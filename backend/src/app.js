@@ -10,6 +10,9 @@ const usersRoutes = require('./routes/users');
 const subscriptionsRoutes = require('./routes/subscriptions');
 const notificationsRoutes = require('./routes/notifications');
 const geoRoutes = require('./routes/geo');
+const taxiRoutes = require('./routes/taxi');
+const vehiclesRoutes = require('./routes/vehicles');
+const adminRoutes = require('./routes/admin');
 
 const app = express();
 
@@ -31,6 +34,9 @@ app.use('/api/users', usersRoutes);
 app.use('/api/subscriptions', subscriptionsRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/geo', geoRoutes);
+app.use('/api/taxi', taxiRoutes);
+app.use('/api/vehicles', vehiclesRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 404 handler
 app.use((req, res) => {
