@@ -15,6 +15,8 @@ const vehiclesRoutes = require('./routes/vehicles');
 const adminRoutes = require('./routes/admin');
 const sosRoutes = require('./routes/sos');
 const insuranceRoutes = require('./routes/insurance');
+const deliveryRoutes = require('./routes/delivery');
+const merchantsRoutes = require('./routes/merchants');
 
 const app = express();
 
@@ -41,6 +43,8 @@ app.use('/api/vehicles', vehiclesRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/sos', sosRoutes);
 app.use('/api/insurance', insuranceRoutes);
+app.use('/api/delivery', deliveryRoutes);
+app.use('/api/merchants', merchantsRoutes);
 
 // 404 handler
 app.use((req, res) => {
