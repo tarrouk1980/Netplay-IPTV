@@ -160,9 +160,12 @@ model Merchant {
   category             String
   address              String
   priceAgreementSigned Boolean   @default(false)
+  isBoosted            Boolean   @default(false)
+  boostedUntil         DateTime?
   createdAt            DateTime  @default(now())
 
   products Product[]
+  ads      Advertisement[]
 }
 
 model Product {
@@ -227,4 +230,38 @@ model Tip {
   toUserId   String
   to         User     @relation("TipTo", fields: [toUserId], references: [id])
   createdAt  DateTime @default(now())
+}
+
+enum AdType {
+  BANNER_TOP
+  BANNER_INLINE
+  SPONSORED_CARD
+  INTERSTITIAL
+}
+
+enum AdPlacement {
+  HOME
+  DELIVERY
+  GROCERY
+  TAXI
+  ALL
+}
+
+model Advertisement {
+  id          String      @id @default(uuid())
+  title       String
+  imageUrl    String
+  targetUrl   String?
+  type        AdType
+  placement   AdPlacement
+  merchantId  String?
+  startDate   DateTime
+  endDate     DateTime
+  budgetTND   Decimal
+  cpmRate     Decimal     @default(5.000)
+  impressions Int         @default(0)
+  clicks      Int         @default(0)
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  merchant    Merchant?   @relation(fields: [merchantId], references: [id])
 }
