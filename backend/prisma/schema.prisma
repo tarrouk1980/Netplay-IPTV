@@ -1,0 +1,230 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  CLIENT
+  CHAUFFEUR
+  LIVREUR
+  DEPANNEUR
+  MARCHAND
+  ADMIN
+}
+
+enum KycStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  NOT_REQUIRED
+}
+
+enum PlanType {
+  DECOUVERTE
+  SEMAINE
+  MENSUEL
+  PRO
+}
+
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  DISPUTED
+}
+
+enum ServiceType {
+  TAXI
+  SOS
+  DELIVERY
+  GROCERY
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  EXHAUSTED
+}
+
+enum PaymentProvider {
+  STRIPE
+  ORANGE_MONEY
+}
+
+enum DisputeStatus {
+  OPEN
+  IN_REVIEW
+  RESOLVED
+  DISMISSED
+}
+
+model User {
+  id         String    @id @default(cuid())
+  name       String
+  phone      String    @unique
+  email      String?   @unique
+  password   String?
+  role       UserRole  @default(CLIENT)
+  kycStatus  KycStatus @default(NOT_REQUIRED)
+  fcmToken   String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  subscription      Subscription[]
+  vehicle           Vehicle[]
+  merchant          Merchant?
+  ordersAsClient    Order[]        @relation("ClientOrders")
+  ordersAsProvider  Order[]        @relation("ProviderOrders")
+  reviewsGiven      Review[]       @relation("ReviewerRelation")
+  reviewsReceived   Review[]       @relation("TargetRelation")
+  tipsGiven         Tip[]          @relation("TipFrom")
+  tipsReceived      Tip[]          @relation("TipTo")
+  disputes          Dispute[]      @relation("ReporterDisputes")
+  insuranceContracts InsuranceContract[]
+}
+
+model Subscription {
+  id             String             @id @default(cuid())
+  providerId     String
+  provider       User               @relation(fields: [providerId], references: [id])
+  planType       PlanType
+  ridesTotal     Int
+  ridesConsumed  Int                @default(0)
+  ridesRemaining Int
+  expiresAt      DateTime
+  status         SubscriptionStatus @default(ACTIVE)
+  autoRenew      Boolean            @default(false)
+  createdAt      DateTime           @default(now())
+}
+
+model Order {
+  id                   String      @id @default(cuid())
+  clientId             String
+  client               User        @relation("ClientOrders", fields: [clientId], references: [id])
+  providerId           String?
+  provider             User?       @relation("ProviderOrders", fields: [providerId], references: [id])
+  serviceType          ServiceType
+  status               OrderStatus @default(PENDING)
+  originLat            Float
+  originLng            Float
+  originAddress        String?
+  destinationLat       Float?
+  destinationLng       Float?
+  destinationAddress   String?
+  price                Decimal?
+  passConsumed         Boolean     @default(false)
+  clientConfirmedAt    DateTime?
+  providerConfirmedAt  DateTime?
+  createdAt            DateTime    @default(now())
+  completedAt          DateTime?
+
+  events   OrderEvent[]
+  reviews  Review[]
+  tips     Tip[]
+  disputes Dispute[]
+}
+
+model OrderEvent {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id])
+  eventType String
+  payload   Json
+  createdAt DateTime @default(now())
+}
+
+model Vehicle {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  make          String
+  model         String
+  plate         String   @unique
+  vehicleType   String
+  licenseNumber String?
+  verified      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+}
+
+model Merchant {
+  id                   String    @id @default(cuid())
+  userId               String    @unique
+  user                 User      @relation(fields: [userId], references: [id])
+  name                 String
+  category             String
+  address              String
+  priceAgreementSigned Boolean   @default(false)
+  createdAt            DateTime  @default(now())
+
+  products Product[]
+}
+
+model Product {
+  id         String   @id @default(cuid())
+  merchantId String
+  merchant   Merchant @relation(fields: [merchantId], references: [id])
+  name       String
+  category   String
+  price      Decimal
+  stock      Int      @default(0)
+  imageUrl   String?
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model InsuranceContract {
+  id           String   @id @default(cuid())
+  companyName  String
+  providerId   String
+  provider     User     @relation(fields: [providerId], references: [id])
+  quotaTotal   Int
+  quotaUsed    Int      @default(0)
+  amountFixed  Decimal
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+}
+
+model Dispute {
+  id         String        @id @default(cuid())
+  orderId    String
+  order      Order         @relation(fields: [orderId], references: [id])
+  reporterId String
+  reporter   User          @relation("ReporterDisputes", fields: [reporterId], references: [id])
+  reason     String
+  status     DisputeStatus @default(OPEN)
+  resolution String?
+  createdAt  DateTime      @default(now())
+  resolvedAt DateTime?
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id])
+  reviewerId String
+  reviewer   User     @relation("ReviewerRelation", fields: [reviewerId], references: [id])
+  targetId   String
+  target     User     @relation("TargetRelation", fields: [targetId], references: [id])
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now())
+}
+
+model Tip {
+  id         String   @id @default(cuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id])
+  amount     Decimal
+  fromUserId String
+  from       User     @relation("TipFrom", fields: [fromUserId], references: [id])
+  toUserId   String
+  to         User     @relation("TipTo", fields: [toUserId], references: [id])
+  createdAt  DateTime @default(now())
+}
