@@ -46,6 +46,10 @@ export default function HomeScreen({ navigation }) {
   };
 
   const handleServicePress = (serviceKey) => {
+    if (serviceKey === 'TAXI') {
+      navigation.navigate('TaxiHome');
+      return;
+    }
     navigation.navigate('ServiceDetail', { serviceType: serviceKey });
   };
 
