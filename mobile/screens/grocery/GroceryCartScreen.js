@@ -9,15 +9,17 @@ import {
   SafeAreaView,
   Alert,
   ActivityIndicator,
+  StatusBar,
 } from 'react-native';
 import { useGroceryStore } from '../../store/groceryStore';
 
 const VIOLET = '#8E44AD';
 const BG = '#0A0A0F';
-const CARD_BG = '#16161E';
+const SURFACE = '#1C1C28';
 const TEXT = '#FFFFFF';
 const SUBTEXT = '#9B9BAA';
-const BORDER = '#2A2A3A';
+const BORDER = '#2C2C3E';
+const GREEN = '#27AE60';
 
 const SCHEDULE_OPTIONS = [
   { label: 'Maintenant', value: null },
@@ -26,59 +28,62 @@ const SCHEDULE_OPTIONS = [
   { label: 'Dans 2h', value: 120 },
 ];
 
-const GROCERY_BASE_FEE = 4;
-const GROCERY_PER_KM = 3;
+// Frais calculés seulement quand le panier n'est pas vide
+const BASE_FEE = 4;
+const PER_KM = 3;
+const EST_KM = 3;
 
 export default function GroceryCartScreen({ navigation, route }) {
-  const { mode } = route.params || {};
-  const { cart, addItem, removeItem, updateItem, requestGrocery } = useGroceryStore();
+  const { merchantName } = route.params || {};
+  const { cart, addItem, removeItem, requestGrocery } = useGroceryStore();
+
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [scheduleMinutes, setScheduleMinutes] = useState(null);
   const [loading, setLoading] = useState(false);
   const [newItemName, setNewItemName] = useState('');
   const [newItemQty, setNewItemQty] = useState('1');
 
-  const estimatedDistanceKm = 3;
-  const deliveryFee = parseFloat((GROCERY_BASE_FEE + estimatedDistanceKm * GROCERY_PER_KM).toFixed(3));
+  const hasItems = cart.items.length > 0;
+  const deliveryFee = hasItems ? parseFloat((BASE_FEE + EST_KM * PER_KM).toFixed(3)) : 0;
   const subtotal = cart.items.reduce((acc, item) => acc + (item.price || 0) * item.quantity, 0);
   const total = parseFloat((subtotal + deliveryFee).toFixed(3));
 
   const handleAddItem = () => {
-    if (!newItemName.trim()) return;
-    addItem({ name: newItemName.trim(), quantity: parseInt(newItemQty, 10) || 1 });
+    const name = newItemName.trim();
+    if (!name) return;
+    addItem({ name, quantity: parseInt(newItemQty, 10) || 1 });
     setNewItemName('');
     setNewItemQty('1');
   };
 
   const handleOrder = async () => {
-    if (!deliveryAddress.trim()) {
-      Alert.alert('Adresse manquante', 'Veuillez entrer votre adresse de livraison.');
+    if (!hasItems) {
+      Alert.alert('Liste vide', 'Ajoutez au moins un article à votre liste de courses.');
       return;
     }
-    if (cart.items.length === 0) {
-      Alert.alert('Panier vide', 'Ajoutez des articles avant de commander.');
+    if (!deliveryAddress.trim()) {
+      Alert.alert('Adresse manquante', 'Veuillez entrer votre adresse de livraison.');
       return;
     }
 
     setLoading(true);
     try {
-      let scheduledAt = null;
-      if (scheduleMinutes) {
-        scheduledAt = new Date(Date.now() + scheduleMinutes * 60 * 1000).toISOString();
-      }
+      const scheduledAt = scheduleMinutes
+        ? new Date(Date.now() + scheduleMinutes * 60 * 1000).toISOString()
+        : null;
 
       const order = await requestGrocery({
         items: cart.items,
         merchantIds: cart.merchantId ? [cart.merchantId] : [],
         deliveryLat: 36.8065,
         deliveryLng: 10.1815,
-        deliveryAddress,
+        deliveryAddress: deliveryAddress.trim(),
         scheduledAt,
       });
 
       navigation.replace('GroceryTracking', { orderId: order.id });
     } catch (err) {
-      Alert.alert('Erreur', err.message || 'Impossible de passer la commande.');
+      Alert.alert('Erreur', err?.message || 'Impossible de passer la commande.');
     } finally {
       setLoading(false);
     }
@@ -86,69 +91,91 @@ export default function GroceryCartScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.safe}>
+      <StatusBar barStyle="light-content" backgroundColor={BG} />
+
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backText}>←</Text>
+          <Text style={styles.backArrow}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Mon panier</Text>
+        <Text style={styles.headerTitle}>
+          {merchantName ? `🛒 ${merchantName}` : '🛒 Ma liste de courses'}
+        </Text>
       </View>
 
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-        <Text style={styles.sectionTitle}>Articles</Text>
+      <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
 
-        {mode === 'CUSTOM' && (
-          <View style={styles.addItemRow}>
-            <TextInput
-              style={[styles.input, { flex: 1 }]}
-              placeholder="Nom de l'article..."
-              placeholderTextColor={SUBTEXT}
-              value={newItemName}
-              onChangeText={setNewItemName}
-            />
-            <TextInput
-              style={[styles.input, styles.qtyInput]}
-              placeholder="Qté"
-              placeholderTextColor={SUBTEXT}
-              value={newItemQty}
-              onChangeText={setNewItemQty}
-              keyboardType="numeric"
-            />
-            <TouchableOpacity style={styles.addBtn} onPress={handleAddItem}>
-              <Text style={styles.addBtnText}>+</Text>
-            </TouchableOpacity>
+        {/* Explanation banner */}
+        <View style={styles.infoBanner}>
+          <Text style={styles.infoBannerIcon}>💡</Text>
+          <Text style={styles.infoBannerText}>
+            Écrivez votre liste de courses. Notre livreur se charge d'acheter vos articles et de vous les livrer.
+          </Text>
+        </View>
+
+        {/* Add item */}
+        <Text style={styles.sectionTitle}>Votre liste de courses</Text>
+        <View style={styles.addItemRow}>
+          <TextInput
+            style={[styles.input, { flex: 1 }]}
+            placeholder="Ex: Lait entier 1L, Pain..."
+            placeholderTextColor={SUBTEXT}
+            value={newItemName}
+            onChangeText={setNewItemName}
+            onSubmitEditing={handleAddItem}
+            returnKeyType="done"
+          />
+          <TextInput
+            style={[styles.input, styles.qtyInput]}
+            placeholder="Qté"
+            placeholderTextColor={SUBTEXT}
+            value={newItemQty}
+            onChangeText={setNewItemQty}
+            keyboardType="numeric"
+          />
+          <TouchableOpacity style={styles.addBtn} onPress={handleAddItem}>
+            <Text style={styles.addBtnText}>+</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Items list */}
+        {!hasItems ? (
+          <View style={styles.emptyBox}>
+            <Text style={styles.emptyIcon}>📝</Text>
+            <Text style={styles.emptyTitle}>Liste vide</Text>
+            <Text style={styles.emptyText}>Ajoutez vos articles ci-dessus</Text>
           </View>
-        )}
-
-        {cart.items.length === 0 ? (
-          <Text style={styles.emptyText}>Aucun article dans le panier</Text>
         ) : (
-          cart.items.map((item, idx) => (
-            <View key={idx} style={styles.itemRow}>
-              <View style={styles.itemInfo}>
+          <View style={styles.itemsList}>
+            {cart.items.map((item, idx) => (
+              <View key={idx} style={styles.itemRow}>
+                <Text style={styles.itemBullet}>•</Text>
                 <Text style={styles.itemName}>{item.name}</Text>
-                {item.price && <Text style={styles.itemPrice}>{item.price} TND</Text>}
-              </View>
-              <View style={styles.itemActions}>
+                <Text style={styles.itemQty}>×{item.quantity}</Text>
                 <TouchableOpacity onPress={() => removeItem(idx)} style={styles.removeBtn}>
                   <Text style={styles.removeBtnText}>✕</Text>
                 </TouchableOpacity>
-                <Text style={styles.itemQty}>×{item.quantity}</Text>
               </View>
+            ))}
+            <View style={styles.itemsCount}>
+              <Text style={styles.itemsCountText}>{cart.items.length} article{cart.items.length > 1 ? 's' : ''}</Text>
             </View>
-          ))
+          </View>
         )}
 
+        {/* Delivery address */}
         <Text style={styles.sectionTitle}>Adresse de livraison</Text>
         <TextInput
-          style={styles.input}
-          placeholder="Entrez votre adresse complète..."
+          style={[styles.input, styles.addressInput]}
+          placeholder="Rue, numéro, ville, gouvernorat..."
           placeholderTextColor={SUBTEXT}
           value={deliveryAddress}
           onChangeText={setDeliveryAddress}
           multiline
         />
 
-        <Text style={styles.sectionTitle}>Créneau de livraison</Text>
+        {/* Schedule */}
+        <Text style={styles.sectionTitle}>Quand ?</Text>
         <View style={styles.scheduleRow}>
           {SCHEDULE_OPTIONS.map((opt) => (
             <TouchableOpacity
@@ -163,29 +190,51 @@ export default function GroceryCartScreen({ navigation, route }) {
           ))}
         </View>
 
-        <View style={styles.summary}>
-          <Text style={styles.summaryTitle}>Résumé</Text>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Sous-total</Text>
-            <Text style={styles.summaryValue}>{subtotal.toFixed(3)} TND</Text>
+        {/* Summary — only if has items */}
+        {hasItems && (
+          <View style={styles.summary}>
+            <Text style={styles.summaryTitle}>Résumé</Text>
+            {subtotal > 0 && (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Produits estimés</Text>
+                <Text style={styles.summaryValue}>{subtotal.toFixed(3)} TND</Text>
+              </View>
+            )}
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Frais de livraison</Text>
+              <Text style={styles.summaryValue}>{deliveryFee.toFixed(3)} TND</Text>
+            </View>
+            {subtotal > 0 && (
+              <View style={[styles.summaryRow, styles.totalRow]}>
+                <Text style={styles.totalLabel}>Total estimé</Text>
+                <Text style={styles.totalValue}>{total.toFixed(3)} TND</Text>
+              </View>
+            )}
+            <Text style={styles.summaryNote}>
+              * Le prix final des produits est réglé directement avec le livreur selon les prix du magasin.
+            </Text>
           </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Frais de livraison</Text>
-            <Text style={styles.summaryValue}>{deliveryFee.toFixed(3)} TND</Text>
-          </View>
-          <View style={[styles.summaryRow, styles.totalRow]}>
-            <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>{total.toFixed(3)} TND</Text>
-          </View>
-        </View>
+        )}
+
+        <View style={{ height: 90 }} />
       </ScrollView>
 
+      {/* Order button */}
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.orderBtn} onPress={handleOrder} disabled={loading}>
+        <TouchableOpacity
+          style={[styles.orderBtn, !hasItems && styles.orderBtnDisabled]}
+          onPress={handleOrder}
+          disabled={loading || !hasItems}
+          activeOpacity={0.85}
+        >
           {loading ? (
             <ActivityIndicator color="#FFF" />
           ) : (
-            <Text style={styles.orderBtnText}>Commander — {total.toFixed(3)} TND</Text>
+            <Text style={styles.orderBtnText}>
+              {hasItems
+                ? `Commander — ${deliveryFee.toFixed(3)} TND livraison`
+                : 'Ajoutez des articles pour commander'}
+            </Text>
           )}
         </TouchableOpacity>
       </View>
@@ -198,19 +247,33 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: VIOLET,
     paddingHorizontal: 16,
     paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: BORDER,
   },
-  backBtn: { marginRight: 12 },
-  backText: { color: TEXT, fontSize: 22 },
-  headerTitle: { color: TEXT, fontSize: 20, fontWeight: '700' },
+  backBtn: { marginRight: 12, padding: 4 },
+  backArrow: { color: VIOLET, fontSize: 32, lineHeight: 32, marginTop: -4 },
+  headerTitle: { color: TEXT, fontSize: 18, fontWeight: '700', flex: 1 },
   container: { flex: 1 },
-  content: { padding: 16, paddingBottom: 100 },
-  sectionTitle: { color: TEXT, fontSize: 17, fontWeight: '700', marginTop: 20, marginBottom: 10 },
-  addItemRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  content: { padding: 16, paddingBottom: 20 },
+  infoBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: VIOLET + '22',
+    borderRadius: 12,
+    padding: 14,
+    gap: 10,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: VIOLET + '55',
+  },
+  infoBannerIcon: { fontSize: 18 },
+  infoBannerText: { flex: 1, color: '#C9A0DC', fontSize: 13, lineHeight: 20 },
+  sectionTitle: { color: TEXT, fontSize: 16, fontWeight: '700', marginTop: 16, marginBottom: 10 },
+  addItemRow: { flexDirection: 'row', gap: 8, marginBottom: 12, alignItems: 'center' },
   input: {
-    backgroundColor: CARD_BG,
+    backgroundColor: SURFACE,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -218,38 +281,56 @@ const styles = StyleSheet.create({
     fontSize: 15,
     borderWidth: 1,
     borderColor: BORDER,
-    marginBottom: 8,
   },
-  qtyInput: { width: 60 },
+  addressInput: { marginBottom: 8, minHeight: 60, textAlignVertical: 'top' },
+  qtyInput: { width: 56, textAlign: 'center' },
   addBtn: {
     backgroundColor: VIOLET,
     borderRadius: 10,
-    paddingHorizontal: 18,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
     justifyContent: 'center',
   },
-  addBtnText: { color: TEXT, fontSize: 22, fontWeight: '700' },
-  emptyText: { color: SUBTEXT, textAlign: 'center', marginVertical: 20 },
-  itemRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  addBtnText: { color: TEXT, fontSize: 24, fontWeight: '700', lineHeight: 28 },
+  emptyBox: {
+    backgroundColor: SURFACE,
+    borderRadius: 14,
+    padding: 32,
     alignItems: 'center',
-    backgroundColor: CARD_BG,
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 8,
     borderWidth: 1,
     borderColor: BORDER,
+    marginBottom: 8,
   },
-  itemInfo: { flex: 1 },
-  itemName: { color: TEXT, fontSize: 15 },
-  itemPrice: { color: SUBTEXT, fontSize: 13, marginTop: 2 },
-  itemActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  emptyIcon: { fontSize: 40, marginBottom: 8 },
+  emptyTitle: { color: TEXT, fontWeight: '700', fontSize: 15, marginBottom: 4 },
+  emptyText: { color: SUBTEXT, fontSize: 13 },
+  itemsList: {
+    backgroundColor: SURFACE,
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: BORDER,
+    marginBottom: 8,
+  },
+  itemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: BORDER,
+    gap: 8,
+  },
+  itemBullet: { color: VIOLET, fontSize: 18 },
+  itemName: { flex: 1, color: TEXT, fontSize: 14 },
+  itemQty: { color: SUBTEXT, fontSize: 13, fontWeight: '600' },
   removeBtn: { padding: 4 },
-  removeBtnText: { color: '#E74C3C', fontSize: 14 },
-  itemQty: { color: SUBTEXT, fontSize: 14 },
-  scheduleRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  removeBtnText: { color: '#E74C3C', fontSize: 14, fontWeight: '700' },
+  itemsCount: { paddingTop: 10, alignItems: 'flex-end' },
+  itemsCountText: { color: VIOLET, fontSize: 12, fontWeight: '700' },
+  scheduleRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
   scheduleChip: {
-    backgroundColor: CARD_BG,
+    backgroundColor: SURFACE,
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 8,
@@ -257,23 +338,24 @@ const styles = StyleSheet.create({
     borderColor: BORDER,
   },
   scheduleChipActive: { backgroundColor: VIOLET, borderColor: VIOLET },
-  scheduleText: { color: SUBTEXT, fontSize: 14 },
+  scheduleText: { color: SUBTEXT, fontSize: 13 },
   scheduleTextActive: { color: TEXT, fontWeight: '600' },
   summary: {
-    backgroundColor: CARD_BG,
+    backgroundColor: SURFACE,
     borderRadius: 14,
     padding: 16,
     marginTop: 20,
     borderWidth: 1,
     borderColor: BORDER,
   },
-  summaryTitle: { color: TEXT, fontSize: 16, fontWeight: '700', marginBottom: 12 },
+  summaryTitle: { color: TEXT, fontSize: 15, fontWeight: '700', marginBottom: 12 },
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   summaryLabel: { color: SUBTEXT, fontSize: 14 },
   summaryValue: { color: TEXT, fontSize: 14 },
   totalRow: { borderTopWidth: 1, borderTopColor: BORDER, paddingTop: 10, marginTop: 4 },
-  totalLabel: { color: TEXT, fontSize: 16, fontWeight: '700' },
-  totalValue: { color: VIOLET, fontSize: 18, fontWeight: '700' },
+  totalLabel: { color: TEXT, fontSize: 15, fontWeight: '700' },
+  totalValue: { color: VIOLET, fontSize: 17, fontWeight: '800' },
+  summaryNote: { color: SUBTEXT, fontSize: 11, marginTop: 12, lineHeight: 16, fontStyle: 'italic' },
   footer: {
     position: 'absolute',
     bottom: 0,
@@ -284,11 +366,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: BORDER,
   },
-  orderBtn: {
-    backgroundColor: VIOLET,
-    borderRadius: 14,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  orderBtnText: { color: TEXT, fontSize: 16, fontWeight: '700' },
+  orderBtn: { backgroundColor: VIOLET, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
+  orderBtnDisabled: { backgroundColor: '#3A2A4A', opacity: 0.7 },
+  orderBtnText: { color: TEXT, fontSize: 15, fontWeight: '700' },
 });
