@@ -115,6 +115,9 @@ export default function SOSRequestScreen({ route, navigation }) {
   const [location, setLocation] = useState(null);
   const [locating, setLocating] = useState(false);
   const [pickerModal, setPickerModal] = useState({ visible: false, field: '', title: '', options: [] });
+  const [scheduleModal, setScheduleModal] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleTime, setScheduleTime] = useState('');
 
   useEffect(() => {
     if (step === 2) {
@@ -182,16 +185,14 @@ export default function SOSRequestScreen({ route, navigation }) {
     }
 
     if (submitMode === 'SCHEDULED') {
-      Alert.alert(
-        'Réserver un dépanneur',
-        'Choisissez un créneau',
-        [
-          { text: 'Dans 1h', onPress: () => sendSOS(submitMode, '1h') },
-          { text: 'Dans 2h', onPress: () => sendSOS(submitMode, '2h') },
-          { text: 'Choisir une date', onPress: () => sendSOS(submitMode, 'custom') },
-          { text: 'Annuler', style: 'cancel' },
-        ]
-      );
+      // Pré-remplir avec aujourd'hui + 2h
+      const now = new Date();
+      const d = now.toISOString().slice(0, 10);
+      const h = String(now.getHours() + 2).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      setScheduleDate(d);
+      setScheduleTime(`${h}:${m}`);
+      setScheduleModal(true);
       return;
     }
 
@@ -231,6 +232,72 @@ export default function SOSRequestScreen({ route, navigation }) {
         onSelect={handlePickerSelect}
         onClose={closePicker}
       />
+
+      {/* Modal agenda — réservation dépanneur */}
+      <Modal visible={scheduleModal} transparent animationType="slide" onRequestClose={() => setScheduleModal(false)}>
+        <TouchableOpacity style={modalStyles.overlay} activeOpacity={1} onPress={() => setScheduleModal(false)}>
+          <TouchableOpacity style={[modalStyles.sheet, { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 36 }]} activeOpacity={1}>
+            <View style={modalStyles.handle} />
+            <Text style={{ fontSize: 18, fontWeight: '800', color: '#FFF', marginBottom: 6 }}>📅 Programmer une intervention</Text>
+            <Text style={{ fontSize: 13, color: '#8E8E9A', marginBottom: 20 }}>Le dépanneur sera notifié et confirmera le créneau.</Text>
+
+            <Text style={scheduleStyles.label}>DATE (AAAA-MM-JJ)</Text>
+            <TextInput
+              style={scheduleStyles.input}
+              value={scheduleDate}
+              onChangeText={setScheduleDate}
+              placeholder="2025-06-15"
+              placeholderTextColor="#555"
+              keyboardType="numeric"
+              maxLength={10}
+            />
+
+            <Text style={scheduleStyles.label}>HEURE (HH:MM)</Text>
+            <TextInput
+              style={scheduleStyles.input}
+              value={scheduleTime}
+              onChangeText={setScheduleTime}
+              placeholder="14:30"
+              placeholderTextColor="#555"
+              keyboardType="numeric"
+              maxLength={5}
+            />
+
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
+              {['+1h', '+2h', '+3h', 'Demain matin'].map((label) => (
+                <TouchableOpacity
+                  key={label}
+                  style={scheduleStyles.quickBtn}
+                  onPress={() => {
+                    const base = new Date();
+                    if (label === 'Demain matin') {
+                      base.setDate(base.getDate() + 1);
+                      base.setHours(9, 0, 0);
+                    } else {
+                      const h = parseInt(label.replace('+', '').replace('h', ''));
+                      base.setHours(base.getHours() + h);
+                    }
+                    setScheduleDate(base.toISOString().slice(0, 10));
+                    setScheduleTime(`${String(base.getHours()).padStart(2,'0')}:${String(base.getMinutes()).padStart(2,'0')}`);
+                  }}
+                >
+                  <Text style={scheduleStyles.quickBtnText}>{label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <TouchableOpacity
+              style={[scheduleStyles.confirmBtn, { backgroundColor: COLORS.accent }]}
+              onPress={() => {
+                setScheduleModal(false);
+                sendSOS('SCHEDULED', `${scheduleDate}T${scheduleTime}`);
+              }}
+            >
+              <Text style={scheduleStyles.confirmBtnText}>Confirmer le rendez-vous</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
 
       {/* Header */}
       <View style={styles.header}>
@@ -655,4 +722,34 @@ const styles = StyleSheet.create({
   scheduledButtonIcon: { fontSize: 20 },
   scheduledButtonText: { color: COLORS.accent, fontSize: 16, fontWeight: '700' },
   buttonDisabled: { opacity: 0.5 },
+});
+
+const scheduleStyles = StyleSheet.create({
+  label: { color: '#8E8E9A', fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 6, marginTop: 12 },
+  input: {
+    backgroundColor: '#0A0A0F',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#2C2C3E',
+    color: '#FFF',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 16,
+    letterSpacing: 1,
+  },
+  quickBtn: {
+    flex: 1,
+    backgroundColor: '#2C2C3E',
+    borderRadius: 8,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  quickBtnText: { color: '#FFF', fontSize: 12, fontWeight: '600' },
+  confirmBtn: {
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  confirmBtnText: { color: '#FFF', fontWeight: '900', fontSize: 16 },
 });
