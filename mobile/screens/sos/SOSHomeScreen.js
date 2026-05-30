@@ -112,6 +112,22 @@ export default function SOSHomeScreen({ navigation }) {
           <Text style={[styles.modeChevron, { color: COLORS.accent }]}>›</Text>
         </TouchableOpacity>
 
+        {/* Constat amiable */}
+        <TouchableOpacity
+          style={[styles.modeCard, { borderColor: '#8E44AD' }]}
+          onPress={() => navigation.navigate('ConstatAmiable', {})}
+          activeOpacity={0.85}
+        >
+          <View style={[styles.modeIcon, { backgroundColor: '#8E44AD22' }]}>
+            <Text style={styles.modeEmoji}>📋</Text>
+          </View>
+          <View style={styles.modeContent}>
+            <Text style={[styles.modeTitle, { color: '#8E44AD' }]}>Constat amiable</Text>
+            <Text style={styles.modeSubtitle}>Remplir un constat d'accident entre deux parties</Text>
+          </View>
+          <Text style={[styles.modeChevron, { color: '#8E44AD' }]}>›</Text>
+        </TouchableOpacity>
+
         <View style={{ flex: 1 }} />
 
         {/* Legal note */}

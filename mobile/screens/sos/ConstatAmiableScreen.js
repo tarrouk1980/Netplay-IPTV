@@ -16,7 +16,7 @@ import api from '../../services/api';
 const COLORS = {
   background: '#0A0A0F',
   surface: '#1C1C28',
-  accent: '#F5A623',
+  accent: '#8E44AD',
   text: '#FFFFFF',
   muted: '#8E8E9A',
   border: '#2C2C3E',
@@ -97,7 +97,8 @@ export default function ConstatAmiableScreen({ route, navigation }) {
     }
     setSubmitting(true);
     try {
-      await api.post(`/sos/${orderId}/constat`, {
+      const endpoint = orderId ? `/sos/${orderId}/constat` : '/sos/constat';
+      await api.post(endpoint, {
         vehicleA,
         vehicleB,
         circumstances: selectedCircumstances,
