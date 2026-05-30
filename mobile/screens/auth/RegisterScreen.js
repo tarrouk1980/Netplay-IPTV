@@ -38,22 +38,27 @@ const ROLES = [
   { value: 'MARCHAND', label: 'Marchand', emoji: '🏪' },
 ];
 
-const TAXI_TYPES = [
-  { value: 'NORMAL', label: 'Normal', emoji: '🚕' },
-  { value: 'EASYLADY', label: 'EasyLady', emoji: '🚺' },
-  { value: 'EASYACCESS', label: 'EasyAccess', emoji: '♿' },
+const CHAUFFEUR_VEHICLE_TYPES = [
+  { value: 'BERLINE', label: 'Berline', emoji: '🚗' },
+  { value: 'SUV', label: 'SUV', emoji: '🚙' },
+  { value: 'MINIVAN', label: 'Minivan', emoji: '🚐' },
+  { value: 'MOTO', label: 'Moto', emoji: '🛵' },
 ];
 
 const DELIVERY_VEHICLE_TYPES = [
   { value: 'MOTO', label: 'Moto', emoji: '🛵' },
-  { value: 'VOITURE', label: 'Voiture', emoji: '🚗' },
+  { value: 'SCOOTER', label: 'Scooter', emoji: '🛺' },
   { value: 'VELO', label: 'Vélo', emoji: '🚲' },
+  { value: 'APIED', label: 'À pied', emoji: '🚶' },
+  { value: 'VOITURE', label: 'Voiture', emoji: '🚗' },
 ];
 
+const MOTORIZED_DELIVERY = ['MOTO', 'SCOOTER', 'VOITURE'];
+
 const TRUCK_TYPES = [
-  { value: 'LEGER', label: 'Léger', emoji: '🚐' },
-  { value: 'MOYEN', label: 'Moyen', emoji: '🚚' },
-  { value: 'LOURD', label: 'Lourd', emoji: '🚛' },
+  { value: 'PLATEAU', label: 'Plateau', emoji: '🚛' },
+  { value: 'GRUE', label: 'Grue', emoji: '🏗️' },
+  { value: 'FOURGON', label: 'Fourgon', emoji: '🚐' },
 ];
 
 const MERCHANT_CATEGORIES = [
@@ -61,9 +66,9 @@ const MERCHANT_CATEGORIES = [
   { value: 'PHARMACY', label: 'Pharmacie', emoji: '💊' },
   { value: 'SUPERMARKET', label: 'Supermarché', emoji: '🛒' },
   { value: 'BEAUTY', label: 'Beauté', emoji: '💄' },
-  { value: 'PETS', label: 'Animaux', emoji: '🐾' },
+  { value: 'PETS', label: 'Animalerie', emoji: '🐾' },
   { value: 'HIGHTECH', label: 'High-Tech', emoji: '💻' },
-  { value: 'ELECTRO', label: 'Électro', emoji: '⚡' },
+  { value: 'ELECTRO', label: 'Électroménager', emoji: '⚡' },
   { value: 'OTHER', label: 'Autre', emoji: '📦' },
 ];
 
@@ -165,7 +170,7 @@ export default function RegisterScreen({ navigation }) {
 
   // Step 2 — CHAUFFEUR
   const [licenseNumber, setLicenseNumber] = useState('');
-  const [taxiType, setTaxiType] = useState('NORMAL');
+  const [chauffeurVehicleType, setChauffeurVehicleType] = useState('BERLINE');
   const [vMake, setVMake] = useState('');
   const [vModel, setVModel] = useState('');
   const [vYear, setVYear] = useState('');
@@ -175,16 +180,19 @@ export default function RegisterScreen({ navigation }) {
   // Step 2 — LIVREUR
   const [deliveryVehicle, setDeliveryVehicle] = useState('MOTO');
   const [deliveryPlate, setDeliveryPlate] = useState('');
+  const [deliveryZone, setDeliveryZone] = useState('');
 
   // Step 2 — DEPANNEUR
   const [depLicense, setDepLicense] = useState('');
-  const [truckType, setTruckType] = useState('LEGER');
+  const [truckType, setTruckType] = useState('PLATEAU');
   const [truckPlate, setTruckPlate] = useState('');
+  const [depZone, setDepZone] = useState('');
 
   // Step 2 — MARCHAND
   const [shopName, setShopName] = useState('');
   const [shopCategory, setShopCategory] = useState('RESTAURANT');
   const [shopAddress, setShopAddress] = useState('');
+  const [shopPhone, setShopPhone] = useState('');
   const [shopCity, setShopCity] = useState('');
 
   const [isLoading, setIsLoading] = useState(false);
@@ -295,25 +303,35 @@ export default function RegisterScreen({ navigation }) {
           await api.post('/api/vehicles', {
             make: vMake.trim(),
             model: vModel.trim(),
+            year: vYear.trim(),
             plate: vPlate.trim(),
             licenseNumber: licenseNumber.trim(),
-            vehicleType: taxiType,
+            vehicleType: chauffeurVehicleType,
           });
         } catch (vErr) {
           console.warn('[RegisterScreen] Vehicle registration failed (non-blocking):', vErr?.response?.data);
         }
         Alert.alert(
           'Compte créé !',
-          'En attente de validation KYC par notre équipe avant activation de votre compte.',
+          'En attente de vérification.',
           [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
         );
         return;
       }
 
-      if (role === 'LIVREUR' || role === 'DEPANNEUR') {
+      if (role === 'LIVREUR') {
         Alert.alert(
           'Compte créé !',
-          'En attente de validation KYC par notre équipe avant activation de votre compte.',
+          'En attente de vérification.',
+          [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
+        );
+        return;
+      }
+
+      if (role === 'DEPANNEUR') {
+        Alert.alert(
+          'Compte créé !',
+          'En attente de vérification.',
           [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
         );
         return;
@@ -324,7 +342,8 @@ export default function RegisterScreen({ navigation }) {
           await api.post('/api/merchants/register', {
             name: shopName.trim(),
             category: shopCategory,
-            address: `${shopAddress.trim()}, ${shopCity.trim()}`,
+            address: shopAddress.trim(),
+            phone: shopPhone.trim(),
             lat: 0,
             lng: 0,
           });
@@ -332,9 +351,9 @@ export default function RegisterScreen({ navigation }) {
           console.warn('[RegisterScreen] Merchant registration failed (non-blocking):', mErr?.response?.data);
         }
         Alert.alert(
-          'Boutique créée !',
-          'Votre boutique sera activée après vérification par notre équipe.',
-          [{ text: 'OK', onPress: () => navigation.navigate('Home') }]
+          'Compte créé !',
+          'En attente de vérification.',
+          [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
         );
         return;
       }
@@ -372,29 +391,30 @@ export default function RegisterScreen({ navigation }) {
     ];
 
     if (role === 'CHAUFFEUR') {
-      const tInfo = TAXI_TYPES.find((t) => t.value === taxiType);
+      const cvInfo = CHAUFFEUR_VEHICLE_TYPES.find((t) => t.value === chauffeurVehicleType);
       rows.push(
         { label: 'Permis', value: licenseNumber },
-        { label: 'Type taxi', value: tInfo ? `${tInfo.emoji} ${tInfo.label}` : taxiType },
+        { label: 'Type véhicule', value: cvInfo ? `${cvInfo.emoji} ${cvInfo.label}` : chauffeurVehicleType },
         { label: 'Véhicule', value: [vMake, vModel, vYear ? `(${vYear})` : ''].filter(Boolean).join(' ') },
         { label: 'Plaque', value: vPlate },
-        { label: 'Couleur', value: vColor },
       );
     }
     if (role === 'LIVREUR') {
       const dvInfo = DELIVERY_VEHICLE_TYPES.find((v) => v.value === deliveryVehicle);
       rows.push({ label: 'Véhicule', value: dvInfo ? `${dvInfo.emoji} ${dvInfo.label}` : deliveryVehicle });
-      if (deliveryVehicle !== 'VELO' && deliveryPlate) {
+      if (MOTORIZED_DELIVERY.includes(deliveryVehicle) && deliveryPlate) {
         rows.push({ label: 'Plaque', value: deliveryPlate });
       }
+      if (deliveryZone) rows.push({ label: 'Zone', value: deliveryZone });
     }
     if (role === 'DEPANNEUR') {
       const ttInfo = TRUCK_TYPES.find((t) => t.value === truckType);
       rows.push(
-        { label: 'Licence', value: depLicense },
+        { label: 'Permis', value: depLicense },
         { label: 'Camion', value: ttInfo ? `${ttInfo.emoji} ${ttInfo.label}` : truckType },
         { label: 'Plaque camion', value: truckPlate },
       );
+      if (depZone) rows.push({ label: 'Zone', value: depZone });
     }
     if (role === 'MARCHAND') {
       const catInfo = MERCHANT_CATEGORIES.find((c) => c.value === shopCategory);
@@ -402,8 +422,8 @@ export default function RegisterScreen({ navigation }) {
         { label: 'Boutique', value: shopName },
         { label: 'Catégorie', value: catInfo ? `${catInfo.emoji} ${catInfo.label}` : shopCategory },
         { label: 'Adresse', value: shopAddress },
-        { label: 'Ville', value: shopCity },
       );
+      if (shopPhone) rows.push({ label: 'Tél. boutique', value: shopPhone });
     }
 
     return rows.map((row, idx) => <RecapRow key={idx} label={row.label} value={row.value} />);
@@ -479,10 +499,10 @@ export default function RegisterScreen({ navigation }) {
           />
 
           <OptionSelector
-            label="Type de taxi"
-            options={TAXI_TYPES}
-            value={taxiType}
-            onChange={setTaxiType}
+            label="Type de véhicule"
+            options={CHAUFFEUR_VEHICLE_TYPES}
+            value={chauffeurVehicleType}
+            onChange={setChauffeurVehicleType}
             disabled={isLoading}
           />
 
@@ -516,7 +536,7 @@ export default function RegisterScreen({ navigation }) {
             editable={!isLoading}
           />
           <InputField
-            label="Numéro de plaque"
+            label="Plaque d'immatriculation"
             required
             placeholder="Ex: 123 TUN 4567"
             value={vPlate}
@@ -525,17 +545,8 @@ export default function RegisterScreen({ navigation }) {
             error={fieldErrors.vPlate}
             editable={!isLoading}
           />
-          <InputField
-            label="Couleur"
-            required
-            placeholder="Ex: Blanc"
-            value={vColor}
-            onChangeText={(v) => { setVColor(v); setFieldErrors((e) => ({ ...e, vColor: undefined })); }}
-            error={fieldErrors.vColor}
-            editable={!isLoading}
-          />
 
-          <KycNote text="Vos documents KYC seront vérifiés par notre équipe avant activation de votre compte." />
+          <KycNote text="📋 Vos documents seront vérifiés sous 24h" />
         </View>
       );
     }
@@ -554,9 +565,9 @@ export default function RegisterScreen({ navigation }) {
             disabled={isLoading}
           />
 
-          {deliveryVehicle !== 'VELO' && (
+          {MOTORIZED_DELIVERY.includes(deliveryVehicle) && (
             <InputField
-              label="Numéro de plaque (optionnel)"
+              label="Plaque d'immatriculation"
               placeholder="Ex: 123 TUN 4567"
               value={deliveryPlate}
               onChangeText={setDeliveryPlate}
@@ -565,7 +576,15 @@ export default function RegisterScreen({ navigation }) {
             />
           )}
 
-          <KycNote text="Vos documents KYC seront vérifiés par notre équipe avant activation de votre compte." />
+          <InputField
+            label="Zone de livraison"
+            placeholder="Ex: Tunis Centre, La Marsa"
+            value={deliveryZone}
+            onChangeText={setDeliveryZone}
+            editable={!isLoading}
+          />
+
+          <KycNote text="📋 Vérification sous 24h" />
         </View>
       );
     }
@@ -577,9 +596,9 @@ export default function RegisterScreen({ navigation }) {
           <Text style={styles.stepSubtitle}>Votre camion de dépannage</Text>
 
           <InputField
-            label="Numéro de licence dépanneur"
+            label="Numéro de permis de conduire"
             required
-            placeholder="Ex: DEP-123456"
+            placeholder="Ex: 12345678"
             value={depLicense}
             onChangeText={(v) => { setDepLicense(v); setFieldErrors((e) => ({ ...e, depLicense: undefined })); }}
             error={fieldErrors.depLicense}
@@ -595,7 +614,7 @@ export default function RegisterScreen({ navigation }) {
           />
 
           <InputField
-            label="Numéro de plaque camion"
+            label="Plaque camion"
             required
             placeholder="Ex: 456 TUN 7890"
             value={truckPlate}
@@ -605,7 +624,15 @@ export default function RegisterScreen({ navigation }) {
             editable={!isLoading}
           />
 
-          <KycNote text="Vos documents KYC seront vérifiés par notre équipe avant activation de votre compte." />
+          <InputField
+            label="Zone d'intervention"
+            placeholder="Ex: Grand Tunis, Ariana"
+            value={depZone}
+            onChangeText={setDepZone}
+            editable={!isLoading}
+          />
+
+          <KycNote text="📋 Vérification sous 24h" />
         </View>
       );
     }
@@ -636,9 +663,9 @@ export default function RegisterScreen({ navigation }) {
           />
 
           <InputField
-            label="Adresse complète"
+            label="Adresse de la boutique"
             required
-            placeholder="Numéro et rue"
+            placeholder="Numéro, rue, ville"
             value={shopAddress}
             onChangeText={(v) => { setShopAddress(v); setFieldErrors((e) => ({ ...e, shopAddress: undefined })); }}
             error={fieldErrors.shopAddress}
@@ -646,16 +673,15 @@ export default function RegisterScreen({ navigation }) {
           />
 
           <InputField
-            label="Ville"
-            required
-            placeholder="Ex: Tunis"
-            value={shopCity}
-            onChangeText={(v) => { setShopCity(v); setFieldErrors((e) => ({ ...e, shopCity: undefined })); }}
-            error={fieldErrors.shopCity}
+            label="Téléphone boutique"
+            placeholder="Ex: +216 XX XXX XXX"
+            value={shopPhone}
+            onChangeText={setShopPhone}
+            keyboardType="phone-pad"
             editable={!isLoading}
           />
 
-          <KycNote text="Votre boutique sera activée après vérification par notre équipe." />
+          <KycNote text="📷 Vous pourrez ajouter vos produits après validation" />
         </View>
       );
     }

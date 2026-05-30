@@ -17,6 +17,7 @@ import OnboardingScreen from './screens/onboarding/OnboardingScreen';
 import LoginScreen from './screens/auth/LoginScreen';
 import RegisterScreen from './screens/auth/RegisterScreen';
 import OTPScreen from './screens/auth/OTPScreen';
+import ForgotPasswordScreen from './screens/auth/ForgotPasswordScreen';
 
 // Main Screens
 import HomeScreen from './screens/home/HomeScreen';
