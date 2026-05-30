@@ -10,6 +10,7 @@ import {
   Alert,
   StatusBar,
   TextInput,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import useSosStore from '../../store/sosStore';
@@ -334,9 +335,19 @@ export default function SOSTrackingScreen({ route, navigation }) {
                   <Text style={styles.depanneurPhone}>{localOrder.provider.phone}</Text>
                 )}
               </View>
-              {localOrder?.price && (
-                <Text style={styles.depanneurPrice}>{parseFloat(localOrder.price).toFixed(3)} TND</Text>
-              )}
+              <View style={{ alignItems: 'flex-end', gap: 6 }}>
+                {localOrder?.price && (
+                  <Text style={styles.depanneurPrice}>{parseFloat(localOrder.price).toFixed(3)} TND</Text>
+                )}
+                {localOrder?.provider?.phone && (
+                  <TouchableOpacity
+                    style={styles.callBtn}
+                    onPress={() => Linking.openURL(`tel:${localOrder.provider.phone}`)}
+                  >
+                    <Text style={styles.callBtnText}>📞 Appeler</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
 
             {/* Live location map */}
@@ -495,6 +506,8 @@ const styles = StyleSheet.create({
   depanneurInfo: { flex: 1 },
   depanneurName: { fontSize: 16, fontWeight: '700', color: COLORS.text },
   depanneurPhone: { fontSize: 13, color: COLORS.textMuted, marginTop: 2 },
+  callBtn: { backgroundColor: '#27AE60', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7 },
+  callBtnText: { color: '#FFF', fontWeight: '700', fontSize: 12 },
   depanneurPrice: { fontSize: 18, fontWeight: '800', color: COLORS.sos },
   mapPlaceholder: {
     backgroundColor: COLORS.background,

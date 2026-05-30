@@ -3,6 +3,7 @@
 const express = require('express');
 const { prisma } = require('../config/db');
 const { authenticate } = require('../middleware/auth');
+const { analyzeProvider, banUser } = require('../services/antifraud');
 const { requireRole } = require('../middleware/rbac');
 const { sendNotification, NOTIFICATION_TYPES } = require('../services/fcm');
 
@@ -896,6 +897,77 @@ router.get('/reports/top-merchants', async (req, res) => {
     return res.json({ merchants: result });
   } catch (err) {
     console.error('[admin/reports/top-merchants]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// POST /api/admin/users/:id/ban — Bannir un utilisateur
+router.post('/users/:id/ban', authenticate, async (req, res) => {
+  const { reason } = req.body;
+  if (!reason?.trim()) return res.status(400).json({ error: 'Raison obligatoire', code: 'REASON_REQUIRED' });
+  try {
+    await banUser(req.params.id, reason.trim(), req.user.id);
+    return res.json({ success: true, message: `Utilisateur ${req.params.id} banni.` });
+  } catch (err) {
+    console.error('[Admin/Ban]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// POST /api/admin/users/:id/unban — Débannir un utilisateur
+router.post('/users/:id/unban', authenticate, async (req, res) => {
+  try {
+    await prisma.user.update({
+      where: { id: req.params.id },
+      data: { kycStatus: 'APPROVED' },
+    });
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// GET /api/admin/fraud/alerts — Liste des prestataires suspects
+router.get('/fraud/alerts', authenticate, async (req, res) => {
+  try {
+    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    // Prestataires avec taux d'annulation > 40% sur 7 jours
+    const providers = await prisma.user.findMany({
+      where: {
+        role: { in: ['CHAUFFEUR', 'LIVREUR', 'DEPANNEUR'] },
+        kycStatus: 'APPROVED',
+      },
+      select: { id: true, name: true, phone: true, role: true },
+    });
+
+    const alerts = [];
+
+    for (const p of providers) {
+      const orders = await prisma.order.findMany({
+        where: { providerId: p.id, createdAt: { gte: since } },
+        select: { status: true, createdAt: true },
+      });
+
+      if (orders.length < 5) continue;
+
+      const cancelled = orders.filter((o) => o.status === 'CANCELLED').length;
+      const rate = cancelled / orders.length;
+
+      if (rate >= 0.4) {
+        alerts.push({
+          provider: p,
+          totalOrders: orders.length,
+          cancelled,
+          cancelRate: Math.round(rate * 100),
+        });
+      }
+    }
+
+    alerts.sort((a, b) => b.cancelRate - a.cancelRate);
+    return res.json({ alerts });
+  } catch (err) {
+    console.error('[Admin/FraudAlerts]', err);
     return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
   }
 });

@@ -8,6 +8,7 @@ import {
   Animated,
   StatusBar,
   Alert,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import useTaxiStore from '../../store/taxiStore';
@@ -229,6 +230,14 @@ export default function TaxiTrackingScreen({ route, navigation }) {
                   <Text style={styles.driverPhone}>{localOrder.driver.phone}</Text>
                 )}
               </View>
+              {localOrder.driver.phone && (
+                <TouchableOpacity
+                  style={styles.callBtn}
+                  onPress={() => Linking.openURL(`tel:${localOrder.driver.phone}`)}
+                >
+                  <Text style={styles.callBtnText}>📞 Appeler</Text>
+                </TouchableOpacity>
+              )}
             </View>
             {localOrder.driver.plate && (
               <View style={styles.plateRow}>
@@ -360,6 +369,8 @@ const styles = StyleSheet.create({
   driverInfo: { flex: 1 },
   driverName: { fontSize: 16, fontWeight: '700', color: COLORS.text },
   driverPhone: { fontSize: 13, color: COLORS.textMuted, marginTop: 2 },
+  callBtn: { backgroundColor: '#27AE60', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8, marginLeft: 8 },
+  callBtnText: { color: '#FFF', fontWeight: '700', fontSize: 13 },
   plateRow: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
   plateLabel: { fontSize: 13, color: COLORS.textMuted },
   plateValue: { fontSize: 13, color: COLORS.text, fontWeight: '600' },

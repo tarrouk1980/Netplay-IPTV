@@ -66,6 +66,9 @@ import KYCPendingScreen from './screens/profile/KYCPendingScreen';
 // Subscriptions
 import BuyPassScreen from './screens/subscriptions/BuyPassScreen';
 
+// Legal
+import CGUScreen from './screens/legal/CGUScreen';
+
 const Stack = createNativeStackNavigator();
 
 // Configure notification behavior
@@ -160,6 +163,9 @@ function MainStack() {
 
       {/* Subscriptions */}
       <Stack.Screen name="BuyPass" component={BuyPassScreen} options={{ title: 'Passer Premium' }} />
+
+      {/* Legal */}
+      <Stack.Screen name="CGU" component={CGUScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
