@@ -191,6 +191,19 @@ export default function ProfileScreen({ navigation }) {
           )}
         </View>
 
+        {/* Quick Links */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Autres</Text>
+          <TouchableOpacity style={styles.quickLink} onPress={() => navigation.navigate('Referral')}>
+            <Text style={styles.quickLinkText}>🎁 Parrainage — Invitez vos amis</Text>
+            <Text style={styles.quickLinkArrow}>›</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.quickLink} onPress={() => navigation.navigate('ShareApp')}>
+            <Text style={styles.quickLinkText}>📤 Partager l'application</Text>
+            <Text style={styles.quickLinkArrow}>›</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Logout */}
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
           <Text style={styles.logoutText}>🚪 Se déconnecter</Text>
@@ -252,6 +265,16 @@ const styles = StyleSheet.create({
   },
   cancelBtn: { marginTop: 12, alignItems: 'center' },
   cancelBtnText: { color: COLORS.textMuted },
+  quickLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  quickLinkText: { fontSize: 14, color: COLORS.text },
+  quickLinkArrow: { fontSize: 20, color: COLORS.textMuted },
   logoutBtn: {
     backgroundColor: '#1A0A0A',
     margin: 16,

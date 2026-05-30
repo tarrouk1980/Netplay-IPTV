@@ -24,6 +24,7 @@ enum KycStatus {
 }
 
 enum PlanType {
+  DAILY
   DECOUVERTE
   SEMAINE
   MENSUEL
@@ -65,28 +66,47 @@ enum DisputeStatus {
 }
 
 model User {
-  id         String    @id @default(cuid())
-  name       String
-  phone      String    @unique
-  email      String?   @unique
-  password   String?
-  role       UserRole  @default(CLIENT)
-  kycStatus  KycStatus @default(NOT_REQUIRED)
-  fcmToken   String?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  id           String    @id @default(cuid())
+  name         String
+  phone        String    @unique
+  email        String?   @unique
+  password     String?
+  role         UserRole  @default(CLIENT)
+  kycStatus    KycStatus @default(NOT_REQUIRED)
+  fcmToken     String?
+  referralCode String?   @unique
+  referredBy   String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  subscription      Subscription[]
-  vehicle           Vehicle[]
-  merchant          Merchant?
-  ordersAsClient    Order[]        @relation("ClientOrders")
-  ordersAsProvider  Order[]        @relation("ProviderOrders")
-  reviewsGiven      Review[]       @relation("ReviewerRelation")
-  reviewsReceived   Review[]       @relation("TargetRelation")
-  tipsGiven         Tip[]          @relation("TipFrom")
-  tipsReceived      Tip[]          @relation("TipTo")
-  disputes          Dispute[]      @relation("ReporterDisputes")
-  insuranceContracts InsuranceContract[]
+  subscription        Subscription[]
+  vehicle             Vehicle[]
+  merchant            Merchant?
+  ordersAsClient      Order[]          @relation("ClientOrders")
+  ordersAsProvider    Order[]          @relation("ProviderOrders")
+  reviewsGiven        Review[]         @relation("ReviewerRelation")
+  reviewsReceived     Review[]         @relation("TargetRelation")
+  tipsGiven           Tip[]            @relation("TipFrom")
+  tipsReceived        Tip[]            @relation("TipTo")
+  disputes            Dispute[]        @relation("ReporterDisputes")
+  insuranceContracts  InsuranceContract[]
+  referralRewardsGiven  ReferralReward[] @relation("ReferrerRewards")
+  referralRewardsReceived ReferralReward[] @relation("RefereeRewards")
+}
+
+enum RewardType {
+  PASS_DAY
+}
+
+model ReferralReward {
+  id           String     @id @default(cuid())
+  referrerId   String
+  referrer     User       @relation("ReferrerRewards", fields: [referrerId], references: [id])
+  refereeId    String
+  referee      User       @relation("RefereeRewards", fields: [refereeId], references: [id])
+  rewardType   RewardType @default(PASS_DAY)
+  rewardAmount Int        @default(1)
+  createdAt    DateTime   @default(now())
 }
 
 model Subscription {
@@ -94,10 +114,13 @@ model Subscription {
   providerId     String
   provider       User               @relation(fields: [providerId], references: [id])
   planType       PlanType
-  ridesTotal     Int
+  ridesTotal     Int                @default(0)
   ridesConsumed  Int                @default(0)
-  ridesRemaining Int
+  ridesRemaining Int                @default(0)
+  startDate      DateTime?
+  endDate        DateTime?
   expiresAt      DateTime
+  amount         Decimal            @default(0)
   status         SubscriptionStatus @default(ACTIVE)
   autoRenew      Boolean            @default(false)
   createdAt      DateTime           @default(now())
@@ -118,6 +141,8 @@ model Order {
   destinationLng       Float?
   destinationAddress   String?
   price                Decimal?
+  counterPrice         Float?
+  finalPrice           Float?
   passConsumed         Boolean     @default(false)
   clientConfirmedAt    DateTime?
   providerConfirmedAt  DateTime?

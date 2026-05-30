@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import useDeliveryStore from '../../store/deliveryStore';
 import useLocationStore from '../../store/locationStore';
 import usePassStore from '../../store/passStore';
+import PassAlertBanner from '../../components/PassAlertBanner';
 
 const COLORS = {
   background: '#0A0A0F',
@@ -30,13 +31,14 @@ const COLORS = {
 export default function LivreurDashboardScreen({ navigation }) {
   const { livreurAssignments, fetchAssignments, pickupOrder, completeDelivery, currentOrder } = useDeliveryStore();
   const { location, startTracking, stopTracking, isTracking } = useLocationStore();
-  const { subscription } = usePassStore();
+  const { subscription, passStatus, fetchPassStatus } = usePassStore();
   const [isOnline, setIsOnline] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchAssignments();
+    fetchPassStatus();
   }, []);
 
   const handleToggleOnline = (value) => {
@@ -166,6 +168,10 @@ export default function LivreurDashboardScreen({ navigation }) {
         <View style={{ width: 32 }} />
       </View>
 
+      <PassAlertBanner
+        hasActivePass={passStatus?.hasActivePass ?? true}
+        daysLeft={passStatus?.daysLeft ?? 99}
+      />
       <View style={styles.onlineCard}>
         <View>
           <Text style={styles.onlineLabel}>{isOnline ? '🟢 En ligne' : '🔴 Hors ligne'}</Text>

@@ -17,6 +17,7 @@ import useTaxiStore from '../../store/taxiStore';
 import api from '../../services/api';
 import socketService from '../../services/socket';
 import * as Location from 'expo-location';
+import PassAlertBanner from '../../components/PassAlertBanner';
 
 const COLORS = {
   background: '#0A0A0F',
@@ -35,7 +36,7 @@ const COLORS = {
 
 export default function DriverDashboardScreen({ navigation }) {
   const { user } = useAuthStore();
-  const { subscription, fetchSubscription } = usePassStore();
+  const { subscription, passStatus, fetchSubscription, fetchPassStatus } = usePassStore();
   const { currentOrder, acceptOrder, completeRide } = useTaxiStore();
 
   const [isOnline, setIsOnline] = useState(false);
@@ -46,6 +47,7 @@ export default function DriverDashboardScreen({ navigation }) {
 
   useEffect(() => {
     fetchSubscription();
+    fetchPassStatus();
     fetchTodayEarnings();
   }, []);
 
@@ -200,6 +202,10 @@ export default function DriverDashboardScreen({ navigation }) {
         <Text style={styles.headerSubtitle}>{user?.name}</Text>
       </View>
 
+      <PassAlertBanner
+        hasActivePass={passStatus?.hasActivePass ?? true}
+        daysLeft={passStatus?.daysLeft ?? 99}
+      />
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Online/Offline toggle */}
         <View style={styles.onlineCard}>

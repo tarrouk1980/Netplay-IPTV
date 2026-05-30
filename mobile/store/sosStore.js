@@ -109,6 +109,26 @@ const useSosStore = create((set, get) => ({
   },
 
   // ─────────────────────────────────────────────
+  // CLIENT: submit counter offer (±20%)
+  // ─────────────────────────────────────────────
+  submitCounterOffer: async (orderId, counterPrice) => {
+    const response = await api.post(`/sos/${orderId}/counter-offer`, { counterPrice });
+    const { order } = response.data;
+    if (order) set({ currentSOSOrder: order });
+    return response.data;
+  },
+
+  // ─────────────────────────────────────────────
+  // DEPANNEUR: accept counter offer
+  // ─────────────────────────────────────────────
+  acceptCounterOffer: async (orderId) => {
+    const response = await api.post(`/sos/${orderId}/accept-counter`);
+    const { order } = response.data;
+    if (order) set({ currentSOSOrder: order });
+    return response.data;
+  },
+
+  // ─────────────────────────────────────────────
   // LOCAL: handle incoming quote from socket
   // ─────────────────────────────────────────────
   addQuote: (quote) => {

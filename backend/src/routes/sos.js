@@ -571,6 +571,148 @@ router.post(
 );
 
 // ─────────────────────────────────────────────
+// POST /api/sos/:id/counter-offer — CLIENT proposes counter price (±20%)
+// ─────────────────────────────────────────────
+router.post(
+  '/:id/counter-offer',
+  authenticate,
+  requireRole('CLIENT'),
+  [
+    body('counterPrice').isFloat({ min: 0 }).withMessage('counterPrice must be a positive number'),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ error: 'Validation failed', code: 'VALIDATION_ERROR', details: errors.array() });
+    }
+
+    const { id } = req.params;
+    const { counterPrice } = req.body;
+
+    try {
+      const order = await prisma.order.findUnique({ where: { id } });
+      if (!order) return res.status(404).json({ error: 'Order not found', code: 'NOT_FOUND' });
+      if (order.clientId !== req.user.id) return res.status(403).json({ error: 'Not your order', code: 'FORBIDDEN' });
+      if (!['PENDING', 'QUOTED'].includes(order.status) && order.status !== 'PENDING') {
+        return res.status(409).json({ error: `Order status is ${order.status}`, code: 'INVALID_STATE' });
+      }
+
+      const meta = order.metadata || {};
+      const quotes = meta.quotes || [];
+      if (quotes.length === 0) {
+        return res.status(400).json({ error: 'No quotes available to counter', code: 'NO_QUOTES' });
+      }
+
+      // Use the best (lowest) quote as the original quote
+      const originalQuote = quotes.reduce((min, q) => q.price < min.price ? q : min, quotes[0]);
+      const originalPrice = parseFloat(originalQuote.price);
+      const minAllowed = originalPrice * 0.8;
+      const maxAllowed = originalPrice * 1.2;
+      const cp = parseFloat(counterPrice);
+
+      if (cp < minAllowed || cp > maxAllowed) {
+        return res.status(422).json({
+          error: `Le contre-prix doit être entre ${minAllowed.toFixed(3)} TND et ${maxAllowed.toFixed(3)} TND (±20% de ${originalPrice.toFixed(3)} TND)`,
+          code: 'COUNTER_PRICE_OUT_OF_RANGE',
+          minAllowed,
+          maxAllowed,
+        });
+      }
+
+      const updated = await prisma.order.update({
+        where: { id },
+        data: { counterPrice: cp },
+      });
+
+      await logEvent(id, 'COUNTER_OFFER', { clientId: req.user.id, counterPrice: cp, originalPrice });
+
+      const io = getIo(req);
+      if (io && order.providerId) {
+        io.to(`user:${order.providerId}`).emit('sos:counter-offer', { orderId: id, counterPrice: cp, originalPrice });
+      }
+      // Notify all depanneurs who submitted quotes
+      if (io && quotes.length > 0) {
+        quotes.forEach((q) => {
+          io.to(`user:${q.depanneurId}`).emit('sos:counter-offer', { orderId: id, counterPrice: cp, originalPrice });
+        });
+      }
+
+      return res.json({ order: updated, counterPrice: cp });
+    } catch (err) {
+      console.error('[SOS] counter-offer error:', err);
+      return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+    }
+  }
+);
+
+// ─────────────────────────────────────────────
+// POST /api/sos/:id/accept-counter — DEPANNEUR accepts the counter offer
+// ─────────────────────────────────────────────
+router.post(
+  '/:id/accept-counter',
+  authenticate,
+  requireRole('DEPANNEUR'),
+  async (req, res) => {
+    const { id } = req.params;
+
+    try {
+      const order = await prisma.order.findUnique({ where: { id } });
+      if (!order) return res.status(404).json({ error: 'Order not found', code: 'NOT_FOUND' });
+
+      const meta = order.metadata || {};
+      const quotes = meta.quotes || [];
+      const myQuote = quotes.find((q) => q.depanneurId === req.user.id);
+      if (!myQuote) return res.status(403).json({ error: 'You did not submit a quote for this order', code: 'FORBIDDEN' });
+
+      if (!order.counterPrice) {
+        return res.status(400).json({ error: 'No counter offer to accept', code: 'NO_COUNTER_OFFER' });
+      }
+
+      const finalPrice = order.counterPrice;
+
+      const updated = await prisma.order.update({
+        where: { id },
+        data: {
+          finalPrice,
+          status: 'ACCEPTED',
+          providerId: req.user.id,
+          price: finalPrice.toString(),
+          metadata: {
+            ...meta,
+            acceptedQuote: { ...myQuote, price: finalPrice },
+          },
+        },
+        include: {
+          client: { select: { fcmToken: true, id: true } },
+        },
+      });
+
+      await logEvent(id, 'COUNTER_ACCEPTED', { depanneurId: req.user.id, finalPrice });
+
+      const io = getIo(req);
+      if (io) {
+        io.to(`user:${order.clientId}`).emit('sos:quote_accepted', { orderId: id, finalPrice });
+      }
+
+      if (updated.client?.fcmToken) {
+        await sendNotification(
+          [updated.client.fcmToken],
+          NOTIFICATION_TYPES.ORDER_ACCEPTED,
+          'Prix négocié accepté !',
+          `Le dépanneur a accepté votre contre-offre : ${parseFloat(finalPrice).toFixed(3)} TND`,
+          { orderId: id }
+        );
+      }
+
+      return res.json({ order: updated, finalPrice });
+    } catch (err) {
+      console.error('[SOS] accept-counter error:', err);
+      return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+    }
+  }
+);
+
+// ─────────────────────────────────────────────
 // GET /api/sos/depanneur/requests — DEPANNEUR sees nearby PENDING requests
 // ─────────────────────────────────────────────
 router.get(

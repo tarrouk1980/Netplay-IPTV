@@ -19,6 +19,7 @@ const deliveryRoutes = require('./routes/delivery');
 const merchantsRoutes = require('./routes/merchants');
 const groceryRoutes = require('./routes/grocery');
 const adsRoutes = require('./routes/ads');
+const referralRoutes = require('./routes/referral');
 
 const app = express();
 
@@ -49,6 +50,7 @@ app.use('/api/delivery', deliveryRoutes);
 app.use('/api/merchants', merchantsRoutes);
 app.use('/api/grocery', groceryRoutes);
 app.use('/api/ads', adsRoutes);
+app.use('/api/referral', referralRoutes);
 
 // 404 handler
 app.use((req, res) => {

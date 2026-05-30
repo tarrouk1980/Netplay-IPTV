@@ -15,6 +15,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
 import useDeliveryStore from '../../store/deliveryStore';
+import usePassStore from '../../store/passStore';
+import PassAlertBanner from '../../components/PassAlertBanner';
 
 const COLORS = {
   background: '#0A0A0F',
@@ -29,6 +31,7 @@ const COLORS = {
 
 export default function MerchantDashboardScreen({ navigation }) {
   const { fetchMerchantOrders, acceptOrder, markReady } = useDeliveryStore();
+  const { passStatus, fetchPassStatus } = usePassStore();
   const [isOpen, setIsOpen] = useState(false);
   const [orders, setOrders] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -52,6 +55,7 @@ export default function MerchantDashboardScreen({ navigation }) {
 
   useEffect(() => {
     loadData();
+    fetchPassStatus();
     const interval = setInterval(loadData, 15000);
     return () => clearInterval(interval);
   }, [loadData]);
@@ -184,6 +188,10 @@ export default function MerchantDashboardScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
+      <PassAlertBanner
+        hasActivePass={passStatus?.hasActivePass ?? true}
+        daysLeft={passStatus?.daysLeft ?? 99}
+      />
       <View style={styles.toggleCard}>
         <View>
           <Text style={styles.toggleLabel}>

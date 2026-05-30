@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
   StatusBar,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import useSosStore from '../../store/sosStore';
@@ -50,11 +51,13 @@ const PHASE_CONFIG = {
 export default function SOSTrackingScreen({ route, navigation }) {
   const { orderId } = route.params || {};
   const { user } = useAuthStore();
-  const { currentSOSOrder, quotes, fetchOrder, acceptQuote, completeRide, cancelSOS, addQuote, updateOrderStatus } = useSosStore();
+  const { currentSOSOrder, quotes, fetchOrder, acceptQuote, completeRide, cancelSOS, addQuote, updateOrderStatus, submitCounterOffer, acceptCounterOffer } = useSosStore();
 
   const [localOrder, setLocalOrder] = useState(currentSOSOrder);
   const [localQuotes, setLocalQuotes] = useState(quotes || []);
   const [depanneurLocation, setDepanneurLocation] = useState(null);
+  const [counterPriceInput, setCounterPriceInput] = useState('');
+  const [submittingCounter, setSubmittingCounter] = useState(false);
   const radarAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -186,6 +189,33 @@ export default function SOSTrackingScreen({ route, navigation }) {
     );
   };
 
+  const handleSubmitCounterOffer = async () => {
+    const val = parseFloat(counterPriceInput);
+    if (!counterPriceInput || isNaN(val) || val <= 0) {
+      Alert.alert('Erreur', 'Veuillez entrer un montant valide');
+      return;
+    }
+    setSubmittingCounter(true);
+    try {
+      await submitCounterOffer(orderId, val);
+      setCounterPriceInput('');
+      Alert.alert('Contre-offre envoyée', `Votre offre de ${val.toFixed(3)} TND a été envoyée au dépanneur.`);
+    } catch (err) {
+      Alert.alert('Erreur', err?.response?.data?.error || 'Impossible d\'envoyer la contre-offre.');
+    } finally {
+      setSubmittingCounter(false);
+    }
+  };
+
+  const handleAcceptCounterOffer = async (quote) => {
+    try {
+      await acceptCounterOffer(orderId);
+      setLocalOrder((prev) => prev ? { ...prev, status: 'ACCEPTED' } : prev);
+    } catch (err) {
+      Alert.alert('Erreur', err?.response?.data?.error || 'Impossible d\'accepter.');
+    }
+  };
+
   const handleCancel = () => {
     Alert.alert(
       'Annuler la demande SOS',
@@ -257,6 +287,37 @@ export default function SOSTrackingScreen({ route, navigation }) {
                 )}
               </View>
             ))}
+
+            {/* Price negotiation section (CLIENT only) */}
+            {user?.role === 'CLIENT' && (
+              <View style={styles.negotiationBox}>
+                <Text style={styles.negotiationTitle}>💬 Négociation de prix</Text>
+                <Text style={styles.negotiationHint}>Vous pouvez négocier ±20% du prix proposé</Text>
+                {localOrder?.counterPrice && (
+                  <Text style={styles.currentCounter}>
+                    Votre contre-offre actuelle : {parseFloat(localOrder.counterPrice).toFixed(3)} TND
+                  </Text>
+                )}
+                <TextInput
+                  style={styles.counterInput}
+                  value={counterPriceInput}
+                  onChangeText={setCounterPriceInput}
+                  placeholder="Votre prix (TND)"
+                  placeholderTextColor={COLORS.textMuted}
+                  keyboardType="decimal-pad"
+                />
+                <TouchableOpacity
+                  style={[styles.counterBtn, submittingCounter && { opacity: 0.6 }]}
+                  onPress={handleSubmitCounterOffer}
+                  activeOpacity={0.85}
+                  disabled={submittingCounter}
+                >
+                  {submittingCounter
+                    ? <ActivityIndicator color="#fff" size="small" />
+                    : <Text style={styles.counterBtnText}>📤 Proposer mon prix</Text>}
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         )}
 
@@ -462,4 +523,35 @@ const styles = StyleSheet.create({
     borderColor: COLORS.sos,
   },
   cancelButtonText: { color: COLORS.sos, fontSize: 14, fontWeight: '600' },
+  negotiationBox: {
+    marginTop: 16,
+    backgroundColor: '#1A1A2E',
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: COLORS.blue,
+    width: '100%',
+  },
+  negotiationTitle: { fontSize: 14, fontWeight: '700', color: COLORS.text, marginBottom: 4 },
+  negotiationHint: { fontSize: 11, color: COLORS.textMuted, marginBottom: 10, fontStyle: 'italic' },
+  currentCounter: { fontSize: 12, color: COLORS.orange, marginBottom: 10, fontWeight: '600' },
+  counterInput: {
+    backgroundColor: COLORS.background,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    color: COLORS.text,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 10,
+  },
+  counterBtn: {
+    backgroundColor: COLORS.blue,
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  counterBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
 });

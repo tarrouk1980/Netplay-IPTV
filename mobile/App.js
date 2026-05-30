@@ -52,6 +52,13 @@ import AdminOrdersScreen from './screens/admin/AdminOrdersScreen';
 import AdminKYCScreen from './screens/admin/AdminKYCScreen';
 import AdminReportsScreen from './screens/admin/AdminReportsScreen';
 
+// Referral & Profile extras
+import ReferralScreen from './screens/profile/ReferralScreen';
+import ShareAppScreen from './screens/profile/ShareAppScreen';
+
+// Subscriptions
+import BuyPassScreen from './screens/subscriptions/BuyPassScreen';
+
 const Stack = createNativeStackNavigator();
 
 // Configure notification behavior
@@ -130,6 +137,13 @@ function MainStack() {
       <Stack.Screen name="AdminOrders" component={AdminOrdersScreen} options={{ title: 'Commandes' }} />
       <Stack.Screen name="AdminKYC" component={AdminKYCScreen} options={{ title: 'KYC' }} />
       <Stack.Screen name="AdminReports" component={AdminReportsScreen} options={{ title: 'Rapports' }} />
+
+      {/* Referral & Sharing */}
+      <Stack.Screen name="Referral" component={ReferralScreen} options={{ title: 'Parrainage' }} />
+      <Stack.Screen name="ShareApp" component={ShareAppScreen} options={{ title: 'Inviter des amis' }} />
+
+      {/* Subscriptions */}
+      <Stack.Screen name="BuyPass" component={BuyPassScreen} options={{ title: 'Passer Premium' }} />
     </Stack.Navigator>
   );
 }

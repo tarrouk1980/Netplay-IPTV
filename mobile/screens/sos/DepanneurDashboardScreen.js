@@ -15,9 +15,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import useAuthStore from '../../store/authStore';
 import useSosStore from '../../store/sosStore';
+import usePassStore from '../../store/passStore';
 import api from '../../services/api';
 import socketService from '../../services/socket';
 import * as Location from 'expo-location';
+import PassAlertBanner from '../../components/PassAlertBanner';
 
 const COLORS = {
   background: '#0A0A0F',
@@ -35,6 +37,7 @@ const COLORS = {
 export default function DepanneurDashboardScreen({ navigation }) {
   const { user } = useAuthStore();
   const { nearbyRequests, currentSOSOrder, fetchNearbyRequests, submitQuote, confirmArrival, completeRide, updateOrderStatus } = useSosStore();
+  const { passStatus, fetchPassStatus } = usePassStore();
 
   const [isOnline, setIsOnline] = useState(false);
   const [togglingOnline, setTogglingOnline] = useState(false);
@@ -46,6 +49,7 @@ export default function DepanneurDashboardScreen({ navigation }) {
   const [submittingQuote, setSubmittingQuote] = useState(false);
 
   useEffect(() => {
+    fetchPassStatus();
     if (isOnline) fetchNearbyRequests();
   }, [isOnline]);
 
@@ -211,6 +215,10 @@ export default function DepanneurDashboardScreen({ navigation }) {
         <Text style={styles.headerSubtitle}>{user?.name}</Text>
       </View>
 
+      <PassAlertBanner
+        hasActivePass={passStatus?.hasActivePass ?? true}
+        daysLeft={passStatus?.daysLeft ?? 99}
+      />
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Online toggle */}
         <View style={styles.onlineCard}>
