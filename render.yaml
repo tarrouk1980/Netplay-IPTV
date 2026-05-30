@@ -27,16 +27,12 @@ services:
         generateValue: true
       - key: MAPBOX_TOKEN
         sync: false
-        value: ""
       - key: FIREBASE_PROJECT_ID
         sync: false
-        value: ""
       - key: FIREBASE_CLIENT_EMAIL
         sync: false
-        value: ""
       - key: FIREBASE_PRIVATE_KEY
         sync: false
-        value: ""
 
   - type: redis
     name: easyway-redis
