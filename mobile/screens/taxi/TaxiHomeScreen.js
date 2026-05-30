@@ -7,6 +7,7 @@ import {
   StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import ServiceIcon from '../../components/ServiceIcon';
 
 const COLORS = {
   background: '#0A0A0F',
@@ -23,21 +24,21 @@ const COLORS = {
 const TAXI_TYPES = [
   {
     key: 'NORMAL',
-    emoji: '🚕',
-    title: 'Taxi Normal',
+    iconService: 'EASYTAXY',
+    title: 'EasyTaxy',
     subtitle: 'Course standard',
     color: COLORS.taxiNormal,
   },
   {
     key: 'EASYLADY',
-    emoji: '🚺',
+    iconService: 'EASYLADY',
     title: 'EasyLady',
     subtitle: 'Conduit par une femme',
     color: COLORS.taxiLady,
   },
   {
     key: 'EASYACCESS',
-    emoji: '♿',
+    iconService: 'EASYACCESS',
     title: 'EasyAccess',
     subtitle: 'Véhicule adapté PMR',
     color: COLORS.taxiAccess,
@@ -77,7 +78,7 @@ export default function TaxiHomeScreen({ navigation }) {
             activeOpacity={0.85}
           >
             <View style={[styles.tileIconBg, { backgroundColor: type.color + '22' }]}>
-              <Text style={styles.tileEmoji}>{type.emoji}</Text>
+              <ServiceIcon service={type.iconService} size={32} />
             </View>
             <View style={styles.tileContent}>
               <Text style={[styles.tileTitle, { color: type.color }]}>{type.title}</Text>

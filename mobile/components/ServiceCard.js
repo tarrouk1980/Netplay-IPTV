@@ -9,9 +9,10 @@ import {
 
 /**
  * ServiceCard component
- * Props: color, emoji, title, subtitle, onPress, disabled
+ * Props: color, emoji, icon (React element), title, subtitle, onPress, disabled
+ * Pass either `icon` (ServiceIcon component) or `emoji` (string fallback)
  */
-export default function ServiceCard({ color, emoji, title, subtitle, onPress, disabled = false }) {
+export default function ServiceCard({ color, emoji, icon, title, subtitle, onPress, disabled = false }) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
@@ -47,7 +48,11 @@ export default function ServiceCard({ color, emoji, title, subtitle, onPress, di
         {/* Color accent line */}
         <View style={[styles.accentDot, { backgroundColor: color }]} />
 
-        <Text style={styles.emoji}>{emoji}</Text>
+        {icon ? (
+          <View style={styles.iconWrapper}>{icon}</View>
+        ) : (
+          <Text style={styles.emoji}>{emoji}</Text>
+        )}
         <Text style={styles.title} numberOfLines={1}>{title}</Text>
         {subtitle && (
           <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text>
@@ -92,6 +97,9 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
+  },
+  iconWrapper: {
+    marginBottom: 8,
   },
   emoji: {
     fontSize: 36,

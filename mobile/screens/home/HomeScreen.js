@@ -14,6 +14,8 @@ import useNotificationStore from '../../store/notificationStore';
 import ServiceCard from '../../components/ServiceCard';
 import PassStatusCard from '../../components/PassStatusCard';
 import NotificationBadge from '../../components/NotificationBadge';
+import EasywayLogo from '../../components/EasywayLogo';
+import ServiceIcon from '../../components/ServiceIcon';
 
 const COLORS = {
   background: '#0A0A0F',
@@ -21,13 +23,21 @@ const COLORS = {
   text: '#FFFFFF',
   textMuted: '#8E8E9A',
   primary: '#F5A623',
+  red: '#D32F2F',
 };
 
 const SERVICES = [
-  { key: 'TAXI', emoji: '🚕', title: 'Taxi', subtitle: 'Réserver un taxi', color: '#F5A623' },
-  { key: 'SOS', emoji: '🚨', title: 'SOS Remorquage', subtitle: 'Assistance en route', color: '#E74C3C' },
-  { key: 'DELIVERY', emoji: '📦', title: 'Livraison', subtitle: 'Livraison rapide', color: '#27AE60' },
-  { key: 'GROCERY', emoji: '🛒', title: 'Courses', subtitle: 'Livraison épicerie', color: '#8E44AD' },
+  { key: 'EASYTAXY', iconService: 'EASYTAXY', title: 'EasyTaxy', subtitle: 'Réserver un taxi', color: '#F5A623' },
+  { key: 'SOS', iconService: 'SOS', title: 'SOS', subtitle: 'Assistance en route', color: '#E74C3C' },
+  { key: 'DELIVERY', iconService: 'DELIVERY', title: 'Livraison', subtitle: 'Livraison rapide', color: '#27AE60' },
+  { key: 'GROCERY', iconService: 'GROCERY', title: 'Courses', subtitle: 'Livraison épicerie', color: '#8E44AD' },
+];
+
+// Offres du moment — placeholders pour AdBanner
+const PROMOS = [
+  { id: 'p1', label: '🔥 -20% sur EasyTaxy', sub: 'Ce week-end seulement', color: '#F5A623' },
+  { id: 'p2', label: '🚀 Livraison gratuite', sub: 'Commandes > 30 TND', color: '#27AE60' },
+  { id: 'p3', label: '💎 Pass VIP -50%', sub: 'Offre limitée', color: '#D32F2F' },
 ];
 
 export default function HomeScreen({ navigation }) {
@@ -53,7 +63,7 @@ export default function HomeScreen({ navigation }) {
   };
 
   const handleServicePress = (serviceKey) => {
-    if (serviceKey === 'TAXI') navigation.navigate('TaxiHome');
+    if (serviceKey === 'EASYTAXY') navigation.navigate('TaxiHome');
     else if (serviceKey === 'SOS') navigation.navigate('SOSHome');
     else if (serviceKey === 'DELIVERY') navigation.navigate('DeliveryHome');
     else if (serviceKey === 'GROCERY') navigation.navigate('GroceryHome');
@@ -69,6 +79,10 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.greeting}>{getGreeting()},</Text>
             <Text style={styles.userName}>{user?.name || 'Utilisateur'} 👋</Text>
           </View>
+
+          {/* Logo centré */}
+          <EasywayLogo size={40} showTagline={false} />
+
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <NotificationBadge
               unreadCount={unreadCount}
@@ -95,7 +109,7 @@ export default function HomeScreen({ navigation }) {
           {SERVICES.map((service) => (
             <ServiceCard
               key={service.key}
-              emoji={service.emoji}
+              icon={<ServiceIcon service={service.iconService} size={40} />}
               title={service.title}
               subtitle={service.subtitle}
               color={service.color}
@@ -103,6 +117,23 @@ export default function HomeScreen({ navigation }) {
             />
           ))}
         </View>
+
+        {/* Offres du moment */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>🔥 Offres du moment</Text>
+        </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.promosContainer}
+        >
+          {PROMOS.map((promo) => (
+            <TouchableOpacity key={promo.id} style={[styles.promoCard, { borderLeftColor: promo.color }]} activeOpacity={0.85}>
+              <Text style={styles.promoLabel}>{promo.label}</Text>
+              <Text style={styles.promoSub}>{promo.sub}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
 
         {/* Recent activity placeholder */}
         <View style={styles.sectionHeader}>
@@ -135,6 +166,33 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     paddingHorizontal: 12,
     gap: 8,
+  },
+  promosContainer: {
+    paddingHorizontal: 16,
+    gap: 12,
+    paddingBottom: 4,
+  },
+  promoCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 14,
+    padding: 16,
+    minWidth: 180,
+    borderLeftWidth: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  promoLabel: {
+    color: COLORS.text,
+    fontWeight: '700',
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  promoSub: {
+    color: COLORS.textMuted,
+    fontSize: 12,
   },
   emptyActivity: {
     alignItems: 'center',
