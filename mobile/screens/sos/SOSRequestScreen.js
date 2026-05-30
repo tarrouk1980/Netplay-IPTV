@@ -37,8 +37,26 @@ const VEHICLE_CHECKS = [
   { key: 'automatic', label: 'Boîte automatique', icon: '⚙️' },
 ];
 
-const BRANDS = ['Volkswagen','Renault','Peugeot','Citroën','Ford','Toyota','Hyundai','Kia','Seat','Skoda','BMW','Mercedes','Audi','Fiat','Dacia','Autre'];
-const MODELS = ['Golf','Polo','Clio','208','C3','Fiesta','Yaris','i20','Picanto','Ibiza','Autre'];
+const BRANDS_MODELS = {
+  'Volkswagen': ['Golf','Polo','Passat','Tiguan','T-Roc','Touareg','Caddy','Transporter','Autre'],
+  'Renault': ['Clio','Megane','Scenic','Kadjar','Captur','Duster','Symbol','Logan','Sandero','Kangoo','Autre'],
+  'Peugeot': ['208','308','508','2008','3008','5008','Partner','Expert','Autre'],
+  'Citroën': ['C3','C4','C5','Berlingo','Jumpy','Jumper','C-Elysée','Autre'],
+  'Ford': ['Fiesta','Focus','Mondeo','Puma','Kuga','Explorer','Transit','Ranger','Autre'],
+  'Toyota': ['Yaris','Corolla','Camry','RAV4','Hilux','Land Cruiser','Fortuner','Innova','Prius','Autre'],
+  'Hyundai': ['i10','i20','i30','Tucson','Santa Fe','Elantra','Accent','Creta','Autre'],
+  'Kia': ['Picanto','Rio','Sportage','Sorento','Stinger','Seltos','Carnival','Autre'],
+  'Seat': ['Ibiza','Leon','Arona','Ateca','Tarraco','Alhambra','Autre'],
+  'Skoda': ['Fabia','Octavia','Superb','Karoq','Kodiaq','Autre'],
+  'BMW': ['Série 1','Série 3','Série 5','Série 7','X1','X3','X5','X7','Autre'],
+  'Mercedes': ['Classe A','Classe C','Classe E','Classe S','GLA','GLC','GLE','Sprinter','Autre'],
+  'Audi': ['A1','A3','A4','A6','Q2','Q3','Q5','Q7','Autre'],
+  'Fiat': ['500','Punto','Tipo','Panda','Bravo','Doblo','Ducato','Autre'],
+  'Dacia': ['Sandero','Logan','Duster','Spring','Lodgy','Dokker','Autre'],
+  'Autre': ['Autre'],
+};
+
+const BRANDS = Object.keys(BRANDS_MODELS);
 const YEARS = Array.from({ length: 26 }, (_, i) => String(2025 - i));
 const CAR_COLORS = ['Blanc','Noir','Gris','Argent','Rouge','Bleu','Vert','Beige','Marron','Jaune','Orange','Autre'];
 
@@ -296,8 +314,14 @@ export default function SOSRequestScreen({ route, navigation }) {
                 />
               ) : (
                 <TouchableOpacity
-                  style={styles.pickerButton}
-                  onPress={() => openPicker('model', 'Modèle', MODELS)}
+                  style={[styles.pickerButton, !vehicleInfo.brand && { opacity: 0.45 }]}
+                  onPress={() => {
+                    if (!vehicleInfo.brand) {
+                      Alert.alert('Marque requise', 'Veuillez d\'abord sélectionner la marque du véhicule.');
+                      return;
+                    }
+                    openPicker('model', 'Modèle', BRANDS_MODELS[vehicleInfo.brand] || ['Autre']);
+                  }}
                 >
                   <Text style={[styles.pickerButtonText, !vehicleInfo.model && styles.pickerPlaceholder]}>
                     {vehicleInfo.model || 'Sélectionner le modèle'}
