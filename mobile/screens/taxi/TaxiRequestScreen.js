@@ -27,14 +27,14 @@ const COLORS = {
   headerText: '#0A0A0F',
   text: '#FFFFFF',
   textMuted: '#8E8E9A',
-  red: '#D32F2F',
-  redLight: '#EF5350',
+  accent: '#F5A623',
+  accentLight: '#F5A623',
   border: '#2C2C3E',
   inputBg: '#252535',
 };
 
 const TAXI_LABELS = {
-  NORMAL: { emoji: '🚕', label: 'Taxi Normal', color: '#D32F2F' },
+  NORMAL: { emoji: '🚕', label: 'EasyTaxy', color: '#F5A623' },
   EASYLADY: { emoji: '🚺', label: 'EasyLady', color: '#E91E8C' },
   EASYACCESS: { emoji: '♿', label: 'EasyAccess', color: '#2196F3' },
 };
@@ -219,7 +219,7 @@ export default function TaxiRequestScreen({ route, navigation }) {
         {mode === 'A' && (
           <View style={styles.section}>
             {loadingEstimate
-              ? <ActivityIndicator size="large" color={COLORS.red} />
+              ? <ActivityIndicator size="large" color={COLORS.accent} />
               : fareEstimate
                 ? <FareEstimateCard estimate={fareEstimate} />
                 : null}
@@ -243,7 +243,7 @@ export default function TaxiRequestScreen({ route, navigation }) {
         {/* Nearby drivers */}
         <View style={styles.nearbyRow}>
           <Text style={styles.nearbyText}>
-            🚗 {nearbyDrivers.length} chauffeur{nearbyDrivers.length !== 1 ? 's' : ''} disponible{nearbyDrivers.length !== 1 ? 's' : ''} à proximité
+            🚕 {nearbyDrivers.length} chauffeur{nearbyDrivers.length !== 1 ? 's' : ''} disponible{nearbyDrivers.length !== 1 ? 's' : ''} à proximité
           </Text>
         </View>
 
@@ -323,11 +323,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modeBtnActive: {
-    borderColor: COLORS.red,
-    backgroundColor: COLORS.red + '22',
+    borderColor: COLORS.accent,
+    backgroundColor: COLORS.accent + '22',
   },
   modeBtnText: { fontSize: 13, color: COLORS.textMuted, fontWeight: '500', textAlign: 'center' },
-  modeBtnTextActive: { color: COLORS.redLight, fontWeight: '700' },
+  modeBtnTextActive: { color: COLORS.accent, fontWeight: '700' },
   modeBCard: {
     backgroundColor: COLORS.surface,
     borderRadius: 16,
@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 16,
   },
-  nearbyText: { fontSize: 13, color: COLORS.textMuted },
+  nearbyText: { fontSize: 13, color: COLORS.text },
   disclaimer: {
     marginHorizontal: 20,
     marginTop: 12,
@@ -358,11 +358,11 @@ const styles = StyleSheet.create({
   searchButton: {
     marginHorizontal: 20,
     marginTop: 20,
-    backgroundColor: COLORS.red,
+    backgroundColor: COLORS.accent,
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
   },
   searchButtonDisabled: { opacity: 0.6 },
-  searchButtonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  searchButtonText: { color: '#0A0A0F', fontSize: 16, fontWeight: '700' },
 });
