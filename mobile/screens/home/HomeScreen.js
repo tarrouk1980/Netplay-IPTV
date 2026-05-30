@@ -48,13 +48,22 @@ export default function HomeScreen({ navigation }) {
 
   useEffect(() => {
     fetchSubscription();
-    // Rediriger les prestataires vers leur dashboard
+
+    const PROVIDER_ROLES = ['CHAUFFEUR', 'LIVREUR', 'DEPANNEUR', 'MARCHAND'];
+
+    // Prestataires avec KYC en attente → écran d'attente
+    if (PROVIDER_ROLES.includes(user?.role) && user?.kycStatus === 'PENDING') {
+      navigation.replace('KYCPending');
+      return;
+    }
+
+    // Rediriger les prestataires approuvés vers leur dashboard
     if (user?.role === 'CHAUFFEUR') navigation.replace('DriverDashboard');
     else if (user?.role === 'LIVREUR') navigation.replace('LivreurDashboard');
     else if (user?.role === 'DEPANNEUR') navigation.replace('DepanneurDashboard');
     else if (user?.role === 'MARCHAND') navigation.replace('MerchantDashboard');
     else if (user?.role === 'ADMIN') navigation.replace('AdminDashboard');
-  }, [user?.role]);
+  }, [user?.role, user?.kycStatus]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();

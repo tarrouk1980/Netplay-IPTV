@@ -60,6 +60,7 @@ import AdminReportsScreen from './screens/admin/AdminReportsScreen';
 // Referral & Profile extras
 import ReferralScreen from './screens/profile/ReferralScreen';
 import ShareAppScreen from './screens/profile/ShareAppScreen';
+import KYCPendingScreen from './screens/profile/KYCPendingScreen';
 
 // Subscriptions
 import BuyPassScreen from './screens/subscriptions/BuyPassScreen';
@@ -147,6 +148,9 @@ function MainStack() {
       <Stack.Screen name="AdminOrders" component={AdminOrdersScreen} options={{ title: 'Commandes' }} />
       <Stack.Screen name="AdminKYC" component={AdminKYCScreen} options={{ title: 'KYC' }} />
       <Stack.Screen name="AdminReports" component={AdminReportsScreen} options={{ title: 'Rapports' }} />
+
+      {/* KYC Pending */}
+      <Stack.Screen name="KYCPending" component={KYCPendingScreen} options={{ headerShown: false }} />
 
       {/* Referral & Sharing */}
       <Stack.Screen name="Referral" component={ReferralScreen} options={{ title: 'Parrainage' }} />
