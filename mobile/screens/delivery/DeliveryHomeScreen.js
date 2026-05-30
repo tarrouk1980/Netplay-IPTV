@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import useDeliveryStore from '../../store/deliveryStore';
 import useLocationStore from '../../store/locationStore';
 import AdBanner from '../../components/AdBanner';
+import ServiceIcon from '../../components/ServiceIcon';
 
 const COLORS = {
   background: '#0A0A0F',
@@ -78,7 +79,11 @@ export default function DeliveryHomeScreen({ navigation }) {
       ]}
       onPress={() => setSelectedCategory(selectedCategory === item.key ? null : item.key)}
     >
-      <Text style={styles.categoryEmoji}>{item.emoji}</Text>
+      {item.key ? (
+        <ServiceIcon service={item.key} size={32} />
+      ) : (
+        <Text style={styles.categoryEmoji}>{item.emoji}</Text>
+      )}
       <Text style={[styles.categoryLabel, selectedCategory === item.key && styles.categoryLabelActive]}>
         {item.label}
       </Text>

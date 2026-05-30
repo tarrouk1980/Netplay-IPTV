@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   StatusBar,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import useSosStore from '../../store/sosStore';
@@ -27,22 +26,10 @@ export default function SOSHomeScreen({ navigation }) {
   }, []);
 
   const handleInsurance = () => {
-    if (!myContract) {
-      Alert.alert(
-        'Aucun contrat détecté',
-        'Vous n\'avez pas de contrat d\'assurance enregistré. Voulez-vous en ajouter un ?',
-        [
-          { text: 'Annuler', style: 'cancel' },
-          { text: 'Ajouter', onPress: () => navigation.navigate('AddInsurance') },
-        ]
-      );
-      return;
-    }
-    if (new Date(myContract.expiresAt) < new Date()) {
-      Alert.alert('Contrat expiré', 'Votre contrat d\'assurance a expiré.');
-      return;
-    }
-    navigation.navigate('SOSRequest', { mode: 'INSURANCE', contract: myContract });
+    navigation.navigate('SOSRequest', {
+      mode: 'INSURANCE',
+      contract: contractValid ? myContract : null,
+    });
   };
 
   const handleIndependent = () => {
@@ -80,8 +67,10 @@ export default function SOSHomeScreen({ navigation }) {
             <Text style={[styles.modeTitle, { color: COLORS.accent }]}>Couvert par mon assurance</Text>
             <Text style={styles.modeSubtitle}>
               {contractValid
-                ? `Contrat actif — expire le ${new Date(myContract.expiresAt).toLocaleDateString('fr-TN')}`
-                : 'Vérification du contrat automatique'}
+                ? `✅ Contrat actif · expire le ${new Date(myContract.expiresAt).toLocaleDateString('fr-TN')}`
+                : myContract
+                  ? '⚠️ Contrat expiré — renseignez vos infos dans le formulaire'
+                  : 'Renseignez vos infos d\'assurance dans le formulaire suivant'}
             </Text>
             {contractValid && (
               <View style={styles.coverageTags}>

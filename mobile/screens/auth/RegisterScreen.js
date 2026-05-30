@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api, { setTokens } from '../../services/api';
 import useAuthStore from '../../store/authStore';
+import ServiceIcon from '../../components/ServiceIcon';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -70,13 +71,13 @@ const TRUCK_TYPES = [
 ];
 
 const MERCHANT_CATEGORIES = [
-  { value: 'RESTAURANT', label: 'Restaurant', emoji: '🍕' },
-  { value: 'PHARMACY', label: 'Pharmacie', emoji: '💊' },
-  { value: 'SUPERMARKET', label: 'Supermarché', emoji: '🛒' },
-  { value: 'BEAUTY', label: 'Beauté', emoji: '💄' },
-  { value: 'PETS', label: 'Animalerie', emoji: '🐾' },
-  { value: 'HIGHTECH', label: 'High-Tech', emoji: '💻' },
-  { value: 'ELECTRO', label: 'Électroménager', emoji: '⚡' },
+  { value: 'RESTAURANT', label: 'Restaurant', emoji: '🍕', svgKey: 'RESTAURANT' },
+  { value: 'PHARMACY', label: 'Pharmacie', emoji: '💊', svgKey: 'PHARMACY' },
+  { value: 'SUPERMARKET', label: 'Supermarché', emoji: '🛒', svgKey: 'SUPERMARKET' },
+  { value: 'BEAUTY', label: 'Beauté', emoji: '💄', svgKey: 'BEAUTY' },
+  { value: 'PETS', label: 'Animalerie', emoji: '🐾', svgKey: 'PETS' },
+  { value: 'HIGHTECH', label: 'High-Tech', emoji: '💻', svgKey: 'HIGHTECH' },
+  { value: 'ELECTRO', label: 'Électroménager', emoji: '⚡', svgKey: 'ELECTRO' },
   { value: 'OTHER', label: 'Autre', emoji: '📦' },
 ];
 
@@ -114,7 +115,11 @@ function OptionSelector({ label, required, options, value, onChange, disabled })
             onPress={() => onChange(opt.value)}
             disabled={disabled}
           >
-            <Text style={styles.optionEmoji}>{opt.emoji}</Text>
+            {opt.svgKey ? (
+              <ServiceIcon service={opt.svgKey} size={28} />
+            ) : (
+              <Text style={styles.optionEmoji}>{opt.emoji}</Text>
+            )}
             <Text style={[styles.optionLabel, value === opt.value ? styles.optionLabelSelected : null]}>
               {opt.label}
             </Text>
