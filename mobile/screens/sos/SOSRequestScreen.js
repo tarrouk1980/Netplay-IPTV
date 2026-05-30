@@ -18,7 +18,7 @@ import useSosStore from '../../store/sosStore';
 const COLORS = {
   background: '#0A0A0F',
   surface: '#1C1C28',
-  accent: '#F5A623',
+  accent: '#D32F2F',
   text: '#FFFFFF',
   textMuted: '#8E8E9A',
   border: '#2C2C3E',
@@ -333,12 +333,6 @@ export default function SOSRequestScreen({ route, navigation }) {
                   placeholderTextColor={COLORS.textMuted}
                   autoCapitalize="characters"
                 />
-                <TouchableOpacity
-                  style={styles.photoButton}
-                  onPress={() => Alert.alert('📷 OCR', 'Fonctionnalité OCR bientôt disponible')}
-                >
-                  <Text style={styles.photoButtonText}>📷 Photo</Text>
-                </TouchableOpacity>
               </View>
             </View>
 

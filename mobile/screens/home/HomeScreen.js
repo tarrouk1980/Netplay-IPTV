@@ -95,11 +95,13 @@ export default function HomeScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Pass Status */}
-        <PassStatusCard
-          subscription={subscription}
-          onBuyPass={() => navigation.navigate('BuyPass')}
-        />
+        {/* Pass Status — prestataires uniquement, jamais pour CLIENT */}
+        {user?.role !== 'CLIENT' && (
+          <PassStatusCard
+            subscription={subscription}
+            onBuyPass={() => navigation.navigate('BuyPass')}
+          />
+        )}
 
         {/* Ad Banner */}
         <AdBanner placement="HOME" style={{ marginHorizontal: 16, marginTop: 8 }} />

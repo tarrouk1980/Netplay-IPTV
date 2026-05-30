@@ -57,6 +57,15 @@ router.post(
 
       const kycStatus = ['CHAUFFEUR', 'DEPANNEUR'].includes(role) ? 'PENDING' : 'NOT_REQUIRED';
 
+      // Generate unique referral code at registration
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let referralCode, codeUnique = false;
+      while (!codeUnique) {
+        referralCode = Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+        const existing2 = await prisma.user.findUnique({ where: { referralCode } });
+        if (!existing2) codeUnique = true;
+      }
+
       const user = await prisma.user.create({
         data: {
           name,
@@ -65,8 +74,9 @@ router.post(
           password: hashedPassword,
           role: role || 'CLIENT',
           kycStatus,
+          referralCode,
         },
-        select: { id: true, name: true, phone: true, email: true, role: true, kycStatus: true, createdAt: true },
+        select: { id: true, name: true, phone: true, email: true, role: true, kycStatus: true, referralCode: true, createdAt: true },
       });
 
       const tokenPayload = { id: user.id, role: user.role, kycStatus: user.kycStatus };

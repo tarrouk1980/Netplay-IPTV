@@ -18,6 +18,14 @@ import useAuthStore from '../../store/authStore';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
+const COUNTRY_CODES = [
+  { flag: '🇹🇳', code: '+216' },
+  { flag: '🇩🇿', code: '+213' },
+  { flag: '🇲🇦', code: '+212' },
+  { flag: '🇫🇷', code: '+33' },
+  { flag: '🇸🇦', code: '+966' },
+];
+
 const COLORS = {
   background: '#0A0A0F',
   surface: '#1C1C28',
@@ -164,6 +172,7 @@ export default function RegisterScreen({ navigation }) {
   // Step 1
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState(COUNTRY_CODES[0]);
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('CLIENT');
   const [fieldErrors, setFieldErrors] = useState({});
@@ -447,16 +456,36 @@ export default function RegisterScreen({ navigation }) {
           editable={!isLoading}
         />
 
-        <InputField
-          label="Téléphone"
-          required
-          placeholder="+216 XX XXX XXX"
-          value={phone}
-          onChangeText={(v) => { setPhone(v); setFieldErrors((e) => ({ ...e, phone: undefined })); }}
-          keyboardType="phone-pad"
-          error={fieldErrors.phone}
-          editable={!isLoading}
-        />
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Téléphone <Text style={{ color: COLORS.primary }}>*</Text></Text>
+          <View style={[styles.phoneRow, fieldErrors.phone ? styles.inputError : null]}>
+            <TouchableOpacity
+              style={styles.countryPicker}
+              onPress={() => Alert.alert(
+                'Indicatif',
+                '',
+                COUNTRY_CODES.map((c) => ({
+                  text: `${c.flag}  ${c.code}`,
+                  onPress: () => setSelectedCountry(c),
+                }))
+              )}
+            >
+              <Text style={styles.countryFlag}>{selectedCountry.flag}</Text>
+              <Text style={styles.countryCode}>{selectedCountry.code}</Text>
+              <Text style={styles.countryChevron}>▼</Text>
+            </TouchableOpacity>
+            <TextInput
+              style={styles.phoneInput}
+              placeholder="XX XXX XXX"
+              placeholderTextColor={COLORS.textMuted}
+              value={phone}
+              onChangeText={(v) => { setPhone(v); setFieldErrors((e) => ({ ...e, phone: undefined })); }}
+              keyboardType="phone-pad"
+              editable={!isLoading}
+            />
+          </View>
+          {fieldErrors.phone ? <Text style={styles.errorText}>{fieldErrors.phone}</Text> : null}
+        </View>
 
         <InputField
           label="Mot de passe"
@@ -863,6 +892,28 @@ const styles = StyleSheet.create({
   },
   inputError: { borderColor: COLORS.error },
   errorText: { color: COLORS.error, fontSize: 12, marginTop: 4 },
+  phoneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surfaceAlt,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    overflow: 'hidden',
+  },
+  countryPicker: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+    borderRightWidth: 1,
+    borderRightColor: COLORS.border,
+    gap: 4,
+  },
+  countryFlag: { fontSize: 18 },
+  countryCode: { color: COLORS.text, fontSize: 14, fontWeight: '600' },
+  countryChevron: { color: COLORS.textMuted, fontSize: 9, marginLeft: 2 },
+  phoneInput: { flex: 1, color: COLORS.text, fontSize: 16, paddingHorizontal: 12, paddingVertical: 14 },
 
   // ── Options
   optionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

@@ -31,7 +31,7 @@ export default function ReferralScreen({ navigation }) {
   const [applying, setApplying] = useState(false);
 
   useEffect(() => {
-    fetchStats();
+    fetchStats(); // also returns code
   }, []);
 
   const handleShare = async () => {
@@ -74,7 +74,7 @@ export default function ReferralScreen({ navigation }) {
         <View style={styles.header}>
           <Text style={styles.headerEmoji}>🎁</Text>
           <Text style={styles.headerTitle}>Parrainage</Text>
-          <Text style={styles.headerSub}>Invitez vos amis et gagnez des jours gratuits</Text>
+          <Text style={styles.headerSub}>Invitez vos amis à rejoindre EASYWAY</Text>
         </View>
 
         {/* Your code */}
@@ -88,7 +88,7 @@ export default function ReferralScreen({ navigation }) {
           <TouchableOpacity style={styles.shareBtn} onPress={handleShare} activeOpacity={0.85} disabled={!code}>
             <Text style={styles.shareBtnText}>📤 Partager mon code</Text>
           </TouchableOpacity>
-          <Text style={styles.shareHint}>Votre ami gagne 1 jour gratuit, vous aussi !</Text>
+          <Text style={styles.shareHint}>Partagez EASYWAY et faites découvrir l'app à vos proches !</Text>
         </View>
 
         {/* Stats */}
@@ -100,7 +100,7 @@ export default function ReferralScreen({ navigation }) {
             </View>
             <View style={[styles.statBox, styles.statBoxAccent]}>
               <Text style={[styles.statValue, { color: COLORS.accent }]}>{stats.totalRewardsEarned}</Text>
-              <Text style={styles.statLabel}>Jours gagnés</Text>
+              <Text style={styles.statLabel}>Amis invités</Text>
             </View>
           </View>
         )}
@@ -144,7 +144,7 @@ export default function ReferralScreen({ navigation }) {
           </View>
           <View style={styles.step}>
             <Text style={styles.stepNum}>3</Text>
-            <Text style={styles.stepText}>Vous gagnez tous les deux 1 jour gratuit !</Text>
+            <Text style={styles.stepText}>Votre ami découvre EASYWAY gratuitement !</Text>
           </View>
         </View>
 
