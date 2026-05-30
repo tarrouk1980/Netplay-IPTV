@@ -102,4 +102,803 @@ router.post('/kyc/:userId/reject', async (req, res) => {
   return res.json({ user: updated, reason: reason || null });
 });
 
+
+// ═════════════════════════════════════════════════════════════════════════════
+// PHASE 6 — DASHBOARD ADMIN COMPLET
+// ═════════════════════════════════════════════════════════════════════════════
+
+// ─────────────────────────────────────────────
+// GET /api/admin/stats — KPIs temps réel
+// ─────────────────────────────────────────────
+router.get('/stats', async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const tomorrowStart = new Date(today);
+    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+
+    const [
+      totalUsers,
+      clientCount,
+      chauffeurCount,
+      livreurCount,
+      depanneurCount,
+      marchandCount,
+      totalOrders,
+      todayOrders,
+      pendingOrders,
+      completedOrders,
+      cancelledOrders,
+      ordersByType,
+      todayRevenue,
+      monthRevenue,
+      totalRevenue,
+      activeSubscriptions,
+      expiredTodaySubscriptions,
+      activeAds,
+      adsStats,
+    ] = await prisma.$transaction([
+      prisma.user.count(),
+      prisma.user.count({ where: { role: 'CLIENT' } }),
+      prisma.user.count({ where: { role: 'CHAUFFEUR' } }),
+      prisma.user.count({ where: { role: 'LIVREUR' } }),
+      prisma.user.count({ where: { role: 'DEPANNEUR' } }),
+      prisma.user.count({ where: { role: 'MARCHAND' } }),
+      prisma.order.count(),
+      prisma.order.count({ where: { createdAt: { gte: today, lt: tomorrowStart } } }),
+      prisma.order.count({ where: { status: 'PENDING' } }),
+      prisma.order.count({ where: { status: 'COMPLETED' } }),
+      prisma.order.count({ where: { status: 'CANCELLED' } }),
+      prisma.order.groupBy({ by: ['serviceType'], _count: { _all: true } }),
+      prisma.order.aggregate({
+        _sum: { price: true },
+        where: { status: 'COMPLETED', completedAt: { gte: today, lt: tomorrowStart } },
+      }),
+      prisma.order.aggregate({
+        _sum: { price: true },
+        where: { status: 'COMPLETED', completedAt: { gte: monthStart } },
+      }),
+      prisma.order.aggregate({
+        _sum: { price: true },
+        where: { status: 'COMPLETED' },
+      }),
+      prisma.subscription.count({ where: { status: 'ACTIVE' } }),
+      prisma.subscription.count({
+        where: { status: 'ACTIVE', expiresAt: { gte: today, lt: tomorrowStart } },
+      }),
+      prisma.advertisement.count({ where: { isActive: true } }),
+      prisma.advertisement.aggregate({ _sum: { impressions: true, clicks: true } }),
+    ]);
+
+    const byType = {};
+    for (const row of ordersByType) {
+      byType[row.serviceType] = row._count._all;
+    }
+
+    return res.json({
+      users: {
+        total: totalUsers,
+        clients: clientCount,
+        chauffeurs: chauffeurCount,
+        livreurs: livreurCount,
+        depanneurs: depanneurCount,
+        marchands: marchandCount,
+      },
+      orders: {
+        total: totalOrders,
+        today: todayOrders,
+        pending: pendingOrders,
+        completed: completedOrders,
+        cancelled: cancelledOrders,
+        byType,
+      },
+      revenue: {
+        todayTND: Number(todayRevenue._sum.price || 0),
+        monthTND: Number(monthRevenue._sum.price || 0),
+        totalTND: Number(totalRevenue._sum.price || 0),
+      },
+      subscriptions: {
+        active: activeSubscriptions,
+        expiredToday: expiredTodaySubscriptions,
+      },
+      ads: {
+        active: activeAds,
+        totalImpressions: adsStats._sum.impressions || 0,
+        totalClicks: adsStats._sum.clicks || 0,
+      },
+    });
+  } catch (err) {
+    console.error('[admin/stats]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// GET /api/admin/stats/orders-chart
+// ─────────────────────────────────────────────
+router.get('/stats/orders-chart', async (req, res) => {
+  try {
+    const { type } = req.query;
+    const days = 30;
+    const labels = [];
+    const dataMap = {};
+
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().split('T')[0];
+      labels.push(key);
+      dataMap[key] = 0;
+    }
+
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - (days - 1));
+    startDate.setHours(0, 0, 0, 0);
+
+    const where = { createdAt: { gte: startDate } };
+    if (type) where.serviceType = type;
+
+    const orders = await prisma.order.findMany({
+      where,
+      select: { createdAt: true },
+    });
+
+    for (const order of orders) {
+      const key = order.createdAt.toISOString().split('T')[0];
+      if (dataMap[key] !== undefined) dataMap[key]++;
+    }
+
+    return res.json({ labels, data: labels.map((l) => dataMap[l]) });
+  } catch (err) {
+    console.error('[admin/stats/orders-chart]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// GET /api/admin/stats/revenue-chart
+// ─────────────────────────────────────────────
+router.get('/stats/revenue-chart', async (req, res) => {
+  try {
+    const days = 30;
+    const labels = [];
+    const dataMap = {};
+
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().split('T')[0];
+      labels.push(key);
+      dataMap[key] = 0;
+    }
+
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - (days - 1));
+    startDate.setHours(0, 0, 0, 0);
+
+    const orders = await prisma.order.findMany({
+      where: { status: 'COMPLETED', completedAt: { gte: startDate } },
+      select: { completedAt: true, price: true },
+    });
+
+    for (const order of orders) {
+      if (!order.completedAt) continue;
+      const key = order.completedAt.toISOString().split('T')[0];
+      if (dataMap[key] !== undefined) dataMap[key] += Number(order.price || 0);
+    }
+
+    return res.json({ labels, data: labels.map((l) => Math.round(dataMap[l] * 100) / 100) });
+  } catch (err) {
+    console.error('[admin/stats/revenue-chart]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// GET /api/admin/users — Liste paginée
+// ─────────────────────────────────────────────
+router.get('/users', async (req, res) => {
+  try {
+    const { role, kycStatus, page = '1', limit = '20', search } = req.query;
+    const pageNum = Math.max(1, parseInt(page, 10));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10)));
+    const skip = (pageNum - 1) * limitNum;
+
+    const where = {};
+    if (role) where.role = role;
+    if (kycStatus) where.kycStatus = kycStatus;
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { phone: { contains: search } },
+        { email: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [users, total] = await prisma.$transaction([
+      prisma.user.findMany({
+        where,
+        skip,
+        take: limitNum,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+          email: true,
+          role: true,
+          kycStatus: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      }),
+      prisma.user.count({ where }),
+    ]);
+
+    return res.json({
+      users,
+      total,
+      page: pageNum,
+      totalPages: Math.ceil(total / limitNum),
+    });
+  } catch (err) {
+    console.error('[admin/users]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// GET /api/admin/users/:id — Détail utilisateur
+// ─────────────────────────────────────────────
+router.get('/users/:id', async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.params.id },
+      include: {
+        subscription: { orderBy: { createdAt: 'desc' }, take: 1 },
+        vehicle: true,
+        merchant: true,
+        ordersAsClient: {
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+          select: { id: true, serviceType: true, status: true, price: true, createdAt: true },
+        },
+        ordersAsProvider: {
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+          select: { id: true, serviceType: true, status: true, price: true, createdAt: true },
+        },
+      },
+    });
+
+    if (!user) return res.status(404).json({ error: 'User not found', code: 'NOT_FOUND' });
+
+    const { password: _pw, ...safeUser } = user;
+    return res.json({ user: safeUser });
+  } catch (err) {
+    console.error('[admin/users/:id]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// PATCH /api/admin/users/:id/suspend
+// ─────────────────────────────────────────────
+router.patch('/users/:id/suspend', async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.params.id } });
+    if (!user) return res.status(404).json({ error: 'User not found', code: 'NOT_FOUND' });
+    if (user.role === 'ADMIN') return res.status(403).json({ error: 'Cannot suspend admin', code: 'FORBIDDEN' });
+
+    const updated = await prisma.user.update({
+      where: { id: req.params.id },
+      data: { kycStatus: 'REJECTED' },
+      select: { id: true, name: true, phone: true, role: true, kycStatus: true, fcmToken: true },
+    });
+
+    if (updated.fcmToken) {
+      await sendNotification(
+        [updated.fcmToken],
+        'ACCOUNT_SUSPENDED',
+        'Compte suspendu',
+        'Votre compte EASYWAY a été suspendu par un administrateur. Contactez le support.',
+        { userId: req.params.id }
+      );
+    }
+
+    return res.json({ user: updated, suspended: true });
+  } catch (err) {
+    console.error('[admin/users/suspend]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// PATCH /api/admin/users/:id/reactivate
+// ─────────────────────────────────────────────
+router.patch('/users/:id/reactivate', async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.params.id } });
+    if (!user) return res.status(404).json({ error: 'User not found', code: 'NOT_FOUND' });
+
+    const updated = await prisma.user.update({
+      where: { id: req.params.id },
+      data: { kycStatus: 'APPROVED' },
+      select: { id: true, name: true, phone: true, role: true, kycStatus: true, fcmToken: true },
+    });
+
+    if (updated.fcmToken) {
+      await sendNotification(
+        [updated.fcmToken],
+        'ACCOUNT_REACTIVATED',
+        'Compte réactivé ✅',
+        'Votre compte EASYWAY a été réactivé. Bienvenue de retour !',
+        { userId: req.params.id }
+      );
+    }
+
+    return res.json({ user: updated, reactivated: true });
+  } catch (err) {
+    console.error('[admin/users/reactivate]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// DELETE /api/admin/users/:id — Soft delete (anonymisation)
+// ─────────────────────────────────────────────
+router.delete('/users/:id', async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.params.id } });
+    if (!user) return res.status(404).json({ error: 'User not found', code: 'NOT_FOUND' });
+    if (user.role === 'ADMIN') return res.status(403).json({ error: 'Cannot delete admin', code: 'FORBIDDEN' });
+
+    const anonymized = await prisma.user.update({
+      where: { id: req.params.id },
+      data: {
+        name: `[Deleted-${req.params.id.slice(-6)}]`,
+        phone: `deleted-${req.params.id}`,
+        email: null,
+        fcmToken: null,
+        password: null,
+      },
+      select: { id: true, name: true },
+    });
+
+    return res.json({ deleted: true, user: anonymized });
+  } catch (err) {
+    console.error('[admin/users/delete]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// GET /api/admin/orders — Liste paginée
+// ─────────────────────────────────────────────
+router.get('/orders', async (req, res) => {
+  try {
+    const { type, status, page = '1', limit = '20', from, to } = req.query;
+    const pageNum = Math.max(1, parseInt(page, 10));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10)));
+    const skip = (pageNum - 1) * limitNum;
+
+    const where = {};
+    if (type) where.serviceType = type;
+    if (status) where.status = status;
+    if (from || to) {
+      where.createdAt = {};
+      if (from) where.createdAt.gte = new Date(from);
+      if (to) {
+        const toDate = new Date(to);
+        toDate.setHours(23, 59, 59, 999);
+        where.createdAt.lte = toDate;
+      }
+    }
+
+    const [orders, total] = await prisma.$transaction([
+      prisma.order.findMany({
+        where,
+        skip,
+        take: limitNum,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          serviceType: true,
+          status: true,
+          price: true,
+          createdAt: true,
+          completedAt: true,
+          originAddress: true,
+          destinationAddress: true,
+          client: { select: { id: true, name: true, phone: true } },
+          provider: { select: { id: true, name: true, phone: true } },
+        },
+      }),
+      prisma.order.count({ where }),
+    ]);
+
+    return res.json({ orders, total, page: pageNum, totalPages: Math.ceil(total / limitNum) });
+  } catch (err) {
+    console.error('[admin/orders]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// GET /api/admin/orders/:id — Détail + timeline
+// ─────────────────────────────────────────────
+router.get('/orders/:id', async (req, res) => {
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: req.params.id },
+      include: {
+        client: { select: { id: true, name: true, phone: true, role: true } },
+        provider: { select: { id: true, name: true, phone: true, role: true } },
+        events: { orderBy: { createdAt: 'asc' } },
+        reviews: true,
+        disputes: { include: { reporter: { select: { id: true, name: true } } } },
+      },
+    });
+
+    if (!order) return res.status(404).json({ error: 'Order not found', code: 'NOT_FOUND' });
+    return res.json({ order });
+  } catch (err) {
+    console.error('[admin/orders/:id]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// POST /api/admin/orders/:id/force-cancel
+// ─────────────────────────────────────────────
+router.post('/orders/:id/force-cancel', async (req, res) => {
+  try {
+    const { reason } = req.body;
+    if (!reason) return res.status(400).json({ error: 'reason is required', code: 'VALIDATION_ERROR' });
+
+    const order = await prisma.order.findUnique({
+      where: { id: req.params.id },
+      include: {
+        client: { select: { fcmToken: true } },
+        provider: { select: { fcmToken: true } },
+      },
+    });
+
+    if (!order) return res.status(404).json({ error: 'Order not found', code: 'NOT_FOUND' });
+    if (order.status === 'CANCELLED' || order.status === 'COMPLETED') {
+      return res.status(409).json({ error: 'Order already finalized', code: 'CONFLICT' });
+    }
+
+    const [updated] = await prisma.$transaction([
+      prisma.order.update({
+        where: { id: req.params.id },
+        data: { status: 'CANCELLED' },
+      }),
+      prisma.orderEvent.create({
+        data: {
+          orderId: req.params.id,
+          eventType: 'ADMIN_FORCE_CANCEL',
+          payload: { reason, adminId: req.user.id, timestamp: new Date().toISOString() },
+        },
+      }),
+    ]);
+
+    const tokens = [];
+    if (order.client?.fcmToken) tokens.push(order.client.fcmToken);
+    if (order.provider?.fcmToken) tokens.push(order.provider.fcmToken);
+
+    if (tokens.length > 0) {
+      await sendNotification(
+        tokens,
+        'ORDER_CANCELLED',
+        "Commande annulée par l'administration",
+        `Commande #${req.params.id.slice(-6)} annulée. Raison: ${reason}`,
+        { orderId: req.params.id, reason }
+      );
+    }
+
+    return res.json({ order: updated, cancelled: true });
+  } catch (err) {
+    console.error('[admin/orders/force-cancel]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// GET /api/admin/disputes — Liste des disputes ouvertes
+// ─────────────────────────────────────────────
+router.get('/disputes', async (req, res) => {
+  try {
+    const { page = '1', limit = '20' } = req.query;
+    const pageNum = Math.max(1, parseInt(page, 10));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10)));
+    const skip = (pageNum - 1) * limitNum;
+
+    const where = { status: { in: ['OPEN', 'IN_REVIEW'] } };
+
+    const [disputes, total] = await prisma.$transaction([
+      prisma.dispute.findMany({
+        where,
+        skip,
+        take: limitNum,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          reporter: { select: { id: true, name: true, phone: true, role: true } },
+          order: {
+            select: {
+              id: true,
+              serviceType: true,
+              status: true,
+              price: true,
+              createdAt: true,
+              client: { select: { id: true, name: true, phone: true } },
+              provider: { select: { id: true, name: true, phone: true } },
+            },
+          },
+        },
+      }),
+      prisma.dispute.count({ where }),
+    ]);
+
+    return res.json({ disputes, total, page: pageNum, totalPages: Math.ceil(total / limitNum) });
+  } catch (err) {
+    console.error('[admin/disputes]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// POST /api/admin/disputes/:orderId/resolve
+// ─────────────────────────────────────────────
+router.post('/disputes/:orderId/resolve', async (req, res) => {
+  try {
+    const { resolution, refundTND, compensationTND } = req.body;
+    if (!resolution) return res.status(400).json({ error: 'resolution is required', code: 'VALIDATION_ERROR' });
+
+    const dispute = await prisma.dispute.findFirst({
+      where: { orderId: req.params.orderId, status: { in: ['OPEN', 'IN_REVIEW'] } },
+    });
+    if (!dispute) return res.status(404).json({ error: 'Open dispute not found', code: 'NOT_FOUND' });
+
+    const updated = await prisma.dispute.update({
+      where: { id: dispute.id },
+      data: { status: 'RESOLVED', resolution, resolvedAt: new Date() },
+    });
+
+    await prisma.orderEvent.create({
+      data: {
+        orderId: req.params.orderId,
+        eventType: 'ADMIN_DISPUTE_RESOLVED',
+        payload: {
+          resolution,
+          refundTND: refundTND || 0,
+          compensationTND: compensationTND || 0,
+          adminId: req.user.id,
+          timestamp: new Date().toISOString(),
+        },
+      },
+    });
+
+    return res.json({ dispute: updated });
+  } catch (err) {
+    console.error('[admin/disputes/resolve]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// GET /api/admin/merchants — Liste marchands
+// ─────────────────────────────────────────────
+router.get('/merchants', async (req, res) => {
+  try {
+    const { page = '1', limit = '20' } = req.query;
+    const pageNum = Math.max(1, parseInt(page, 10));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10)));
+    const skip = (pageNum - 1) * limitNum;
+
+    const [merchants, total] = await prisma.$transaction([
+      prisma.merchant.findMany({
+        skip,
+        take: limitNum,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: { select: { id: true, name: true, phone: true, kycStatus: true } },
+          _count: { select: { products: true, ads: true } },
+        },
+      }),
+      prisma.merchant.count(),
+    ]);
+
+    const merchantsWithOrders = await Promise.all(
+      merchants.map(async (m) => {
+        const orderCount = await prisma.order.count({
+          where: { providerId: m.userId, serviceType: 'GROCERY' },
+        });
+        return { ...m, orderCount };
+      })
+    );
+
+    return res.json({ merchants: merchantsWithOrders, total, page: pageNum, totalPages: Math.ceil(total / limitNum) });
+  } catch (err) {
+    console.error('[admin/merchants]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// PATCH /api/admin/merchants/:id/suspend
+// ─────────────────────────────────────────────
+router.patch('/merchants/:id/suspend', async (req, res) => {
+  try {
+    const merchant = await prisma.merchant.findUnique({
+      where: { id: req.params.id },
+      include: { user: { select: { id: true, fcmToken: true } } },
+    });
+    if (!merchant) return res.status(404).json({ error: 'Merchant not found', code: 'NOT_FOUND' });
+
+    const updatedUser = await prisma.user.update({
+      where: { id: merchant.userId },
+      data: { kycStatus: 'REJECTED' },
+      select: { id: true, fcmToken: true },
+    });
+
+    if (updatedUser.fcmToken) {
+      await sendNotification(
+        [updatedUser.fcmToken],
+        'ACCOUNT_SUSPENDED',
+        'Boutique suspendue',
+        'Votre boutique EASYWAY a été suspendue par un administrateur.',
+        { merchantId: req.params.id }
+      );
+    }
+
+    return res.json({ suspended: true, merchantId: req.params.id });
+  } catch (err) {
+    console.error('[admin/merchants/suspend]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// PATCH /api/admin/merchants/:id/boost — Boost admin gratuit
+// ─────────────────────────────────────────────
+router.patch('/merchants/:id/boost', async (req, res) => {
+  try {
+    const { days } = req.body;
+    if (!days || Number(days) < 1) {
+      return res.status(400).json({ error: 'days must be >= 1', code: 'VALIDATION_ERROR' });
+    }
+
+    const merchant = await prisma.merchant.findUnique({ where: { id: req.params.id } });
+    if (!merchant) return res.status(404).json({ error: 'Merchant not found', code: 'NOT_FOUND' });
+
+    const boostedUntil = new Date();
+    boostedUntil.setDate(boostedUntil.getDate() + Number(days));
+
+    const updated = await prisma.merchant.update({
+      where: { id: req.params.id },
+      data: { isBoosted: true, boostedUntil },
+    });
+
+    return res.json({ merchant: updated, boostedUntil });
+  } catch (err) {
+    console.error('[admin/merchants/boost]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// GET /api/admin/reports/subscriptions
+// ─────────────────────────────────────────────
+router.get('/reports/subscriptions', async (req, res) => {
+  try {
+    const [byPlan, autoRenewCount, totalActive] = await prisma.$transaction([
+      prisma.subscription.groupBy({
+        by: ['planType', 'status'],
+        _count: { _all: true },
+      }),
+      prisma.subscription.count({ where: { autoRenew: true, status: 'ACTIVE' } }),
+      prisma.subscription.count({ where: { status: 'ACTIVE' } }),
+    ]);
+
+    const PLAN_PRICES = { DECOUVERTE: 0, SEMAINE: 19, MENSUEL: 49, PRO: 149 };
+    const summary = {};
+    for (const row of byPlan) {
+      if (!summary[row.planType]) {
+        summary[row.planType] = { active: 0, expired: 0, exhausted: 0, estimatedRevenueTND: 0 };
+      }
+      summary[row.planType][row.status.toLowerCase()] = row._count._all;
+      if (row.status === 'ACTIVE') {
+        summary[row.planType].estimatedRevenueTND = row._count._all * (PLAN_PRICES[row.planType] || 0);
+      }
+    }
+
+    return res.json({ byPlan: summary, totalActive, autoRenewCount });
+  } catch (err) {
+    console.error('[admin/reports/subscriptions]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// GET /api/admin/reports/top-providers
+// ─────────────────────────────────────────────
+router.get('/reports/top-providers', async (req, res) => {
+  try {
+    const topProviders = await prisma.order.groupBy({
+      by: ['providerId'],
+      where: { status: 'COMPLETED', providerId: { not: null } },
+      _count: { _all: true },
+      orderBy: { _count: { id: 'desc' } },
+      take: 10,
+    });
+
+    const providerIds = topProviders.map((p) => p.providerId).filter(Boolean);
+    const [users, reviews] = await Promise.all([
+      prisma.user.findMany({
+        where: { id: { in: providerIds } },
+        select: { id: true, name: true, phone: true, role: true },
+      }),
+      prisma.review.groupBy({
+        by: ['targetId'],
+        where: { targetId: { in: providerIds } },
+        _avg: { rating: true },
+        _count: { _all: true },
+      }),
+    ]);
+
+    const userMap = Object.fromEntries(users.map((u) => [u.id, u]));
+    const reviewMap = Object.fromEntries(reviews.map((r) => [r.targetId, r]));
+
+    const result = topProviders.map((p) => ({
+      provider: userMap[p.providerId] || { id: p.providerId },
+      completedOrders: p._count._all,
+      avgRating: reviewMap[p.providerId]?._avg?.rating || null,
+      reviewCount: reviewMap[p.providerId]?._count?._all || 0,
+    }));
+
+    return res.json({ providers: result });
+  } catch (err) {
+    console.error('[admin/reports/top-providers]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// GET /api/admin/reports/top-merchants
+// ─────────────────────────────────────────────
+router.get('/reports/top-merchants', async (req, res) => {
+  try {
+    const topOrders = await prisma.order.groupBy({
+      by: ['providerId'],
+      where: { serviceType: 'GROCERY', providerId: { not: null } },
+      _count: { _all: true },
+      orderBy: { _count: { id: 'desc' } },
+      take: 10,
+    });
+
+    const providerIds = topOrders.map((p) => p.providerId).filter(Boolean);
+    const merchants = await prisma.merchant.findMany({
+      where: { userId: { in: providerIds } },
+      include: { user: { select: { id: true, name: true, phone: true } } },
+    });
+
+    const merchantMap = Object.fromEntries(merchants.map((m) => [m.userId, m]));
+
+    const result = topOrders.map((p) => ({
+      merchant: merchantMap[p.providerId] || { userId: p.providerId },
+      totalOrders: p._count._all,
+    }));
+
+    return res.json({ merchants: result });
+  } catch (err) {
+    console.error('[admin/reports/top-merchants]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
 module.exports = router;
+
