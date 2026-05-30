@@ -16,7 +16,7 @@ const COLORS = {
   headerText: '#0A0A0F',
   text: '#FFFFFF',
   textMuted: '#8E8E9A',
-  taxiNormal: '#D32F2F',
+  taxiNormal: '#F5A623',
   taxiLady: '#E91E8C',
   taxiAccess: '#2196F3',
 };

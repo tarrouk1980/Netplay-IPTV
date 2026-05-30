@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   backArrow: { color: COLORS.text, fontSize: 28, fontWeight: '300' },
-  headerTitle: { color: COLORS.green, fontSize: 20, fontFamily: 'Poppins-SemiBold', fontWeight: '600' },
+  headerTitle: { color: '#FFFFFF', fontSize: 20, fontFamily: 'Poppins-SemiBold', fontWeight: '600' },
   searchContainer: { paddingHorizontal: 20, marginBottom: 12 },
   searchInput: {
     backgroundColor: COLORS.surface,

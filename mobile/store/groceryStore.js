@@ -34,43 +34,43 @@ export const useGroceryStore = create((set, get) => ({
     set({ cart: { items: [], merchantId: null, mode: 'CUSTOM' } }),
 
   requestGrocery: async (data) => {
-    const res = await api.post('/grocery/request', data);
+    const res = await api.post('/api/grocery/request', data);
     set({ currentOrder: res.data.order });
     return res.data.order;
   },
 
   fetchOrder: async (orderId) => {
-    const res = await api.get(`/grocery/${orderId}`);
+    const res = await api.get(`/api/grocery/${orderId}`);
     set({ currentOrder: res.data.order });
     return res.data.order;
   },
 
   confirmReceipt: async (orderId) => {
-    const res = await api.post(`/grocery/${orderId}/confirm-receipt`);
+    const res = await api.post(`/api/grocery/${orderId}/confirm-receipt`);
     set({ currentOrder: res.data.order });
     return res.data.order;
   },
 
   cancelGrocery: async (orderId) => {
-    const res = await api.post(`/grocery/${orderId}/cancel`);
+    const res = await api.post(`/api/grocery/${orderId}/cancel`);
     set({ currentOrder: res.data.order });
     return res.data.order;
   },
 
   fetchHistory: async () => {
-    const res = await api.get('/grocery/history');
+    const res = await api.get('/api/grocery/history');
     return res.data.orders;
   },
 
   // LIVREUR actions
   fetchAssignments: async () => {
-    const res = await api.get('/grocery/livreur/assignments');
+    const res = await api.get('/api/grocery/livreur/assignments');
     set({ assignments: res.data.orders });
     return res.data.orders;
   },
 
   acceptGrocery: async (orderId) => {
-    const res = await api.post(`/grocery/${orderId}/accept`);
+    const res = await api.post(`/api/grocery/${orderId}/accept`);
     set((state) => ({
       assignments: state.assignments.map((o) => (o.id === orderId ? res.data.order : o)),
     }));
@@ -78,7 +78,7 @@ export const useGroceryStore = create((set, get) => ({
   },
 
   pickupGrocery: async (orderId) => {
-    const res = await api.post(`/grocery/${orderId}/pickup`);
+    const res = await api.post(`/api/grocery/${orderId}/pickup`);
     set((state) => ({
       assignments: state.assignments.map((o) => (o.id === orderId ? res.data.order : o)),
     }));
@@ -86,7 +86,7 @@ export const useGroceryStore = create((set, get) => ({
   },
 
   completeGrocery: async (orderId) => {
-    const res = await api.post(`/grocery/${orderId}/complete`);
+    const res = await api.post(`/api/grocery/${orderId}/complete`);
     set((state) => ({
       assignments: state.assignments.filter((o) => o.id !== orderId),
     }));

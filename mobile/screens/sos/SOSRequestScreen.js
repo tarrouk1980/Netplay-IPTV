@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import useSosStore from '../../store/sosStore';
 import { estimateSOSPrice } from '../../utils/sosPricing';
+import StaticMap from '../../components/StaticMap';
 
 const COLORS = {
   background: '#0A0A0F',
@@ -218,6 +219,11 @@ export default function SOSRequestScreen({ route, navigation }) {
         {step === 2 && (
           <View>
             <Text style={styles.sectionTitle}>Confirmation</Text>
+
+            {/* Static map */}
+            <View style={{ alignItems: 'center', marginBottom: 14 }}>
+              <StaticMap lat={location?.coords?.latitude ?? location?.lat} lng={location?.coords?.longitude ?? location?.lng} width={340} height={180} />
+            </View>
 
             {/* GPS */}
             <View style={styles.infoCard}>

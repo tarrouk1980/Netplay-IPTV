@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
@@ -9,6 +9,9 @@ import { connectSocket, disconnectSocket } from './services/socket';
 
 import useAuthStore from './store/authStore';
 import useNotificationStore from './store/notificationStore';
+
+// Onboarding
+import OnboardingScreen from './screens/onboarding/OnboardingScreen';
 
 // Auth Screens
 import LoginScreen from './screens/auth/LoginScreen';
@@ -71,9 +74,12 @@ Notifications.setNotificationHandler({
   }),
 });
 
-function AuthStack() {
+function AuthStack({ onboardingDone }) {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {onboardingDone === false && (
+        <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ headerShown: false }} />
+      )}
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="OTP" component={OTPScreen} />
@@ -155,10 +161,15 @@ export default function App() {
   const { addNotification } = useNotificationStore();
   const notificationListener = useRef();
   const responseListener = useRef();
+  const [onboardingDone, setOnboardingDone] = useState(null); // null=loading, true/false
 
   useEffect(() => {
     // Restore tokens from AsyncStorage on app start
     loadFromStorage();
+    // Check onboarding status
+    AsyncStorage.getItem('onboardingDone').then((done) => {
+      setOnboardingDone(!!done);
+    });
   }, []);
 
   useEffect(() => {
@@ -206,7 +217,7 @@ export default function App() {
   return (
     <NavigationContainer>
       <StatusBar style="light" />
-      {isAuthenticated ? <MainStack /> : <AuthStack />}
+      {isAuthenticated ? <MainStack /> : <AuthStack onboardingDone={onboardingDone} />}
     </NavigationContainer>
   );
 }

@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import useTaxiStore from '../../store/taxiStore';
 import FareEstimateCard from '../../components/FareEstimateCard';
+import StaticMap from '../../components/StaticMap';
 import api from '../../services/api';
 
 // TODO: Replace with Mapbox SDK — mapbox.com/pricing — free tier: 25,000 loads/month
@@ -160,6 +161,11 @@ export default function TaxiRequestScreen({ route, navigation }) {
       </View>
 
       <ScrollView style={styles.scroll} keyboardShouldPersistTaps="handled">
+        {/* Static map */}
+        <View style={styles.mapContainer}>
+          <StaticMap lat={origin?.lat} lng={origin?.lng} width={340} height={180} />
+        </View>
+
         {/* Origin */}
         <View style={styles.section}>
           <Text style={styles.label}>📍 Point de départ</Text>
@@ -268,6 +274,7 @@ export default function TaxiRequestScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
+  mapContainer: { alignItems: 'center', paddingTop: 16, paddingHorizontal: 20 },
   header: {
     backgroundColor: COLORS.header,
     flexDirection: 'row',

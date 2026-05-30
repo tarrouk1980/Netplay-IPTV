@@ -272,6 +272,16 @@ enum AdPlacement {
   ALL
 }
 
+model PassDiscount {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  label       String
+  discountPct Int
+  validFor    String[]
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
 model Advertisement {
   id          String      @id @default(uuid())
   title       String

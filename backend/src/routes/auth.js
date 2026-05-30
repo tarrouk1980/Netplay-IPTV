@@ -236,4 +236,56 @@ router.post('/otp/verify', async (req, res) => {
   }
 });
 
+// POST /api/auth/forgot-password
+router.post('/forgot-password', async (req, res) => {
+  const { phone } = req.body;
+  if (!phone) {
+    return res.status(400).json({ error: 'phone is required', code: 'MISSING_FIELD' });
+  }
+
+  try {
+    const user = await prisma.user.findUnique({ where: { phone } });
+    if (!user) {
+      // Don't reveal if phone exists; still return success
+      return res.json({ success: true, message: 'Code envoyé par SMS' });
+    }
+
+    const code = Math.floor(1000 + Math.random() * 9000).toString();
+    await redisClient.setex(`forgot:${phone}`, 600, code);
+    console.log(`[ForgotPassword Dev] Phone: ${phone}, Code: ${code}`);
+
+    return res.json({ success: true, message: 'Code envoyé par SMS' });
+  } catch (err) {
+    console.error('[Auth/ForgotPassword]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// POST /api/auth/reset-password
+router.post('/reset-password', async (req, res) => {
+  const { phone, code, newPassword } = req.body;
+  if (!phone || !code || !newPassword) {
+    return res.status(400).json({ error: 'phone, code and newPassword are required', code: 'MISSING_FIELDS' });
+  }
+
+  try {
+    const stored = await redisClient.get(`forgot:${phone}`);
+    if (!stored) {
+      return res.status(400).json({ error: 'Code expiré ou introuvable', code: 'CODE_EXPIRED' });
+    }
+    if (stored !== code) {
+      return res.status(400).json({ error: 'Code invalide', code: 'CODE_INVALID' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({ where: { phone }, data: { password: hashedPassword } });
+    await redisClient.del(`forgot:${phone}`);
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('[Auth/ResetPassword]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
 module.exports = router;

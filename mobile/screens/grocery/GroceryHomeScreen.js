@@ -54,8 +54,9 @@ export default function GroceryHomeScreen({ navigation }) {
     <SafeAreaView style={styles.safe}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>🛒 Grocery</Text>
+          <Text style={styles.headerTitle}>🛒 EasyCourses</Text>
           <Text style={styles.headerSub}>Courses livrées chez vous</Text>
+          <Text style={styles.headerNote}>Épicerie, supermarché, liste personnalisée</Text>
         </View>
 
         <AdBanner placement="GROCERY" style={styles.topBanner} />
@@ -140,6 +141,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: { color: TEXT, fontSize: 28, fontWeight: '700' },
   headerSub: { color: 'rgba(255,255,255,0.8)', fontSize: 14, marginTop: 4 },
+  headerNote: { color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 4, fontStyle: 'italic' },
   topBanner: { marginHorizontal: 16, marginTop: 16 },
   searchContainer: { margin: 16 },
   searchInput: {

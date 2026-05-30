@@ -135,7 +135,7 @@ const useDeliveryStore = create((set, get) => ({
   },
 
   completeDelivery: async (orderId) => {
-    const response = await api.post(`/delivery/${orderId}/complete`);
+    const response = await api.post(`/api/delivery/${orderId}/complete`);
     const { order } = response.data;
     set({ currentOrder: order });
     return order;
