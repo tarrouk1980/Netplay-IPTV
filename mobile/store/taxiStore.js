@@ -47,7 +47,7 @@ const useTaxiStore = create((set, get) => ({
         body.destinationAddress = dest.address;
       }
 
-      const response = await api.post('/taxi/request', body);
+      const response = await api.post('/api/taxi/request', body);
       const { order } = response.data;
       set({ currentOrder: order });
       return order;
@@ -60,7 +60,7 @@ const useTaxiStore = create((set, get) => ({
   // CLIENT: confirm arrival (triggers double-confirmation logic)
   // ─────────────────────────────────────────────
   confirmArrival: async (orderId) => {
-    const response = await api.post(`/taxi/${orderId}/complete`);
+    const response = await api.post(`/api/taxi/${orderId}/complete`);
     const { order } = response.data;
     set({ currentOrder: order });
     return order;
@@ -70,7 +70,7 @@ const useTaxiStore = create((set, get) => ({
   // CLIENT / CHAUFFEUR: cancel order
   // ─────────────────────────────────────────────
   cancelOrder: async (orderId, reason) => {
-    const response = await api.post(`/taxi/${orderId}/cancel`, { reason });
+    const response = await api.post(`/api/taxi/${orderId}/cancel`, { reason });
     const { order } = response.data;
     set({ currentOrder: order });
     return order;
@@ -80,7 +80,7 @@ const useTaxiStore = create((set, get) => ({
   // SHARED: fetch order details
   // ─────────────────────────────────────────────
   fetchOrder: async (orderId) => {
-    const response = await api.get(`/taxi/${orderId}`);
+    const response = await api.get(`/api/taxi/${orderId}`);
     const { order } = response.data;
     set({ currentOrder: order });
     return order;
@@ -90,7 +90,7 @@ const useTaxiStore = create((set, get) => ({
   // SHARED: fetch nearby drivers
   // ─────────────────────────────────────────────
   fetchNearbyDrivers: async (lat, lng, radius = 5) => {
-    const response = await api.get('/taxi/nearby', { params: { lat, lng, radius } });
+    const response = await api.get('/api/taxi/nearby', { params: { lat, lng, radius } });
     const drivers = response.data.providers || [];
     set({ nearbyDrivers: drivers });
     return drivers;
@@ -100,7 +100,7 @@ const useTaxiStore = create((set, get) => ({
   // CHAUFFEUR: accept an order
   // ─────────────────────────────────────────────
   acceptOrder: async (orderId) => {
-    const response = await api.post(`/taxi/${orderId}/accept`);
+    const response = await api.post(`/api/taxi/${orderId}/accept`);
     const { order } = response.data;
     set({ currentOrder: order });
     return order;
@@ -110,7 +110,7 @@ const useTaxiStore = create((set, get) => ({
   // CHAUFFEUR: complete a ride (sends driver confirmation)
   // ─────────────────────────────────────────────
   completeRide: async (orderId) => {
-    const response = await api.post(`/taxi/${orderId}/complete`);
+    const response = await api.post(`/api/taxi/${orderId}/complete`);
     const { order } = response.data;
     set({ currentOrder: order });
     return order;

@@ -68,7 +68,7 @@ const useDeliveryStore = create((set, get) => ({
   requestDelivery: async (data) => {
     set({ isLoading: true });
     try {
-      const response = await api.post('/delivery/request', data);
+      const response = await api.post('/api/delivery/request', data);
       const { order, priceBreakdown } = response.data;
       set({ currentOrder: order, cart: {} });
       return { order, priceBreakdown };
@@ -78,57 +78,57 @@ const useDeliveryStore = create((set, get) => ({
   },
 
   fetchOrder: async (orderId) => {
-    const response = await api.get(`/delivery/${orderId}`);
+    const response = await api.get(`/api/delivery/${orderId}`);
     const { order } = response.data;
     set({ currentOrder: order });
     return order;
   },
 
   confirmReceipt: async (orderId) => {
-    const response = await api.post(`/delivery/${orderId}/confirm-receipt`);
+    const response = await api.post(`/api/delivery/${orderId}/confirm-receipt`);
     const { order } = response.data;
     set({ currentOrder: order });
     return order;
   },
 
   cancelDelivery: async (orderId) => {
-    const response = await api.post(`/delivery/${orderId}/cancel`);
+    const response = await api.post(`/api/delivery/${orderId}/cancel`);
     const { order } = response.data;
     set({ currentOrder: order });
     return order;
   },
 
   fetchHistory: async () => {
-    const response = await api.get('/delivery/history');
+    const response = await api.get('/api/delivery/history');
     return response.data.orders || [];
   },
 
   // MARCHAND actions
   fetchMerchantOrders: async () => {
-    const response = await api.get('/delivery/merchant/orders');
+    const response = await api.get('/api/delivery/merchant/orders');
     return response.data.orders || [];
   },
 
   acceptOrder: async (orderId) => {
-    const response = await api.post(`/delivery/${orderId}/accept`);
+    const response = await api.post(`/api/delivery/${orderId}/accept`);
     return response.data;
   },
 
   markReady: async (orderId) => {
-    const response = await api.post(`/delivery/${orderId}/ready`);
+    const response = await api.post(`/api/delivery/${orderId}/ready`);
     return response.data;
   },
 
   // LIVREUR actions
   fetchAssignments: async () => {
-    const response = await api.get('/delivery/livreur/assignments');
+    const response = await api.get('/api/delivery/livreur/assignments');
     const orders = response.data.orders || [];
     set({ livreurAssignments: orders });
     return orders;
   },
 
   pickupOrder: async (orderId) => {
-    const response = await api.post(`/delivery/${orderId}/pickup`);
+    const response = await api.post(`/api/delivery/${orderId}/pickup`);
     const { order } = response.data;
     set({ currentOrder: order });
     return order;

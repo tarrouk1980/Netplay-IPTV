@@ -1,12 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  Animated,
   StatusBar,
-  Linking,
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,32 +13,17 @@ import useSosStore from '../../store/sosStore';
 const COLORS = {
   background: '#0A0A0F',
   surface: '#1C1C28',
-  sos: '#E74C3C',
-  sosDark: '#B03A2E',
+  accent: '#F5A623',
   text: '#FFFFFF',
   textMuted: '#8E8E9A',
   border: '#2C2C3E',
-  insurance: '#27AE60',
-  independent: '#2980B9',
 };
-
-const EMERGENCY_NUMBER = '197';
 
 export default function SOSHomeScreen({ navigation }) {
   const { myContract, fetchMyContract } = useSosStore();
-  const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     fetchMyContract();
-  }, []);
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, { toValue: 1.12, duration: 900, useNativeDriver: true }),
-        Animated.timing(pulseAnim, { toValue: 1, duration: 900, useNativeDriver: true }),
-      ])
-    ).start();
   }, []);
 
   const handleInsurance = () => {
@@ -66,17 +49,6 @@ export default function SOSHomeScreen({ navigation }) {
     navigation.navigate('SOSRequest', { mode: 'INDEPENDENT' });
   };
 
-  const handleEmergencyCall = () => {
-    Alert.alert(
-      'Appel d\'urgence',
-      `Appeler le ${EMERGENCY_NUMBER} (Dépannage national Tunisie) ?`,
-      [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Appeler', onPress: () => Linking.openURL(`tel:${EMERGENCY_NUMBER}`) },
-      ]
-    );
-  };
-
   const contractValid = myContract && new Date(myContract.expiresAt) >= new Date();
 
   return (
@@ -97,15 +69,15 @@ export default function SOSHomeScreen({ navigation }) {
 
         {/* Insurance option */}
         <TouchableOpacity
-          style={[styles.modeCard, { borderColor: COLORS.insurance }]}
+          style={[styles.modeCard, { borderColor: COLORS.accent }]}
           onPress={handleInsurance}
           activeOpacity={0.85}
         >
-          <View style={[styles.modeIcon, { backgroundColor: COLORS.insurance + '22' }]}>
-            <Text style={styles.modeEmoji}>🔒</Text>
+          <View style={[styles.modeIcon, { backgroundColor: COLORS.accent + '22' }]}>
+            <Text style={styles.modeEmoji}>🛡️</Text>
           </View>
           <View style={styles.modeContent}>
-            <Text style={[styles.modeTitle, { color: COLORS.insurance }]}>Couvert par mon assurance</Text>
+            <Text style={[styles.modeTitle, { color: COLORS.accent }]}>Couvert par mon assurance</Text>
             <Text style={styles.modeSubtitle}>
               {contractValid
                 ? `Contrat actif — expire le ${new Date(myContract.expiresAt).toLocaleDateString('fr-TN')}`
@@ -121,39 +93,26 @@ export default function SOSHomeScreen({ navigation }) {
               </View>
             )}
           </View>
-          <Text style={[styles.modeChevron, { color: COLORS.insurance }]}>›</Text>
+          <Text style={[styles.modeChevron, { color: COLORS.accent }]}>›</Text>
         </TouchableOpacity>
 
         {/* Independent option */}
         <TouchableOpacity
-          style={[styles.modeCard, { borderColor: COLORS.independent }]}
+          style={[styles.modeCard, { borderColor: COLORS.accent }]}
           onPress={handleIndependent}
           activeOpacity={0.85}
         >
-          <View style={[styles.modeIcon, { backgroundColor: COLORS.independent + '22' }]}>
-            <Text style={styles.modeEmoji}>🔧</Text>
+          <View style={[styles.modeIcon, { backgroundColor: COLORS.accent + '22' }]}>
+            <Text style={styles.modeEmoji}>🚛</Text>
           </View>
           <View style={styles.modeContent}>
-            <Text style={[styles.modeTitle, { color: COLORS.independent }]}>Dépanneur indépendant</Text>
+            <Text style={[styles.modeTitle, { color: COLORS.accent }]}>Dépanneur indépendant</Text>
             <Text style={styles.modeSubtitle}>Paiement direct au dépanneur — devis en temps réel</Text>
           </View>
-          <Text style={[styles.modeChevron, { color: COLORS.independent }]}>›</Text>
+          <Text style={[styles.modeChevron, { color: COLORS.accent }]}>›</Text>
         </TouchableOpacity>
 
-        {/* Emergency CTA */}
-        <View style={styles.emergencyWrapper}>
-          <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
-            <TouchableOpacity
-              style={styles.emergencyButton}
-              onPress={handleEmergencyCall}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.emergencyIcon}>🚨</Text>
-              <Text style={styles.emergencyText}>APPEL D'URGENCE</Text>
-              <Text style={styles.emergencyNumber}>{EMERGENCY_NUMBER}</Text>
-            </TouchableOpacity>
-          </Animated.View>
-        </View>
+        <View style={{ flex: 1 }} />
 
         {/* Legal note */}
         <Text style={styles.legalNote}>
@@ -175,8 +134,8 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.border,
   },
   backButton: { padding: 4 },
-  backArrow: { fontSize: 32, color: COLORS.sos, lineHeight: 32, marginTop: -4 },
-  headerTitle: { flex: 1, textAlign: 'center', fontSize: 20, fontWeight: '800', color: COLORS.sos },
+  backArrow: { fontSize: 32, color: COLORS.accent, lineHeight: 32, marginTop: -4 },
+  headerTitle: { flex: 1, textAlign: 'center', fontSize: 20, fontWeight: '800', color: COLORS.accent },
   headerSpacer: { width: 32 },
   content: { flex: 1, padding: 20 },
   subtitle: {
@@ -211,29 +170,12 @@ const styles = StyleSheet.create({
   modeChevron: { fontSize: 26, fontWeight: '300' },
   coverageTags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
   coverageTag: {
-    backgroundColor: COLORS.insurance + '22',
+    backgroundColor: COLORS.accent + '22',
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
-  coverageTagText: { fontSize: 10, color: COLORS.insurance, fontWeight: '700' },
-  emergencyWrapper: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  emergencyButton: {
-    backgroundColor: COLORS.sos,
-    borderRadius: 20,
-    paddingVertical: 22,
-    paddingHorizontal: 48,
-    alignItems: 'center',
-    gap: 4,
-    shadowColor: COLORS.sos,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 20,
-    elevation: 12,
-  },
-  emergencyIcon: { fontSize: 32 },
-  emergencyText: { color: '#fff', fontSize: 18, fontWeight: '900', letterSpacing: 2 },
-  emergencyNumber: { color: '#fff', fontSize: 28, fontWeight: '900', marginTop: 4 },
+  coverageTagText: { fontSize: 10, color: COLORS.accent, fontWeight: '700' },
   legalNote: {
     fontSize: 11,
     color: COLORS.textMuted,

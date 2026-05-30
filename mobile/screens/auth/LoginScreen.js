@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,9 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import useAuthStore from '../../store/authStore';
+import EasywayLogo from '../../components/EasywayLogo';
 
 const COLORS = {
   background: '#0A0A0F',
@@ -24,12 +26,46 @@ const COLORS = {
   error: '#E74C3C',
 };
 
+const COUNTRY_CODES = [
+  { flag: '🇹🇳', code: '+216' },
+  { flag: '🇩🇿', code: '+213' },
+  { flag: '🇲🇦', code: '+212' },
+  { flag: '🇫🇷', code: '+33' },
+  { flag: '🇸🇦', code: '+966' },
+];
+
 export default function LoginScreen({ navigation }) {
+  const [selectedCountry, setSelectedCountry] = useState(COUNTRY_CODES[0]);
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const { login, isLoading, error, clearError } = useAuthStore();
+
+  useEffect(() => {
+    AsyncStorage.getItem('savedCredentials').then((raw) => {
+      if (raw) {
+        try {
+          const { phone: savedPhone, password: savedPassword } = JSON.parse(raw);
+          if (savedPhone) setPhone(savedPhone);
+          if (savedPassword) setPassword(savedPassword);
+          setRememberMe(true);
+        } catch (_) {}
+      }
+    });
+  }, []);
+
+  const handleCountryPicker = () => {
+    Alert.alert(
+      'Sélectionner le pays',
+      '',
+      COUNTRY_CODES.map((c) => ({
+        text: `${c.flag}  ${c.code}`,
+        onPress: () => setSelectedCountry(c),
+      })).concat([{ text: 'Annuler', style: 'cancel' }])
+    );
+  };
 
   const handleLogin = async () => {
     if (!phone.trim() || !password.trim()) {
@@ -38,9 +74,18 @@ export default function LoginScreen({ navigation }) {
     }
 
     clearError();
-    const result = await login(phone.trim(), password);
+    const fullPhone = `${selectedCountry.code}${phone.trim()}`;
+    const result = await login(fullPhone, password);
 
     if (result.success) {
+      if (rememberMe) {
+        await AsyncStorage.setItem(
+          'savedCredentials',
+          JSON.stringify({ phone: phone.trim(), password })
+        );
+      } else {
+        await AsyncStorage.removeItem('savedCredentials');
+      }
       // Navigation handled by App.js based on isAuthenticated state
     } else {
       Alert.alert('Connexion échouée', result.error || 'Identifiants incorrects');
@@ -54,11 +99,9 @@ export default function LoginScreen({ navigation }) {
         style={styles.keyboardView}
       >
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-          {/* Logo / Brand */}
+          {/* Logo */}
           <View style={styles.brandContainer}>
-            <Text style={styles.brandEmoji}>🚗</Text>
-            <Text style={styles.brandName}>EASYWAY</Text>
-            <Text style={styles.brandTagline}>Votre partenaire de mobilité</Text>
+            <EasywayLogo size={100} showTagline={true} />
           </View>
 
           {/* Form */}
@@ -73,16 +116,23 @@ export default function LoginScreen({ navigation }) {
 
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Numéro de téléphone</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="+216 XX XXX XXX"
-                placeholderTextColor={COLORS.textMuted}
-                value={phone}
-                onChangeText={setPhone}
-                keyboardType="phone-pad"
-                autoCapitalize="none"
-                editable={!isLoading}
-              />
+              <View style={styles.phoneRow}>
+                <TouchableOpacity style={styles.countryPicker} onPress={handleCountryPicker}>
+                  <Text style={styles.countryFlag}>{selectedCountry.flag}</Text>
+                  <Text style={styles.countryCode}>{selectedCountry.code}</Text>
+                  <Text style={styles.countryChevron}>▼</Text>
+                </TouchableOpacity>
+                <TextInput
+                  style={styles.phoneInput}
+                  placeholder="XX XXX XXX"
+                  placeholderTextColor={COLORS.textMuted}
+                  value={phone}
+                  onChangeText={setPhone}
+                  keyboardType="phone-pad"
+                  autoCapitalize="none"
+                  editable={!isLoading}
+                />
+              </View>
             </View>
 
             <View style={styles.inputGroup}>
@@ -105,6 +155,26 @@ export default function LoginScreen({ navigation }) {
                 </TouchableOpacity>
               </View>
             </View>
+
+            {/* Forgot password */}
+            <TouchableOpacity
+              style={styles.forgotContainer}
+              onPress={() => navigation.navigate('ForgotPassword')}
+            >
+              <Text style={styles.forgotText}>Mot de passe oublié ?</Text>
+            </TouchableOpacity>
+
+            {/* Remember me */}
+            <TouchableOpacity
+              style={styles.rememberRow}
+              onPress={() => setRememberMe(!rememberMe)}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
+                {rememberMe && <Text style={styles.checkmark}>✓</Text>}
+              </View>
+              <Text style={styles.rememberText}>Se souvenir de moi</Text>
+            </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
@@ -136,9 +206,6 @@ const styles = StyleSheet.create({
   keyboardView: { flex: 1 },
   scrollContent: { flexGrow: 1, justifyContent: 'center', padding: 24 },
   brandContainer: { alignItems: 'center', marginBottom: 40 },
-  brandEmoji: { fontSize: 60, marginBottom: 8 },
-  brandName: { fontSize: 36, fontWeight: '800', color: COLORS.primary, letterSpacing: 4 },
-  brandTagline: { fontSize: 14, color: COLORS.textMuted, marginTop: 4 },
   formContainer: {
     backgroundColor: COLORS.surface,
     borderRadius: 16,
@@ -165,10 +232,62 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
   },
+  phoneRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  countryPicker: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#252535',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    gap: 4,
+  },
+  countryFlag: { fontSize: 18 },
+  countryCode: { color: COLORS.text, fontSize: 14, fontWeight: '600' },
+  countryChevron: { color: COLORS.textMuted, fontSize: 9, marginLeft: 2 },
+  phoneInput: {
+    flex: 1,
+    backgroundColor: '#252535',
+    borderRadius: 10,
+    padding: 14,
+    color: COLORS.text,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
   passwordContainer: { position: 'relative' },
   passwordInput: { paddingRight: 50 },
   showPasswordBtn: { position: 'absolute', right: 14, top: 14 },
   showPasswordText: { fontSize: 18 },
+  forgotContainer: { alignItems: 'flex-end', marginBottom: 12 },
+  forgotText: { color: COLORS.primary, fontSize: 13, fontWeight: '500' },
+  rememberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 10,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: COLORS.border,
+    backgroundColor: '#252535',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxChecked: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primary,
+  },
+  checkmark: { color: '#0A0A0F', fontSize: 12, fontWeight: '800' },
+  rememberText: { color: COLORS.textMuted, fontSize: 14 },
   loginButton: {
     backgroundColor: COLORS.primary,
     borderRadius: 12,
