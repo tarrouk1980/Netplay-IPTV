@@ -42,11 +42,13 @@ export default function MerchantDashboardScreen({ navigation }) {
   const loadData = useCallback(async () => {
     try {
       const [profileRes, ordersData] = await Promise.all([
-        api.get('/merchants/me'),
+        api.get('/api/merchants/me').catch(() => ({ data: {} })),
         fetchMerchantOrders(),
       ]);
-      setIsOpen(profileRes.data.merchant.isOpen);
-      setOrders(ordersData);
+      setIsOpen(profileRes.data.merchant?.isOpen ?? false);
+      setOrders(ordersData || []);
+    } catch (err) {
+      console.warn('[MerchantDashboard] loadData error:', err?.response?.data || err.message);
     } finally {
       setLoading(false);
       setRefreshing(false);

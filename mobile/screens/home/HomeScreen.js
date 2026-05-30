@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import AdBanner from '../../components/AdBanner';
 import NotificationBadge from '../../components/NotificationBadge';
 import EasywayLogo from '../../components/EasywayLogo';
 import ServiceIcon from '../../components/ServiceIcon';
+import api from '../../services/api';
 
 const COLORS = {
   background: '#0A0A0F',
@@ -41,13 +42,40 @@ const PROMOS = [
   { id: 'p3', label: '💎 Pass VIP -50%', sub: 'Offre limitée', color: '#D32F2F' },
 ];
 
+const STATUS_LABELS = {
+  PENDING: 'En attente',
+  ACCEPTED: 'Acceptée',
+  IN_PROGRESS: 'En cours',
+  COMPLETED: 'Terminée',
+  CANCELLED: 'Annulée',
+};
+
+const STATUS_COLORS = {
+  PENDING: '#F39C12',
+  ACCEPTED: '#3498DB',
+  IN_PROGRESS: '#27AE60',
+  COMPLETED: '#8E8E9A',
+  CANCELLED: '#E74C3C',
+};
+
 export default function HomeScreen({ navigation }) {
   const { user } = useAuthStore();
   const { subscription, fetchSubscription } = usePassStore();
   const { unreadCount } = useNotificationStore();
+  const [recentActivity, setRecentActivity] = useState([]);
+
+  const fetchActivity = useCallback(async () => {
+    try {
+      const res = await api.get('/api/users/me/activity');
+      setRecentActivity(res.data.activity || []);
+    } catch {
+      // silently ignore
+    }
+  }, []);
 
   useEffect(() => {
     fetchSubscription();
+    fetchActivity();
 
     const PROVIDER_ROLES = ['CHAUFFEUR', 'LIVREUR', 'DEPANNEUR', 'MARCHAND'];
 
@@ -150,14 +178,35 @@ export default function HomeScreen({ navigation }) {
           ))}
         </ScrollView>
 
-        {/* Recent activity placeholder */}
+        {/* Activité récente */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Activité récente</Text>
         </View>
-        <View style={styles.emptyActivity}>
-          <Text style={styles.emptyEmoji}>📋</Text>
-          <Text style={styles.emptyText}>Aucune activité récente</Text>
-        </View>
+        {recentActivity.length === 0 ? (
+          <View style={styles.emptyActivity}>
+            <Text style={styles.emptyEmoji}>📋</Text>
+            <Text style={styles.emptyText}>Aucune activité récente</Text>
+          </View>
+        ) : (
+          <View style={styles.activityList}>
+            {recentActivity.map((item) => (
+              <View key={item.id} style={styles.activityRow}>
+                <Text style={styles.activityEmoji}>{item.emoji}</Text>
+                <View style={styles.activityInfo}>
+                  <Text style={styles.activityLabel}>{item.label}</Text>
+                  <Text style={styles.activityDate}>
+                    {new Date(item.createdAt).toLocaleDateString('fr-TN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                  </Text>
+                </View>
+                <View style={[styles.activityStatusBadge, { backgroundColor: STATUS_COLORS[item.status] + '22', borderColor: STATUS_COLORS[item.status] }]}>
+                  <Text style={[styles.activityStatusText, { color: STATUS_COLORS[item.status] }]}>
+                    {STATUS_LABELS[item.status] || item.status}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -218,4 +267,19 @@ const styles = StyleSheet.create({
   },
   emptyEmoji: { fontSize: 40, marginBottom: 8 },
   emptyText: { color: COLORS.textMuted, fontSize: 14 },
+  activityList: { marginHorizontal: 16, marginBottom: 24, borderRadius: 16, overflow: 'hidden', backgroundColor: COLORS.surface },
+  activityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2A2A3A',
+  },
+  activityEmoji: { fontSize: 22, marginRight: 12 },
+  activityInfo: { flex: 1 },
+  activityLabel: { color: COLORS.text, fontSize: 14, fontWeight: '600' },
+  activityDate: { color: COLORS.textMuted, fontSize: 11, marginTop: 2 },
+  activityStatusBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, borderWidth: 1 },
+  activityStatusText: { fontSize: 11, fontWeight: '700' },
 });

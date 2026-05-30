@@ -105,4 +105,41 @@ router.post(
   }
 );
 
+// GET /api/users/me/activity — 5 dernières commandes du CLIENT tous services confondus
+router.get('/me/activity', authenticate, async (req, res) => {
+  const SERVICE_META = {
+    TAXI: { label: 'EasyTaxy', emoji: '🚕' },
+    SOS: { label: 'SOS Remorquage', emoji: '🚛' },
+    DELIVERY: { label: 'Livraison', emoji: '🛵' },
+    GROCERY: { label: 'Courses', emoji: '🛒' },
+  };
+
+  try {
+    const orders = await prisma.order.findMany({
+      where: { clientId: req.user.id },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+      select: { id: true, serviceType: true, status: true, price: true, finalPrice: true, createdAt: true },
+    });
+
+    const activity = orders.map((o) => {
+      const meta = SERVICE_META[o.serviceType] || { label: o.serviceType, emoji: '📦' };
+      return {
+        id: o.id,
+        type: o.serviceType,
+        label: meta.label,
+        emoji: meta.emoji,
+        status: o.status,
+        price: o.finalPrice ?? o.price,
+        createdAt: o.createdAt,
+      };
+    });
+
+    return res.json({ activity });
+  } catch (err) {
+    console.error('[Users/Activity]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
 module.exports = router;
