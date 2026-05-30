@@ -15,6 +15,9 @@
       },
       "env": {
         "EXPO_NO_DOCTOR": "1"
+      },
+      "cache": {
+        "disabled": true
       }
     },
     "production": {
