@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   StatusBar,
+  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import useAuthStore from '../../store/authStore';
@@ -46,11 +47,10 @@ export default function HomeScreen({ navigation }) {
   };
 
   const handleServicePress = (serviceKey) => {
-    if (serviceKey === 'TAXI') {
-      navigation.navigate('TaxiHome');
-      return;
-    }
-    navigation.navigate('ServiceDetail', { serviceType: serviceKey });
+    if (serviceKey === 'TAXI') navigation.navigate('TaxiHome');
+    else if (serviceKey === 'SOS') navigation.navigate('SOSHome');
+    else if (serviceKey === 'DELIVERY') navigation.navigate('DeliveryHome');
+    else if (serviceKey === 'GROCERY') navigation.navigate('GroceryHome');
   };
 
   return (
@@ -63,10 +63,15 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.greeting}>{getGreeting()},</Text>
             <Text style={styles.userName}>{user?.name || 'Utilisateur'} 👋</Text>
           </View>
-          <NotificationBadge
-            unreadCount={unreadCount}
-            onPress={() => navigation.navigate('Notifications')}
-          />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <NotificationBadge
+              unreadCount={unreadCount}
+              onPress={() => navigation.navigate('Notifications')}
+            />
+            <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+              <Text style={{ fontSize: 28 }}>👤</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Pass Status */}

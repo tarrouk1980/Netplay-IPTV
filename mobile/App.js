@@ -21,6 +21,37 @@ import ProfileScreen from './screens/profile/ProfileScreen';
 import KYCScreen from './screens/profile/KYCScreen';
 import NotificationsScreen from './screens/notifications/NotificationsScreen';
 
+// Taxi Screens
+import TaxiHomeScreen from './screens/taxi/TaxiHomeScreen';
+import TaxiRequestScreen from './screens/taxi/TaxiRequestScreen';
+import TaxiTrackingScreen from './screens/taxi/TaxiTrackingScreen';
+import DriverDashboardScreen from './screens/taxi/DriverDashboardScreen';
+
+// SOS Screens
+import SOSHomeScreen from './screens/sos/SOSHomeScreen';
+import SOSRequestScreen from './screens/sos/SOSRequestScreen';
+import SOSTrackingScreen from './screens/sos/SOSTrackingScreen';
+import DepanneurDashboardScreen from './screens/sos/DepanneurDashboardScreen';
+
+// Delivery Screens
+import DeliveryHomeScreen from './screens/delivery/DeliveryHomeScreen';
+import MerchantScreen from './screens/delivery/MerchantScreen';
+import DeliveryTrackingScreen from './screens/delivery/DeliveryTrackingScreen';
+import LivreurDashboardScreen from './screens/delivery/LivreurDashboardScreen';
+import MerchantDashboardScreen from './screens/delivery/MerchantDashboardScreen';
+
+// Grocery Screens
+import GroceryHomeScreen from './screens/grocery/GroceryHomeScreen';
+import GroceryCartScreen from './screens/grocery/GroceryCartScreen';
+import GroceryTrackingScreen from './screens/grocery/GroceryTrackingScreen';
+
+// Admin Screens
+import AdminDashboardScreen from './screens/admin/AdminDashboardScreen';
+import AdminUsersScreen from './screens/admin/AdminUsersScreen';
+import AdminOrdersScreen from './screens/admin/AdminOrdersScreen';
+import AdminKYCScreen from './screens/admin/AdminKYCScreen';
+import AdminReportsScreen from './screens/admin/AdminReportsScreen';
+
 const Stack = createNativeStackNavigator();
 
 // Configure notification behavior
@@ -67,11 +98,38 @@ function MainStack() {
         component={KYCScreen}
         options={{ title: 'Vérification KYC' }}
       />
-      <Stack.Screen
-        name="Notifications"
-        component={NotificationsScreen}
-        options={{ title: 'Notifications', headerShown: false }}
-      />
+      <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ title: 'Notifications', headerShown: false }} />
+
+      {/* Taxi */}
+      <Stack.Screen name="TaxiHome" component={TaxiHomeScreen} options={{ title: 'Taxi' }} />
+      <Stack.Screen name="TaxiRequest" component={TaxiRequestScreen} options={{ title: 'Commander un taxi' }} />
+      <Stack.Screen name="TaxiTracking" component={TaxiTrackingScreen} options={{ title: 'Suivi course', headerShown: false }} />
+      <Stack.Screen name="DriverDashboard" component={DriverDashboardScreen} options={{ title: 'Tableau de bord', headerShown: false }} />
+
+      {/* SOS */}
+      <Stack.Screen name="SOSHome" component={SOSHomeScreen} options={{ title: 'SOS Remorquage', headerShown: false }} />
+      <Stack.Screen name="SOSRequest" component={SOSRequestScreen} options={{ title: 'Demande SOS' }} />
+      <Stack.Screen name="SOSTracking" component={SOSTrackingScreen} options={{ title: 'Suivi SOS', headerShown: false }} />
+      <Stack.Screen name="DepanneurDashboard" component={DepanneurDashboardScreen} options={{ title: 'Tableau de bord', headerShown: false }} />
+
+      {/* Delivery */}
+      <Stack.Screen name="DeliveryHome" component={DeliveryHomeScreen} options={{ title: 'Delivery', headerShown: false }} />
+      <Stack.Screen name="Merchant" component={MerchantScreen} options={{ title: 'Commande' }} />
+      <Stack.Screen name="DeliveryTracking" component={DeliveryTrackingScreen} options={{ title: 'Suivi livraison', headerShown: false }} />
+      <Stack.Screen name="LivreurDashboard" component={LivreurDashboardScreen} options={{ title: 'Tableau de bord', headerShown: false }} />
+      <Stack.Screen name="MerchantDashboard" component={MerchantDashboardScreen} options={{ title: 'Ma boutique', headerShown: false }} />
+
+      {/* Grocery */}
+      <Stack.Screen name="GroceryHome" component={GroceryHomeScreen} options={{ title: 'Courses', headerShown: false }} />
+      <Stack.Screen name="GroceryCart" component={GroceryCartScreen} options={{ title: 'Mon panier' }} />
+      <Stack.Screen name="GroceryTracking" component={GroceryTrackingScreen} options={{ title: 'Suivi courses', headerShown: false }} />
+
+      {/* Admin */}
+      <Stack.Screen name="AdminDashboard" component={AdminDashboardScreen} options={{ title: 'Administration', headerShown: false }} />
+      <Stack.Screen name="AdminUsers" component={AdminUsersScreen} options={{ title: 'Utilisateurs' }} />
+      <Stack.Screen name="AdminOrders" component={AdminOrdersScreen} options={{ title: 'Commandes' }} />
+      <Stack.Screen name="AdminKYC" component={AdminKYCScreen} options={{ title: 'KYC' }} />
+      <Stack.Screen name="AdminReports" component={AdminReportsScreen} options={{ title: 'Rapports' }} />
     </Stack.Navigator>
   );
 }
