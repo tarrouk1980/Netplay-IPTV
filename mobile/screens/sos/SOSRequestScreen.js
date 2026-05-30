@@ -9,23 +9,20 @@ import {
   ActivityIndicator,
   Alert,
   StatusBar,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import useSosStore from '../../store/sosStore';
-import { estimateSOSPrice } from '../../utils/sosPricing';
-import StaticMap from '../../components/StaticMap';
 
 const COLORS = {
   background: '#0A0A0F',
   surface: '#1C1C28',
-  sos: '#E74C3C',
+  accent: '#F5A623',
   text: '#FFFFFF',
   textMuted: '#8E8E9A',
   border: '#2C2C3E',
   green: '#27AE60',
-  blue: '#2980B9',
-  checked: '#E74C3C',
 };
 
 const STEPS = ['État du véhicule', 'Infos véhicule', 'Confirmation'];
@@ -35,9 +32,45 @@ const VEHICLE_CHECKS = [
   { key: 'accident', label: 'Accident survenu', icon: '💥' },
   { key: 'battery', label: 'Batterie à plat', icon: '🔋' },
   { key: 'fuel', label: 'Manque de carburant', icon: '⛽' },
+  { key: 'flatTire', label: 'Pneu crevé', icon: '🔴' },
   { key: 'keysLocked', label: 'Clés enfermées', icon: '🔒' },
   { key: 'automatic', label: 'Boîte automatique', icon: '⚙️' },
 ];
+
+const BRANDS = ['Volkswagen','Renault','Peugeot','Citroën','Ford','Toyota','Hyundai','Kia','Seat','Skoda','BMW','Mercedes','Audi','Fiat','Dacia','Autre'];
+const MODELS = ['Golf','Polo','Clio','208','C3','Fiesta','Yaris','i20','Picanto','Ibiza','Autre'];
+const YEARS = Array.from({ length: 26 }, (_, i) => String(2025 - i));
+const CAR_COLORS = ['Blanc','Noir','Gris','Argent','Rouge','Bleu','Vert','Beige','Marron','Jaune','Orange','Autre'];
+
+function PickerModal({ visible, title, options, onSelect, onClose }) {
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <TouchableOpacity style={modalStyles.overlay} activeOpacity={1} onPress={onClose}>
+        <View style={modalStyles.sheet}>
+          <View style={modalStyles.handle} />
+          <Text style={modalStyles.title}>{title}</Text>
+          <ScrollView showsVerticalScrollIndicator={false} style={modalStyles.scroll}>
+            {options.map((opt) => (
+              <TouchableOpacity key={opt} style={modalStyles.option} onPress={() => { onSelect(opt); onClose(); }}>
+                <Text style={modalStyles.optionText}>{opt}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
+}
+
+const modalStyles = StyleSheet.create({
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
+  sheet: { backgroundColor: '#1C1C28', borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: 32, maxHeight: '70%' },
+  handle: { width: 40, height: 4, backgroundColor: '#444', borderRadius: 2, alignSelf: 'center', marginTop: 12, marginBottom: 8 },
+  title: { fontSize: 14, color: '#8E8E9A', textTransform: 'uppercase', letterSpacing: 1, fontWeight: '700', paddingHorizontal: 20, paddingBottom: 8 },
+  scroll: { paddingHorizontal: 20 },
+  option: { paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#2C2C3E' },
+  optionText: { fontSize: 16, color: '#FFFFFF', fontWeight: '500' },
+});
 
 export default function SOSRequestScreen({ route, navigation }) {
   const { mode, contract } = route.params || {};
@@ -49,6 +82,7 @@ export default function SOSRequestScreen({ route, navigation }) {
     accident: false,
     battery: false,
     fuel: false,
+    flatTire: false,
     keysLocked: false,
     automatic: false,
   });
@@ -61,15 +95,11 @@ export default function SOSRequestScreen({ route, navigation }) {
   });
   const [location, setLocation] = useState(null);
   const [locating, setLocating] = useState(false);
-  const [priceEstimate, setPriceEstimate] = useState(null);
+  const [pickerModal, setPickerModal] = useState({ visible: false, field: '', title: '', options: [] });
 
   useEffect(() => {
     if (step === 2) {
       fetchLocation();
-      if (mode === 'INDEPENDENT') {
-        const est = estimateSOSPrice(5, vehicleState, new Date());
-        setPriceEstimate(est);
-      }
     }
   }, [step]);
 
@@ -94,6 +124,23 @@ export default function SOSRequestScreen({ route, navigation }) {
     setVehicleState((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const openPicker = (field, title, options) => {
+    setPickerModal({ visible: true, field, title, options });
+  };
+
+  const closePicker = () => {
+    setPickerModal((p) => ({ ...p, visible: false }));
+  };
+
+  const handlePickerSelect = (value) => {
+    const field = pickerModal.field;
+    setVehicleInfo((prev) => {
+      const next = { ...prev, [field]: value };
+      if (field === 'brand') next.model = '';
+      return next;
+    });
+  };
+
   const handleNext = () => {
     if (step === 1) {
       if (!vehicleInfo.brand.trim() || !vehicleInfo.licensePlate.trim()) {
@@ -109,12 +156,30 @@ export default function SOSRequestScreen({ route, navigation }) {
     else setStep((s) => s - 1);
   };
 
-  const handleSendSOS = async () => {
+  const handleSubmit = async (submitMode) => {
     if (!location) {
       Alert.alert('Position requise', 'Impossible d\'envoyer le SOS sans position GPS.');
       return;
     }
 
+    if (submitMode === 'SCHEDULED') {
+      Alert.alert(
+        'Réserver un dépanneur',
+        'Choisissez un créneau',
+        [
+          { text: 'Dans 1h', onPress: () => sendSOS(submitMode, '1h') },
+          { text: 'Dans 2h', onPress: () => sendSOS(submitMode, '2h') },
+          { text: 'Choisir une date', onPress: () => sendSOS(submitMode, 'custom') },
+          { text: 'Annuler', style: 'cancel' },
+        ]
+      );
+      return;
+    }
+
+    await sendSOS(submitMode);
+  };
+
+  const sendSOS = async (submitMode, slot) => {
     try {
       const data = {
         lat: location.lat,
@@ -125,6 +190,8 @@ export default function SOSRequestScreen({ route, navigation }) {
           year: vehicleInfo.year ? parseInt(vehicleInfo.year) : null,
         },
         mode,
+        submitMode,
+        slot: slot || null,
         insuranceContractId: contract?.id || undefined,
       };
       const result = await requestSOS(data);
@@ -137,6 +204,14 @@ export default function SOSRequestScreen({ route, navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
+
+      <PickerModal
+        visible={pickerModal.visible}
+        title={pickerModal.title}
+        options={pickerModal.options}
+        onSelect={handlePickerSelect}
+        onClose={closePicker}
+      />
 
       {/* Header */}
       <View style={styles.header}>
@@ -192,26 +267,94 @@ export default function SOSRequestScreen({ route, navigation }) {
         {step === 1 && (
           <View>
             <Text style={styles.sectionTitle}>Informations sur votre véhicule</Text>
-            {[
-              { key: 'brand', label: 'Marque *', placeholder: 'Ex: Volkswagen' },
-              { key: 'model', label: 'Modèle *', placeholder: 'Ex: Golf' },
-              { key: 'year', label: 'Année', placeholder: 'Ex: 2019', keyboard: 'numeric' },
-              { key: 'licensePlate', label: 'Plaque d\'immatriculation *', placeholder: 'Ex: 123 TUN 4567' },
-              { key: 'color', label: 'Couleur', placeholder: 'Ex: Blanc' },
-            ].map(({ key, label, placeholder, keyboard }) => (
-              <View key={key} style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>{label}</Text>
+
+            {/* Marque */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Marque *</Text>
+              <TouchableOpacity
+                style={styles.pickerButton}
+                onPress={() => openPicker('brand', 'Marque', BRANDS)}
+              >
+                <Text style={[styles.pickerButtonText, !vehicleInfo.brand && styles.pickerPlaceholder]}>
+                  {vehicleInfo.brand || 'Sélectionner la marque'}
+                </Text>
+                <Text style={styles.pickerChevron}>›</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Modèle */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Modèle</Text>
+              {vehicleInfo.brand === 'Autre' ? (
                 <TextInput
                   style={styles.input}
-                  value={vehicleInfo[key]}
-                  onChangeText={(v) => setVehicleInfo((prev) => ({ ...prev, [key]: v }))}
-                  placeholder={placeholder}
+                  value={vehicleInfo.model}
+                  onChangeText={(v) => setVehicleInfo((prev) => ({ ...prev, model: v }))}
+                  placeholder="Ex: Golf"
                   placeholderTextColor={COLORS.textMuted}
-                  keyboardType={keyboard || 'default'}
+                  autoCapitalize="words"
+                />
+              ) : (
+                <TouchableOpacity
+                  style={styles.pickerButton}
+                  onPress={() => openPicker('model', 'Modèle', MODELS)}
+                >
+                  <Text style={[styles.pickerButtonText, !vehicleInfo.model && styles.pickerPlaceholder]}>
+                    {vehicleInfo.model || 'Sélectionner le modèle'}
+                  </Text>
+                  <Text style={styles.pickerChevron}>›</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Année */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Année</Text>
+              <TouchableOpacity
+                style={styles.pickerButton}
+                onPress={() => openPicker('year', 'Année', YEARS)}
+              >
+                <Text style={[styles.pickerButtonText, !vehicleInfo.year && styles.pickerPlaceholder]}>
+                  {vehicleInfo.year || "Sélectionner l'année"}
+                </Text>
+                <Text style={styles.pickerChevron}>›</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Plaque d'immatriculation */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Plaque d'immatriculation *</Text>
+              <View style={styles.plateRow}>
+                <TextInput
+                  style={[styles.input, { flex: 1 }]}
+                  value={vehicleInfo.licensePlate}
+                  onChangeText={(v) => setVehicleInfo((prev) => ({ ...prev, licensePlate: v }))}
+                  placeholder="Ex: 123 TUN 4567"
+                  placeholderTextColor={COLORS.textMuted}
                   autoCapitalize="characters"
                 />
+                <TouchableOpacity
+                  style={styles.photoButton}
+                  onPress={() => Alert.alert('📷 OCR', 'Fonctionnalité OCR bientôt disponible')}
+                >
+                  <Text style={styles.photoButtonText}>📷 Photo</Text>
+                </TouchableOpacity>
               </View>
-            ))}
+            </View>
+
+            {/* Couleur */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Couleur</Text>
+              <TouchableOpacity
+                style={styles.pickerButton}
+                onPress={() => openPicker('color', 'Couleur', CAR_COLORS)}
+              >
+                <Text style={[styles.pickerButtonText, !vehicleInfo.color && styles.pickerPlaceholder]}>
+                  {vehicleInfo.color || 'Sélectionner la couleur'}
+                </Text>
+                <Text style={styles.pickerChevron}>›</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
 
@@ -220,16 +363,11 @@ export default function SOSRequestScreen({ route, navigation }) {
           <View>
             <Text style={styles.sectionTitle}>Confirmation</Text>
 
-            {/* Static map */}
-            <View style={{ alignItems: 'center', marginBottom: 14 }}>
-              <StaticMap lat={location?.coords?.latitude ?? location?.lat} lng={location?.coords?.longitude ?? location?.lng} width={340} height={180} />
-            </View>
-
             {/* GPS */}
             <View style={styles.infoCard}>
               <Text style={styles.infoCardTitle}>📍 Votre position</Text>
               {locating ? (
-                <ActivityIndicator color={COLORS.sos} style={{ marginTop: 8 }} />
+                <ActivityIndicator color={COLORS.accent} style={{ marginTop: 8 }} />
               ) : location ? (
                 <Text style={styles.infoCardValue}>
                   {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
@@ -253,7 +391,7 @@ export default function SOSRequestScreen({ route, navigation }) {
             {/* Insurance coverage */}
             {mode === 'INSURANCE' && contract && (
               <View style={[styles.infoCard, { borderColor: COLORS.green }]}>
-                <Text style={[styles.infoCardTitle, { color: COLORS.green }]}>🔒 Couverture assurance</Text>
+                <Text style={[styles.infoCardTitle, { color: COLORS.green }]}>🛡️ Couverture assurance</Text>
                 <Text style={styles.infoCardValue}>Contrat N° {contract.contractNumber}</Text>
                 <View style={styles.coverageTags}>
                   {contract.coverageTypes.map((c) => (
@@ -262,20 +400,6 @@ export default function SOSRequestScreen({ route, navigation }) {
                     </View>
                   ))}
                 </View>
-              </View>
-            )}
-
-            {/* Price estimate (independent mode) */}
-            {mode === 'INDEPENDENT' && priceEstimate && (
-              <View style={[styles.infoCard, { borderColor: COLORS.sos }]}>
-                <Text style={[styles.infoCardTitle, { color: COLORS.sos }]}>💰 Estimation du prix</Text>
-                <Text style={styles.priceEstimate}>{priceEstimate.total.toFixed(3)} TND</Text>
-                <Text style={styles.infoCardSub}>Estimation basée sur 5 km — devis précis du dépanneur</Text>
-                {priceEstimate.surcharges && Object.keys(priceEstimate.surcharges).length > 0 && (
-                  <Text style={styles.surchargeNote}>
-                    Majorations appliquées : {Object.keys(priceEstimate.surcharges).join(', ')}
-                  </Text>
-                )}
               </View>
             )}
           </View>
@@ -289,21 +413,33 @@ export default function SOSRequestScreen({ route, navigation }) {
             <Text style={styles.nextButtonText}>Suivant →</Text>
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity
-            style={[styles.sosButton, (!location || isSearching) && styles.sosButtonDisabled]}
-            onPress={handleSendSOS}
-            activeOpacity={0.85}
-            disabled={!location || isSearching}
-          >
-            {isSearching ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <>
-                <Text style={styles.sosButtonIcon}>🚨</Text>
-                <Text style={styles.sosButtonText}>Envoyer SOS</Text>
-              </>
-            )}
-          </TouchableOpacity>
+          <View style={styles.submitButtons}>
+            <TouchableOpacity
+              style={[styles.urgentButton, (!location || isSearching) && styles.buttonDisabled]}
+              onPress={() => handleSubmit('URGENT')}
+              activeOpacity={0.85}
+              disabled={!location || isSearching}
+            >
+              {isSearching ? (
+                <ActivityIndicator color="#000" />
+              ) : (
+                <>
+                  <Text style={styles.urgentButtonIcon}>🚨</Text>
+                  <Text style={styles.urgentButtonText}>Dépanneur urgent</Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.scheduledButton, (!location || isSearching) && styles.buttonDisabled]}
+              onPress={() => handleSubmit('SCHEDULED')}
+              activeOpacity={0.85}
+              disabled={!location || isSearching}
+            >
+              <Text style={styles.scheduledButtonIcon}>📅</Text>
+              <Text style={styles.scheduledButtonText}>Réserver un dépanneur</Text>
+            </TouchableOpacity>
+          </View>
         )}
       </View>
     </SafeAreaView>
@@ -321,8 +457,8 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.border,
   },
   backButton: { padding: 4 },
-  backArrow: { fontSize: 32, color: COLORS.sos, lineHeight: 32, marginTop: -4 },
-  headerTitle: { flex: 1, textAlign: 'center', fontSize: 18, fontWeight: '800', color: COLORS.sos },
+  backArrow: { fontSize: 32, color: COLORS.accent, lineHeight: 32, marginTop: -4 },
+  headerTitle: { flex: 1, textAlign: 'center', fontSize: 18, fontWeight: '800', color: COLORS.accent },
   headerSpacer: { width: 32 },
   stepper: {
     flexDirection: 'row',
@@ -341,13 +477,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  stepDotActive: { borderColor: COLORS.sos, backgroundColor: COLORS.sos },
+  stepDotActive: { borderColor: COLORS.accent, backgroundColor: COLORS.accent },
   stepDotText: { fontSize: 11, fontWeight: '700', color: COLORS.textMuted },
-  stepDotTextActive: { color: '#fff' },
+  stepDotTextActive: { color: '#000' },
   stepLabel: { fontSize: 9, color: COLORS.textMuted, marginTop: 4, textAlign: 'center', maxWidth: 60 },
-  stepLabelActive: { color: COLORS.sos },
+  stepLabelActive: { color: COLORS.accent },
   stepLine: { flex: 1, height: 2, backgroundColor: COLORS.border, marginBottom: 16 },
-  stepLineActive: { backgroundColor: COLORS.sos },
+  stepLineActive: { backgroundColor: COLORS.accent },
   scroll: { flex: 1 },
   scrollContent: { padding: 20, paddingBottom: 40 },
   sectionTitle: {
@@ -369,10 +505,10 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     gap: 12,
   },
-  checkRowActive: { borderColor: COLORS.sos },
+  checkRowActive: { borderColor: COLORS.accent },
   checkIcon: { fontSize: 22, width: 30, textAlign: 'center' },
   checkLabel: { flex: 1, fontSize: 14, color: COLORS.text },
-  checkLabelActive: { color: COLORS.sos, fontWeight: '600' },
+  checkLabelActive: { color: COLORS.accent, fontWeight: '600' },
   checkbox: {
     width: 24,
     height: 24,
@@ -382,8 +518,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkboxChecked: { backgroundColor: COLORS.sos, borderColor: COLORS.sos },
-  checkmark: { color: '#fff', fontWeight: '800', fontSize: 13 },
+  checkboxChecked: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
+  checkmark: { color: '#000', fontWeight: '800', fontSize: 13 },
   inputGroup: { marginBottom: 14 },
   inputLabel: { fontSize: 12, color: COLORS.textMuted, marginBottom: 6, fontWeight: '600' },
   input: {
@@ -396,6 +532,30 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
   },
+  pickerButton: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  pickerButtonText: { fontSize: 14, color: COLORS.text, flex: 1 },
+  pickerPlaceholder: { color: COLORS.textMuted },
+  pickerChevron: { fontSize: 22, color: COLORS.textMuted, marginLeft: 8 },
+  plateRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
+  photoButton: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 13,
+    borderWidth: 1,
+    borderColor: COLORS.accent,
+  },
+  photoButtonText: { fontSize: 13, color: COLORS.accent, fontWeight: '600' },
   infoCard: {
     backgroundColor: COLORS.surface,
     borderRadius: 14,
@@ -407,8 +567,6 @@ const styles = StyleSheet.create({
   infoCardTitle: { fontSize: 12, color: COLORS.textMuted, fontWeight: '700', marginBottom: 8, textTransform: 'uppercase' },
   infoCardValue: { fontSize: 15, color: COLORS.text, fontWeight: '600' },
   infoCardSub: { fontSize: 12, color: COLORS.textMuted, marginTop: 4 },
-  priceEstimate: { fontSize: 28, fontWeight: '900', color: COLORS.sos, marginBottom: 4 },
-  surchargeNote: { fontSize: 11, color: COLORS.textMuted, marginTop: 6 },
   coverageTags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
   coverageTag: {
     backgroundColor: COLORS.green + '22',
@@ -421,40 +579,52 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingVertical: 8,
     paddingHorizontal: 16,
-    backgroundColor: COLORS.sos + '22',
+    backgroundColor: COLORS.accent + '22',
     borderRadius: 8,
     alignSelf: 'flex-start',
   },
-  retryGpsText: { color: COLORS.sos, fontWeight: '600', fontSize: 13 },
+  retryGpsText: { color: COLORS.accent, fontWeight: '600', fontSize: 13 },
   bottomBar: {
     padding: 16,
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
   },
   nextButton: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.accent,
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: COLORS.sos,
   },
-  nextButtonText: { color: COLORS.sos, fontSize: 16, fontWeight: '700' },
-  sosButton: {
-    backgroundColor: COLORS.sos,
+  nextButtonText: { color: '#000', fontSize: 16, fontWeight: '700' },
+  submitButtons: { gap: 12 },
+  urgentButton: {
+    backgroundColor: COLORS.accent,
     borderRadius: 14,
-    paddingVertical: 18,
+    paddingVertical: 16,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 10,
-    shadowColor: COLORS.sos,
+    shadowColor: COLORS.accent,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 6,
   },
-  sosButtonDisabled: { opacity: 0.5 },
-  sosButtonIcon: { fontSize: 20 },
-  sosButtonText: { color: '#fff', fontSize: 17, fontWeight: '900', letterSpacing: 1 },
+  urgentButtonIcon: { fontSize: 20 },
+  urgentButtonText: { color: '#000', fontSize: 16, fontWeight: '900', letterSpacing: 0.5 },
+  scheduledButton: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
+    borderWidth: 1.5,
+    borderColor: COLORS.accent,
+  },
+  scheduledButtonIcon: { fontSize: 20 },
+  scheduledButtonText: { color: COLORS.accent, fontSize: 16, fontWeight: '700' },
+  buttonDisabled: { opacity: 0.5 },
 });
