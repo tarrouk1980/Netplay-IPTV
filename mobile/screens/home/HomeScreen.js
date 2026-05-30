@@ -37,7 +37,13 @@ export default function HomeScreen({ navigation }) {
 
   useEffect(() => {
     fetchSubscription();
-  }, []);
+    // Rediriger les prestataires vers leur dashboard
+    if (user?.role === 'CHAUFFEUR') navigation.replace('DriverDashboard');
+    else if (user?.role === 'LIVREUR') navigation.replace('LivreurDashboard');
+    else if (user?.role === 'DEPANNEUR') navigation.replace('DepanneurDashboard');
+    else if (user?.role === 'MARCHAND') navigation.replace('MerchantDashboard');
+    else if (user?.role === 'ADMIN') navigation.replace('AdminDashboard');
+  }, [user?.role]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
