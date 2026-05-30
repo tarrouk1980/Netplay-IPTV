@@ -57,6 +57,8 @@ import AdminUsersScreen from './screens/admin/AdminUsersScreen';
 import AdminOrdersScreen from './screens/admin/AdminOrdersScreen';
 import AdminKYCScreen from './screens/admin/AdminKYCScreen';
 import AdminReportsScreen from './screens/admin/AdminReportsScreen';
+import AdminActivityScreen from './screens/admin/AdminActivityScreen';
+import AdminFraudScreen from './screens/admin/AdminFraudScreen';
 
 // Referral & Profile extras
 import ReferralScreen from './screens/profile/ReferralScreen';
@@ -153,6 +155,8 @@ function MainStack() {
       <Stack.Screen name="AdminOrders" component={AdminOrdersScreen} options={{ title: 'Commandes' }} />
       <Stack.Screen name="AdminKYC" component={AdminKYCScreen} options={{ title: 'KYC' }} />
       <Stack.Screen name="AdminReports" component={AdminReportsScreen} options={{ title: 'Rapports' }} />
+      <Stack.Screen name="AdminActivity" component={AdminActivityScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminFraud" component={AdminFraudScreen} options={{ headerShown: false }} />
 
       {/* KYC Pending */}
       <Stack.Screen name="KYCPending" component={KYCPendingScreen} options={{ headerShown: false }} />

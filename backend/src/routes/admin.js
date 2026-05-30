@@ -901,6 +901,101 @@ router.get('/reports/top-merchants', async (req, res) => {
   }
 });
 
+// GET /api/admin/activity — Chronologie temps réel de tous les événements
+router.get('/activity', authenticate, async (req, res) => {
+  const { page = 1, limit = 30, filter = 'ALL' } = req.query;
+  const skip = (parseInt(page) - 1) * parseInt(limit);
+
+  try {
+    const now = new Date();
+    const since30d = new Date(now - 30 * 24 * 60 * 60 * 1000);
+
+    // Commandes récentes
+    const orderWhere = { createdAt: { gte: since30d } };
+    if (filter === 'ORDERS') orderWhere.serviceType = { in: ['TAXI', 'SOS', 'DELIVERY', 'GROCERY'] };
+
+    const [recentOrders, recentUsers, recentSubscriptions] = await Promise.all([
+      (filter === 'ALL' || filter === 'ORDERS' || filter === 'FRAUD')
+        ? prisma.order.findMany({
+            where: orderWhere,
+            orderBy: { createdAt: 'desc' },
+            take: filter === 'FRAUD' ? 200 : parseInt(limit),
+            skip: filter === 'FRAUD' ? 0 : skip,
+            select: {
+              id: true, status: true, serviceType: true, price: true,
+              createdAt: true, completedAt: true,
+              client: { select: { name: true } },
+              provider: { select: { name: true } },
+            },
+          })
+        : Promise.resolve([]),
+      (filter === 'ALL' || filter === 'USERS')
+        ? prisma.user.findMany({
+            where: { createdAt: { gte: since30d } },
+            orderBy: { createdAt: 'desc' },
+            take: parseInt(limit),
+            skip,
+            select: { id: true, name: true, role: true, kycStatus: true, createdAt: true },
+          })
+        : Promise.resolve([]),
+      (filter === 'ALL' || filter === 'PASSES')
+        ? prisma.subscription.findMany({
+            where: { createdAt: { gte: since30d } },
+            orderBy: { createdAt: 'desc' },
+            take: parseInt(limit),
+            skip,
+            select: { id: true, planType: true, amount: true, status: true, createdAt: true, provider: { select: { name: true } } },
+          })
+        : Promise.resolve([]),
+    ]);
+
+    const events = [];
+
+    // Commandes → événements
+    for (const o of recentOrders) {
+      const isFraud = o.status === 'CANCELLED';
+      if (filter === 'FRAUD' && !isFraud) continue;
+      events.push({
+        id: `order_${o.id}_${o.status}`,
+        type: isFraud ? 'ORDER_CANCELLED' : o.status === 'COMPLETED' ? 'ORDER_COMPLETED' : o.status === 'ACCEPTED' ? 'ORDER_ACCEPTED' : 'ORDER_CREATED',
+        serviceType: o.serviceType,
+        description: `${o.client?.name || 'Client'} → ${o.provider?.name || 'Pas encore attribué'}`,
+        amount: o.price,
+        createdAt: o.completedAt || o.createdAt,
+      });
+    }
+
+    // Inscriptions → événements
+    for (const u of recentUsers) {
+      events.push({
+        id: `user_${u.id}`,
+        type: u.kycStatus === 'APPROVED' ? 'KYC_APPROVED' : u.kycStatus === 'PENDING' ? 'KYC_SUBMITTED' : 'USER_REGISTERED',
+        description: `${u.name} — ${u.role}`,
+        createdAt: u.createdAt,
+      });
+    }
+
+    // Abonnements → événements
+    for (const s of recentSubscriptions) {
+      events.push({
+        id: `sub_${s.id}`,
+        type: 'PASS_ACTIVATED',
+        description: `${s.provider?.name || 'Prestataire'} — Pass ${s.planType}`,
+        amount: s.amount,
+        createdAt: s.createdAt,
+      });
+    }
+
+    // Trier par date décroissante
+    events.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    return res.json({ events: events.slice(0, parseInt(limit)) });
+  } catch (err) {
+    console.error('[Admin/Activity]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
 // POST /api/admin/users/:id/ban — Bannir un utilisateur
 router.post('/users/:id/ban', authenticate, async (req, res) => {
   const { reason } = req.body;

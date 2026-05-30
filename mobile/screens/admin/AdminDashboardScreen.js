@@ -280,6 +280,16 @@ export default function AdminDashboardScreen({ navigation }) {
                 label="Rapports"
                 onPress={() => navigation.navigate('AdminReports')}
               />
+              <NavButton
+                emoji="🕐"
+                label="Chronologie"
+                onPress={() => navigation.navigate('AdminActivity')}
+              />
+              <NavButton
+                emoji="🚨"
+                label="Anti-fraude"
+                onPress={() => navigation.navigate('AdminFraud')}
+              />
             </View>
 
             {/* Revenue total */}
