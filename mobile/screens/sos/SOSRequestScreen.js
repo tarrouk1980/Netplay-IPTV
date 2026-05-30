@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import useSosStore from '../../store/sosStore';
+import StaticMap from '../../components/StaticMap';
 
 const COLORS = {
   background: '#0A0A0F',
@@ -381,15 +382,24 @@ export default function SOSRequestScreen({ route, navigation }) {
           <View>
             <Text style={styles.sectionTitle}>Confirmation</Text>
 
-            {/* GPS */}
+            {/* GPS + Map */}
             <View style={styles.infoCard}>
               <Text style={styles.infoCardTitle}>📍 Votre position</Text>
               {locating ? (
                 <ActivityIndicator color={COLORS.accent} style={{ marginTop: 8 }} />
               ) : location ? (
-                <Text style={styles.infoCardValue}>
-                  {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
-                </Text>
+                <>
+                  <StaticMap
+                    lat={location.lat}
+                    lng={location.lng}
+                    height={180}
+                    zoom={15}
+                    style={{ marginTop: 10, marginBottom: 8 }}
+                  />
+                  <Text style={styles.infoCardValue}>
+                    {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
+                  </Text>
+                </>
               ) : (
                 <TouchableOpacity onPress={fetchLocation} style={styles.retryGps}>
                   <Text style={styles.retryGpsText}>Réessayer la géolocalisation</Text>

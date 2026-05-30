@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import useSosStore from '../../store/sosStore';
 import useAuthStore from '../../store/authStore';
 import socketService from '../../services/socket';
+import StaticMap from '../../components/StaticMap';
 
 const COLORS = {
   background: '#0A0A0F',
@@ -338,18 +339,14 @@ export default function SOSTrackingScreen({ route, navigation }) {
               )}
             </View>
 
-            {/* Live location placeholder */}
-            <View style={styles.mapPlaceholder}>
-              {depanneurLocation ? (
-                <>
-                  <Text style={styles.mapText}>📍 Position en direct</Text>
-                  <Text style={styles.mapCoords}>{depanneurLocation.lat.toFixed(5)}, {depanneurLocation.lng.toFixed(5)}</Text>
-                </>
-              ) : (
-                <Text style={styles.mapText}>📍 Localisation du dépanneur en temps réel</Text>
-              )}
-              <Text style={styles.mapHint}>Intégration Mapbox disponible</Text>
-            </View>
+            {/* Live location map */}
+            <StaticMap
+              lat={depanneurLocation?.lat}
+              lng={depanneurLocation?.lng}
+              height={200}
+              zoom={14}
+              style={{ marginTop: 12 }}
+            />
           </View>
         )}
 

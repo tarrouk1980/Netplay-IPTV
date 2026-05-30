@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import useTaxiStore from '../../store/taxiStore';
 import useAuthStore from '../../store/authStore';
 import socketService from '../../services/socket';
+import StaticMap from '../../components/StaticMap';
 
 // TODO: Replace with Mapbox SDK — mapbox.com/pricing — free tier: 25,000 loads/month
 // TODO: Heatmap layer — uses aggregated Redis demand data — no extra cost with Redis
@@ -236,23 +237,14 @@ export default function TaxiTrackingScreen({ route, navigation }) {
               </View>
             )}
 
-            {/* Driver live location (Mapbox map placeholder) */}
-            <View style={styles.mapPlaceholder}>
-              {driverLocation ? (
-                <>
-                  <Text style={styles.mapPlaceholderText}>📍 Position en direct</Text>
-                  <Text style={styles.mapCoords}>
-                    {driverLocation.lat.toFixed(5)}, {driverLocation.lng.toFixed(5)}
-                  </Text>
-                </>
-              ) : (
-                <Text style={styles.mapPlaceholderText}>📍 Mapbox map à intégrer</Text>
-              )}
-              <Text style={styles.mapHint}>
-                {/* TODO: Replace with Mapbox SDK — mapbox.com/pricing — free tier: 25,000 loads/month */}
-                Carte interactive disponible après intégration Mapbox
-              </Text>
-            </View>
+            {/* Driver live location map */}
+            <StaticMap
+              lat={driverLocation?.lat}
+              lng={driverLocation?.lng}
+              height={200}
+              zoom={14}
+              style={{ marginTop: 12 }}
+            />
           </View>
         )}
 
