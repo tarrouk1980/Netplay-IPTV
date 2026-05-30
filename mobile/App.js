@@ -32,6 +32,7 @@ import SOSHomeScreen from './screens/sos/SOSHomeScreen';
 import SOSRequestScreen from './screens/sos/SOSRequestScreen';
 import SOSTrackingScreen from './screens/sos/SOSTrackingScreen';
 import DepanneurDashboardScreen from './screens/sos/DepanneurDashboardScreen';
+import ConstatAmiableScreen from './screens/sos/ConstatAmiableScreen';
 
 // Delivery Screens
 import DeliveryHomeScreen from './screens/delivery/DeliveryHomeScreen';
@@ -118,6 +119,7 @@ function MainStack() {
       <Stack.Screen name="SOSRequest" component={SOSRequestScreen} options={{ title: 'Demande SOS' }} />
       <Stack.Screen name="SOSTracking" component={SOSTrackingScreen} options={{ title: 'Suivi SOS', headerShown: false }} />
       <Stack.Screen name="DepanneurDashboard" component={DepanneurDashboardScreen} options={{ title: 'Tableau de bord', headerShown: false }} />
+      <Stack.Screen name="ConstatAmiable" component={ConstatAmiableScreen} options={{ title: 'Constat Amiable', headerShown: false }} />
 
       {/* Delivery */}
       <Stack.Screen name="DeliveryHome" component={DeliveryHomeScreen} options={{ title: 'Delivery', headerShown: false }} />

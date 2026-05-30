@@ -50,12 +50,12 @@ router.post(
     } = req.body;
 
     if (mode === 'B') {
-      const result = modeB(originLat, originLng, destLat, destLng);
+      const result = await modeB(originLat, originLng, destLat, destLng);
       return res.json({ mode: 'B', ...result });
     }
 
     const dt = datetime ? new Date(datetime) : new Date();
-    const result = estimateFare(originLat, originLng, destLat, destLng, dt);
+    const result = await estimateFare(originLat, originLng, destLat, destLng, dt);
     return res.json({ mode: 'A', ...result });
   }
 );
@@ -92,7 +92,7 @@ router.post(
     let fareBreakdown = null;
 
     if (mode === 'A' && destLat != null && destLng != null) {
-      const fareResult = estimateFare(originLat, originLng, destLat, destLng, new Date());
+      const fareResult = await estimateFare(originLat, originLng, destLat, destLng, new Date());
       price = fareResult.estimatedFare;
       fareBreakdown = fareResult.breakdown;
     }

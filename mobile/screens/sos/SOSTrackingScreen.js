@@ -361,6 +361,13 @@ export default function SOSTrackingScreen({ route, navigation }) {
               <Text style={styles.finalPrice}>Prix final : {parseFloat(localOrder.price).toFixed(3)} TND</Text>
             )}
             <TouchableOpacity
+              style={[styles.actionButton, { backgroundColor: '#2980B9', marginTop: 8 }]}
+              onPress={() => navigation.navigate('ConstatAmiable', { orderId: localOrder?.id || orderId })}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.actionButtonText}>📋 Constat Amiable</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               style={[styles.actionButton, { backgroundColor: COLORS.green }]}
               onPress={() => navigation.navigate('Home')}
               activeOpacity={0.85}

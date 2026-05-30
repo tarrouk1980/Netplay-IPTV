@@ -7,7 +7,8 @@ const { authenticate } = require('../middleware/auth');
 const { requireRole } = require('../middleware/rbac');
 const { sendNotification, NOTIFICATION_TYPES } = require('../services/fcm');
 const { findNearby } = require('../services/geolocation');
-const { calculateDeliveryFee, haversineKm } = require('../services/deliveryPricing');
+const { calculateDeliveryFee } = require('../services/deliveryPricing');
+const { getRoadDistanceKm } = require('../services/mapbox');
 
 const router = express.Router();
 
@@ -85,7 +86,7 @@ router.post(
       };
     });
 
-    const distanceKm = haversineKm(merchant.lat, merchant.lng, deliveryLat, deliveryLng);
+    const distanceKm = await getRoadDistanceKm(merchant.lat, merchant.lng, deliveryLat, deliveryLng);
     const feeResult = calculateDeliveryFee(distanceKm);
     const deliveryFee = feeResult.total;
     const total = parseFloat((subtotal + deliveryFee).toFixed(3));

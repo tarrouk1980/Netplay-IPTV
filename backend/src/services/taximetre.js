@@ -1,5 +1,7 @@
 'use strict';
 
+const { getRoadDistanceKm } = require('./mapbox');
+
 /**
  * EASYWAY Taximètre — Tarifs officiels Tunisie Décret Décembre 2022
  *
@@ -141,11 +143,11 @@ function simulerCompteur(distanceKm, dureeMin, arretMin = 0, datetime = new Date
  * // TODO: Remplacer haversineKm par appel Mapbox Directions API
  * // mapbox.com/pricing — gratuit jusqu'à 100 000 req/mois
  */
-function estimateFare(originLat, originLng, destLat, destLng, datetime = new Date(), options = {}) {
+async function estimateFare(originLat, originLng, destLat, destLng, datetime = new Date(), options = {}) {
   const dt = datetime instanceof Date ? datetime : new Date(datetime);
 
-  // Distance à vol d'oiseau × 1.35 (facteur route urbaine tunisienne)
-  const distanceKm = parseFloat((haversineKm(originLat, originLng, destLat, destLng) * 1.35).toFixed(3));
+  // Road distance via Mapbox Directions API (falls back to haversine × 1.35)
+  const distanceKm = parseFloat((await getRoadDistanceKm(originLat, originLng, destLat, destLng)).toFixed(3));
 
   // Estimation durée : vitesse moyenne 25 km/h en ville
   const dureeMin   = parseFloat(((distanceKm / 25) * 60).toFixed(1));
@@ -159,8 +161,8 @@ function estimateFare(originLat, originLng, destLat, destLng, datetime = new Dat
  * Mode B — Mise en relation pure.
  * Le chauffeur déclenche son compteur physique homologué.
  */
-function modeB(originLat, originLng, destLat, destLng) {
-  const distanceKm = parseFloat((haversineKm(originLat, originLng, destLat, destLng) * 1.35).toFixed(3));
+async function modeB(originLat, originLng, destLat, destLng) {
+  const distanceKm = parseFloat((await getRoadDistanceKm(originLat, originLng, destLat, destLng)).toFixed(3));
   return {
     distanceKm,
     estimatedFare: null,

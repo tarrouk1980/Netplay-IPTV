@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import useDeliveryStore from '../../store/deliveryStore';
 import useLocationStore from '../../store/locationStore';
+import AdBanner from '../../components/AdBanner';
 
 const COLORS = {
   background: '#0A0A0F',
@@ -126,6 +127,8 @@ export default function DeliveryHomeScreen({ navigation }) {
         <Text style={styles.headerTitle}>Livraison</Text>
         <View style={{ width: 32 }} />
       </View>
+
+      <AdBanner placement="DELIVERY" style={{ marginHorizontal: 16, marginBottom: 12 }} />
 
       <View style={styles.searchContainer}>
         <TextInput

@@ -792,4 +792,49 @@ router.get(
   }
 );
 
+// ─────────────────────────────────────────────
+// POST /api/sos/:id/constat — save digital accident report
+// ─────────────────────────────────────────────
+router.post(
+  '/:id/constat',
+  authenticate,
+  async (req, res) => {
+    const { id } = req.params;
+
+    try {
+      const order = await prisma.order.findUnique({ where: { id } });
+      if (!order) return res.status(404).json({ error: 'Order not found', code: 'NOT_FOUND' });
+
+      const isParty = order.clientId === req.user.id || order.providerId === req.user.id;
+      const isAdmin = req.user.role === 'ADMIN';
+      if (!isParty && !isAdmin) return res.status(403).json({ error: 'Access denied', code: 'FORBIDDEN' });
+
+      const meta = order.metadata || {};
+      const constat = {
+        ...req.body,
+        submittedBy: req.user.id,
+        submittedAt: new Date().toISOString(),
+      };
+
+      const updated = await prisma.order.update({
+        where: { id },
+        data: { metadata: { ...meta, constat } },
+      });
+
+      await logEvent(id, 'CONSTAT_SUBMITTED', { submittedBy: req.user.id });
+
+      const io = getIo(req);
+      if (io) {
+        io.to(`user:${order.clientId}`).emit('sos:constat-submitted', { orderId: id });
+        if (order.providerId) io.to(`user:${order.providerId}`).emit('sos:constat-submitted', { orderId: id });
+      }
+
+      return res.json({ success: true, message: 'Constat enregistré' });
+    } catch (err) {
+      console.error('[SOS] constat error:', err);
+      return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+    }
+  }
+);
+
 module.exports = router;

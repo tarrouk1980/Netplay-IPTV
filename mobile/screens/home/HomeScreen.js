@@ -13,6 +13,7 @@ import usePassStore from '../../store/passStore';
 import useNotificationStore from '../../store/notificationStore';
 import ServiceCard from '../../components/ServiceCard';
 import PassStatusCard from '../../components/PassStatusCard';
+import AdBanner from '../../components/AdBanner';
 import NotificationBadge from '../../components/NotificationBadge';
 import EasywayLogo from '../../components/EasywayLogo';
 import ServiceIcon from '../../components/ServiceIcon';
@@ -99,6 +100,9 @@ export default function HomeScreen({ navigation }) {
           subscription={subscription}
           onBuyPass={() => navigation.navigate('BuyPass')}
         />
+
+        {/* Ad Banner */}
+        <AdBanner placement="HOME" style={{ marginHorizontal: 16, marginTop: 8 }} />
 
         {/* Services Grid */}
         <View style={styles.sectionHeader}>
