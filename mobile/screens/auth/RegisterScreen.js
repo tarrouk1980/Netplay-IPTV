@@ -355,6 +355,7 @@ export default function RegisterScreen({ navigation }) {
   const [vYear, setVYear] = useState('');
   const [vPlate, setVPlate] = useState('');
   const [vColor, setVColor] = useState('');
+  const [chauffeurZones, setChauffeurZones] = useState([]);
 
   // Step 2 — LIVREUR
   const [deliveryVehicle, setDeliveryVehicle] = useState('MOTO');
@@ -597,6 +598,7 @@ export default function RegisterScreen({ navigation }) {
         { label: 'Véhicule', value: [vMake, vModel, vYear ? `(${vYear})` : ''].filter(Boolean).join(' ') },
         { label: 'Plaque', value: vPlate },
       );
+      if (chauffeurZones.length > 0) rows.push({ label: 'Zones', value: chauffeurZones.join(', ') });
     }
     if (role === 'LIVREUR') {
       const dvInfo = DELIVERY_VEHICLE_TYPES.find((v) => v.value === deliveryVehicle);
@@ -787,7 +789,17 @@ export default function RegisterScreen({ navigation }) {
             editable={!isLoading}
           />
 
-          <KycNote text="📋 Vos documents seront vérifiés sous 24h" />
+          <MultiPickerField
+            label="Zone légale d'opération"
+            required
+            selected={chauffeurZones}
+            options={ZONES_BY_COUNTRY[selectedCountry.key] || ZONES_BY_COUNTRY['TN']}
+            onToggle={(z) => setChauffeurZones((prev) => prev.includes(z) ? prev.filter((x) => x !== z) : [...prev, z])}
+            placeholder="Gouvernorats autorisés..."
+            disabled={isLoading}
+          />
+
+          <KycNote text="📋 Vos documents seront vérifiés sous 24h — la zone doit correspondre à votre autorisation de taxi" />
         </View>
       );
     }
