@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Notifications from 'expo-notifications';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
 
@@ -44,6 +45,21 @@ const ROLE_LABELS = {
 export default function ProfileScreen({ navigation }) {
   const { user, setUser, logout } = useAuthStore();
   const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    // Register FCM token on profile open
+    (async () => {
+      try {
+        const { status } = await Notifications.getPermissionsAsync();
+        if (status === 'granted') {
+          const tokenData = await Notifications.getExpoPushTokenAsync();
+          await api.post('/api/users/me/fcm-token', { fcmToken: tokenData.data });
+        }
+      } catch (err) {
+        console.warn('[ProfileScreen] FCM token registration failed:', err?.message);
+      }
+    })();
+  }, []);
   const [isSaving, setIsSaving] = useState(false);
   const [editedName, setEditedName] = useState(user?.name || '');
   const [editedEmail, setEditedEmail] = useState(user?.email || '');
@@ -194,6 +210,10 @@ export default function ProfileScreen({ navigation }) {
         {/* Quick Links */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Autres</Text>
+          <TouchableOpacity style={styles.quickLink} onPress={() => navigation.navigate('History')}>
+            <Text style={styles.quickLinkText}>📋 Historique de mes commandes</Text>
+            <Text style={styles.quickLinkArrow}>›</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.quickLink} onPress={() => navigation.navigate('Referral')}>
             <Text style={styles.quickLinkText}>🎁 Parrainage — Invitez vos amis</Text>
             <Text style={styles.quickLinkArrow}>›</Text>

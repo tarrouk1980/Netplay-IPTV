@@ -16,9 +16,36 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
+import axios from 'axios';
 import api, { setTokens } from '../../services/api';
 import useAuthStore from '../../store/authStore';
 import ServiceIcon from '../../components/ServiceIcon';
+
+async function uploadKycPhotos(accessToken, photos) {
+  try {
+    const formData = new FormData();
+    if (photos.facePhoto) {
+      const uri = photos.facePhoto;
+      const ext = uri.split('.').pop() || 'jpg';
+      formData.append('facePhoto', { uri, name: `facePhoto.${ext}`, type: `image/${ext}` });
+    }
+    if (photos.truckPhoto) {
+      const uri = photos.truckPhoto;
+      const ext = uri.split('.').pop() || 'jpg';
+      formData.append('truckPhoto', { uri, name: `truckPhoto.${ext}`, type: `image/${ext}` });
+    }
+    const baseURL = api.defaults.baseURL || '';
+    await axios.post(`${baseURL}/api/auth/kyc-upload`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    console.log('[RegisterScreen] KYC photos uploaded successfully');
+  } catch (err) {
+    console.warn('[RegisterScreen] KYC photo upload failed (non-blocking):', err?.message);
+  }
+}
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -575,6 +602,10 @@ export default function RegisterScreen({ navigation }) {
         } catch (vErr) {
           console.warn('[RegisterScreen] Vehicle registration failed (non-blocking):', vErr?.response?.data);
         }
+        // Upload KYC face photo (non-blocking)
+        if (chauffeurFacePhoto) {
+          uploadKycPhotos(accessToken, { facePhoto: chauffeurFacePhoto });
+        }
         Alert.alert(
           'Compte créé !',
           'En attente de vérification.',
@@ -593,6 +624,10 @@ export default function RegisterScreen({ navigation }) {
       }
 
       if (role === 'DEPANNEUR') {
+        // Upload KYC photos for DEPANNEUR (non-blocking)
+        if (depFacePhoto || depPhoto) {
+          uploadKycPhotos(accessToken, { facePhoto: depFacePhoto, truckPhoto: depPhoto });
+        }
         Alert.alert(
           'Compte créé !',
           'En attente de vérification.',

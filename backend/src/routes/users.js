@@ -105,6 +105,95 @@ router.post(
   }
 );
 
+// POST /api/users/me/fcm-token — register FCM token
+router.post('/me/fcm-token', authenticate, async (req, res) => {
+  const { fcmToken } = req.body;
+  if (!fcmToken) {
+    return res.status(400).json({ error: 'fcmToken is required', code: 'MISSING_FIELD' });
+  }
+  try {
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { fcmToken },
+    });
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('[Users/FCM-Token]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// GET /api/users/me/orders — paginated order history
+router.get('/me/orders', authenticate, async (req, res) => {
+  try {
+    const orders = await prisma.order.findMany({
+      where: {
+        OR: [
+          { clientId: req.user.id },
+          { providerId: req.user.id },
+        ],
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      select: {
+        id: true,
+        serviceType: true,
+        status: true,
+        price: true,
+        finalPrice: true,
+        originAddress: true,
+        destinationAddress: true,
+        createdAt: true,
+        completedAt: true,
+        clientId: true,
+        providerId: true,
+      },
+    });
+    return res.json({ orders, count: orders.length });
+  } catch (err) {
+    console.error('[Users/Orders]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// GET /api/users/provider/:userId/profile — public provider profile
+router.get('/provider/:userId/profile', authenticate, async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        role: true,
+        rating: true,
+        totalRides: true,
+        vehicle: {
+          select: { vehicleType: true, make: true, model: true },
+          take: 1,
+        },
+      },
+    });
+    if (!user) {
+      return res.status(404).json({ error: 'Provider not found', code: 'NOT_FOUND' });
+    }
+    // Return public info only
+    return res.json({
+      id: user.id,
+      name: user.name,
+      role: user.role,
+      rating: user.rating || 0,
+      totalRides: user.totalRides || 0,
+      vehicleType: user.vehicle?.[0]?.vehicleType || null,
+      vehicleMake: user.vehicle?.[0]?.make || null,
+      vehicleModel: user.vehicle?.[0]?.model || null,
+    });
+  } catch (err) {
+    console.error('[Users/Provider/Profile]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
 // GET /api/users/me/activity — 5 dernières commandes du CLIENT tous services confondus
 router.get('/me/activity', authenticate, async (req, res) => {
   const SERVICE_META = {

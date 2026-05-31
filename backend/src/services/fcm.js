@@ -90,4 +90,59 @@ async function sendNotification(tokens, type, title, body, data = {}) {
   };
 }
 
-module.exports = { sendNotification, NOTIFICATION_TYPES };
+/**
+ * Send notification to a single user by userId.
+ * Looks up the user's fcmToken from the database.
+ */
+async function sendToUser(userId, title, body, data = {}) {
+  try {
+    const { prisma } = require('../config/db');
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { fcmToken: true },
+    });
+    if (!user?.fcmToken) {
+      console.log(`[FCM] No fcmToken for user ${userId}`);
+      return;
+    }
+    return sendNotification([user.fcmToken], data.type || NOTIFICATION_TYPES.SYSTEM, title, body, data);
+  } catch (err) {
+    console.warn('[FCM] sendToUser error:', err.message);
+  }
+}
+
+/**
+ * Notify client and provider when order status changes.
+ */
+async function sendOrderUpdate(orderId, status) {
+  try {
+    const { prisma } = require('../config/db');
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        client: { select: { fcmToken: true } },
+        provider: { select: { fcmToken: true } },
+      },
+    });
+    if (!order) return;
+
+    const STATUS_MESSAGES = {
+      ACCEPTED: { title: 'Commande acceptée !', body: 'Un prestataire a accepté votre demande.' },
+      IN_PROGRESS: { title: 'En cours', body: 'La prestation a démarré.' },
+      COMPLETED: { title: 'Terminé !', body: 'Votre commande est terminée. Merci !' },
+      CANCELLED: { title: 'Annulé', body: 'La commande a été annulée.' },
+    };
+
+    const msg = STATUS_MESSAGES[status] || { title: `Statut: ${status}`, body: '' };
+    const notifType = NOTIFICATION_TYPES[`ORDER_${status}`] || NOTIFICATION_TYPES.SYSTEM;
+
+    const tokens = [order.client?.fcmToken, order.provider?.fcmToken].filter(Boolean);
+    if (tokens.length > 0) {
+      await sendNotification(tokens, notifType, msg.title, msg.body, { orderId, status });
+    }
+  } catch (err) {
+    console.warn('[FCM] sendOrderUpdate error:', err.message);
+  }
+}
+
+module.exports = { sendNotification, sendToUser, sendOrderUpdate, NOTIFICATION_TYPES };

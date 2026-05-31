@@ -15,6 +15,8 @@ import useTaxiStore from '../../store/taxiStore';
 import useAuthStore from '../../store/authStore';
 import socketService from '../../services/socket';
 import StaticMap from '../../components/StaticMap';
+import RatingModal from '../../components/RatingModal';
+import ChatModal from '../../components/ChatModal';
 
 // TODO: Replace with Mapbox SDK — mapbox.com/pricing — free tier: 25,000 loads/month
 // TODO: Heatmap layer — uses aggregated Redis demand data — no extra cost with Redis
@@ -68,6 +70,8 @@ export default function TaxiTrackingScreen({ route, navigation }) {
   const [driverLocation, setDriverLocation] = useState(null);
   const [localOrder, setLocalOrder] = useState(currentOrder);
   const [lastLocationUpdate, setLastLocationUpdate] = useState(null);
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [showChatModal, setShowChatModal] = useState(false);
   const liveDotAnim = useRef(new Animated.Value(1)).current;
 
   // Pulse animation for PENDING state
@@ -129,7 +133,7 @@ export default function TaxiTrackingScreen({ route, navigation }) {
     const onCompleted = (data) => {
       if (data.orderId === orderId) {
         setLocalOrder((prev) => ({ ...prev, status: 'COMPLETED' }));
-        setTimeout(() => navigation.navigate('Home'), 3000);
+        setShowRatingModal(true);
       }
     };
 
@@ -306,13 +310,22 @@ export default function TaxiTrackingScreen({ route, navigation }) {
 
         {/* Completed state */}
         {status === 'COMPLETED' && (
-          <TouchableOpacity
-            style={styles.rateButton}
-            onPress={() => navigation.navigate('Home')}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.rateButtonText}>🏠 Retour à l'accueil</Text>
-          </TouchableOpacity>
+          <View style={{ width: '100%', gap: 10 }}>
+            <TouchableOpacity
+              style={styles.rateButton}
+              onPress={() => setShowRatingModal(true)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.rateButtonText}>⭐ Noter la course</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.rateButton, { borderColor: COLORS.blue }]}
+              onPress={() => navigation.navigate('Home')}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.rateButtonText}>🏠 Retour à l'accueil</Text>
+            </TouchableOpacity>
+          </View>
         )}
 
         {/* Cancelled state */}
@@ -325,7 +338,32 @@ export default function TaxiTrackingScreen({ route, navigation }) {
             <Text style={styles.rateButtonText}>🔄 Nouvelle demande</Text>
           </TouchableOpacity>
         )}
+        {/* Chat button — only when driver is assigned */}
+        {(status === 'ACCEPTED' || status === 'IN_PROGRESS') && localOrder?.driver && (
+          <TouchableOpacity
+            style={styles.chatButton}
+            onPress={() => setShowChatModal(true)}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.chatButtonText}>💬 Chat avec le chauffeur</Text>
+          </TouchableOpacity>
+        )}
       </View>
+
+      {/* Rating Modal */}
+      <RatingModal
+        visible={showRatingModal}
+        orderId={orderId}
+        onClose={() => setShowRatingModal(false)}
+        onSubmitted={() => setTimeout(() => navigation.navigate('Home'), 1000)}
+      />
+
+      {/* Chat Modal */}
+      <ChatModal
+        visible={showChatModal}
+        orderId={orderId}
+        onClose={() => setShowChatModal(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -447,4 +485,13 @@ const styles = StyleSheet.create({
   liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#4CAF50' },
   liveText: { fontSize: 12, color: COLORS.green, fontWeight: '600', flex: 1 },
   liveTime: { fontSize: 11, color: COLORS.textMuted },
+  chatButton: {
+    marginTop: 12,
+    width: '100%',
+    backgroundColor: '#1565C0',
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  chatButtonText: { color: '#fff', fontSize: 14, fontWeight: '700' },
 });

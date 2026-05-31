@@ -8,9 +8,13 @@ import {
   ActivityIndicator,
   Alert,
   StatusBar,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import useDeliveryStore from '../../store/deliveryStore';
+import socketService from '../../services/socket';
+import StaticMap from '../../components/StaticMap';
+import ChatModal from '../../components/ChatModal';
 
 const COLORS = {
   background: '#0A0A0F',
@@ -74,6 +78,10 @@ export default function DeliveryTrackingScreen({ route, navigation }) {
   const { currentOrder, fetchOrder, confirmReceipt, cancelDelivery } = useDeliveryStore();
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [livreurLocation, setLivreurLocation] = useState(null);
+  const [lastLocationUpdate, setLastLocationUpdate] = useState(null);
+  const [showChatModal, setShowChatModal] = useState(false);
+  const liveDotAnim = useRef(new Animated.Value(1)).current;
   const pollRef = useRef(null);
 
   const load = async () => {
@@ -88,6 +96,53 @@ export default function DeliveryTrackingScreen({ route, navigation }) {
     load();
     pollRef.current = setInterval(load, 10000);
     return () => clearInterval(pollRef.current);
+  }, [orderId]);
+
+  // Live dot pulse animation
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(liveDotAnim, { toValue: 0.2, duration: 700, useNativeDriver: true }),
+        Animated.timing(liveDotAnim, { toValue: 1, duration: 700, useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
+
+  // Socket.io listeners for real-time delivery updates
+  useEffect(() => {
+    if (!orderId) return;
+    const socket = socketService.getSocket();
+    if (!socket) return;
+
+    socket.emit('join:order', orderId);
+
+    const onAccepted = (data) => {
+      if (data.orderId === orderId) load();
+    };
+    const onPickedUp = (data) => {
+      if (data.orderId === orderId) load();
+    };
+    const onDelivered = (data) => {
+      if (data.orderId === orderId) load();
+    };
+    const onLocationUpdate = (data) => {
+      if (data.serviceType === 'DELIVERY') {
+        setLivreurLocation({ lat: data.lat, lng: data.lng });
+        setLastLocationUpdate(new Date());
+      }
+    };
+
+    socket.on('delivery:accepted', onAccepted);
+    socket.on('delivery:picked_up', onPickedUp);
+    socket.on('delivery:delivered', onDelivered);
+    socket.on('location:update', onLocationUpdate);
+
+    return () => {
+      socket.off('delivery:accepted', onAccepted);
+      socket.off('delivery:picked_up', onPickedUp);
+      socket.off('delivery:delivered', onDelivered);
+      socket.off('location:update', onLocationUpdate);
+    };
   }, [orderId]);
 
   const order = currentOrder?.id === orderId ? currentOrder : null;
@@ -237,7 +292,44 @@ export default function DeliveryTrackingScreen({ route, navigation }) {
             <Text style={styles.cancelBtnText}>Annuler la commande</Text>
           </TouchableOpacity>
         )}
+
+        {/* Live location map */}
+        {(status === 'ACCEPTED' || status === 'IN_PROGRESS') && (
+          <View style={styles.liveMapCard}>
+            <View style={styles.liveRow}>
+              <Animated.View style={[styles.liveDot, { opacity: liveDotAnim }]} />
+              <Text style={styles.liveText}>
+                {livreurLocation ? 'Suivi en direct' : 'En attente du GPS livreur…'}
+              </Text>
+              {lastLocationUpdate && (
+                <Text style={styles.liveTime}>
+                  {lastLocationUpdate.toLocaleTimeString('fr-TN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                </Text>
+              )}
+            </View>
+            <StaticMap
+              lat={livreurLocation?.lat}
+              lng={livreurLocation?.lng}
+              height={200}
+              zoom={15}
+            />
+          </View>
+        )}
+
+        {/* Chat button */}
+        {(status === 'ACCEPTED' || status === 'IN_PROGRESS') && (
+          <TouchableOpacity style={styles.chatBtn} onPress={() => setShowChatModal(true)}>
+            <Text style={styles.chatBtnText}>💬 Chat avec le livreur</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
+
+      {/* Chat Modal */}
+      <ChatModal
+        visible={showChatModal}
+        orderId={orderId}
+        onClose={() => setShowChatModal(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -342,4 +434,24 @@ const styles = StyleSheet.create({
     borderColor: '#E74C3C',
   },
   cancelBtnText: { color: '#E74C3C', fontSize: 15, fontWeight: '600' },
+  liveMapCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  liveRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
+  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.green },
+  liveText: { fontSize: 12, color: COLORS.green, fontWeight: '600', flex: 1 },
+  liveTime: { fontSize: 11, color: COLORS.textMuted },
+  chatBtn: {
+    backgroundColor: '#1565C0',
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  chatBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
 });

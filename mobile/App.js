@@ -64,6 +64,8 @@ import AdminFraudScreen from './screens/admin/AdminFraudScreen';
 import ReferralScreen from './screens/profile/ReferralScreen';
 import ShareAppScreen from './screens/profile/ShareAppScreen';
 import KYCPendingScreen from './screens/profile/KYCPendingScreen';
+import HistoryScreen from './screens/profile/HistoryScreen';
+import ProviderProfileScreen from './screens/profile/ProviderProfileScreen';
 
 // Subscriptions
 import BuyPassScreen from './screens/subscriptions/BuyPassScreen';
@@ -164,6 +166,8 @@ function MainStack() {
       {/* Referral & Sharing */}
       <Stack.Screen name="Referral" component={ReferralScreen} options={{ title: 'Parrainage' }} />
       <Stack.Screen name="ShareApp" component={ShareAppScreen} options={{ title: 'Inviter des amis' }} />
+      <Stack.Screen name="History" component={HistoryScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ProviderProfile" component={ProviderProfileScreen} options={{ headerShown: false }} />
 
       {/* Subscriptions */}
       <Stack.Screen name="BuyPass" component={BuyPassScreen} options={{ title: 'Passer Premium' }} />

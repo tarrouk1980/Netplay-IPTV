@@ -17,6 +17,7 @@ import useSosStore from '../../store/sosStore';
 import useAuthStore from '../../store/authStore';
 import socketService from '../../services/socket';
 import StaticMap from '../../components/StaticMap';
+import ChatModal from '../../components/ChatModal';
 
 const COLORS = {
   background: '#0A0A0F',
@@ -61,6 +62,7 @@ export default function SOSTrackingScreen({ route, navigation }) {
   const [lastLocationUpdate, setLastLocationUpdate] = useState(null);
   const [counterPriceInput, setCounterPriceInput] = useState('');
   const [submittingCounter, setSubmittingCounter] = useState(false);
+  const [showChatModal, setShowChatModal] = useState(false);
   const radarAnim = useRef(new Animated.Value(1)).current;
   const liveDotAnim = useRef(new Animated.Value(1)).current;
 
@@ -438,8 +440,26 @@ export default function SOSTrackingScreen({ route, navigation }) {
           </TouchableOpacity>
         )}
 
+        {/* Chat button — when depanneur is assigned */}
+        {(phase === 'ACCEPTED' || phase === 'IN_PROGRESS') && (
+          <TouchableOpacity
+            style={styles.chatButton}
+            onPress={() => setShowChatModal(true)}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.chatButtonText}>💬 Chat avec le dépanneur</Text>
+          </TouchableOpacity>
+        )}
+
         <View style={{ height: 32 }} />
       </ScrollView>
+
+      {/* Chat Modal */}
+      <ChatModal
+        visible={showChatModal}
+        orderId={orderId}
+        onClose={() => setShowChatModal(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -600,4 +620,13 @@ const styles = StyleSheet.create({
   liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#27AE60' },
   liveText: { fontSize: 12, color: COLORS.green, fontWeight: '600', flex: 1 },
   liveTime: { fontSize: 11, color: COLORS.textMuted },
+  chatButton: {
+    marginTop: 12,
+    width: '100%',
+    backgroundColor: '#1565C0',
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  chatButtonText: { color: '#fff', fontSize: 14, fontWeight: '700' },
 });

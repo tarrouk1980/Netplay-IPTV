@@ -478,6 +478,40 @@ router.post(
 );
 
 // ─────────────────────────────────────────────
+// GET /api/taxi/heatmap — demand zones by time of day
+// ─────────────────────────────────────────────
+router.get('/heatmap', authenticate, async (req, res) => {
+  const { lat, lng } = req.query;
+
+  // Try Redis for cached zone data
+  try {
+    const cached = await require('../config/redis').redisClient.get('heatmap:zones');
+    if (cached) {
+      return res.json(JSON.parse(cached));
+    }
+  } catch (_) {}
+
+  const hour = new Date().getHours();
+  const zones = [];
+  if ((hour >= 7 && hour <= 9) || (hour >= 17 && hour <= 20)) {
+    zones.push({ label: 'Centre-ville', level: 'HAUTE', color: '#E53935' });
+    zones.push({ label: 'Gare / Aéroport', level: 'HAUTE', color: '#E53935' });
+    zones.push({ label: 'Zone résidentielle', level: 'MOYENNE', color: '#F5A623' });
+  } else if (hour >= 10 && hour <= 16) {
+    zones.push({ label: 'Centre commercial', level: 'MOYENNE', color: '#F5A623' });
+    zones.push({ label: 'Université / Hôpitaux', level: 'MOYENNE', color: '#F5A623' });
+    zones.push({ label: 'Banlieue', level: 'FAIBLE', color: '#43A047' });
+  } else {
+    zones.push({ label: 'Centre-ville', level: 'FAIBLE', color: '#43A047' });
+    zones.push({ label: 'Zone de loisirs', level: 'MOYENNE', color: '#F5A623' });
+    zones.push({ label: 'Aéroport', level: 'FAIBLE', color: '#43A047' });
+  }
+
+  const result = { zones, updatedAt: new Date().toISOString() };
+  return res.json(result);
+});
+
+// ─────────────────────────────────────────────
 // POST /api/taxi/:orderId/rate — 1-5 stars review
 // ─────────────────────────────────────────────
 router.post(

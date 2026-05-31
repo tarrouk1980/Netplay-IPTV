@@ -25,6 +25,7 @@ router.get('/kyc/pending', async (req, res) => {
       email: true,
       role: true,
       kycStatus: true,
+      kycDocuments: true,
       createdAt: true,
     },
     orderBy: { createdAt: 'asc' },

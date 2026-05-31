@@ -2,13 +2,30 @@
 
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const path = require('path');
+const fs = require('fs');
 const { body, validationResult } = require('express-validator');
 const { prisma } = require('../config/db');
 const { redisClient } = require('../config/redis');
 const tokenService = require('../services/tokenService');
 const { authenticate } = require('../middleware/auth');
+const multer = require('multer');
 
 const router = express.Router();
+
+// ── Multer storage for KYC uploads ───────────────────────────────────────────
+const kycStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = path.join(process.cwd(), 'uploads', 'kyc', req.user?.id || 'unknown');
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname) || '.jpg';
+    cb(null, `${file.fieldname}_${Date.now()}${ext}`);
+  },
+});
+const kycUpload = multer({ storage: kycStorage, limits: { fileSize: 10 * 1024 * 1024 } });
 
 // Helper: parse refresh token expiry to seconds
 function refreshExpiryToSeconds(str) {
@@ -298,5 +315,37 @@ router.post('/reset-password', async (req, res) => {
     return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
   }
 });
+
+// POST /api/auth/kyc-upload — upload KYC photos after registration
+router.post(
+  '/kyc-upload',
+  authenticate,
+  kycUpload.fields([
+    { name: 'facePhoto', maxCount: 1 },
+    { name: 'truckPhoto', maxCount: 1 },
+  ]),
+  async (req, res) => {
+    try {
+      const docs = {};
+      if (req.files?.facePhoto?.[0]) {
+        docs.facePhoto = req.files.facePhoto[0].path;
+      }
+      if (req.files?.truckPhoto?.[0]) {
+        docs.truckPhoto = req.files.truckPhoto[0].path;
+      }
+
+      await prisma.user.update({
+        where: { id: req.user.id },
+        data: { kycDocuments: JSON.stringify(docs) },
+      });
+
+      console.log(`[KYC Upload] User ${req.user.id} uploaded docs:`, docs);
+      return res.json({ success: true, documents: docs });
+    } catch (err) {
+      console.error('[Auth/KYC-Upload]', err);
+      return res.status(500).json({ error: 'Failed to upload KYC documents', code: 'UPLOAD_FAILED' });
+    }
+  }
+);
 
 module.exports = router;

@@ -41,6 +41,26 @@ function initSocket(httpServer) {
       socket.leave(`service:${serviceType}`);
     });
 
+    // Join order room for chat
+    socket.on('join:order', (orderId) => {
+      if (orderId) {
+        socket.join(`order:${orderId}`);
+        console.log(`[Socket] ${socket.user.id} joined order:${orderId}`);
+      }
+    });
+
+    // Chat message relay
+    socket.on('chat:message', ({ orderId, message, senderName }) => {
+      if (!orderId || !message) return;
+      io.to(`order:${orderId}`).emit('chat:message', {
+        id: Date.now(),
+        message,
+        senderName,
+        senderId: socket.user.id,
+        createdAt: new Date().toISOString(),
+      });
+    });
+
     socket.on('disconnect', () => {
       console.log(`[Socket] Disconnected: ${socket.user.id}`);
     });

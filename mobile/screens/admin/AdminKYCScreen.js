@@ -11,6 +11,8 @@ import {
   Alert,
   StatusBar,
   ActivityIndicator,
+  Image,
+  ScrollView,
 } from 'react-native';
 import useAdminStore from '../../store/adminStore';
 
@@ -159,6 +161,14 @@ function KYCItem({ user, onApprove, onReject }) {
     }
   };
 
+  // Parse kycDocuments
+  let kycDocs = {};
+  try {
+    kycDocs = user.kycDocuments ? JSON.parse(user.kycDocuments) : {};
+  } catch (_) {}
+
+  const API_BASE = '';  // Adjust if backend base URL is needed
+
   return (
     <View style={kItem.card}>
       <View style={kItem.top}>
@@ -166,6 +176,7 @@ function KYCItem({ user, onApprove, onReject }) {
           <Text style={kItem.name}>{user.name}</Text>
           <Text style={kItem.phone}>{user.phone}</Text>
           {user.email ? <Text style={kItem.email}>{user.email}</Text> : null}
+          <Text style={[kItem.phone, { marginTop: 2 }]}>Rôle: {user.role}</Text>
         </View>
         <View style={[kItem.roleBadge, { backgroundColor: roleColor + '22', borderColor: roleColor }]}>
           <Text style={[kItem.roleText, { color: roleColor }]}>{user.role}</Text>
@@ -174,6 +185,33 @@ function KYCItem({ user, onApprove, onReject }) {
       <Text style={kItem.date}>
         Soumis le {new Date(user.createdAt).toLocaleDateString('fr-TN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
       </Text>
+
+      {/* KYC Photos */}
+      {(kycDocs.facePhoto || kycDocs.truckPhoto) && (
+        <View style={kItem.photosRow}>
+          {kycDocs.facePhoto && (
+            <View style={kItem.photoWrapper}>
+              <Text style={kItem.photoLabel}>Photo identité</Text>
+              <Image
+                source={{ uri: `${API_BASE}/uploads/kyc/${user.id}/` + kycDocs.facePhoto.split('/').pop() }}
+                style={kItem.photo}
+                resizeMode="cover"
+              />
+            </View>
+          )}
+          {kycDocs.truckPhoto && (
+            <View style={kItem.photoWrapper}>
+              <Text style={kItem.photoLabel}>Photo camion</Text>
+              <Image
+                source={{ uri: `${API_BASE}/uploads/kyc/${user.id}/` + kycDocs.truckPhoto.split('/').pop() }}
+                style={kItem.photo}
+                resizeMode="cover"
+              />
+            </View>
+          )}
+        </View>
+      )}
+
       <View style={kItem.actions}>
         <TouchableOpacity style={kItem.approveBtn} onPress={handleApprove} disabled={approving}>
           {approving ? (
@@ -210,6 +248,10 @@ const kItem = StyleSheet.create({
   roleBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, borderWidth: 1 },
   roleText: { fontSize: 11, fontWeight: '700' },
   date: { color: COLORS.muted, fontSize: 12, marginBottom: 12 },
+  photosRow: { flexDirection: 'row', gap: 10, marginBottom: 12 },
+  photoWrapper: { flex: 1, alignItems: 'center' },
+  photoLabel: { color: COLORS.muted, fontSize: 11, marginBottom: 4 },
+  photo: { width: '100%', height: 100, borderRadius: 8, backgroundColor: COLORS.surfaceAlt },
   actions: { flexDirection: 'row', gap: 10 },
   approveBtn: {
     flex: 1,
