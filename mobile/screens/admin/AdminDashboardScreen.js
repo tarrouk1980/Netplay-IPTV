@@ -300,6 +300,16 @@ export default function AdminDashboardScreen({ navigation }) {
                 label="Analytics"
                 onPress={() => navigation.navigate('AdminAnalytics')}
               />
+              <NavButton
+                emoji="💼"
+                label="Wallets"
+                onPress={() => navigation.navigate('AdminWallet')}
+              />
+              <NavButton
+                emoji="🗺️"
+                label="Carte live"
+                onPress={() => navigation.navigate('AdminDriverMap')}
+              />
             </View>
 
             {/* Revenue total */}

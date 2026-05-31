@@ -238,6 +238,10 @@ export default function ProfileScreen({ navigation }) {
             <Text style={styles.quickLinkText}>📋 Historique de mes commandes</Text>
             <Text style={styles.quickLinkArrow}>›</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={styles.quickLink} onPress={() => navigation.navigate('PromoCode')}>
+            <Text style={styles.quickLinkText}>🏷️ Code promo</Text>
+            <Text style={styles.quickLinkArrow}>›</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.quickLink} onPress={() => navigation.navigate('Referral')}>
             <Text style={styles.quickLinkText}>🎁 Parrainage — Invitez vos amis</Text>
             <Text style={styles.quickLinkArrow}>›</Text>

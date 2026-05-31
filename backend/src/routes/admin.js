@@ -1235,5 +1235,93 @@ router.get('/stats/top-providers', authenticate, requireRole('ADMIN'), async (re
   }
 });
 
+// GET /api/admin/wallets — list all user wallets
+router.get('/wallets', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'ADMIN') return res.status(403).json({ error: 'Admin only' });
+    const users = await prisma.user.findMany({
+      select: { id: true, name: true, phone: true, role: true, walletBalance: true, updatedAt: true },
+      orderBy: { walletBalance: 'asc' },
+    });
+    const wallets = users.map(u => ({
+      userId: u.id,
+      name: u.name,
+      phone: u.phone,
+      role: u.role,
+      balance: Number(u.walletBalance || 0),
+      lastTx: u.updatedAt,
+    }));
+    res.json({ wallets });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/admin/wallets/:userId/adjust — credit or debit user wallet
+router.post('/wallets/:userId/adjust', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'ADMIN') return res.status(403).json({ error: 'Admin only' });
+    const { userId } = req.params;
+    const { amount, type, reason } = req.body;
+    const amt = parseFloat(amount);
+    if (!amt || amt <= 0) return res.status(400).json({ error: 'Invalid amount' });
+    if (!['CREDIT', 'DEBIT'].includes(type)) return res.status(400).json({ error: 'type must be CREDIT or DEBIT' });
+
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { walletBalance: true } });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const delta = type === 'CREDIT' ? amt : -amt;
+    const newBalance = Math.max(0, Number(user.walletBalance || 0) + delta);
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        walletBalance: newBalance,
+        walletTransactions: {
+          create: {
+            amount: type === 'CREDIT' ? amt : -amt,
+            type: type === 'CREDIT' ? 'RECHARGE' : 'DEDUCTION',
+            description: reason || `Ajustement admin (${type})`,
+          },
+        },
+      },
+    });
+    res.json({ success: true, newBalance });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/admin/providers/live — active providers with last known location
+router.get('/providers/live', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'ADMIN') return res.status(403).json({ error: 'Admin only' });
+    const providers = await prisma.user.findMany({
+      where: {
+        role: { in: ['CHAUFFEUR', 'LIVREUR', 'DEPANNEUR'] },
+        isOnline: true,
+        lastLat: { not: null },
+      },
+      select: {
+        id: true, name: true, role: true, lastLat: true, lastLng: true,
+        _count: { select: { providedOrders: { where: { createdAt: { gte: new Date(new Date().setHours(0,0,0,0)) } } } } },
+      },
+    });
+    res.json({
+      providers: providers.map(p => ({
+        id: p.id,
+        name: p.name,
+        role: p.role,
+        lat: p.lastLat,
+        lng: p.lastLng,
+        status: 'ONLINE',
+        ordersToday: p._count.providedOrders,
+      })),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
 

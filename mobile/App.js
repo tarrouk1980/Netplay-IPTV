@@ -68,6 +68,8 @@ import AdminFraudScreen from './screens/admin/AdminFraudScreen';
 import AdminAnalyticsScreen from './screens/admin/AdminAnalyticsScreen';
 import AdminMerchantsScreen from './screens/admin/AdminMerchantsScreen';
 import AdminDisputesScreen from './screens/admin/AdminDisputesScreen';
+import AdminWalletScreen from './screens/admin/AdminWalletScreen';
+import AdminDriverMapScreen from './screens/admin/AdminDriverMapScreen';
 
 // Settings
 import SettingsScreen from './screens/profile/SettingsScreen';
@@ -75,6 +77,7 @@ import LanguageScreen from './screens/profile/LanguageScreen';
 
 // Referral & Profile extras
 import ReferralScreen from './screens/profile/ReferralScreen';
+import PromoCodeScreen from './screens/promo/PromoCodeScreen';
 import ShareAppScreen from './screens/profile/ShareAppScreen';
 import KYCPendingScreen from './screens/profile/KYCPendingScreen';
 import HistoryScreen from './screens/profile/HistoryScreen';
@@ -229,12 +232,15 @@ function MainStack() {
       <Stack.Screen name="AdminAnalytics" component={AdminAnalyticsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminMerchants" component={AdminMerchantsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminDisputes" component={AdminDisputesScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminWallet" component={AdminWalletScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminDriverMap" component={AdminDriverMapScreen} options={{ headerShown: false }} />
 
       {/* KYC Pending */}
       <Stack.Screen name="KYCPending" component={KYCPendingScreen} options={{ headerShown: false }} />
 
       {/* Referral & Sharing */}
       <Stack.Screen name="Referral" component={ReferralScreen} options={{ title: 'Parrainage' }} />
+      <Stack.Screen name="PromoCode" component={PromoCodeScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ShareApp" component={ShareAppScreen} options={{ title: 'Inviter des amis' }} />
       <Stack.Screen name="History" component={HistoryScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ProviderProfile" component={ProviderProfileScreen} options={{ headerShown: false }} />
