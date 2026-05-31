@@ -63,6 +63,7 @@ export default function SOSTrackingScreen({ route, navigation }) {
   const [counterPriceInput, setCounterPriceInput] = useState('');
   const [submittingCounter, setSubmittingCounter] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
+  const [showRatingPrompt, setShowRatingPrompt] = useState(false);
   const radarAnim = useRef(new Animated.Value(1)).current;
   const liveDotAnim = useRef(new Animated.Value(1)).current;
 
@@ -136,7 +137,7 @@ export default function SOSTrackingScreen({ route, navigation }) {
       if (data.orderId === orderId) {
         setLocalOrder((prev) => prev ? { ...prev, status: 'COMPLETED' } : prev);
         updateOrderStatus(orderId, { status: 'COMPLETED' });
-        setTimeout(() => navigation.navigate('Home'), 3000);
+        setTimeout(() => setShowRatingPrompt(true), 1500);
       }
     };
 
@@ -409,6 +410,22 @@ export default function SOSTrackingScreen({ route, navigation }) {
             >
               <Text style={styles.actionButtonText}>🏠 Retour à l'accueil</Text>
             </TouchableOpacity>
+            {showRatingPrompt && (
+              <TouchableOpacity
+                style={styles.rateBtn}
+                onPress={() => {
+                  setShowRatingPrompt(false);
+                  navigation.navigate('Rating', {
+                    orderId,
+                    serviceType: 'SOS',
+                    providerName: localOrder?.depanneur?.name || 'Le dépanneur',
+                  });
+                }}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.rateBtnText}>⭐ Évaluer l'intervention</Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
 
@@ -629,4 +646,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   chatButtonText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  rateBtn: {
+    backgroundColor: '#F5A623',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    marginTop: 8,
+    width: '100%',
+  },
+  rateBtnText: { color: '#0A0A0F', fontSize: 15, fontWeight: '700' },
 });

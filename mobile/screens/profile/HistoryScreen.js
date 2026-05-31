@@ -26,32 +26,43 @@ const COLORS = {
 };
 
 const SERVICE_META = {
-  TAXI: { label: 'EasyTaxy', emoji: '🚕', color: COLORS.primary },
-  SOS: { label: 'SOS Remorquage', emoji: '🚛', color: COLORS.red },
-  DELIVERY: { label: 'Livraison', emoji: '🛵', color: COLORS.green },
-  GROCERY: { label: 'Courses', emoji: '🛒', color: COLORS.blue },
+  TAXI: { label: 'EasyTaxy', emoji: '🚕', color: '#F5A623' },
+  SOS: { label: 'SOS Remorquage', emoji: '🚨', color: '#D32F2F' },
+  DELIVERY: { label: 'Livraison', emoji: '🛵', color: '#27AE60' },
+  GROCERY: { label: 'Courses', emoji: '🛒', color: '#8E44AD' },
+};
+
+const STATUS_COLORS = {
+  COMPLETED: '#27AE60',
+  CANCELLED: '#E74C3C',
+  PENDING: '#F57C00',
+  IN_PROGRESS: '#3498DB',
+  ACCEPTED: '#3498DB',
 };
 
 const STATUS_LABELS = {
-  PENDING: { label: 'En attente', color: COLORS.orange },
-  ACCEPTED: { label: 'Acceptée', color: COLORS.blue },
-  IN_PROGRESS: { label: 'En cours', color: COLORS.blue },
-  COMPLETED: { label: 'Terminée', color: COLORS.green },
-  CANCELLED: { label: 'Annulée', color: COLORS.red },
-  DISPUTED: { label: 'Litige', color: COLORS.red },
+  COMPLETED: 'Terminée',
+  CANCELLED: 'Annulée',
+  PENDING: 'En attente',
+  IN_PROGRESS: 'En cours',
+  ACCEPTED: 'Acceptée',
+  DISPUTED: 'Litige',
 };
 
-const TABS = ['Tout', 'Taxi', 'SOS', 'Livraison'];
+const TABS = ['Tout', 'Taxi', 'SOS', 'Livraison', 'Courses'];
 const TAB_SERVICE_MAP = {
   'Tout': null,
   'Taxi': 'TAXI',
   'SOS': 'SOS',
   'Livraison': 'DELIVERY',
+  'Courses': 'GROCERY',
 };
 
 function OrderItem({ item, onPress }) {
   const meta = SERVICE_META[item.serviceType] || { label: item.serviceType, emoji: '📦', color: COLORS.textMuted };
-  const statusCfg = STATUS_LABELS[item.status] || { label: item.status, color: COLORS.textMuted };
+  const statusColor = STATUS_COLORS[item.status] || COLORS.textMuted;
+  const statusLabel = STATUS_LABELS[item.status] || item.status;
+  const statusCfg = { label: statusLabel, color: statusColor };
   const price = item.finalPrice ?? item.price;
 
   return (

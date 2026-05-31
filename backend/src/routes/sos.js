@@ -474,6 +474,25 @@ router.post(
       if (bothConfirmed) {
         await logEvent(id, 'COMPLETED', { completedAt: new Date().toISOString() });
 
+        // Award EasyPoints to client
+        try {
+          const SOS_POINTS = 15;
+          await prisma.$transaction([
+            prisma.user.update({
+              where: { id: order.clientId },
+              data: { loyaltyPoints: { increment: SOS_POINTS } },
+            }),
+            prisma.loyaltyTransaction.create({
+              data: {
+                userId: order.clientId,
+                points: SOS_POINTS,
+                description: 'Intervention SOS complétée — EasySOS',
+                type: 'EARN',
+              },
+            }),
+          ]);
+        } catch {} // Non-blocking
+
         const tokens = [order.client?.fcmToken, order.provider?.fcmToken].filter(Boolean);
         if (tokens.length > 0) {
           await sendNotification(tokens, NOTIFICATION_TYPES.ORDER_COMPLETED, 'Intervention terminée', 'Merci d\'avoir utilisé EASYWAY SOS !', { orderId: id });

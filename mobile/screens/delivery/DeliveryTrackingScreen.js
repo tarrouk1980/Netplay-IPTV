@@ -81,6 +81,7 @@ export default function DeliveryTrackingScreen({ route, navigation }) {
   const [livreurLocation, setLivreurLocation] = useState(null);
   const [lastLocationUpdate, setLastLocationUpdate] = useState(null);
   const [showChatModal, setShowChatModal] = useState(false);
+  const [showRatingPrompt, setShowRatingPrompt] = useState(false);
   const liveDotAnim = useRef(new Animated.Value(1)).current;
   const pollRef = useRef(null);
 
@@ -123,7 +124,10 @@ export default function DeliveryTrackingScreen({ route, navigation }) {
       if (data.orderId === orderId) load();
     };
     const onDelivered = (data) => {
-      if (data.orderId === orderId) load();
+      if (data.orderId === orderId) {
+        load();
+        setTimeout(() => setShowRatingPrompt(true), 1500);
+      }
     };
     const onLocationUpdate = (data) => {
       if (data.serviceType === 'DELIVERY') {
@@ -284,6 +288,22 @@ export default function DeliveryTrackingScreen({ route, navigation }) {
             <TouchableOpacity style={styles.secondaryBtn} onPress={() => navigation.navigate('DeliveryHome')}>
               <Text style={styles.secondaryBtnText}>Nouvelle commande</Text>
             </TouchableOpacity>
+            {showRatingPrompt && (
+              <TouchableOpacity
+                style={styles.rateBtn}
+                onPress={() => {
+                  setShowRatingPrompt(false);
+                  navigation.navigate('Rating', {
+                    orderId,
+                    serviceType: 'DELIVERY',
+                    providerName: order?.driver?.name || 'Le livreur',
+                  });
+                }}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.rateBtnText}>⭐ Évaluer la livraison</Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
 
@@ -454,4 +474,13 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   chatBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  rateBtn: {
+    backgroundColor: '#F5A623',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  rateBtnText: { color: '#0A0A0F', fontSize: 15, fontWeight: '700' },
 });

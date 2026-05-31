@@ -264,6 +264,25 @@ router.post('/:id/confirm-receipt', authenticate, requireRole('CLIENT'), async (
 
   await logEvent(order.id, 'ORDER_COMPLETED', { confirmedBy: req.user.id });
 
+  // Award EasyPoints to client
+  try {
+    const DELIVERY_POINTS = 8;
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: order.clientId },
+        data: { loyaltyPoints: { increment: DELIVERY_POINTS } },
+      }),
+      prisma.loyaltyTransaction.create({
+        data: {
+          userId: order.clientId,
+          points: DELIVERY_POINTS,
+          description: 'Livraison complétée — EasyDelivery',
+          type: 'EARN',
+        },
+      }),
+    ]);
+  } catch {} // Non-blocking
+
   const io = getIo(req);
   if (io) {
     io.to(`user:${order.providerId}`).emit('delivery:completed', { orderId: order.id });
@@ -529,6 +548,25 @@ router.post('/:id/complete', authenticate, requireRole('LIVREUR'), async (req, r
   });
 
   await logEvent(order.id, 'DELIVERED', { livreurId: req.user.id, completedAt: now.toISOString() });
+
+  // Award EasyPoints to client
+  try {
+    const DELIVERY_POINTS = 8;
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: order.clientId },
+        data: { loyaltyPoints: { increment: DELIVERY_POINTS } },
+      }),
+      prisma.loyaltyTransaction.create({
+        data: {
+          userId: order.clientId,
+          points: DELIVERY_POINTS,
+          description: 'Livraison complétée — EasyDelivery',
+          type: 'EARN',
+        },
+      }),
+    ]);
+  } catch {} // Non-blocking
 
   const clientToken = order.client?.fcmToken;
   if (clientToken) {

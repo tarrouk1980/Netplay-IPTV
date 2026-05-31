@@ -392,6 +392,25 @@ router.post(
 
       await logEvent(orderId, 'ORDER_COMPLETED', { completedAt: now.toISOString() });
 
+      // Award EasyPoints to client
+      try {
+        const TAXI_POINTS = 10;
+        await prisma.$transaction([
+          prisma.user.update({
+            where: { id: order.clientId },
+            data: { loyaltyPoints: { increment: TAXI_POINTS } },
+          }),
+          prisma.loyaltyTransaction.create({
+            data: {
+              userId: order.clientId,
+              points: TAXI_POINTS,
+              description: 'Course taxi complétée — EasyTaxy',
+              type: 'EARN',
+            },
+          }),
+        ]);
+      } catch {} // Non-blocking
+
       const io = getIo(req);
       if (io) {
         io.to(`user:${order.clientId}`).emit('taxi:completed', { orderId });
