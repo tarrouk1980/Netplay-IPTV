@@ -13,6 +13,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
+import useThemeStore from '../../store/themeStore';
 
 const COLORS = {
   bg: '#0A0A0F',
@@ -133,6 +134,7 @@ const lRow = StyleSheet.create({
 
 export default function SettingsScreen({ navigation }) {
   const { logout } = useAuthStore();
+  const { mode: themeMode, setMode: setThemeMode } = useThemeStore();
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -309,14 +311,26 @@ export default function SettingsScreen({ navigation }) {
         {/* Apparence */}
         <SectionHeader title="Apparence" />
         <View style={styles.group}>
-          <SettingRow
-            label="Mode sombre"
-            sublabel="Thème sombre activé"
-            value={settings.darkMode}
-            onValueChange={() => {}}
-            disabled={true}
-            note="Le mode sombre est actuellement obligatoire. Une option de thème clair sera disponible prochainement."
-          />
+          {[
+            { key: 'dark', label: '🌙 Mode sombre', sublabel: 'Toujours sombre' },
+            { key: 'light', label: '☀️ Mode clair', sublabel: 'Toujours clair' },
+            { key: 'auto', label: '🌓 Automatique', sublabel: 'Sombre 20h–7h, clair sinon' },
+          ].map((opt, idx, arr) => (
+            <TouchableOpacity
+              key={opt.key}
+              style={[lRow.container, idx < arr.length - 1 && { borderBottomWidth: 1, borderBottomColor: COLORS.border }]}
+              onPress={() => setThemeMode(opt.key)}
+              activeOpacity={0.7}
+            >
+              <View style={lRow.left}>
+                <Text style={lRow.label}>{opt.label}</Text>
+                <Text style={lRow.sublabel}>{opt.sublabel}</Text>
+              </View>
+              {themeMode === opt.key && (
+                <Text style={{ color: COLORS.accent, fontSize: 18, fontWeight: '700' }}>✓</Text>
+              )}
+            </TouchableOpacity>
+          ))}
         </View>
 
         {/* Compte */}

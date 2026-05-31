@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, Vibration, Alert,
-  AppState, Platform,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, Vibration, Alert,
+  AppState,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Accelerometer } from 'expo-sensors';
@@ -238,9 +238,6 @@ export default function SilentSOSScreen({ navigation }) {
     </SafeAreaView>
   );
 }
-
-// ScrollView must be imported separately since it's used inside
-import { ScrollView } from 'react-native';
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },

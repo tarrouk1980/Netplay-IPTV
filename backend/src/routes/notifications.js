@@ -84,4 +84,19 @@ router.post(
   }
 );
 
+// POST /api/notifications/weather-check — Admin: déclencher vérification météo manuellement
+router.post('/weather-check', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'ADMIN') return res.status(403).json({ error: 'Admin only' });
+    const { checkWeatherAndNotify } = require('../services/weatherNotifier');
+    const result = await checkWeatherAndNotify(
+      req.body.lat || 36.8,
+      req.body.lng || 10.18
+    );
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

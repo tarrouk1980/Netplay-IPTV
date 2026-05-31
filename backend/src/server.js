@@ -10,9 +10,13 @@ const config = require('./config/env');
 const server = http.createServer(app);
 initSocket(server);
 
+const { startWeatherNotifier } = require('./services/weatherNotifier');
+
 server.listen(config.port, () => {
   console.log(`EASYWAY Backend running on port ${config.port}`);
   console.log(`Environment: ${config.nodeEnv}`);
+  // Start hourly weather check → push notifications si pluie
+  if (config.nodeEnv !== 'test') startWeatherNotifier();
 });
 
 // Graceful shutdown

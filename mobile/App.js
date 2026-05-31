@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 import { initI18n } from './i18n';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -11,6 +12,7 @@ import { registerForPushNotifications as registerPushToken, useNotificationListe
 
 import useAuthStore from './store/authStore';
 import useNotificationStore from './store/notificationStore';
+import useThemeStore from './store/themeStore';
 
 // Onboarding
 import OnboardingScreen from './screens/onboarding/OnboardingScreen';
@@ -223,19 +225,23 @@ function MainStack() {
 export default function App() {
   const { isAuthenticated, loadFromStorage, user } = useAuthStore();
   const { addNotification } = useNotificationStore();
+  const { init: initTheme, refreshAuto } = useThemeStore();
   const notificationListener = useRef();
   const responseListener = useRef();
   const [onboardingDone, setOnboardingDone] = useState(null); // null=loading, true/false
 
   useEffect(() => {
-    // Init i18n (language preference)
     initI18n().catch(() => {});
-    // Restore tokens from AsyncStorage on app start
     loadFromStorage();
-    // Check onboarding status
+    initTheme();
     AsyncStorage.getItem('onboardingDone').then((done) => {
       setOnboardingDone(!!done);
     });
+    // Refresh auto theme when app comes back to foreground
+    const appStateSub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') refreshAuto();
+    });
+    return () => appStateSub.remove();
   }, []);
 
   useEffect(() => {
