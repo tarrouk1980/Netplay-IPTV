@@ -41,8 +41,59 @@ if (config.firebaseProjectId && config.firebaseClientEmail && config.firebasePri
 }
 
 /**
+ * Send via Expo Push API (used when token starts with "ExponentPushToken").
+ */
+async function sendViaExpoPush(expoTokens, title, body, data = {}) {
+  const https = require('https');
+  const messages = expoTokens.map(to => ({
+    to,
+    title,
+    body,
+    data,
+    sound: 'default',
+    priority: 'high',
+  }));
+
+  return new Promise((resolve) => {
+    const payload = JSON.stringify(messages);
+    const req = https.request({
+      hostname: 'exp.host',
+      path: '/--/api/v2/push/send',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(payload),
+        'Accept': 'application/json',
+        'Accept-Encoding': 'gzip, deflate',
+      },
+    }, (res) => {
+      let raw = '';
+      res.on('data', d => { raw += d; });
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(raw);
+          const results = parsed.data || [];
+          const successCount = results.filter(r => r.status === 'ok').length;
+          console.log(`[ExpoPush] Sent ${successCount}/${expoTokens.length} notifications`);
+          resolve({ successCount, failureCount: expoTokens.length - successCount });
+        } catch {
+          resolve({ successCount: 0, failureCount: expoTokens.length });
+        }
+      });
+    });
+    req.on('error', (e) => {
+      console.warn('[ExpoPush] Request error:', e.message);
+      resolve({ successCount: 0, failureCount: expoTokens.length });
+    });
+    req.write(payload);
+    req.end();
+  });
+}
+
+/**
  * Send push notifications to multiple device tokens.
- * @param {string[]} tokens - FCM device tokens
+ * Supports both Expo push tokens (ExponentPushToken[...]) and FCM tokens.
+ * @param {string[]} tokens - device tokens
  * @param {string} type - notification type from NOTIFICATION_TYPES
  * @param {string} title - notification title
  * @param {string} body - notification body
@@ -54,39 +105,45 @@ async function sendNotification(tokens, type, title, body, data = {}) {
     return { successCount: 0, failureCount: 0, responses: [] };
   }
 
-  if (firebaseAdmin) {
+  // Split tokens by type
+  const expoTokens = tokens.filter(t => t && t.startsWith('ExponentPushToken'));
+  const fcmTokens = tokens.filter(t => t && !t.startsWith('ExponentPushToken'));
+
+  let expoResult = { successCount: 0, failureCount: 0 };
+  let fcmResult = { successCount: 0, failureCount: 0 };
+
+  // Send Expo tokens via Expo Push API
+  if (expoTokens.length > 0) {
+    expoResult = await sendViaExpoPush(expoTokens, title, body, { type, ...data });
+  }
+
+  // Send FCM tokens via Firebase Admin SDK
+  if (fcmTokens.length > 0 && firebaseAdmin) {
     try {
       const admin = require('firebase-admin');
       const message = {
-        tokens,
+        tokens: fcmTokens,
         notification: { title, body },
         data: { type, ...Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)])) },
         android: { priority: 'high' },
         apns: { payload: { aps: { sound: 'default' } } },
       };
-
       const response = await admin.messaging().sendEachForMulticast(message);
-      console.log(`[FCM] Sent ${response.successCount}/${tokens.length} notifications`);
-      return {
-        successCount: response.successCount,
-        failureCount: response.failureCount,
-        responses: response.responses,
-      };
+      fcmResult = { successCount: response.successCount, failureCount: response.failureCount };
+      console.log(`[FCM] Sent ${response.successCount}/${fcmTokens.length} FCM notifications`);
     } catch (err) {
       console.error('[FCM] Send error:', err);
-      throw err;
+      fcmResult = { successCount: 0, failureCount: fcmTokens.length };
     }
+  } else if (fcmTokens.length > 0) {
+    // Mock FCM
+    console.log(`[FCM Mock] Would send "${title}" (${type}) to ${fcmTokens.length} device(s) — Body: ${body}`);
+    fcmResult = { successCount: fcmTokens.length, failureCount: 0 };
   }
 
-  // Mock response
-  console.log(`[FCM Mock] Would send "${title}" (${type}) to ${tokens.length} device(s)`);
-  console.log(`[FCM Mock] Body: ${body}`);
-  if (Object.keys(data).length > 0) console.log('[FCM Mock] Data:', data);
-
   return {
-    successCount: tokens.length,
-    failureCount: 0,
-    responses: tokens.map((token) => ({ success: true, messageId: `mock_${token.slice(0, 8)}` })),
+    successCount: expoResult.successCount + fcmResult.successCount,
+    failureCount: expoResult.failureCount + fcmResult.failureCount,
   };
 }
 

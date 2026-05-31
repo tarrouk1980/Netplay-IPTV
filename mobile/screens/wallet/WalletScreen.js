@@ -126,7 +126,9 @@ export default function WalletScreen({ navigation }) {
           <Text style={styles.backArrow}>‹</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Mon Wallet</Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity onPress={() => navigation.navigate('WalletRecharge')} style={styles.rechargeHeaderBtn}>
+          <Text style={styles.rechargeHeaderBtnText}>+ Recharger</Text>
+        </TouchableOpacity>
       </View>
 
       {loading ? (
@@ -240,5 +242,7 @@ const styles = StyleSheet.create({
   },
   rechargeBtnAmount: { color: '#fff', fontSize: 18, fontWeight: '800' },
   rechargeBtnSub: { color: 'rgba(255,255,255,0.75)', fontSize: 11 },
+  rechargeHeaderBtn: { backgroundColor: COLORS.green, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6 },
+  rechargeHeaderBtnText: { color: '#FFF', fontSize: 12, fontWeight: '700' },
   emptyText: { color: COLORS.muted, fontSize: 13, textAlign: 'center', paddingVertical: 20 },
 });

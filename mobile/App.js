@@ -87,6 +87,7 @@ import BuyPassScreen from './screens/subscriptions/BuyPassScreen';
 import BackHomeRideScreen from './screens/taxi/BackHomeRideScreen';
 import PaymentScreen from './screens/payment/PaymentScreen';
 import WalletScreen from './screens/wallet/WalletScreen';
+import WalletRechargeScreen from './screens/wallet/WalletRechargeScreen';
 import ProviderDashboardScreen from './screens/provider/ProviderDashboardScreen';
 import ProviderEarningsScreen from './screens/provider/ProviderEarningsScreen';
 
@@ -247,6 +248,7 @@ function MainStack() {
       <Stack.Screen name="BackHomeRide" component={BackHomeRideScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Payment" component={PaymentScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Wallet" component={WalletScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="WalletRecharge" component={WalletRechargeScreen} options={{ headerShown: false }} />
 
       {/* Legal */}
       <Stack.Screen name="CGU" component={CGUScreen} options={{ headerShown: false }} />
