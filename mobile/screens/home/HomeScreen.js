@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   ScrollView,
   StatusBar,
   TouchableOpacity,
+  Image,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import useAuthStore from '../../store/authStore';
@@ -35,11 +37,13 @@ const SERVICES = [
   { key: 'GROCERY', iconService: 'GROCERY', title: 'Courses', subtitle: 'Livraison épicerie', color: '#8E44AD' },
 ];
 
-// Offres du moment — placeholders pour AdBanner
-const PROMOS = [
-  { id: 'p1', label: '🔥 -20% sur EasyTaxy', sub: 'Ce week-end seulement', color: '#F5A623' },
-  { id: 'p2', label: '🚀 Livraison gratuite', sub: 'Commandes > 30 TND', color: '#27AE60' },
-  { id: 'p3', label: '💎 Pass VIP -50%', sub: 'Offre limitée', color: '#D32F2F' },
+// Offres du moment — fallback si API indisponible
+const DEFAULT_PROMOS = [
+  { id: 'p1', label: '🔥 -20% sur EasyTaxy', sub: 'Ce week-end seulement', color: '#F5A623', imageUrl: null, ctaUrl: null },
+  { id: 'p2', label: '🚀 Livraison gratuite', sub: 'Commandes > 30 TND', color: '#27AE60', imageUrl: null, ctaUrl: null },
+  { id: 'p3', label: '💎 Pass VIP -50%', sub: 'Offre limitée', color: '#D32F2F', imageUrl: null, ctaUrl: null },
+  { id: 'p4', label: '🛵 EasyLady disponible', sub: 'Conductrices certifiées', color: '#E91E8C', imageUrl: null, ctaUrl: null },
+  { id: 'p5', label: '🚑 SOS 24h/24', sub: 'Dépannage rapide en Tunisie', color: '#E74C3C', imageUrl: null, ctaUrl: null },
 ];
 
 const STATUS_LABELS = {
@@ -63,6 +67,10 @@ export default function HomeScreen({ navigation }) {
   const { subscription, fetchSubscription } = usePassStore();
   const { unreadCount } = useNotificationStore();
   const [recentActivity, setRecentActivity] = useState([]);
+  const [promos, setPromos] = useState(DEFAULT_PROMOS);
+  const [heroBanner, setHeroBanner] = useState(null);
+  const promoBannerRef = useRef(null);
+  const [promoBannerIndex, setPromoBannerIndex] = useState(0);
 
   const fetchActivity = useCallback(async () => {
     try {
@@ -73,9 +81,34 @@ export default function HomeScreen({ navigation }) {
     }
   }, []);
 
+  const fetchAds = useCallback(async () => {
+    try {
+      const [heroRes, promoRes] = await Promise.all([
+        api.get('/api/ads?placement=home_hero&limit=1'),
+        api.get('/api/ads?placement=home_promos&limit=8'),
+      ]);
+      const hero = (heroRes.data?.ads || heroRes.data || [])[0];
+      if (hero) setHeroBanner(hero);
+      const ads = promoRes.data?.ads || promoRes.data || [];
+      if (ads.length > 0) {
+        setPromos(ads.map((ad, i) => ({
+          id: ad.id || `ad_${i}`,
+          label: ad.title || '',
+          sub: ad.description || '',
+          color: ad.color || '#D32F2F',
+          imageUrl: ad.imageUrl || null,
+          ctaUrl: ad.ctaUrl || null,
+        })));
+      }
+    } catch {
+      // garder les defaults
+    }
+  }, []);
+
   useEffect(() => {
     fetchSubscription();
     fetchActivity();
+    fetchAds();
 
     if (!user?.role) return;
 
@@ -171,22 +204,74 @@ export default function HomeScreen({ navigation }) {
           ))}
         </View>
 
+        {/* Bannière pub héro dynamique */}
+        {heroBanner && (
+          <TouchableOpacity
+            style={styles.heroBanner}
+            activeOpacity={0.9}
+            onPress={() => heroBanner.ctaUrl && Linking.openURL(heroBanner.ctaUrl)}
+          >
+            {heroBanner.imageUrl ? (
+              <Image source={{ uri: heroBanner.imageUrl }} style={styles.heroBannerImage} resizeMode="cover" />
+            ) : (
+              <View style={[styles.heroBannerFallback, { backgroundColor: heroBanner.color || '#D32F2F' }]}>
+                <Text style={styles.heroBannerTitle}>{heroBanner.title || ''}</Text>
+                <Text style={styles.heroBannerSub}>{heroBanner.description || ''}</Text>
+                {heroBanner.ctaLabel && (
+                  <View style={styles.heroBannerCta}>
+                    <Text style={styles.heroBannerCtaText}>{heroBanner.ctaLabel}</Text>
+                  </View>
+                )}
+              </View>
+            )}
+          </TouchableOpacity>
+        )}
+
         {/* Offres du moment */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>🔥 Offres du moment</Text>
         </View>
         <ScrollView
+          ref={promoBannerRef}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.promosContainer}
+          snapToInterval={196}
+          decelerationRate="fast"
+          onScroll={(e) => {
+            const idx = Math.round(e.nativeEvent.contentOffset.x / 196);
+            setPromoBannerIndex(idx);
+          }}
+          scrollEventThrottle={16}
         >
-          {PROMOS.map((promo) => (
-            <TouchableOpacity key={promo.id} style={[styles.promoCard, { borderLeftColor: promo.color }]} activeOpacity={0.85}>
-              <Text style={styles.promoLabel}>{promo.label}</Text>
-              <Text style={styles.promoSub}>{promo.sub}</Text>
+          {promos.map((promo) => (
+            <TouchableOpacity
+              key={promo.id}
+              style={[styles.promoCard, { borderLeftColor: promo.color }]}
+              activeOpacity={0.85}
+              onPress={() => promo.ctaUrl && Linking.openURL(promo.ctaUrl)}
+            >
+              {promo.imageUrl ? (
+                <Image source={{ uri: promo.imageUrl }} style={styles.promoImage} resizeMode="cover" />
+              ) : (
+                <View style={[styles.promoColorBar, { backgroundColor: promo.color + '22' }]}>
+                  <Text style={[styles.promoColorDot, { color: promo.color }]}>●</Text>
+                </View>
+              )}
+              <Text style={styles.promoLabel} numberOfLines={2}>{promo.label}</Text>
+              <Text style={styles.promoSub} numberOfLines={2}>{promo.sub}</Text>
+              {promo.ctaUrl && (
+                <Text style={[styles.promoCta, { color: promo.color }]}>En savoir plus →</Text>
+              )}
             </TouchableOpacity>
           ))}
         </ScrollView>
+        {/* Dots pagination promos */}
+        <View style={styles.promosDots}>
+          {promos.map((_, i) => (
+            <View key={i} style={[styles.promosDot, i === promoBannerIndex && styles.promosDotActive]} />
+          ))}
+        </View>
 
         {/* Activité récente */}
         <View style={styles.sectionHeader}>
@@ -241,6 +326,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     gap: 8,
   },
+  heroBanner: { marginHorizontal: 16, marginTop: 8, borderRadius: 16, overflow: 'hidden' },
+  heroBannerImage: { width: '100%', height: 160, borderRadius: 16 },
+  heroBannerFallback: { borderRadius: 16, padding: 24, minHeight: 120, justifyContent: 'center' },
+  heroBannerTitle: { color: '#FFF', fontSize: 20, fontWeight: '900', marginBottom: 6 },
+  heroBannerSub: { color: 'rgba(255,255,255,0.85)', fontSize: 13, marginBottom: 12 },
+  heroBannerCta: { alignSelf: 'flex-start', backgroundColor: 'rgba(0,0,0,0.25)', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 7 },
+  heroBannerCtaText: { color: '#FFF', fontWeight: '700', fontSize: 13 },
   promosContainer: {
     paddingHorizontal: 16,
     gap: 12,
@@ -249,15 +341,19 @@ const styles = StyleSheet.create({
   promoCard: {
     backgroundColor: COLORS.surface,
     borderRadius: 14,
-    padding: 16,
-    minWidth: 180,
+    padding: 14,
+    width: 184,
     borderLeftWidth: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.25,
     shadowRadius: 5,
     elevation: 5,
+    overflow: 'hidden',
   },
+  promoImage: { width: '100%', height: 90, borderRadius: 10, marginBottom: 10 },
+  promoColorBar: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, marginBottom: 8, alignSelf: 'flex-start' },
+  promoColorDot: { fontSize: 10 },
   promoLabel: {
     color: COLORS.text,
     fontWeight: '700',
@@ -267,7 +363,12 @@ const styles = StyleSheet.create({
   promoSub: {
     color: COLORS.textMuted,
     fontSize: 12,
+    marginBottom: 6,
   },
+  promoCta: { fontSize: 11, fontWeight: '700', marginTop: 4 },
+  promosDots: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 8, marginBottom: 4 },
+  promosDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#2C2C3E' },
+  promosDotActive: { backgroundColor: '#D32F2F', width: 18 },
   emptyActivity: {
     alignItems: 'center',
     padding: 32,
