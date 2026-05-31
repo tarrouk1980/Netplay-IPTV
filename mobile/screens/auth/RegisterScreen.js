@@ -21,12 +21,51 @@ import ServiceIcon from '../../components/ServiceIcon';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const COUNTRY_CODES = [
-  { flag: '🇹🇳', code: '+216' },
-  { flag: '🇩🇿', code: '+213' },
-  { flag: '🇲🇦', code: '+212' },
-  { flag: '🇫🇷', code: '+33' },
-  { flag: '🇸🇦', code: '+966' },
+  { flag: '🇹🇳', code: '+216', key: 'TN', label: 'Tunisie' },
+  { flag: '🇩🇿', code: '+213', key: 'DZ', label: 'Algérie' },
+  { flag: '🇲🇦', code: '+212', key: 'MA', label: 'Maroc' },
+  { flag: '🇱🇾', code: '+218', key: 'LY', label: 'Libye' },
+  { flag: '🇲🇷', code: '+222', key: 'MR', label: 'Mauritanie' },
+  { flag: '🇫🇷', code: '+33',  key: 'FR', label: 'France' },
+  { flag: '🇸🇦', code: '+966', key: 'SA', label: 'Arabie Saoudite' },
 ];
+
+const ZONES_BY_COUNTRY = {
+  TN: [
+    'Ariana','Béja','Ben Arous','Bizerte','Gabès','Gafsa','Jendouba','Kairouan',
+    'Kasserine','Kébili','Kef','Mahdia','Manouba','Médenine','Monastir','Nabeul',
+    'Sfax','Sidi Bouzid','Siliana','Sousse','Tataouine','Tozeur','Tunis','Zaghouan',
+  ],
+  DZ: [
+    'Adrar','Aïn Défla','Aïn Témouchent','Alger','Annaba','Batna','Béchar','Béjaïa',
+    'Biskra','Blida','Bordj Bou Arréridj','Bouira','Boumerdès','Chlef','Constantine',
+    'Djelfa','El Bayadh','El Oued','El Tarf','Ghardaïa','Guelma','Illizi','Jijel',
+    'Khenchela','Laghouat','Mascara','Médéa','Mila','Mostaganem','Msila','Naâma',
+    'Oran','Ouargla','Oum El Bouaghi','Relizane','Saïda','Sétif','Sidi Bel Abbès',
+    'Skikda','Souk Ahras','Tamanrasset','Tébessa','Tiaret','Tindouf','Tipaza',
+    'Tissemsilt','Tizi Ouzou','Tlemcen','Bordj Badji Mokhtar','Béni Abbès',
+    'Timimoun','Ouled Djellal','Touggourt','Djanet','In Salah','In Guezzam',
+    'El Meniaa','Oran 2',
+  ],
+  MA: [
+    'Tanger-Tétouan-Al Hoceïma','Oriental','Fès-Meknès','Rabat-Salé-Kénitra',
+    'Béni Mellal-Khénifra','Casablanca-Settat','Marrakech-Safi',
+    'Drâa-Tafilalet','Souss-Massa','Guelmim-Oued Noun',
+    'Laâyoune-Sakia El Hamra','Dakhla-Oued Ed-Dahab',
+  ],
+  LY: [
+    'Tripoli','Benghazi','Misrata','Al Bayda','Surt','Sebha','Zintan','Zawiya',
+    'Zliten','Derna','Tobruk','Al Jufra','Al Kufra','Al Marj','Al Wahat',
+    'Ghat','Jabal al Akhdar','Jabal al Gharbi','Murzuq','Nalut','Nuqat al Khams','Wadi al Hayaa',
+  ],
+  MR: [
+    'Adrar','Assaba','Brakna','Dakhlet Nouadhibou','Gorgol','Guidimaka',
+    'Hodh Ech Chargui','Hodh El Gharbi','Inchiri','Lagouira','Nouakchott-Nord',
+    'Nouakchott-Ouest','Nouakchott-Sud','Tagant','Tiris Zemmour','Trarza',
+  ],
+  FR: ['Île-de-France','Provence-Alpes-Côte d\'Azur','Occitanie','Hauts-de-France','Auvergne-Rhône-Alpes','Bretagne','Normandie','Pays de la Loire','Centre-Val de Loire','Bourgogne-Franche-Comté','Grand Est','Nouvelle-Aquitaine'],
+  SA: ['Riyad','La Mecque','Médine','Al-Qassim','Hail','Tabuk','Asir','Jizan','Najran','Al Jouf','Al-Bahah','Frontière du Nord','Frontière de l\'Est'],
+};
 
 const COLORS = {
   background: '#0A0A0F',
@@ -105,6 +144,54 @@ const MERCHANT_CATEGORIES = [
 ];
 
 // ─── Reusable sub-components ──────────────────────────────────────────────────
+
+function MultiPickerField({ label, required, selected, options, onToggle, placeholder, disabled }) {
+  const [open, setOpen] = useState(false);
+  const displayText = selected.length > 0 ? selected.join(', ') : null;
+  return (
+    <View style={styles.inputGroup}>
+      <Text style={styles.inputLabel}>{label}{required ? <Text style={{ color: COLORS.primary }}> *</Text> : null}</Text>
+      <TouchableOpacity
+        style={[styles.pickerBtn, disabled && { opacity: 0.5 }]}
+        onPress={() => !disabled && setOpen(true)}
+        activeOpacity={0.8}
+      >
+        <Text style={[displayText ? styles.pickerBtnText : styles.pickerBtnPlaceholder, { flex: 1, marginRight: 8 }]} numberOfLines={2}>
+          {displayText || placeholder || 'Sélectionner...'}
+        </Text>
+        <Text style={{ color: COLORS.primary, fontSize: 16 }}>▾</Text>
+      </TouchableOpacity>
+      <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
+        <TouchableOpacity style={pickerStyles.overlay} activeOpacity={1} onPress={() => setOpen(false)}>
+          <View style={pickerStyles.sheet}>
+            <View style={pickerStyles.handle} />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 8 }}>
+              <Text style={pickerStyles.title}>{label}</Text>
+              <TouchableOpacity onPress={() => setOpen(false)}>
+                <Text style={{ color: COLORS.primary, fontWeight: '700', fontSize: 14 }}>OK ({selected.length})</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={pickerStyles.scroll} showsVerticalScrollIndicator={false}>
+              {options.map((opt) => {
+                const isSelected = selected.includes(opt);
+                return (
+                  <TouchableOpacity
+                    key={opt}
+                    style={[pickerStyles.option, isSelected && pickerStyles.optionSelected]}
+                    onPress={() => onToggle(opt)}
+                  >
+                    <Text style={[pickerStyles.optionText, isSelected && { color: COLORS.primary, fontWeight: '700' }]}>{opt}</Text>
+                    {isSelected && <Text style={{ color: COLORS.primary }}>✓</Text>}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </View>
+  );
+}
 
 function PickerField({ label, required, value, options, onSelect, placeholder, disabled }) {
   const [open, setOpen] = useState(false);
@@ -251,6 +338,7 @@ export default function RegisterScreen({ navigation }) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [selectedCountry, setSelectedCountry] = useState(COUNTRY_CODES[0]);
+  const [countryPickerOpen, setCountryPickerOpen] = useState(false);
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('CLIENT');
   const [fieldErrors, setFieldErrors] = useState({});
@@ -267,13 +355,13 @@ export default function RegisterScreen({ navigation }) {
   // Step 2 — LIVREUR
   const [deliveryVehicle, setDeliveryVehicle] = useState('MOTO');
   const [deliveryPlate, setDeliveryPlate] = useState('');
-  const [deliveryZone, setDeliveryZone] = useState('');
+  const [deliveryZones, setDeliveryZones] = useState([]);
 
   // Step 2 — DEPANNEUR
   const [depLicense, setDepLicense] = useState('');
   const [truckType, setTruckType] = useState('PLATEAU');
   const [truckPlate, setTruckPlate] = useState('');
-  const [depZone, setDepZone] = useState('');
+  const [depZones, setDepZones] = useState([]);
 
   // Step 2 — MARCHAND
   const [shopName, setShopName] = useState('');
@@ -492,7 +580,7 @@ export default function RegisterScreen({ navigation }) {
       if (MOTORIZED_DELIVERY.includes(deliveryVehicle) && deliveryPlate) {
         rows.push({ label: 'Plaque', value: deliveryPlate });
       }
-      if (deliveryZone) rows.push({ label: 'Zone', value: deliveryZone });
+      if (deliveryZones.length > 0) rows.push({ label: 'Zones', value: deliveryZones.join(', ') });
     }
     if (role === 'DEPANNEUR') {
       const ttInfo = TRUCK_TYPES.find((t) => t.value === truckType);
@@ -501,7 +589,7 @@ export default function RegisterScreen({ navigation }) {
         { label: 'Camion', value: ttInfo ? `${ttInfo.emoji} ${ttInfo.label}` : truckType },
         { label: 'Plaque camion', value: truckPlate },
       );
-      if (depZone) rows.push({ label: 'Zone', value: depZone });
+      if (depZones.length > 0) rows.push({ label: 'Zones', value: depZones.join(', ') });
     }
     if (role === 'MARCHAND') {
       const catInfo = MERCHANT_CATEGORIES.find((c) => c.value === shopCategory);
@@ -539,15 +627,30 @@ export default function RegisterScreen({ navigation }) {
           <View style={[styles.phoneRow, fieldErrors.phone ? styles.inputError : null]}>
             <TouchableOpacity
               style={styles.countryPicker}
-              onPress={() => Alert.alert(
-                'Indicatif',
-                '',
-                COUNTRY_CODES.map((c) => ({
-                  text: `${c.flag}  ${c.code}`,
-                  onPress: () => setSelectedCountry(c),
-                }))
-              )}
+              onPress={() => setCountryPickerOpen(true)}
             >
+              <Modal visible={countryPickerOpen} transparent animationType="slide" onRequestClose={() => setCountryPickerOpen(false)}>
+                <TouchableOpacity style={pickerStyles.overlay} activeOpacity={1} onPress={() => setCountryPickerOpen(false)}>
+                  <View style={pickerStyles.sheet}>
+                    <View style={pickerStyles.handle} />
+                    <Text style={pickerStyles.title}>Indicatif pays</Text>
+                    <ScrollView style={pickerStyles.scroll} showsVerticalScrollIndicator={false}>
+                      {COUNTRY_CODES.map((c) => (
+                        <TouchableOpacity
+                          key={c.key}
+                          style={[pickerStyles.option, selectedCountry.key === c.key && pickerStyles.optionSelected]}
+                          onPress={() => { setSelectedCountry(c); setCountryPickerOpen(false); }}
+                        >
+                          <Text style={[pickerStyles.optionText, selectedCountry.key === c.key && { color: COLORS.primary, fontWeight: '700' }]}>
+                            {c.flag}  {c.code}  {c.label}
+                          </Text>
+                          {selectedCountry.key === c.key && <Text style={{ color: COLORS.primary }}>✓</Text>}
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                </TouchableOpacity>
+              </Modal>
               <Text style={styles.countryFlag}>{selectedCountry.flag}</Text>
               <Text style={styles.countryCode}>{selectedCountry.code}</Text>
               <Text style={styles.countryChevron}>▼</Text>
@@ -690,12 +793,13 @@ export default function RegisterScreen({ navigation }) {
             />
           )}
 
-          <InputField
-            label="Zone de livraison"
-            placeholder="Ex: Tunis Centre, La Marsa"
-            value={deliveryZone}
-            onChangeText={setDeliveryZone}
-            editable={!isLoading}
+          <MultiPickerField
+            label="Zones de livraison"
+            selected={deliveryZones}
+            options={ZONES_BY_COUNTRY[selectedCountry.key] || ZONES_BY_COUNTRY['TN']}
+            onToggle={(z) => setDeliveryZones((prev) => prev.includes(z) ? prev.filter((x) => x !== z) : [...prev, z])}
+            placeholder="Sélectionner vos zones..."
+            disabled={isLoading}
           />
 
           <KycNote text="📋 Vérification sous 24h" />
@@ -738,12 +842,13 @@ export default function RegisterScreen({ navigation }) {
             editable={!isLoading}
           />
 
-          <InputField
-            label="Zone d'intervention"
-            placeholder="Ex: Grand Tunis, Ariana"
-            value={depZone}
-            onChangeText={setDepZone}
-            editable={!isLoading}
+          <MultiPickerField
+            label="Zones d'intervention"
+            selected={depZones}
+            options={ZONES_BY_COUNTRY[selectedCountry.key] || ZONES_BY_COUNTRY['TN']}
+            onToggle={(z) => setDepZones((prev) => prev.includes(z) ? prev.filter((x) => x !== z) : [...prev, z])}
+            placeholder="Sélectionner vos zones..."
+            disabled={isLoading}
           />
 
           <KycNote text="📋 Vérification sous 24h" />
