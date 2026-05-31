@@ -38,7 +38,7 @@ const ROLE_LABELS = {
 const SERVICE_TYPE_LABELS = {
   TAXI: '🚕 Taxi',
   DELIVERY: '📦 Livraison',
-  SOS: '🚛 Dépannage',
+  SOS: '🛻 Dépannage',
   GROCERY: '🛒 Courses',
 };
 

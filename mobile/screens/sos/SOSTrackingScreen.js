@@ -277,7 +277,7 @@ export default function SOSTrackingScreen({ route, navigation }) {
           <View style={styles.radarContainer}>
             <Animated.View style={[styles.radarRing, { transform: [{ scale: radarAnim }], opacity: radarAnim.interpolate({ inputRange: [1, 1.4], outputRange: [0.4, 0] }) }]} />
             <View style={styles.radarCenter}>
-              <Text style={styles.radarEmoji}>🚛</Text>
+              <Text style={styles.radarEmoji}>🛻</Text>
             </View>
             <ActivityIndicator color={COLORS.sos} style={{ marginTop: 16 }} />
           </View>
@@ -290,7 +290,7 @@ export default function SOSTrackingScreen({ route, navigation }) {
             {localQuotes.map((quote) => (
               <View key={quote.depanneurId} style={styles.quoteCard}>
                 <View style={styles.quoteHeader}>
-                  <Text style={styles.quoteDepanneur}>🚛 Dépanneur</Text>
+                  <Text style={styles.quoteDepanneur}>🛻 Dépanneur</Text>
                   <Text style={styles.quoteTime}>⏱ {quote.estimatedArrivalMin} min</Text>
                 </View>
                 <Text style={styles.quotePrice}>{parseFloat(quote.price).toFixed(3)} TND</Text>
@@ -344,7 +344,7 @@ export default function SOSTrackingScreen({ route, navigation }) {
           <View style={styles.depanneurCard}>
             <Text style={styles.sectionTitle}>Votre dépanneur</Text>
             <View style={styles.depanneurRow}>
-              <Text style={styles.depanneurAvatar}>🚛</Text>
+              <Text style={styles.depanneurAvatar}>🛻</Text>
               <View style={styles.depanneurInfo}>
                 <Text style={styles.depanneurName}>{localOrder?.provider?.name || 'Dépanneur'}</Text>
                 {localOrder?.provider?.phone && (

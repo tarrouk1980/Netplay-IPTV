@@ -82,7 +82,7 @@ function computePrice(serviceType, distanceKm) {
 const SERVICE_LABELS = {
   TAXI: '🚕 Taxi',
   DELIVERY: '📦 Livraison',
-  SOS: '🚛 Dépannage SOS',
+  SOS: '🛻 Dépannage SOS',
   GROCERY: '🛒 Courses',
 };
 
