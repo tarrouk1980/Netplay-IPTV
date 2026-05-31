@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AppState } from 'react-native';
+import { AppState, Linking } from 'react-native';
 import { initI18n } from './i18n';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -42,6 +42,7 @@ import SOSRequestScreen from './screens/sos/SOSRequestScreen';
 import SOSTrackingScreen from './screens/sos/SOSTrackingScreen';
 import DepanneurDashboardScreen from './screens/sos/DepanneurDashboardScreen';
 import ConstatAmiableScreen from './screens/sos/ConstatAmiableScreen';
+import EasyInsuranceScreen from './screens/sos/EasyInsuranceScreen';
 
 // Delivery Screens
 import DeliveryHomeScreen from './screens/delivery/DeliveryHomeScreen';
@@ -110,6 +111,28 @@ import ProviderOnboardingScreen from './screens/onboarding/ProviderOnboardingScr
 
 const Stack = createNativeStackNavigator();
 
+const linking = {
+  prefixes: ['easyway://', 'https://easyway.tn'],
+  config: {
+    screens: {
+      Home: 'home',
+      TaxiHome: 'taxi',
+      SOSHome: 'sos',
+      DeliveryHome: 'delivery',
+      GroceryHome: 'grocery',
+      Wallet: 'wallet',
+      Profile: 'profile',
+      Notifications: 'notifications',
+      AdminDashboard: 'admin',
+      TaxiTracking: 'tracking/taxi/:orderId',
+      SOSTracking: 'tracking/sos/:orderId',
+      DeliveryTracking: 'tracking/delivery/:orderId',
+      BuyPass: 'subscription',
+      Chat: 'chat/:orderId',
+    },
+  },
+};
+
 // Configure notification behavior
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -174,6 +197,7 @@ function MainStack() {
       <Stack.Screen name="SOSTracking" component={SOSTrackingScreen} options={{ title: 'Suivi SOS', headerShown: false }} />
       <Stack.Screen name="DepanneurDashboard" component={DepanneurDashboardScreen} options={{ title: 'Tableau de bord', headerShown: false }} />
       <Stack.Screen name="ConstatAmiable" component={ConstatAmiableScreen} options={{ title: 'Constat Amiable', headerShown: false }} />
+      <Stack.Screen name="EasyInsurance" component={EasyInsuranceScreen} options={{ headerShown: false }} />
 
       {/* Delivery */}
       <Stack.Screen name="DeliveryHome" component={DeliveryHomeScreen} options={{ title: 'Delivery', headerShown: false }} />
@@ -296,8 +320,22 @@ export default function App() {
 
     // Listen for notification responses (user taps)
     responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
-      console.log('[Notifications] User tapped notification:', response.notification.request.identifier);
-      // Handle deep linking based on notification data
+      const data = response.notification.request.content.data || {};
+      // Deep link routing based on notification data
+      if (data.screen) {
+        // Use Linking to navigate via the scheme
+        const screenRoutes = {
+          Wallet: 'easyway://wallet',
+          TaxiTracking: data.orderId ? `easyway://tracking/taxi/${data.orderId}` : null,
+          SOSTracking: data.orderId ? `easyway://tracking/sos/${data.orderId}` : null,
+          DeliveryTracking: data.orderId ? `easyway://tracking/delivery/${data.orderId}` : null,
+          Chat: data.orderId ? `easyway://chat/${data.orderId}` : null,
+          BuyPass: 'easyway://subscription',
+          AdminDashboard: 'easyway://admin',
+        };
+        const url = screenRoutes[data.screen];
+        if (url) Linking.openURL(url).catch(() => {});
+      }
     });
 
     return () => {
@@ -307,7 +345,7 @@ export default function App() {
   }, []);
 
   return (
-    <NavigationContainer>
+    <NavigationContainer linking={linking}>
       <StatusBar style="light" />
       {isAuthenticated ? <MainStack /> : <AuthStack onboardingDone={onboardingDone} />}
     </NavigationContainer>

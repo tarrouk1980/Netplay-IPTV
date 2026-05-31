@@ -57,7 +57,26 @@ export default function TaxiRequestScreen({ route, navigation }) {
   const [demandZones, setDemandZones] = useState([]);
   const [showPriceEstimate, setShowPriceEstimate] = useState(false);
   const [estimatedDistanceKm, setEstimatedDistanceKm] = useState(5);
+  const [waypoints, setWaypoints] = useState([]);
   const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  const addWaypoint = () => {
+    if (waypoints.length >= 3) {
+      Alert.alert('Maximum', 'Vous pouvez ajouter jusqu\'à 3 arrêts intermédiaires.');
+      return;
+    }
+    setWaypoints([...waypoints, '']);
+  };
+
+  const updateWaypoint = (index, value) => {
+    const updated = [...waypoints];
+    updated[index] = value;
+    setWaypoints(updated);
+  };
+
+  const removeWaypoint = (index) => {
+    setWaypoints(waypoints.filter((_, i) => i !== index));
+  };
 
   // Detect origin via expo-location
   useEffect(() => {
@@ -183,7 +202,8 @@ export default function TaxiRequestScreen({ route, navigation }) {
         { lat: origin.lat, lng: origin.lng, address: originAddress },
         { address: destination },
         mode,
-        taxiType
+        taxiType,
+        waypoints.filter(w => w.trim().length > 0)
       );
       navigation.navigate('TaxiTracking', { orderId: order.id });
     } catch (err) {
@@ -247,6 +267,39 @@ export default function TaxiRequestScreen({ route, navigation }) {
           />
           <Text style={styles.inputHint}>Autocomplétion dès 3 lettres — Mapbox</Text>
         </View>
+
+        {/* Waypoints */}
+        {waypoints.map((wp, idx) => (
+          <View key={idx} style={styles.section}>
+            <Text style={styles.label}>🔵 Arrêt {idx + 1}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                placeholder={`Arrêt intermédiaire ${idx + 1}…`}
+                placeholderTextColor={COLORS.textMuted}
+                value={wp}
+                onChangeText={(v) => updateWaypoint(idx, v)}
+                returnKeyType="done"
+              />
+              <TouchableOpacity
+                style={styles.removeWpBtn}
+                onPress={() => removeWaypoint(idx)}
+                activeOpacity={0.75}
+              >
+                <Text style={styles.removeWpText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ))}
+
+        {/* Add waypoint button */}
+        {waypoints.length < 3 && (
+          <View style={styles.section}>
+            <TouchableOpacity style={styles.addWpBtn} onPress={addWaypoint} activeOpacity={0.75}>
+              <Text style={styles.addWpText}>＋ Ajouter un arrêt</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Heatmap demand zones */}
         {demandZones.length > 0 && (
@@ -499,6 +552,29 @@ const styles = StyleSheet.create({
   heatmapLabel: { fontSize: 13, color: COLORS.text, fontWeight: '600' },
   heatmapLevel: { fontSize: 11, fontWeight: '700', marginTop: 1 },
   heatmapHint: { fontSize: 10, color: COLORS.textMuted, marginTop: 4, fontStyle: 'italic' },
+  removeWpBtn: {
+    backgroundColor: '#3A1A1A',
+    borderRadius: 10,
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#D32F2F44',
+  },
+  removeWpText: { color: '#D32F2F', fontSize: 14, fontWeight: '700' },
+  addWpBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: COLORS.accent + '66',
+    borderStyle: 'dashed',
+    paddingVertical: 12,
+    backgroundColor: COLORS.accent + '11',
+  },
+  addWpText: { color: COLORS.accent, fontSize: 14, fontWeight: '600' },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.75)',

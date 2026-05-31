@@ -32,6 +32,10 @@ export default function SOSHomeScreen({ navigation }) {
     });
   };
 
+  const handleManageInsurance = () => {
+    navigation.navigate('EasyInsurance');
+  };
+
   const handleIndependent = () => {
     navigation.navigate('SOSRequest', { mode: 'INDEPENDENT' });
   };
@@ -117,6 +121,15 @@ export default function SOSHomeScreen({ navigation }) {
           <Text style={[styles.modeChevron, { color: '#8E44AD' }]}>›</Text>
         </TouchableOpacity>
 
+        {/* Manage insurance link */}
+        <TouchableOpacity
+          style={styles.manageInsuranceBtn}
+          onPress={handleManageInsurance}
+          activeOpacity={0.75}
+        >
+          <Text style={styles.manageInsuranceText}>🛡️ Gérer mon contrat d'assurance</Text>
+        </TouchableOpacity>
+
         <View style={{ flex: 1 }} />
 
         {/* Legal note */}
@@ -181,6 +194,17 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   coverageTagText: { fontSize: 10, color: COLORS.accent, fontWeight: '700' },
+  manageInsuranceBtn: {
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginTop: 8,
+    marginBottom: 8,
+    backgroundColor: COLORS.surface,
+  },
+  manageInsuranceText: { color: COLORS.textMuted, fontSize: 13, fontWeight: '600' },
   legalNote: {
     fontSize: 11,
     color: COLORS.textMuted,
