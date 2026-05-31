@@ -15,6 +15,7 @@ import * as Location from 'expo-location';
 import useTaxiStore from '../../store/taxiStore';
 import FareEstimateCard from '../../components/FareEstimateCard';
 import StaticMap from '../../components/StaticMap';
+import ServiceIcon from '../../components/ServiceIcon';
 import api from '../../services/api';
 
 // TODO: Replace with Mapbox SDK — mapbox.com/pricing — free tier: 25,000 loads/month
@@ -34,9 +35,9 @@ const COLORS = {
 };
 
 const TAXI_LABELS = {
-  NORMAL: { emoji: '🚕', label: 'EasyTaxy', color: '#F5A623' },
-  EASYLADY: { emoji: '🚺', label: 'EasyLady', color: '#E91E8C' },
-  EASYACCESS: { emoji: '♿', label: 'EasyAccess', color: '#2196F3' },
+  NORMAL: { svgKey: 'EASYTAXY', label: 'EasyTaxy', color: '#F5A623' },
+  EASYLADY: { svgKey: 'EASYLADY', label: 'EasyLady', color: '#E91E8C' },
+  EASYACCESS: { svgKey: 'EASYACCESS', label: 'EasyAccess', color: '#2196F3' },
 };
 
 export default function TaxiRequestScreen({ route, navigation }) {
@@ -63,23 +64,40 @@ export default function TaxiRequestScreen({ route, navigation }) {
           setLoadingLocation(false);
           return;
         }
-        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-        setOrigin({ lat: loc.coords.latitude, lng: loc.coords.longitude });
+        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        const lat = loc.coords.latitude;
+        const lng = loc.coords.longitude;
+        setOrigin({ lat, lng });
 
-        // Reverse geocode for human-readable address
-        const geo = await Location.reverseGeocodeAsync({
-          latitude: loc.coords.latitude,
-          longitude: loc.coords.longitude,
-        });
-        if (geo && geo.length > 0) {
-          const g = geo[0];
-          const parts = [g.street, g.district, g.city].filter(Boolean);
-          setOriginAddress(parts.join(', ') || 'Position détectée');
-        } else {
-          setOriginAddress(`${loc.coords.latitude.toFixed(5)}, ${loc.coords.longitude.toFixed(5)}`);
-        }
+        // Essai 1 : expo reverse geocode (natif)
+        try {
+          const geo = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng });
+          if (geo && geo.length > 0) {
+            const g = geo[0];
+            const parts = [g.street, g.district, g.city].filter(Boolean);
+            if (parts.length > 0) { setOriginAddress(parts.join(', ')); return; }
+          }
+        } catch {}
+
+        // Essai 2 : Nominatim OpenStreetMap (gratuit, sans token)
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=fr`,
+            { headers: { 'User-Agent': 'EASYWAY-App/1.0' } }
+          );
+          const data = await res.json();
+          if (data?.display_name) {
+            const addr = data.address || {};
+            const parts = [addr.road, addr.suburb, addr.city || addr.town || addr.village].filter(Boolean);
+            setOriginAddress(parts.join(', ') || data.display_name.split(',').slice(0, 2).join(','));
+            return;
+          }
+        } catch {}
+
+        // Fallback : coordonnées brutes
+        setOriginAddress(`${lat.toFixed(5)}° N, ${lng.toFixed(5)}° E`);
       } catch (err) {
-        setOriginAddress('Impossible de détecter la position');
+        setOriginAddress('Activez la localisation et réessayez');
       } finally {
         setLoadingLocation(false);
       }
@@ -154,9 +172,10 @@ export default function TaxiRequestScreen({ route, navigation }) {
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Text style={styles.backArrow}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>
-          {taxiInfo.emoji} {taxiInfo.label}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <ServiceIcon service={taxiInfo.svgKey} size={28} />
+          <Text style={styles.headerTitle}>{taxiInfo.label}</Text>
+        </View>
         <View style={styles.headerSpacer} />
       </View>
 
