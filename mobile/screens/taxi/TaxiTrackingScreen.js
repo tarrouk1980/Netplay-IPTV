@@ -67,9 +67,21 @@ export default function TaxiTrackingScreen({ route, navigation }) {
 
   const [driverLocation, setDriverLocation] = useState(null);
   const [localOrder, setLocalOrder] = useState(currentOrder);
+  const [lastLocationUpdate, setLastLocationUpdate] = useState(null);
+  const liveDotAnim = useRef(new Animated.Value(1)).current;
 
   // Pulse animation for PENDING state
   const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  // Live dot pulse
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(liveDotAnim, { toValue: 0.2, duration: 700, useNativeDriver: true }),
+        Animated.timing(liveDotAnim, { toValue: 1, duration: 700, useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
 
   useEffect(() => {
     if (localOrder?.status === 'PENDING') {
@@ -130,6 +142,7 @@ export default function TaxiTrackingScreen({ route, navigation }) {
     const onLocationUpdate = (data) => {
       if (data.userId === localOrder?.driver?.id) {
         setDriverLocation({ lat: data.lat, lng: data.lng });
+        setLastLocationUpdate(new Date());
       }
     };
 
@@ -247,13 +260,25 @@ export default function TaxiTrackingScreen({ route, navigation }) {
             )}
 
             {/* Driver live location map */}
-            <StaticMap
-              lat={driverLocation?.lat}
-              lng={driverLocation?.lng}
-              height={200}
-              zoom={14}
-              style={{ marginTop: 12 }}
-            />
+            <View style={{ marginTop: 12 }}>
+              <View style={styles.liveRow}>
+                <Animated.View style={[styles.liveDot, { opacity: liveDotAnim }]} />
+                <Text style={styles.liveText}>
+                  {driverLocation ? 'Suivi en direct' : 'En attente du GPS chauffeur…'}
+                </Text>
+                {lastLocationUpdate && (
+                  <Text style={styles.liveTime}>
+                    {lastLocationUpdate.toLocaleTimeString('fr-TN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                  </Text>
+                )}
+              </View>
+              <StaticMap
+                lat={driverLocation?.lat}
+                lng={driverLocation?.lng}
+                height={200}
+                zoom={15}
+              />
+            </View>
           </View>
         )}
 
@@ -418,4 +443,8 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
   },
   rateButtonText: { color: COLORS.text, fontSize: 15, fontWeight: '600' },
+  liveRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
+  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#4CAF50' },
+  liveText: { fontSize: 12, color: COLORS.green, fontWeight: '600', flex: 1 },
+  liveTime: { fontSize: 11, color: COLORS.textMuted },
 });

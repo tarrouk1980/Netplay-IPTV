@@ -356,6 +356,7 @@ export default function RegisterScreen({ navigation }) {
   const [vPlate, setVPlate] = useState('');
   const [vColor, setVColor] = useState('');
   const [chauffeurZones, setChauffeurZones] = useState([]);
+  const [chauffeurFacePhoto, setChauffeurFacePhoto] = useState(null);
 
   // Step 2 — LIVREUR
   const [deliveryVehicle, setDeliveryVehicle] = useState('MOTO');
@@ -368,6 +369,7 @@ export default function RegisterScreen({ navigation }) {
   const [truckPlate, setTruckPlate] = useState('');
   const [depZones, setDepZones] = useState([]);
   const [depPhoto, setDepPhoto] = useState(null);
+  const [depFacePhoto, setDepFacePhoto] = useState(null);
 
   // Step 2 — MARCHAND
   const [shopName, setShopName] = useState('');
@@ -464,7 +466,7 @@ export default function RegisterScreen({ navigation }) {
 
   // ── Photo picker ───────────────────────────────────────────────────────────
 
-  async function pickPhoto(onDone) {
+  async function pickPhoto(onDone, aspect = [4, 3]) {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Permission refusée', 'Autorisez l\'accès à la galerie dans les paramètres.');
@@ -473,12 +475,70 @@ export default function RegisterScreen({ navigation }) {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.7,
+      aspect,
+      quality: 0.8,
     });
     if (!result.canceled && result.assets?.[0]) {
       onDone(result.assets[0].uri);
     }
+  }
+
+  async function takePhoto(onDone, aspect = [1, 1]) {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission refusée', 'Autorisez l\'accès à la caméra dans les paramètres.');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect,
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets?.[0]) {
+      onDone(result.assets[0].uri);
+    }
+  }
+
+  function FacePhotoField({ value, onSet, disabled }) {
+    return (
+      <View style={styles.inputGroup}>
+        <Text style={styles.inputLabel}>Photo de visage (selfie) <Text style={{ color: COLORS.primary }}>*</Text></Text>
+        <Text style={{ color: COLORS.textMuted, fontSize: 11, marginBottom: 8 }}>
+          Photo claire de votre visage pour vérification d'identité
+        </Text>
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <TouchableOpacity
+            style={[styles.photoBtn, { flex: 1, height: 120 }]}
+            onPress={() => takePhoto(onSet, [1, 1])}
+            disabled={disabled}
+          >
+            {value ? (
+              <Image source={{ uri: value }} style={{ width: '100%', height: '100%', borderRadius: 10 }} />
+            ) : (
+              <View style={styles.photoPlaceholder}>
+                <Text style={{ fontSize: 28 }}>📸</Text>
+                <Text style={{ color: COLORS.textMuted, fontSize: 11, marginTop: 4 }}>Prendre un selfie</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.photoBtn, { flex: 1, height: 120 }]}
+            onPress={() => pickPhoto(onSet, [1, 1])}
+            disabled={disabled}
+          >
+            <View style={styles.photoPlaceholder}>
+              <Text style={{ fontSize: 28 }}>🖼️</Text>
+              <Text style={{ color: COLORS.textMuted, fontSize: 11, marginTop: 4 }}>Depuis galerie</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+        {value && (
+          <TouchableOpacity onPress={() => onSet(null)} style={{ marginTop: 6, alignSelf: 'flex-end' }}>
+            <Text style={{ color: COLORS.error, fontSize: 12 }}>✕ Supprimer</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
   }
 
   // ── Registration ────────────────────────────────────────────────────────────
@@ -804,6 +864,12 @@ export default function RegisterScreen({ navigation }) {
             disabled={isLoading}
           />
 
+          <FacePhotoField
+            value={chauffeurFacePhoto}
+            onSet={setChauffeurFacePhoto}
+            disabled={isLoading}
+          />
+
           <KycNote text="📋 Vos documents seront vérifiés sous 24h — la zone doit correspondre à votre autorisation de taxi" />
         </View>
       );
@@ -893,21 +959,27 @@ export default function RegisterScreen({ navigation }) {
           />
 
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Photo du dépanneur <Text style={{ color: COLORS.primary }}>*</Text></Text>
-            <TouchableOpacity style={styles.photoBtn} onPress={() => pickPhoto(setDepPhoto)} disabled={isLoading}>
+            <Text style={styles.inputLabel}>Photo du camion <Text style={{ color: COLORS.primary }}>*</Text></Text>
+            <TouchableOpacity style={styles.photoBtn} onPress={() => pickPhoto(setDepPhoto, [4, 3])} disabled={isLoading}>
               {depPhoto ? (
                 <Image source={{ uri: depPhoto }} style={styles.photoPreview} />
               ) : (
                 <View style={styles.photoPlaceholder}>
-                  <Text style={{ fontSize: 32 }}>📷</Text>
-                  <Text style={{ color: COLORS.textMuted, fontSize: 13, marginTop: 6 }}>Ajouter une photo</Text>
-                  <Text style={{ color: COLORS.textMuted, fontSize: 11, marginTop: 2 }}>Photo du camion + plaque visible</Text>
+                  <Text style={{ fontSize: 32 }}>🚛</Text>
+                  <Text style={{ color: COLORS.textMuted, fontSize: 13, marginTop: 6 }}>Photo du camion</Text>
+                  <Text style={{ color: COLORS.textMuted, fontSize: 11, marginTop: 2 }}>Camion + plaque visible</Text>
                 </View>
               )}
             </TouchableOpacity>
           </View>
 
-          <KycNote text="📋 Vérification sous 24h — photo du camion obligatoire" />
+          <FacePhotoField
+            value={depFacePhoto}
+            onSet={setDepFacePhoto}
+            disabled={isLoading}
+          />
+
+          <KycNote text="📋 Vérification sous 24h — photo du camion et photo de visage obligatoires" />
         </View>
       );
     }

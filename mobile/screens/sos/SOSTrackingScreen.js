@@ -58,9 +58,11 @@ export default function SOSTrackingScreen({ route, navigation }) {
   const [localOrder, setLocalOrder] = useState(currentSOSOrder);
   const [localQuotes, setLocalQuotes] = useState(quotes || []);
   const [depanneurLocation, setDepanneurLocation] = useState(null);
+  const [lastLocationUpdate, setLastLocationUpdate] = useState(null);
   const [counterPriceInput, setCounterPriceInput] = useState('');
   const [submittingCounter, setSubmittingCounter] = useState(false);
   const radarAnim = useRef(new Animated.Value(1)).current;
+  const liveDotAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (orderId) fetchOrder(orderId);
@@ -72,6 +74,16 @@ export default function SOSTrackingScreen({ route, navigation }) {
       setLocalQuotes(currentSOSOrder.metadata?.quotes || []);
     }
   }, [currentSOSOrder]);
+
+  // Live dot pulse
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(liveDotAnim, { toValue: 0.2, duration: 700, useNativeDriver: true }),
+        Animated.timing(liveDotAnim, { toValue: 1, duration: 700, useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
 
   // Radar pulse
   useEffect(() => {
@@ -136,6 +148,7 @@ export default function SOSTrackingScreen({ route, navigation }) {
     const onLocationUpdate = (data) => {
       if (data.userId === localOrder?.provider?.id) {
         setDepanneurLocation({ lat: data.lat, lng: data.lng });
+        setLastLocationUpdate(new Date());
       }
     };
 
@@ -351,13 +364,25 @@ export default function SOSTrackingScreen({ route, navigation }) {
             </View>
 
             {/* Live location map */}
-            <StaticMap
-              lat={depanneurLocation?.lat}
-              lng={depanneurLocation?.lng}
-              height={200}
-              zoom={14}
-              style={{ marginTop: 12 }}
-            />
+            <View style={{ marginTop: 12 }}>
+              <View style={styles.liveRow}>
+                <Animated.View style={[styles.liveDot, { opacity: liveDotAnim }]} />
+                <Text style={styles.liveText}>
+                  {depanneurLocation ? 'Suivi en direct' : 'En attente du GPS dépanneur…'}
+                </Text>
+                {lastLocationUpdate && (
+                  <Text style={styles.liveTime}>
+                    {lastLocationUpdate.toLocaleTimeString('fr-TN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                  </Text>
+                )}
+              </View>
+              <StaticMap
+                lat={depanneurLocation?.lat}
+                lng={depanneurLocation?.lng}
+                height={200}
+                zoom={15}
+              />
+            </View>
           </View>
         )}
 
@@ -571,4 +596,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   counterBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  liveRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
+  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#27AE60' },
+  liveText: { fontSize: 12, color: COLORS.green, fontWeight: '600', flex: 1 },
+  liveTime: { fontSize: 11, color: COLORS.textMuted },
 });
