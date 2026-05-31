@@ -250,6 +250,10 @@ export default function ProfileScreen({ navigation }) {
             <Text style={styles.quickLinkText}>📤 Partager l'application</Text>
             <Text style={styles.quickLinkArrow}>›</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={styles.quickLink} onPress={() => navigation.navigate('Support')}>
+            <Text style={styles.quickLinkText}>🆘 Aide & Support</Text>
+            <Text style={styles.quickLinkArrow}>›</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Logout */}

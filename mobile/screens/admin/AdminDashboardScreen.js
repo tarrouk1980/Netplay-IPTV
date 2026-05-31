@@ -310,6 +310,11 @@ export default function AdminDashboardScreen({ navigation }) {
                 label="Carte live"
                 onPress={() => navigation.navigate('AdminDriverMap')}
               />
+              <NavButton
+                emoji="🏷️"
+                label="Codes promo"
+                onPress={() => navigation.navigate('AdminPromoCodes')}
+              />
             </View>
 
             {/* Revenue total */}

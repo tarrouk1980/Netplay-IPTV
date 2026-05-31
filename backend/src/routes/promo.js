@@ -150,4 +150,57 @@ router.get('/admin', authenticate, (req, res) => {
   res.json(PROMO_CODES);
 });
 
+// POST /api/promo/admin/create — create a new promo code
+router.post('/admin/create', authenticate, (req, res) => {
+  if (req.user.role !== 'ADMIN') return res.status(403).json({ error: 'Admin only' });
+  const { code, type, value, maxUses, label, services } = req.body;
+  if (!code || !type || !value) return res.status(400).json({ error: 'code, type and value are required' });
+  const upper = code.toUpperCase();
+  if (PROMO_CODES.find(p => p.code === upper)) {
+    return res.status(409).json({ error: 'Code already exists' });
+  }
+  const newPromo = {
+    code: upper,
+    type,
+    value: parseFloat(value),
+    maxUses: parseInt(maxUses, 10) || 100,
+    usedCount: 0,
+    services: services || ['TAXI', 'SOS', 'DELIVERY', 'GROCERY'],
+    minAmount: 0,
+    expiresAt: null,
+    label: label || upper,
+    active: true,
+  };
+  PROMO_CODES.push(newPromo);
+  res.status(201).json(newPromo);
+});
+
+// PATCH /api/promo/admin/:code — update active status
+router.patch('/admin/:code', authenticate, (req, res) => {
+  if (req.user.role !== 'ADMIN') return res.status(403).json({ error: 'Admin only' });
+  const promo = PROMO_CODES.find(p => p.code === req.params.code.toUpperCase());
+  if (!promo) return res.status(404).json({ error: 'Code not found' });
+  if (req.body.active !== undefined) promo.active = !!req.body.active;
+  res.json(promo);
+});
+
+// DELETE /api/promo/admin/:code
+router.delete('/admin/:code', authenticate, (req, res) => {
+  if (req.user.role !== 'ADMIN') return res.status(403).json({ error: 'Admin only' });
+  const idx = PROMO_CODES.findIndex(p => p.code === req.params.code.toUpperCase());
+  if (idx === -1) return res.status(404).json({ error: 'Code not found' });
+  PROMO_CODES.splice(idx, 1);
+  res.json({ success: true });
+});
+
+// GET /api/promo/my-codes — user's used promo codes (stub)
+router.get('/my-codes', authenticate, async (req, res) => {
+  try {
+    // In production this would query a PromoCodeUsage table
+    res.json({ codes: [] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

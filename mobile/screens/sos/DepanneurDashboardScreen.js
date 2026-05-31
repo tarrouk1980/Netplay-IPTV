@@ -339,6 +339,13 @@ export default function DepanneurDashboardScreen({ navigation }) {
         >
           <Text style={styles.earningsLinkText}>📊 Voir l'analyse complète de mes gains →</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.earningsLinkBtn, { marginTop: 8 }]}
+          onPress={() => navigation.navigate('VehicleChecklist', { role: 'DEPANNEUR' })}
+          activeOpacity={0.75}
+        >
+          <Text style={styles.earningsLinkText}>✅ Checklist véhicule du jour →</Text>
+        </TouchableOpacity>
 
         <View style={{ height: 32 }} />
       </ScrollView>
