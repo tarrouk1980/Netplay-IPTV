@@ -236,7 +236,8 @@ export default function SOSRequestScreen({ route, navigation }) {
       {/* Modal agenda — calendrier réservation dépanneur */}
       <Modal visible={scheduleModal} transparent animationType="slide" onRequestClose={() => setScheduleModal(false)}>
         <TouchableOpacity style={modalStyles.overlay} activeOpacity={1} onPress={() => setScheduleModal(false)}>
-          <TouchableOpacity style={[modalStyles.sheet, { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 36 }]} activeOpacity={1}>
+          <TouchableOpacity style={[modalStyles.sheet, { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 0 }]} activeOpacity={1}>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 36 }}>
             <View style={modalStyles.handle} />
             <Text style={{ fontSize: 17, fontWeight: '800', color: '#FFF', marginBottom: 2 }}>📅 Choisir un créneau</Text>
             <Text style={{ fontSize: 12, color: '#8E8E9A', marginBottom: 14 }}>Le dépanneur confirmera le rendez-vous.</Text>
@@ -351,6 +352,7 @@ export default function SOSRequestScreen({ route, navigation }) {
             >
               <Text style={scheduleStyles.confirmBtnText}>✅ Confirmer le rendez-vous</Text>
             </TouchableOpacity>
+          </ScrollView>
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
