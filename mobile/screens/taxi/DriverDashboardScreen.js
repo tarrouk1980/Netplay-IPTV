@@ -52,11 +52,18 @@ export default function DriverDashboardScreen({ navigation }) {
   }, []);
 
   // Listen for incoming taxi requests via Socket.io
+  // Navigation vers DriverRequest uniquement si en ligne
   useEffect(() => {
     const socket = socketService.getSocket();
     if (!socket) return;
 
     const onNewRequest = (data) => {
+      // Si hors ligne → ignorer
+      if (!isOnline) return;
+
+      // Naviguer directement vers l'écran d'acceptation plein écran
+      navigation.navigate('DriverRequest', { request: data });
+
       setIncomingRequests((prev) => {
         // Avoid duplicates
         if (prev.find((r) => r.orderId === data.orderId)) return prev;
@@ -75,7 +82,7 @@ export default function DriverDashboardScreen({ navigation }) {
       socket.off('taxi:new_request', onNewRequest);
       socket.off('taxi:cancelled', onCancelled);
     };
-  }, []);
+  }, [isOnline, navigation]);
 
   const fetchTodayEarnings = async () => {
     // In production: fetch completed orders for today from API

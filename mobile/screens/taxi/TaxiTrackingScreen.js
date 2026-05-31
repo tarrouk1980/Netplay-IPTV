@@ -14,7 +14,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import useTaxiStore from '../../store/taxiStore';
 import useAuthStore from '../../store/authStore';
 import socketService from '../../services/socket';
-import StaticMap from '../../components/StaticMap';
+import * as Location from 'expo-location';
+import MapView from '../../components/MapView';
 import RatingModal from '../../components/RatingModal';
 import ChatModal from '../../components/ChatModal';
 
@@ -68,11 +69,26 @@ export default function TaxiTrackingScreen({ route, navigation }) {
   const { currentOrder, cancelOrder, confirmArrival } = useTaxiStore();
 
   const [driverLocation, setDriverLocation] = useState(null);
+  const [userLocation, setUserLocation] = useState(null);
   const [localOrder, setLocalOrder] = useState(currentOrder);
   const [lastLocationUpdate, setLastLocationUpdate] = useState(null);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
   const liveDotAnim = useRef(new Animated.Value(1)).current;
+
+  // Récupérer la position utilisateur au montage
+  useEffect(() => {
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') return;
+        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        setUserLocation({ lat: loc.coords.latitude, lng: loc.coords.longitude });
+      } catch {
+        // non-critique
+      }
+    })();
+  }, []);
 
   // Pulse animation for PENDING state
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -276,11 +292,10 @@ export default function TaxiTrackingScreen({ route, navigation }) {
                   </Text>
                 )}
               </View>
-              <StaticMap
-                lat={driverLocation?.lat}
-                lng={driverLocation?.lng}
-                height={200}
-                zoom={15}
+              <MapView
+                driverLocation={driverLocation}
+                userLocation={userLocation}
+                height={220}
               />
             </View>
           </View>
