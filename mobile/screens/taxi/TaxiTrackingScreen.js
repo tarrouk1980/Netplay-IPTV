@@ -265,14 +265,26 @@ export default function TaxiTrackingScreen({ route, navigation }) {
                   <Text style={styles.driverPhone}>{localOrder.driver.phone}</Text>
                 )}
               </View>
-              {localOrder.driver.phone && (
+              <View style={{ flexDirection: 'row', gap: 8 }}>
                 <TouchableOpacity
                   style={styles.callBtn}
-                  onPress={() => Linking.openURL(`tel:${localOrder.driver.phone}`)}
+                  onPress={() => navigation.navigate('Chat', {
+                    orderId,
+                    otherName: localOrder.driver.name || 'Chauffeur',
+                    otherRole: 'DRIVER',
+                  })}
                 >
-                  <Text style={styles.callBtnText}>📞 Appeler</Text>
+                  <Text style={styles.callBtnText}>💬 Chat</Text>
                 </TouchableOpacity>
-              )}
+                {localOrder.driver.phone && (
+                  <TouchableOpacity
+                    style={styles.callBtn}
+                    onPress={() => Linking.openURL(`tel:${localOrder.driver.phone}`)}
+                  >
+                    <Text style={styles.callBtnText}>📞 Appel</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
             {localOrder.driver.plate && (
               <View style={styles.plateRow}>
@@ -330,7 +342,11 @@ export default function TaxiTrackingScreen({ route, navigation }) {
           <View style={{ width: '100%', gap: 10 }}>
             <TouchableOpacity
               style={styles.rateButton}
-              onPress={() => setShowRatingModal(true)}
+              onPress={() => navigation.navigate('Rating', {
+                orderId,
+                driverName: localOrder?.driver?.name,
+                driverInitial: localOrder?.driver?.name?.[0]?.toUpperCase(),
+              })}
               activeOpacity={0.85}
             >
               <Text style={styles.rateButtonText}>⭐ Noter la course</Text>

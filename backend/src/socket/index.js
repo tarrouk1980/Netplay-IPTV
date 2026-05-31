@@ -90,4 +90,13 @@ function initSocket(httpServer) {
   return io;
 }
 
-module.exports = { initSocket };
+let _io = null;
+function getIO() { return _io; }
+
+const _initSocket = initSocket;
+function initSocketAndStore(httpServer) {
+  _io = _initSocket(httpServer);
+  return _io;
+}
+
+module.exports = { initSocket: initSocketAndStore, getIO };

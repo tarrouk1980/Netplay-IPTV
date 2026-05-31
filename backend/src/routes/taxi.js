@@ -617,6 +617,8 @@ router.post(
       return res.status(409).json({ error: 'Already reviewed this order', code: 'ALREADY_REVIEWED' });
     }
 
+    const { tags, tip } = req.body;
+
     const review = await prisma.review.create({
       data: {
         orderId,
@@ -624,10 +626,25 @@ router.post(
         targetId,
         rating,
         comment: comment || null,
+        // tags stored as JSON string if column exists, else ignored gracefully
+        ...(tags ? { tags: JSON.stringify(tags) } : {}),
       },
+    }).catch(async () => {
+      // Fallback if tags column doesn't exist yet
+      return prisma.review.create({
+        data: { orderId, reviewerId: req.user.id, targetId, rating, comment: comment || null },
+      });
     });
 
-    await logEvent(orderId, 'ORDER_RATED', { reviewerId: req.user.id, rating, targetId });
+    // Apply tip to driver wallet if provided
+    if (tip && parseFloat(tip) > 0 && order.driverId) {
+      await prisma.user.update({
+        where: { id: order.driverId },
+        data: { walletBalance: { increment: parseFloat(tip) } },
+      }).catch(() => {});
+    }
+
+    await logEvent(orderId, 'ORDER_RATED', { reviewerId: req.user.id, rating, targetId, tags, tip });
 
     return res.status(201).json({ review });
   }

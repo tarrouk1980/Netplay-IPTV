@@ -40,4 +40,43 @@ router.post('/upload', authenticate, chatUpload.single('file'), (req, res) => {
   res.json({ url, filename: req.file.filename, size: req.file.size });
 });
 
+// In-memory chat store (replace with DB when ChatMessage model added to schema)
+const chatMessages = new Map(); // orderId → Message[]
+
+// GET /api/chat/:orderId/messages — history
+router.get('/:orderId/messages', authenticate, (req, res) => {
+  const msgs = chatMessages.get(req.params.orderId) || [];
+  res.json(msgs);
+});
+
+// POST /api/chat/:orderId/messages — send message
+router.post('/:orderId/messages', authenticate, (req, res) => {
+  const { text } = req.body;
+  if (!text?.trim()) return res.status(400).json({ error: 'Message vide' });
+
+  const msg = {
+    id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
+    orderId: req.params.orderId,
+    senderId: req.user.id,
+    senderName: req.user.name,
+    text: text.trim(),
+    createdAt: new Date().toISOString(),
+  };
+
+  const msgs = chatMessages.get(req.params.orderId) || [];
+  msgs.push(msg);
+  // Keep last 200 messages per order
+  if (msgs.length > 200) msgs.shift();
+  chatMessages.set(req.params.orderId, msgs);
+
+  // Broadcast via socket
+  try {
+    const { getIO } = require('../socket');
+    const io = getIO();
+    if (io) io.to(`order_${req.params.orderId}`).emit(`chat:${req.params.orderId}`, msg);
+  } catch {}
+
+  res.json(msg);
+});
+
 module.exports = router;

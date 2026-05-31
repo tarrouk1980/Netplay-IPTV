@@ -95,6 +95,12 @@ import SilentSOSScreen from './screens/emergency/SilentSOSScreen';
 // Business
 import EasyBusinessScreen from './screens/business/EasyBusinessScreen';
 
+// Chat
+import ChatScreen from './screens/chat/ChatScreen';
+
+// Rating
+import RatingScreen from './screens/taxi/RatingScreen';
+
 // History Detail
 import HistoryDetailScreen from './screens/profile/HistoryDetailScreen';
 
@@ -215,6 +221,12 @@ function MainStack() {
 
       {/* Business */}
       <Stack.Screen name="EasyBusiness" component={EasyBusinessScreen} options={{ headerShown: false }} />
+
+      {/* Chat */}
+      <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
+
+      {/* Rating */}
+      <Stack.Screen name="Rating" component={RatingScreen} options={{ headerShown: false }} />
 
       {/* History Detail */}
       <Stack.Screen name="HistoryDetail" component={HistoryDetailScreen} options={{ headerShown: false }} />
