@@ -6,6 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
+import { exportInvoicePDF } from '../../services/pdfExport';
 
 const COLORS = {
   background: '#0A0A0F',
@@ -404,7 +405,12 @@ export default function EasyBusinessScreen({ navigation }) {
                 <Text style={styles.emptyText}>Aucune facture disponible</Text>
               ) : (
                 invoices.map((inv, i) => (
-                  <View key={inv.id || i} style={styles.invoiceRow}>
+                  <TouchableOpacity
+                    key={inv.id || i}
+                    style={styles.invoiceRow}
+                    onPress={() => exportInvoicePDF(inv, { name: companyName }).catch(() => {})}
+                    activeOpacity={0.8}
+                  >
                     <View style={{ flex: 1 }}>
                       <Text style={styles.invoiceLabel}>{inv.label || `Facture #${i + 1}`}</Text>
                       <Text style={styles.invoiceDate}>{inv.date}</Text>
@@ -412,7 +418,8 @@ export default function EasyBusinessScreen({ navigation }) {
                     <Text style={[styles.invoiceAmount, { color: COLORS.accent }]}>
                       {inv.amount} TND
                     </Text>
-                  </View>
+                    <Text style={{ color: COLORS.textMuted, fontSize: 12, marginLeft: 8 }}>📄</Text>
+                  </TouchableOpacity>
                 ))
               )}
             </View>

@@ -218,6 +218,10 @@ export default function ProfileScreen({ navigation }) {
             <Text style={styles.quickLinkText}>🏢 EasyBusiness</Text>
             <Text style={styles.quickLinkArrow}>›</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={styles.quickLink} onPress={() => navigation.navigate('ProviderOnboarding')}>
+            <Text style={styles.quickLinkText}>🚀 Devenir prestataire</Text>
+            <Text style={styles.quickLinkArrow}>›</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.quickLink} onPress={() => navigation.navigate('SilentSOS')}>
             <Text style={styles.quickLinkText}>📱 SOS Discret</Text>
             <Text style={styles.quickLinkArrow}>›</Text>

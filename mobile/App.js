@@ -104,6 +104,9 @@ import RatingScreen from './screens/taxi/RatingScreen';
 // History Detail
 import HistoryDetailScreen from './screens/profile/HistoryDetailScreen';
 
+// Provider Onboarding
+import ProviderOnboardingScreen from './screens/onboarding/ProviderOnboardingScreen';
+
 const Stack = createNativeStackNavigator();
 
 // Configure notification behavior
@@ -230,6 +233,9 @@ function MainStack() {
 
       {/* History Detail */}
       <Stack.Screen name="HistoryDetail" component={HistoryDetailScreen} options={{ headerShown: false }} />
+
+      {/* Provider Onboarding */}
+      <Stack.Screen name="ProviderOnboarding" component={ProviderOnboardingScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }

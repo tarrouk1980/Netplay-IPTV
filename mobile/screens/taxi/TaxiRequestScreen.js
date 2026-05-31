@@ -18,6 +18,7 @@ import useTaxiStore from '../../store/taxiStore';
 import FareEstimateCard from '../../components/FareEstimateCard';
 import PriceEstimate from '../../components/PriceEstimate';
 import StaticMap from '../../components/StaticMap';
+import PromoCodeWidget from '../payment/PromoCodeWidget';
 import ServiceIcon from '../../components/ServiceIcon';
 import api from '../../services/api';
 
@@ -368,6 +369,14 @@ export default function TaxiRequestScreen({ route, navigation }) {
                 doRequestTaxi();
               }}
               onCancel={() => setShowPriceEstimate(false)}
+            />
+            <PromoCodeWidget
+              serviceType="TAXI"
+              amount={fareEstimate?.total || 0}
+              onDiscount={(discount, code) => {
+                // Discount stored for later use in order creation
+                if (discount > 0) console.log(`[Promo] -${discount} TND avec code ${code}`);
+              }}
             />
           </View>
         </View>

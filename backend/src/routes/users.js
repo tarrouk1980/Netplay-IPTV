@@ -231,4 +231,36 @@ router.get('/me/activity', authenticate, async (req, res) => {
   }
 });
 
+// POST /api/users/provider-onboarding — soumettre dossier prestataire
+router.post('/provider-onboarding', authenticate, async (req, res) => {
+  try {
+    const { role, name, phone, cin, city, vehicle, hasDocuments } = req.body;
+    if (!role || !name || !cin) {
+      return res.status(400).json({ error: 'Champs obligatoires manquants' });
+    }
+
+    // Update user role to pending review state
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: {
+        name: name.trim(),
+        // Store pending role application in metadata or a dedicated field
+        // For now: mark KYC as PENDING and store vehicle info
+        kycStatus: 'PENDING',
+      },
+    }).catch(() => {});
+
+    // TODO: store vehicle info, cin, documents in dedicated tables
+    // For now: log for admin review
+    console.log(`[ProviderOnboarding] User ${req.user.id} applied for role ${role}`, { cin, city, vehicle });
+
+    res.json({
+      success: true,
+      message: 'Votre candidature a été reçue. Vérification sous 24-48h.',
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

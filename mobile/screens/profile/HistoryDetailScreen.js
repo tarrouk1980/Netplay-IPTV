@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
+import { exportReceiptPDF } from '../../services/pdfExport';
 
 const COLORS = {
   background: '#0A0A0F',
@@ -102,6 +103,15 @@ export default function HistoryDetailScreen({ route, navigation }) {
     try {
       await Share.share({ message: text, title: 'Reçu EASYWAY' });
     } catch {}
+  };
+
+  const handleExportPDF = async () => {
+    if (!order) return;
+    try {
+      await exportReceiptPDF(order);
+    } catch (err) {
+      Alert.alert('Erreur', 'Impossible de générer le PDF.');
+    }
   };
 
   const handleRate = () => {
@@ -258,8 +268,11 @@ export default function HistoryDetailScreen({ route, navigation }) {
 
         {/* Actions */}
         <View style={styles.actionsRow}>
-          <TouchableOpacity style={styles.shareBtn} onPress={handleShareReceipt}>
-            <Text style={styles.shareBtnText}>📤 Partager le reçu</Text>
+          <TouchableOpacity style={styles.shareBtn} onPress={handleExportPDF}>
+            <Text style={styles.shareBtnText}>📄 Exporter en PDF</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.shareBtn, { borderColor: '#4A4A5A' }]} onPress={handleShareReceipt}>
+            <Text style={styles.shareBtnText}>📤 Partager le texte</Text>
           </TouchableOpacity>
         </View>
 
