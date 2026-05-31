@@ -10,6 +10,7 @@ import {
   Alert,
   Animated,
   Dimensions,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -54,6 +55,28 @@ const CHAUFFEUR_VEHICLE_TYPES = [
   { value: 'MOTO', label: 'Moto', emoji: '🛵' },
 ];
 
+const BRANDS_MODELS = {
+  'Volkswagen': ['Golf','Polo','Passat','Tiguan','T-Roc','Caddy','Transporter','Autre'],
+  'Renault': ['Clio','Megane','Scenic','Kadjar','Captur','Duster','Symbol','Logan','Sandero','Kangoo','Autre'],
+  'Peugeot': ['208','308','508','2008','3008','5008','Partner','Autre'],
+  'Citroën': ['C3','C4','C5','Berlingo','C-Elysée','Autre'],
+  'Ford': ['Fiesta','Focus','Kuga','Transit','Ranger','Autre'],
+  'Toyota': ['Yaris','Corolla','Camry','RAV4','Hilux','Land Cruiser','Fortuner','Innova','Autre'],
+  'Hyundai': ['i10','i20','i30','Tucson','Santa Fe','Elantra','Accent','Autre'],
+  'Kia': ['Picanto','Rio','Sportage','Sorento','Seltos','Autre'],
+  'Seat': ['Ibiza','Leon','Arona','Ateca','Autre'],
+  'Skoda': ['Fabia','Octavia','Superb','Karoq','Autre'],
+  'BMW': ['Série 1','Série 3','Série 5','X1','X3','X5','Autre'],
+  'Mercedes': ['Classe A','Classe C','Classe E','GLA','GLC','Sprinter','Autre'],
+  'Audi': ['A1','A3','A4','A6','Q3','Q5','Autre'],
+  'Fiat': ['500','Punto','Tipo','Doblo','Ducato','Autre'],
+  'Dacia': ['Sandero','Logan','Duster','Spring','Lodgy','Autre'],
+  'Autre': ['Autre'],
+};
+const VEHICLE_BRANDS = Object.keys(BRANDS_MODELS);
+const VEHICLE_YEARS = Array.from({ length: 26 }, (_, i) => String(2025 - i));
+const CAR_COLORS = ['Blanc','Noir','Gris','Argent','Rouge','Bleu','Vert','Beige','Marron','Jaune','Orange','Autre'];
+
 const DELIVERY_VEHICLE_TYPES = [
   { value: 'MOTO', label: 'Moto', emoji: '🛵' },
   { value: 'SCOOTER', label: 'Scooter', emoji: '🛺' },
@@ -82,6 +105,56 @@ const MERCHANT_CATEGORIES = [
 ];
 
 // ─── Reusable sub-components ──────────────────────────────────────────────────
+
+function PickerField({ label, required, value, options, onSelect, placeholder, disabled }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <View style={styles.inputGroup}>
+      <Text style={styles.inputLabel}>{label}{required ? <Text style={{ color: COLORS.primary }}> *</Text> : null}</Text>
+      <TouchableOpacity
+        style={[styles.pickerBtn, disabled && { opacity: 0.5 }]}
+        onPress={() => !disabled && setOpen(true)}
+        activeOpacity={0.8}
+      >
+        <Text style={value ? styles.pickerBtnText : styles.pickerBtnPlaceholder}>
+          {value || placeholder || 'Sélectionner...'}
+        </Text>
+        <Text style={{ color: COLORS.primary, fontSize: 16 }}>▾</Text>
+      </TouchableOpacity>
+      <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
+        <TouchableOpacity style={pickerStyles.overlay} activeOpacity={1} onPress={() => setOpen(false)}>
+          <View style={pickerStyles.sheet}>
+            <View style={pickerStyles.handle} />
+            <Text style={pickerStyles.title}>{label}</Text>
+            <ScrollView style={pickerStyles.scroll} showsVerticalScrollIndicator={false}>
+              {options.map((opt) => (
+                <TouchableOpacity
+                  key={opt}
+                  style={[pickerStyles.option, value === opt && pickerStyles.optionSelected]}
+                  onPress={() => { onSelect(opt); setOpen(false); }}
+                >
+                  <Text style={[pickerStyles.optionText, value === opt && { color: COLORS.primary, fontWeight: '700' }]}>{opt}</Text>
+                  {value === opt && <Text style={{ color: COLORS.primary }}>✓</Text>}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </View>
+  );
+}
+
+const pickerStyles = StyleSheet.create({
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
+  sheet: { backgroundColor: '#1C1C28', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '65%', paddingBottom: 32 },
+  handle: { width: 40, height: 4, backgroundColor: '#444', borderRadius: 2, alignSelf: 'center', marginTop: 12, marginBottom: 8 },
+  title: { color: '#8E8E9A', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, paddingHorizontal: 20, paddingBottom: 8 },
+  scroll: { paddingHorizontal: 20 },
+  option: { paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#2C2C3E', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  optionSelected: { },
+  optionText: { color: '#FFFFFF', fontSize: 16 },
+});
 
 function InputField({ label, required, error, ...props }) {
   return (
@@ -540,34 +613,41 @@ export default function RegisterScreen({ navigation }) {
             disabled={isLoading}
           />
 
-          <InputField
+          <PickerField
             label="Marque du véhicule"
             required
-            placeholder="Ex: Toyota"
             value={vMake}
-            onChangeText={(v) => { setVMake(v); setFieldErrors((e) => ({ ...e, vMake: undefined })); }}
-            error={fieldErrors.vMake}
-            editable={!isLoading}
+            options={VEHICLE_BRANDS}
+            onSelect={(v) => { setVMake(v); setVModel(''); setFieldErrors((e) => ({ ...e, vMake: undefined })); }}
+            placeholder="Choisir une marque..."
+            disabled={isLoading}
           />
-          <InputField
+          <PickerField
             label="Modèle"
             required
-            placeholder="Ex: Corolla"
             value={vModel}
-            onChangeText={(v) => { setVModel(v); setFieldErrors((e) => ({ ...e, vModel: undefined })); }}
-            error={fieldErrors.vModel}
-            editable={!isLoading}
+            options={vMake ? (BRANDS_MODELS[vMake] || ['Autre']) : ['Choisissez d\'abord une marque']}
+            onSelect={(v) => { setVModel(v); setFieldErrors((e) => ({ ...e, vModel: undefined })); }}
+            placeholder="Choisir un modèle..."
+            disabled={isLoading || !vMake}
           />
-          <InputField
+          <PickerField
             label="Année"
             required
-            placeholder="Ex: 2020"
             value={vYear}
-            onChangeText={(v) => { setVYear(v); setFieldErrors((e) => ({ ...e, vYear: undefined })); }}
-            keyboardType="numeric"
-            maxLength={4}
-            error={fieldErrors.vYear}
-            editable={!isLoading}
+            options={VEHICLE_YEARS}
+            onSelect={(v) => { setVYear(v); setFieldErrors((e) => ({ ...e, vYear: undefined })); }}
+            placeholder="Choisir l'année..."
+            disabled={isLoading}
+          />
+          <PickerField
+            label="Couleur du véhicule"
+            required
+            value={vColor}
+            options={CAR_COLORS}
+            onSelect={(v) => { setVColor(v); setFieldErrors((e) => ({ ...e, vColor: undefined })); }}
+            placeholder="Choisir une couleur..."
+            disabled={isLoading}
           />
           <InputField
             label="Plaque d'immatriculation"
@@ -886,6 +966,9 @@ const styles = StyleSheet.create({
   // ── Fields
   inputGroup: { marginBottom: 16 },
   inputLabel: { color: COLORS.textMuted, fontSize: 13, marginBottom: 6, fontWeight: '600' },
+  pickerBtn: { backgroundColor: COLORS.surfaceAlt, borderRadius: 10, padding: 14, borderWidth: 1, borderColor: COLORS.border, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  pickerBtnText: { color: '#FFFFFF', fontSize: 15 },
+  pickerBtnPlaceholder: { color: COLORS.textMuted, fontSize: 15 },
   input: {
     backgroundColor: COLORS.surfaceAlt,
     borderRadius: 10,
