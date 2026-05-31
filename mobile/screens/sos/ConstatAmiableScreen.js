@@ -6,6 +6,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 import api from '../../services/api';
 
 const COLORS = {
@@ -502,10 +504,31 @@ export default function ConstatAmiableScreen({ route, navigation }) {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={[styles.submitBtn, submitting && { opacity: 0.6 }]}
-          onPress={handleSubmit} activeOpacity={0.85} disabled={submitting}>
-          <Text style={styles.submitBtnText}>{submitting ? 'Envoi en cours...' : '📤 Envoyer le constat'}</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 10, marginHorizontal: 0 }}>
+          <TouchableOpacity style={[styles.submitBtn, { flex: 1 }, submitting && { opacity: 0.6 }]}
+            onPress={handleSubmit} activeOpacity={0.85} disabled={submitting}>
+            <Text style={styles.submitBtnText}>{submitting ? 'Envoi...' : '📤 Envoyer'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.submitBtn, { flex: 1, backgroundColor: COLORS.primary }]}
+            onPress={async () => {
+              try {
+                const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><style>body{font-family:Arial,sans-serif;padding:20px;background:#fff;color:#222}h1{color:#8E44AD;font-size:18px}table{width:100%;border-collapse:collapse;margin-top:10px}td,th{border:1px solid #ccc;padding:8px;font-size:12px}th{background:#f0f0f0}h2{font-size:14px;color:#555;margin-top:16px}</style></head><body><h1>⚖️ Constat Amiable EASYWAY</h1><p>Date : ${new Date().toLocaleDateString('fr-TN')}</p><h2>Conducteur A</h2><table><tr><th>Nom</th><td>${driverA.name||''}</td><th>Tél</th><td>${driverA.phone||''}</td></tr><tr><th>Véhicule</th><td>${driverA.vehicleBrand||''} ${driverA.vehicleModel||''}</td><th>Immat.</th><td>${driverA.licensePlate||''}</td></tr><tr><th>Assureur</th><td>${driverA.insuranceCompany||''}</td><th>N° Police</th><td>${driverA.policyNumber||''}</td></tr></table><h2>Conducteur B</h2><table><tr><th>Nom</th><td>${driverB.name||''}</td><th>Tél</th><td>${driverB.phone||''}</td></tr><tr><th>Véhicule</th><td>${driverB.vehicleBrand||''} ${driverB.vehicleModel||''}</td><th>Immat.</th><td>${driverB.licensePlate||''}</td></tr><tr><th>Assureur</th><td>${driverB.insuranceCompany||''}</td><th>N° Police</th><td>${driverB.policyNumber||''}</td></tr></table><h2>Circonstances</h2><p>${circumstances||'Non renseignées'}</p><p style="margin-top:30px;font-size:10px;color:#999">Généré par EASYWAY · ${new Date().toISOString()}</p></body></html>`;
+                const { uri } = await Print.printToFileAsync({ html, base64: false });
+                if (await Sharing.isAvailableAsync()) {
+                  await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: 'Partager le constat amiable' });
+                } else {
+                  Alert.alert('PDF généré', `Fichier : ${uri}`);
+                }
+              } catch (e) {
+                Alert.alert('Erreur', 'Impossible de générer le PDF.');
+              }
+            }}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.submitBtnText}>📄 PDF</Text>
+          </TouchableOpacity>
+        </View>
 
         <View style={{ height: 40 }} />
       </ScrollView>

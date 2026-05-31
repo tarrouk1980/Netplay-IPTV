@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -158,8 +158,13 @@ export default function AdminDashboardScreen({ navigation }) {
     await Promise.all([fetchStats(), fetchOrdersChart(), fetchPendingKYC()]);
   }, [fetchStats, fetchOrdersChart, fetchPendingKYC]);
 
+  const intervalRef = useRef(null);
+
   useEffect(() => {
     load();
+    // Auto-refresh every 30 seconds
+    intervalRef.current = setInterval(load, 30000);
+    return () => clearInterval(intervalRef.current);
   }, [load]);
 
   const kycCount = pendingKYCCount || stats?.users?.pendingKYC || 0;
@@ -171,7 +176,7 @@ export default function AdminDashboardScreen({ navigation }) {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>⚙️ Administration EASYWAY</Text>
-        <Text style={styles.headerSub}>Supervision complète</Text>
+        <Text style={styles.headerSub}>Supervision complète · <Text style={{ color: '#4CAF50' }}>● LIVE</Text></Text>
       </View>
 
       <ScrollView

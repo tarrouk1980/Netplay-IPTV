@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import usePassStore from '../../store/passStore';
 import useAuthStore from '../../store/authStore';
+import api from '../../services/api';
 
 const COLORS = {
   background: '#0A0A0F',
@@ -88,12 +89,14 @@ export default function BuyPassScreen({ navigation }) {
   const [selectedPlan, setSelectedPlan] = useState('DAILY');
   const [trialEligible, setTrialEligible] = useState(false);
   const [activating, setActivating] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(null);
 
   useEffect(() => {
     if (user?.createdAt) {
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
       setTrialEligible(new Date(user.createdAt) >= sevenDaysAgo);
     }
+    api.get('/api/wallet/balance').then(r => setWalletBalance(r.data.walletBalance ?? 0)).catch(() => {});
   }, [user?.createdAt]);
 
   const handleActivate = async () => {
@@ -136,6 +139,19 @@ export default function BuyPassScreen({ navigation }) {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+
+        {/* Wallet balance banner */}
+        {walletBalance !== null && (
+          <View style={styles.walletBanner}>
+            <Text style={styles.walletBannerLabel}>💼 Solde wallet actuel</Text>
+            <Text style={[styles.walletBannerAmount, walletBalance < 7 && { color: '#E74C3C' }]}>
+              {Number(walletBalance).toFixed(2)} TND
+            </Text>
+            {walletBalance < 1 && (
+              <Text style={styles.walletBannerWarn}>⚠️ Solde insuffisant pour activer un pass</Text>
+            )}
+          </View>
+        )}
 
         <View style={styles.heroBox}>
           <Text style={styles.heroTitle}>Travaillez sans limites</Text>
@@ -242,6 +258,22 @@ const styles = StyleSheet.create({
   backArrow: { color: COLORS.text, fontSize: 32, lineHeight: 32, marginTop: -4 },
   topTitle: { flex: 1, textAlign: 'center', color: COLORS.text, fontSize: 18, fontWeight: '700' },
   scroll: { paddingHorizontal: 16, paddingTop: 8 },
+  walletBanner: {
+    backgroundColor: '#1C1C28',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#2C2C3E',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  walletBannerLabel: { color: '#8E8E9A', fontSize: 13 },
+  walletBannerAmount: { color: '#27AE60', fontSize: 18, fontWeight: '800' },
+  walletBannerWarn: { color: '#E74C3C', fontSize: 11, width: '100%' },
   heroBox: { alignItems: 'center', paddingVertical: 20, paddingHorizontal: 8 },
   heroTitle: { color: COLORS.text, fontSize: 24, fontWeight: '900', marginBottom: 8, textAlign: 'center' },
   heroSub: { color: COLORS.textMuted, fontSize: 13, textAlign: 'center', lineHeight: 20 },

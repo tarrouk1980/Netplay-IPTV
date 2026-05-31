@@ -260,6 +260,15 @@ export default function LivreurDashboardScreen({ navigation }) {
             {isOnline ? 'Aucune assignation pour le moment.' : 'Passez en ligne pour recevoir des commandes.'}
           </Text>
         }
+        ListFooterComponent={
+          <TouchableOpacity
+            style={styles.earningsLinkBtn}
+            onPress={() => navigation.navigate('ProviderEarnings')}
+            activeOpacity={0.75}
+          >
+            <Text style={styles.earningsLinkText}>📊 Voir l'analyse complète de mes gains →</Text>
+          </TouchableOpacity>
+        }
       />
     </SafeAreaView>
   );
@@ -367,4 +376,15 @@ const styles = StyleSheet.create({
   },
   completeBtnText: { color: '#FFF', fontWeight: '700', fontSize: 14 },
   emptyText: { color: COLORS.textMuted, textAlign: 'center', marginTop: 40, fontSize: 14 },
+  earningsLinkBtn: {
+    marginHorizontal: 0,
+    marginTop: 16,
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  earningsLinkText: { color: COLORS.green, fontSize: 13, fontWeight: '600' },
 });
