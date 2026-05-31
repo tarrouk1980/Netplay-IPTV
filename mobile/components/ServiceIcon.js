@@ -183,7 +183,189 @@ export default function ServiceIcon({ service, size = 60 }) {
         </Svg>
       );
 
-    // ── GROCERY — caddie violet stylisé ──
+    // ── TRUCK_PLATEAU — dépanneuse plateau inclinable + voiture dessus ──
+    case 'TRUCK_PLATEAU':
+      return (
+        <Svg width={s} height={s} viewBox="0 0 90 60">
+          {/* Cab */}
+          <Path d="M4 18 Q4 10 10 10 L30 10 Q36 10 38 14 L44 34 L4 34 Z" fill="#37474F" />
+          <Path d="M8 14 Q9 11 13 11 L28 11 Q32 11 34 14 L40 28 L8 28 Z" fill="#546E7A" />
+          <Path d="M9 14 Q11 12 14 12 L27 12 Q30 12 32 14 L37 26 L10 26 Z" fill="#4FC3F7" opacity="0.45" />
+          {/* Chassis / frame */}
+          <Rect x="4" y="34" width="82" height="6" rx="2" fill="#263238" />
+          {/* Inclined flatbed platform */}
+          <Path d="M44 22 L86 34 L86 34 L44 34 Z" fill="#455A64" />
+          <Path d="M46 23 L84 33" stroke="#78909C" strokeWidth="1.2" />
+          {/* Car on plateau */}
+          <Path d="M52 22 Q52 18 56 16 L62 12 Q64 10 68 10 L76 10 Q80 10 82 12 L86 16 Q88 18 88 22 Z" fill="#90A4AE" opacity="0.85" />
+          <Path d="M60 20 L62 14 Q63 12 66 12 L74 12 Q77 12 78 14 L80 20 Z" fill="#4FC3F7" opacity="0.4" />
+          <Circle cx="58" cy="24" r="3.5" fill="#1A1A1A" />
+          <Circle cx="82" cy="24" r="3.5" fill="#1A1A1A" />
+          {/* Truck wheels */}
+          <Circle cx="18" cy="43" r="9" fill="#111827" />
+          <Circle cx="18" cy="43" r="5.5" fill="#374151" />
+          <Circle cx="18" cy="43" r="2.5" fill="#6B7280" />
+          <Circle cx="52" cy="43" r="9" fill="#111827" />
+          <Circle cx="52" cy="43" r="5.5" fill="#374151" />
+          <Circle cx="52" cy="43" r="2.5" fill="#6B7280" />
+          {/* Orange stripe */}
+          <Rect x="4" y="36" width="82" height="2.5" fill="#F5A623" />
+          {/* Front light */}
+          <Rect x="4" y="22" width="5" height="5" rx="1.5" fill="#FFFDE7" />
+        </Svg>
+      );
+
+    // ── TRUCK_LEVE_ROUE — lève-roue (J-bar levant les roues avant) ──
+    case 'TRUCK_LEVE_ROUE':
+      return (
+        <Svg width={s} height={s} viewBox="0 0 90 60">
+          {/* Cab */}
+          <Path d="M4 18 Q4 10 10 10 L30 10 Q36 10 38 14 L44 34 L4 34 Z" fill="#1B5E20" />
+          <Path d="M9 14 Q11 12 14 12 L27 12 Q30 12 32 14 L37 26 L10 26 Z" fill="#4FC3F7" opacity="0.45" />
+          {/* Chassis */}
+          <Rect x="4" y="34" width="82" height="5" rx="2" fill="#1A237E" />
+          {/* Flat bed */}
+          <Rect x="44" y="30" width="42" height="9" rx="2" fill="#283593" />
+          {/* J-bar arm extending from rear */}
+          <Rect x="78" y="16" width="6" height="22" rx="2" fill="#4CAF50" />
+          {/* J-hook */}
+          <Path d="M81 16 Q81 8 74 8 Q68 8 68 14" stroke="#4CAF50" strokeWidth="4" fill="none" strokeLinecap="round" />
+          {/* Car being towed (front lifted) */}
+          <Path d="M50 30 Q50 26 54 24 L58 20 Q60 18 64 18 L74 18 Q78 18 79 20 L82 24 Q83 26 83 30 Z" fill="#546E7A" opacity="0.9" />
+          <Path d="M57 28 L59 22 Q60 20 63 20 L72 20 Q75 20 76 22 L78 28 Z" fill="#4FC3F7" opacity="0.35" />
+          {/* Front wheels lifted by J-bar */}
+          <Circle cx="68" cy="14" r="5" fill="#1A1A1A" />
+          <Circle cx="68" cy="14" r="3" fill="#374151" />
+          {/* Rear wheels of towed car on ground */}
+          <Circle cx="55" cy="34" r="4" fill="#1A1A1A" />
+          <Circle cx="55" cy="34" r="2.5" fill="#374151" />
+          {/* Truck wheels */}
+          <Circle cx="18" cy="43" r="9" fill="#111827" />
+          <Circle cx="18" cy="43" r="5.5" fill="#374151" />
+          <Circle cx="18" cy="43" r="2.5" fill="#6B7280" />
+          <Circle cx="50" cy="43" r="9" fill="#111827" />
+          <Circle cx="50" cy="43" r="5.5" fill="#374151" />
+          <Circle cx="50" cy="43" r="2.5" fill="#6B7280" />
+          {/* Orange stripe */}
+          <Rect x="4" y="35.5" width="82" height="2" fill="#F5A623" />
+          <Rect x="4" y="22" width="5" height="5" rx="1.5" fill="#FFFDE7" />
+        </Svg>
+      );
+
+    // ── TRUCK_CROCHET — crochet et chaîne ──
+    case 'TRUCK_CROCHET':
+      return (
+        <Svg width={s} height={s} viewBox="0 0 90 60">
+          {/* Cab */}
+          <Path d="M4 18 Q4 10 10 10 L30 10 Q36 10 38 14 L44 34 L4 34 Z" fill="#4A148C" />
+          <Path d="M9 14 Q11 12 14 12 L27 12 Q30 12 32 14 L37 26 L10 26 Z" fill="#4FC3F7" opacity="0.45" />
+          {/* Chassis */}
+          <Rect x="4" y="34" width="82" height="5" rx="2" fill="#311B92" />
+          <Rect x="44" y="30" width="42" height="9" rx="2" fill="#4527A0" />
+          {/* Boom arm (diagonal) */}
+          <Rect x="72" y="8" width="5" height="28" rx="2" fill="#7B1FA2" />
+          {/* Hook */}
+          <Path d="M74.5 10 Q74.5 4 68 4 Q62 4 62 10 Q62 16 68 16" stroke="#CE93D8" strokeWidth="3" fill="none" strokeLinecap="round" />
+          {/* Chain from hook to car */}
+          <Path d="M68 16 L58 28" stroke="#B0BEC5" strokeWidth="1.5" strokeDasharray="3,2" />
+          <Path d="M62 22 L52 32" stroke="#B0BEC5" strokeWidth="1.5" strokeDasharray="3,2" />
+          {/* Car being towed */}
+          <Path d="M44 30 Q44 26 48 24 L54 20 Q56 18 60 18 L72 18 Q76 18 77 20 L80 24 Q82 26 82 30 Z" fill="#546E7A" opacity="0.9" />
+          <Path d="M52 28 L54 22 Q55 20 58 20 L69 20 Q72 20 74 22 L76 28 Z" fill="#4FC3F7" opacity="0.35" />
+          <Circle cx="50" cy="34" r="4.5" fill="#1A1A1A" />
+          <Circle cx="50" cy="34" r="2.5" fill="#374151" />
+          <Circle cx="76" cy="34" r="4.5" fill="#1A1A1A" />
+          <Circle cx="76" cy="34" r="2.5" fill="#374151" />
+          {/* Truck wheels */}
+          <Circle cx="18" cy="43" r="9" fill="#111827" />
+          <Circle cx="18" cy="43" r="5.5" fill="#374151" />
+          <Circle cx="18" cy="43" r="2.5" fill="#6B7280" />
+          <Circle cx="50" cy="44" r="9" fill="#111827" />
+          <Circle cx="50" cy="44" r="5.5" fill="#374151" />
+          <Circle cx="50" cy="44" r="2.5" fill="#6B7280" />
+          <Rect x="4" y="35.5" width="82" height="2" fill="#F5A623" />
+          <Rect x="4" y="22" width="5" height="5" rx="1.5" fill="#FFFDE7" />
+        </Svg>
+      );
+
+    // ── TRUCK_GRUE — dépanneuse grue à bras articulé ──
+    case 'TRUCK_GRUE':
+      return (
+        <Svg width={s} height={s} viewBox="0 0 90 60">
+          {/* Cab */}
+          <Path d="M4 18 Q4 10 10 10 L30 10 Q36 10 38 14 L44 34 L4 34 Z" fill="#B71C1C" />
+          <Path d="M9 14 Q11 12 14 12 L27 12 Q30 12 32 14 L37 26 L10 26 Z" fill="#4FC3F7" opacity="0.45" />
+          {/* Chassis */}
+          <Rect x="4" y="34" width="82" height="5" rx="2" fill="#7F0000" />
+          {/* Crane base on truck */}
+          <Rect x="56" y="28" width="10" height="12" rx="2" fill="#C62828" />
+          {/* Main boom arm */}
+          <Path d="M61 28 L76 6" stroke="#EF9A9A" strokeWidth="5" strokeLinecap="round" />
+          {/* Secondary arm */}
+          <Path d="M76 6 L88 12" stroke="#EF9A9A" strokeWidth="4" strokeLinecap="round" />
+          {/* Cable */}
+          <Path d="M88 12 L88 32" stroke="#FFCC02" strokeWidth="2" strokeLinecap="round" />
+          {/* Hook */}
+          <Path d="M88 32 Q88 38 84 38 Q80 38 80 34" stroke="#FFCC02" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+          {/* Stabilizer legs */}
+          <Rect x="44" y="39" width="5" height="8" rx="1.5" fill="#B71C1C" />
+          <Rect x="76" y="39" width="5" height="8" rx="1.5" fill="#B71C1C" />
+          <Rect x="40" y="46" width="14" height="3" rx="1.5" fill="#7F0000" />
+          <Rect x="72" y="46" width="14" height="3" rx="1.5" fill="#7F0000" />
+          {/* Truck wheels */}
+          <Circle cx="18" cy="43" r="9" fill="#111827" />
+          <Circle cx="18" cy="43" r="5.5" fill="#374151" />
+          <Circle cx="18" cy="43" r="2.5" fill="#6B7280" />
+          <Circle cx="50" cy="43" r="9" fill="#111827" />
+          <Circle cx="50" cy="43" r="5.5" fill="#374151" />
+          <Circle cx="50" cy="43" r="2.5" fill="#6B7280" />
+          {/* Orange stripe */}
+          <Rect x="4" y="35.5" width="82" height="2" fill="#F5A623" />
+          <Rect x="4" y="22" width="5" height="5" rx="1.5" fill="#FFFDE7" />
+        </Svg>
+      );
+
+    // ── TRUCK_PANIER — fourgon cage / panier fermé ──
+    case 'TRUCK_PANIER':
+      return (
+        <Svg width={s} height={s} viewBox="0 0 90 60">
+          {/* Cab */}
+          <Path d="M4 18 Q4 10 10 10 L30 10 Q36 10 38 14 L44 34 L4 34 Z" fill="#0D47A1" />
+          <Path d="M9 14 Q11 12 14 12 L27 12 Q30 12 32 14 L37 26 L10 26 Z" fill="#4FC3F7" opacity="0.45" />
+          {/* Chassis */}
+          <Rect x="4" y="34" width="82" height="5" rx="2" fill="#0A2A6E" />
+          {/* Closed cage/box body */}
+          <Rect x="44" y="8" width="42" height="28" rx="3" fill="#1565C0" />
+          {/* Cage bars (vertical) */}
+          <Rect x="52" y="10" width="2" height="24" rx="1" fill="#1A237E" />
+          <Rect x="60" y="10" width="2" height="24" rx="1" fill="#1A237E" />
+          <Rect x="68" y="10" width="2" height="24" rx="1" fill="#1A237E" />
+          <Rect x="76" y="10" width="2" height="24" rx="1" fill="#1A237E" />
+          {/* Cage bars (horizontal) */}
+          <Rect x="44" y="16" width="42" height="2" rx="1" fill="#1A237E" />
+          <Rect x="44" y="24" width="42" height="2" rx="1" fill="#1A237E" />
+          {/* Door outline rear */}
+          <Rect x="78" y="10" width="6" height="24" rx="1" fill="#1976D2" />
+          <Rect x="79" y="11" width="4" height="22" rx="1" fill="#1565C0" />
+          {/* EASYWAY logo area */}
+          <Rect x="48" y="12" width="26" height="10" rx="2" fill="#0D47A1" opacity="0.5" />
+          {/* Truck wheels */}
+          <Circle cx="18" cy="43" r="9" fill="#111827" />
+          <Circle cx="18" cy="43" r="5.5" fill="#374151" />
+          <Circle cx="18" cy="43" r="2.5" fill="#6B7280" />
+          <Circle cx="54" cy="43" r="9" fill="#111827" />
+          <Circle cx="54" cy="43" r="5.5" fill="#374151" />
+          <Circle cx="54" cy="43" r="2.5" fill="#6B7280" />
+          <Circle cx="72" cy="43" r="9" fill="#111827" />
+          <Circle cx="72" cy="43" r="5.5" fill="#374151" />
+          <Circle cx="72" cy="43" r="2.5" fill="#6B7280" />
+          {/* Orange stripe */}
+          <Rect x="4" y="35.5" width="82" height="2" fill="#F5A623" />
+          <Rect x="4" y="22" width="5" height="5" rx="1.5" fill="#FFFDE7" />
+        </Svg>
+      );
+
+    // ── TRUCK_PLATEAU — dépanneuse plateau inclinable + voiture dessus ──
     // ── CLIENT — silhouette personne bleu moderne ──
     case 'CLIENT':
       return (

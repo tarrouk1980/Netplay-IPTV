@@ -11,9 +11,11 @@ import {
   Animated,
   Dimensions,
   Modal,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
 import api, { setTokens } from '../../services/api';
 import useAuthStore from '../../store/authStore';
 import ServiceIcon from '../../components/ServiceIcon';
@@ -127,9 +129,11 @@ const DELIVERY_VEHICLE_TYPES = [
 const MOTORIZED_DELIVERY = ['MOTO', 'SCOOTER', 'VOITURE'];
 
 const TRUCK_TYPES = [
-  { value: 'PLATEAU', label: 'Plateau', emoji: '🚛' },
-  { value: 'GRUE', label: 'Grue', emoji: '🏗️' },
-  { value: 'FOURGON', label: 'Fourgon', emoji: '🚐' },
+  { value: 'PLATEAU',    label: 'Plateau',     svgKey: 'TRUCK_PLATEAU' },
+  { value: 'LEVE_ROUE',  label: 'Lève-roue',   svgKey: 'TRUCK_LEVE_ROUE' },
+  { value: 'CROCHET',    label: 'Crochet/Chaîne', svgKey: 'TRUCK_CROCHET' },
+  { value: 'GRUE',       label: 'Grue',         svgKey: 'TRUCK_GRUE' },
+  { value: 'PANIER',     label: 'Panier',       svgKey: 'TRUCK_PANIER' },
 ];
 
 const MERCHANT_CATEGORIES = [
@@ -362,6 +366,7 @@ export default function RegisterScreen({ navigation }) {
   const [truckType, setTruckType] = useState('PLATEAU');
   const [truckPlate, setTruckPlate] = useState('');
   const [depZones, setDepZones] = useState([]);
+  const [depPhoto, setDepPhoto] = useState(null);
 
   // Step 2 — MARCHAND
   const [shopName, setShopName] = useState('');
@@ -449,6 +454,25 @@ export default function RegisterScreen({ navigation }) {
       navigation.goBack();
     } else {
       animateToStep(step - 1);
+    }
+  }
+
+  // ── Photo picker ───────────────────────────────────────────────────────────
+
+  async function pickPhoto(onDone) {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission refusée', 'Autorisez l\'accès à la galerie dans les paramètres.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.7,
+    });
+    if (!result.canceled && result.assets?.[0]) {
+      onDone(result.assets[0].uri);
     }
   }
 
@@ -851,7 +875,22 @@ export default function RegisterScreen({ navigation }) {
             disabled={isLoading}
           />
 
-          <KycNote text="📋 Vérification sous 24h" />
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Photo du dépanneur <Text style={{ color: COLORS.primary }}>*</Text></Text>
+            <TouchableOpacity style={styles.photoBtn} onPress={() => pickPhoto(setDepPhoto)} disabled={isLoading}>
+              {depPhoto ? (
+                <Image source={{ uri: depPhoto }} style={styles.photoPreview} />
+              ) : (
+                <View style={styles.photoPlaceholder}>
+                  <Text style={{ fontSize: 32 }}>📷</Text>
+                  <Text style={{ color: COLORS.textMuted, fontSize: 13, marginTop: 6 }}>Ajouter une photo</Text>
+                  <Text style={{ color: COLORS.textMuted, fontSize: 11, marginTop: 2 }}>Photo du camion + plaque visible</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          <KycNote text="📋 Vérification sous 24h — photo du camion obligatoire" />
         </View>
       );
     }
@@ -1168,6 +1207,11 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.6 },
   primaryButtonText: { color: COLORS.background, fontWeight: '800', fontSize: 16 },
+
+  // ── Photo
+  photoBtn: { borderRadius: 12, borderWidth: 1.5, borderColor: COLORS.border, borderStyle: 'dashed', overflow: 'hidden' },
+  photoPreview: { width: '100%', height: 160, resizeMode: 'cover' },
+  photoPlaceholder: { height: 120, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.surfaceAlt },
 
   // ── Login link
   loginContainer: { flexDirection: 'row', justifyContent: 'center', marginTop: 8 },
