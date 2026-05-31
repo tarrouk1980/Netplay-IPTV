@@ -35,6 +35,7 @@ const SERVICES = [
   { key: 'SOS', iconService: 'SOS', title: 'SOS', subtitle: 'Assistance en route', color: '#E74C3C' },
   { key: 'DELIVERY', iconService: 'DELIVERY', title: 'Livraison', subtitle: 'Livraison rapide', color: '#27AE60' },
   { key: 'GROCERY', iconService: 'GROCERY', title: 'Courses', subtitle: 'Livraison épicerie', color: '#8E44AD' },
+  { key: 'BACKHOME', iconService: 'BACKHOME', title: 'Back Home', subtitle: 'Covoiturage retour', color: '#F5A623' },
 ];
 
 // Offres du moment — fallback si API indisponible
@@ -148,6 +149,7 @@ export default function HomeScreen({ navigation }) {
     else if (serviceKey === 'SOS') navigation.navigate('SOSHome');
     else if (serviceKey === 'DELIVERY') navigation.navigate('DeliveryHome');
     else if (serviceKey === 'GROCERY') navigation.navigate('GroceryHome');
+    else if (serviceKey === 'BACKHOME') navigation.navigate('BackHomeRide');
   };
 
   return (

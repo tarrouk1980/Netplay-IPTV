@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { initI18n } from './i18n';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
@@ -73,6 +74,10 @@ import ProviderProfileScreen from './screens/profile/ProviderProfileScreen';
 
 // Subscriptions
 import BuyPassScreen from './screens/subscriptions/BuyPassScreen';
+
+// Back Home Ride & Payment
+import BackHomeRideScreen from './screens/taxi/BackHomeRideScreen';
+import PaymentScreen from './screens/payment/PaymentScreen';
 
 // Legal
 import CGUScreen from './screens/legal/CGUScreen';
@@ -177,6 +182,10 @@ function MainStack() {
       {/* Subscriptions */}
       <Stack.Screen name="BuyPass" component={BuyPassScreen} options={{ title: 'Passer Premium' }} />
 
+      {/* Back Home Ride & Payment */}
+      <Stack.Screen name="BackHomeRide" component={BackHomeRideScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Payment" component={PaymentScreen} options={{ headerShown: false }} />
+
       {/* Legal */}
       <Stack.Screen name="CGU" component={CGUScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
@@ -191,6 +200,8 @@ export default function App() {
   const [onboardingDone, setOnboardingDone] = useState(null); // null=loading, true/false
 
   useEffect(() => {
+    // Init i18n (language preference)
+    initI18n().catch(() => {});
     // Restore tokens from AsyncStorage on app start
     loadFromStorage();
     // Check onboarding status

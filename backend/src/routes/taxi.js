@@ -478,6 +478,64 @@ router.post(
 );
 
 // ─────────────────────────────────────────────
+// GET /api/taxi/backhome — chercher chauffeurs disponibles
+// ─────────────────────────────────────────────
+router.get('/backhome', authenticate, async (req, res) => {
+  const { destLat, destLng } = req.query;
+  try {
+    const rides = await prisma.backHomeRide.findMany({
+      where: { active: true, seatsLeft: { gt: 0 } },
+      include: { driver: { select: { id: true, name: true, avgRating: true } } },
+      take: 10,
+    });
+    res.json(rides);
+  } catch {
+    res.json([]); // table peut ne pas exister encore
+  }
+});
+
+// POST /api/taxi/backhome — chauffeur propose trajet retour
+router.post('/backhome', authenticate, async (req, res) => {
+  const { destLat, destLng, destAddress, seats, price } = req.body;
+  try {
+    const ride = await prisma.backHomeRide.create({
+      data: {
+        driverId: req.user.id,
+        destLat: parseFloat(destLat),
+        destLng: parseFloat(destLng),
+        destAddress: destAddress || '',
+        seatsTotal: Number(seats) || 1,
+        seatsLeft: Number(seats) || 1,
+        price: parseFloat(price) || 0,
+        active: true,
+      }
+    });
+    res.json(ride);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/taxi/backhome/:id/join — client rejoint un Back Home Ride
+router.post('/backhome/:id/join', authenticate, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const ride = await prisma.backHomeRide.findUnique({ where: { id } });
+    if (!ride) return res.status(404).json({ error: 'Ride not found' });
+    if (!ride.active || ride.seatsLeft <= 0) {
+      return res.status(409).json({ error: 'No seats available' });
+    }
+    const updated = await prisma.backHomeRide.update({
+      where: { id },
+      data: { seatsLeft: { decrement: 1 } },
+    });
+    res.json({ success: true, ride: updated });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─────────────────────────────────────────────
 // GET /api/taxi/heatmap — demand zones by time of day
 // ─────────────────────────────────────────────
 router.get('/heatmap', authenticate, async (req, res) => {
