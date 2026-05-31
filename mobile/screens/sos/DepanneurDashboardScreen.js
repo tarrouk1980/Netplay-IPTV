@@ -331,6 +331,15 @@ export default function DepanneurDashboardScreen({ navigation }) {
           </View>
         )}
 
+        {/* Earnings link */}
+        <TouchableOpacity
+          style={styles.earningsLinkBtn}
+          onPress={() => navigation.navigate('ProviderEarnings')}
+          activeOpacity={0.75}
+        >
+          <Text style={styles.earningsLinkText}>📊 Voir l'analyse complète de mes gains →</Text>
+        </TouchableOpacity>
+
         <View style={{ height: 32 }} />
       </ScrollView>
 
@@ -510,4 +519,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalSubmitText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  earningsLinkBtn: {
+    marginHorizontal: 20,
+    marginTop: 12,
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  earningsLinkText: { color: COLORS.sos, fontSize: 13, fontWeight: '600' },
 });

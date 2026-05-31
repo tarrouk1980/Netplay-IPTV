@@ -58,6 +58,10 @@ export default function TaxiRequestScreen({ route, navigation }) {
   const [showPriceEstimate, setShowPriceEstimate] = useState(false);
   const [estimatedDistanceKm, setEstimatedDistanceKm] = useState(5);
   const [waypoints, setWaypoints] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const suggestTimeout = useRef(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   const addWaypoint = () => {
@@ -186,14 +190,39 @@ export default function TaxiRequestScreen({ route, navigation }) {
     }
   }, [origin]);
 
+  const MAPBOX_TOKEN = 'pk.eyJ1IjoiZWFzeXdheXRhcmVrIiwiYSI6ImNtcHNuaGJ1ODBoc2Qyc3FxenU0aGFvd3QifQ.K-z5zbFtY8v5lyMUn7TryQ';
+
   const handleDestinationChange = (text) => {
     setDestination(text);
-    // Mapbox autocomplete triggers at 3 characters to minimise API calls
-    // (free tier: 100,000 requests/month)
-    if (text.length >= 3) {
-      // TODO: Replace with Mapbox SDK — mapbox.com/pricing — free tier: 25,000 loads/month
-      // fetchMapboxSuggestions(text)
-    }
+    setSuggestions([]);
+    setShowSuggestions(false);
+    if (suggestTimeout.current) clearTimeout(suggestTimeout.current);
+    if (text.length < 3) return;
+    suggestTimeout.current = setTimeout(async () => {
+      setLoadingSuggestions(true);
+      try {
+        const proximity = origin ? `&proximity=${origin.lng},${origin.lat}` : '';
+        const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(text)}.json?country=TN&language=fr&limit=5&access_token=${MAPBOX_TOKEN}${proximity}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.features && data.features.length > 0) {
+          setSuggestions(data.features.map(f => ({
+            id: f.id,
+            name: f.text,
+            fullName: f.place_name,
+            coords: { lng: f.center[0], lat: f.center[1] },
+          })));
+          setShowSuggestions(true);
+        }
+      } catch {}
+      finally { setLoadingSuggestions(false); }
+    }, 400);
+  };
+
+  const handleSelectSuggestion = (suggestion) => {
+    setDestination(suggestion.fullName);
+    setSuggestions([]);
+    setShowSuggestions(false);
   };
 
   const doRequestTaxi = async () => {
@@ -266,6 +295,28 @@ export default function TaxiRequestScreen({ route, navigation }) {
             returnKeyType="done"
           />
           <Text style={styles.inputHint}>Autocomplétion dès 3 lettres — Mapbox</Text>
+          {/* Autocomplete suggestions */}
+          {loadingSuggestions && (
+            <ActivityIndicator size="small" color={COLORS.accent} style={{ marginTop: 8, alignSelf: 'flex-start' }} />
+          )}
+          {showSuggestions && suggestions.length > 0 && (
+            <View style={styles.suggestionsBox}>
+              {suggestions.map((s) => (
+                <TouchableOpacity
+                  key={s.id}
+                  style={styles.suggestionItem}
+                  onPress={() => handleSelectSuggestion(s)}
+                  activeOpacity={0.75}
+                >
+                  <Text style={styles.suggestionIcon}>📍</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.suggestionName} numberOfLines={1}>{s.name}</Text>
+                    <Text style={styles.suggestionFull} numberOfLines={1}>{s.fullName}</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* Waypoints */}
@@ -575,6 +626,25 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.accent + '11',
   },
   addWpText: { color: COLORS.accent, fontSize: 14, fontWeight: '600' },
+  suggestionsBox: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginTop: 4,
+    overflow: 'hidden',
+  },
+  suggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    gap: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  suggestionIcon: { fontSize: 16 },
+  suggestionName: { color: COLORS.text, fontSize: 14, fontWeight: '500' },
+  suggestionFull: { color: COLORS.textMuted, fontSize: 11, marginTop: 1 },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.75)',

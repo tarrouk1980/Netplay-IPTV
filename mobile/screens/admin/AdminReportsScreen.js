@@ -13,6 +13,8 @@ import {
   ScrollView,
   TextInput,
 } from 'react-native';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import api from '../../services/api';
 
 const COLORS = {
@@ -341,6 +343,35 @@ export default function AdminReportsScreen({ navigation }) {
     );
   };
 
+  const exportCSV = async () => {
+    try {
+      if (!reports || reports.length === 0) {
+        Alert.alert('Aucune donnée', 'Aucun rapport à exporter.');
+        return;
+      }
+      const headers = 'ID,Signaleur,Signalé,Raison,Statut,Date\n';
+      const rows = reports.map(r => {
+        const reasons = Array.isArray(r.reasons) ? r.reasons.join('|') : (r.reasons || '');
+        const reporter = r.reporter?.name || r.reporterName || '';
+        const reported = r.reported?.name || r.reportedName || '';
+        const date = r.createdAt ? new Date(r.createdAt).toLocaleDateString('fr-TN') : '';
+        return [r.id, reporter, reported, reasons, r.status || '', date]
+          .map(v => `"${String(v).replace(/"/g, '""')}"`)
+          .join(',');
+      }).join('\n');
+      const csv = headers + rows;
+      const fileUri = FileSystem.documentDirectory + `rapports_${Date.now()}.csv`;
+      await FileSystem.writeAsStringAsync(fileUri, csv, { encoding: FileSystem.EncodingType.UTF8 });
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(fileUri, { mimeType: 'text/csv', dialogTitle: 'Exporter les rapports' });
+      } else {
+        Alert.alert('Fichier créé', fileUri);
+      }
+    } catch (e) {
+      Alert.alert('Erreur', 'Impossible d\'exporter les données.');
+    }
+  };
+
   const renderItem = ({ item }) => (
     <ReportCard
       item={item}
@@ -359,7 +390,9 @@ export default function AdminReportsScreen({ navigation }) {
           <Text style={styles.backTxt}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>🚨 Signalements</Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity onPress={exportCSV} style={styles.exportBtn}>
+          <Text style={styles.exportBtnText}>📊 CSV</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Tabs */}
@@ -450,4 +483,13 @@ const styles = StyleSheet.create({
   empty: { alignItems: 'center', paddingTop: 80, gap: 12 },
   emptyEmoji: { fontSize: 48 },
   emptyTxt: { color: COLORS.muted, fontSize: 15 },
+  exportBtn: {
+    backgroundColor: '#1565C022',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: '#1565C044',
+  },
+  exportBtnText: { color: '#42A5F5', fontSize: 12, fontWeight: '700' },
 });
