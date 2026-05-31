@@ -6,6 +6,7 @@ const { authenticate } = require('../middleware/auth');
 const { requireRole } = require('../middleware/rbac');
 const { updatePosition, findNearby } = require('../services/geolocation');
 const { redisClient } = require('../config/redis');
+const { isCovered, getZones } = require('../services/geofencing');
 
 const router = express.Router();
 
@@ -78,5 +79,26 @@ router.get(
     }
   }
 );
+
+// GET /api/geo/coverage — check if lat/lng is covered for a serviceType
+router.get('/coverage', authenticate, (req, res) => {
+  const lat = parseFloat(req.query.lat);
+  const lng = parseFloat(req.query.lng);
+  const { serviceType } = req.query;
+
+  if (isNaN(lat) || isNaN(lng) || !serviceType) {
+    return res.status(400).json({ error: 'lat, lng et serviceType requis' });
+  }
+
+  const result = isCovered(lat, lng, serviceType);
+  res.json(result);
+});
+
+// GET /api/geo/zones — list coverage zones for a service
+router.get('/zones', authenticate, (req, res) => {
+  const { serviceType } = req.query;
+  const zones = serviceType ? getZones(serviceType) : {};
+  res.json({ zones });
+});
 
 module.exports = router;

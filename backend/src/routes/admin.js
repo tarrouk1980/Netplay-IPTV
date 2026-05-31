@@ -1102,5 +1102,111 @@ router.get('/providers', async (req, res) => {
   }
 });
 
+// POST /api/admin/billing/run — déclencher facturation manuelle
+router.post('/billing/run', authenticate, requireRole('ADMIN'), async (req, res) => {
+  try {
+    const { runDailyBilling } = require('../services/subscriptionBilling');
+    const result = await runDailyBilling();
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/admin/stats/revenue-by-service — breakdown by service type (30 days)
+router.get('/stats/revenue-by-service', authenticate, requireRole('ADMIN'), async (req, res) => {
+  try {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 29);
+    startDate.setHours(0, 0, 0, 0);
+
+    const services = ['TAXI', 'SOS', 'DELIVERY', 'GROCERY'];
+    const results = await Promise.all(
+      services.map((type) =>
+        prisma.order.aggregate({
+          where: { serviceType: type, status: 'COMPLETED', completedAt: { gte: startDate } },
+          _sum: { price: true },
+          _count: { id: true },
+        }).then((r) => ({ type, revenue: r._sum.price || 0, count: r._count.id }))
+      )
+    );
+
+    const total = results.reduce((s, r) => s + Number(r.revenue), 0);
+    const enriched = results.map((r) => ({
+      ...r,
+      revenue: Number(r.revenue),
+      percent: total > 0 ? Math.round((Number(r.revenue) / total) * 100) : 0,
+    }));
+
+    res.json({ services: enriched, total: Math.round(total * 1000) / 1000 });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/admin/stats/active-users — daily active users (logins/orders) last 14 days
+router.get('/stats/active-users', authenticate, requireRole('ADMIN'), async (req, res) => {
+  try {
+    const days = 14;
+    const labels = [];
+    const counts = [];
+
+    for (let i = days - 1; i >= 0; i--) {
+      const start = new Date();
+      start.setDate(start.getDate() - i);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 1);
+
+      labels.push(start.toLocaleDateString('fr-TN', { day: '2-digit', month: '2-digit' }));
+
+      const count = await prisma.order.groupBy({
+        by: ['clientId'],
+        where: { createdAt: { gte: start, lt: end } },
+      }).then((r) => r.length).catch(() => 0);
+
+      counts.push(count);
+    }
+
+    res.json({ labels, data: counts });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/admin/stats/top-providers — top 10 providers by completed orders
+router.get('/stats/top-providers', authenticate, requireRole('ADMIN'), async (req, res) => {
+  try {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 29);
+
+    const grouped = await prisma.order.groupBy({
+      by: ['driverId'],
+      where: { status: 'COMPLETED', completedAt: { gte: startDate }, driverId: { not: null } },
+      _count: { id: true },
+      _sum: { price: true },
+      orderBy: { _count: { id: 'desc' } },
+      take: 10,
+    });
+
+    const ids = grouped.map((g) => g.driverId);
+    const users = await prisma.user.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, name: true, role: true, avgRating: true },
+    });
+
+    const userMap = Object.fromEntries(users.map((u) => [u.id, u]));
+    const top = grouped.map((g) => ({
+      ...userMap[g.driverId],
+      orders: g._count.id,
+      revenue: Number(g._sum.price || 0),
+    }));
+
+    res.json({ providers: top });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
 

@@ -290,6 +290,11 @@ export default function AdminDashboardScreen({ navigation }) {
                 label="Anti-fraude"
                 onPress={() => navigation.navigate('AdminFraud')}
               />
+              <QuickAction
+                emoji="📊"
+                label="Analytics"
+                onPress={() => navigation.navigate('AdminAnalytics')}
+              />
             </View>
 
             {/* Revenue total */}

@@ -64,6 +64,7 @@ import AdminKYCScreen from './screens/admin/AdminKYCScreen';
 import AdminReportsScreen from './screens/admin/AdminReportsScreen';
 import AdminActivityScreen from './screens/admin/AdminActivityScreen';
 import AdminFraudScreen from './screens/admin/AdminFraudScreen';
+import AdminAnalyticsScreen from './screens/admin/AdminAnalyticsScreen';
 
 // Settings
 import SettingsScreen from './screens/profile/SettingsScreen';
@@ -195,6 +196,7 @@ function MainStack() {
       <Stack.Screen name="AdminReports" component={AdminReportsScreen} options={{ title: 'Rapports' }} />
       <Stack.Screen name="AdminActivity" component={AdminActivityScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminFraud" component={AdminFraudScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminAnalytics" component={AdminAnalyticsScreen} options={{ headerShown: false }} />
 
       {/* KYC Pending */}
       <Stack.Screen name="KYCPending" component={KYCPendingScreen} options={{ headerShown: false }} />
