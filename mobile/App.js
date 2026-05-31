@@ -6,6 +6,7 @@ import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from './services/api';
 import { connectSocket, disconnectSocket } from './services/socket';
+import { registerForPushNotifications as registerPushToken, useNotificationListener } from './services/notifications';
 
 import useAuthStore from './store/authStore';
 import useNotificationStore from './store/notificationStore';

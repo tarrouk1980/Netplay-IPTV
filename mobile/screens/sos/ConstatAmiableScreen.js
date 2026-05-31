@@ -55,11 +55,27 @@ const INSURANCE_COMPANIES = [
 ];
 
 const CIRCUMSTANCES = [
-  'En stationnement','En marche arrière','Changeait de file',
-  'Tournait à droite','Tournait à gauche','Brûlait un feu rouge',
-  'Refus de priorité','Collision par l\'arrière','Dépassement dangereux',
-  'Sortait d\'un parking','Changement de voie sans signalement','Ouverture de portière',
+  'En stationnement (à l\'arrêt ou en stationnement)',
+  'Quittait un stationnement / ouvrait une portière',
+  'En marche arrière',
+  'S\'engageait dans un parking / allée privée',
+  'Circulait en sens interdit',
+  'Venait d\'un carrefour / rond-point',
+  'Tournait à droite',
+  'Tournait à gauche',
+  'Changeait de file / dépassait',
+  'Dépassement dangereux',
+  'Refus de priorité / stop / cédez-le-passage',
+  'Brûlait un feu rouge',
+  'Heurtait à l\'arrière (même sens de circulation)',
+  'Collision frontale',
+  'Percutait un véhicule en stationnement',
+  'Avait ses feux éteints (nuit / mauvaise visibilité)',
+  'Roulait sur une piste réservée',
+  'Survenait d\'une allée privée / terrain',
 ];
+
+const ROAD_TYPES = ['Route nationale', 'Route régionale', 'Voie urbaine', 'Autoroute', 'Parking', 'Voie privée', 'Autre'];
 
 const EMPTY_VEHICLE = {
   marque: '', modele: '', annee: '', couleur: '', boiteVitesse: '',
@@ -183,6 +199,11 @@ export default function ConstatAmiableScreen({ route, navigation }) {
   const [sigA, setSigA] = useState(null); // { timestamp, coords }
   const [sigB, setSigB] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [hasBlessés, setHasBlessés] = useState(false);
+  const [blessésDetails, setBlessésDetails] = useState('');
+  const [witness, setWitness] = useState({ name: '', phone: '' });
+  const [roadType, setRoadType] = useState('');
+  const [otherDamage, setOtherDamage] = useState('');
 
   const toggleCircumstance = (item) =>
     setSelectedCircumstances((prev) =>
@@ -250,6 +271,10 @@ export default function ConstatAmiableScreen({ route, navigation }) {
         observations,
         location,
         signatures: { A: sigA, B: sigB },
+        blessés: { present: hasBlessés, details: blessésDetails },
+        witness,
+        roadType,
+        otherDamage,
       });
       Alert.alert(
         '✅ Constat envoyé',
@@ -327,6 +352,92 @@ export default function ConstatAmiableScreen({ route, navigation }) {
               <Text style={styles.checkLabel}>{item}</Text>
             </TouchableOpacity>
           ))}
+        </View>
+
+        {/* Blessés */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>🚑 Y a-t-il des blessés ?</Text>
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <TouchableOpacity
+              style={[styles.toggleBtn, hasBlessés && styles.toggleBtnActive]}
+              onPress={() => setHasBlessés(true)} activeOpacity={0.8}
+            >
+              <Text style={[styles.toggleBtnText, hasBlessés && styles.toggleBtnTextActive]}>Oui</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toggleBtn, !hasBlessés && styles.toggleBtnActive]}
+              onPress={() => setHasBlessés(false)} activeOpacity={0.8}
+            >
+              <Text style={[styles.toggleBtnText, !hasBlessés && styles.toggleBtnTextActive]}>Non</Text>
+            </TouchableOpacity>
+          </View>
+          {hasBlessés && (
+            <>
+              <TextInput
+                style={styles.fieldInput}
+                value={blessésDetails}
+                onChangeText={setBlessésDetails}
+                placeholder="Précisez (nombre, gravité apparente)..."
+                placeholderTextColor={COLORS.muted}
+                multiline
+              />
+              <Text style={{ color: COLORS.red, fontSize: 13, fontWeight: '700' }}>
+                ⚠️ Appelez le 190 (SAMU) immédiatement si pas encore fait
+              </Text>
+            </>
+          )}
+        </View>
+
+        {/* Témoins */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>👁️ Témoin éventuel</Text>
+          <View style={styles.fieldRow}>
+            <Text style={styles.fieldLabel}>Nom du témoin</Text>
+            <TextInput
+              style={styles.fieldInput}
+              value={witness.name}
+              onChangeText={(v) => setWitness({ ...witness, name: v })}
+              placeholder="Nom du témoin (optionnel)"
+              placeholderTextColor={COLORS.muted}
+            />
+          </View>
+          <View style={styles.fieldRow}>
+            <Text style={styles.fieldLabel}>Téléphone du témoin</Text>
+            <TextInput
+              style={styles.fieldInput}
+              value={witness.phone}
+              onChangeText={(v) => setWitness({ ...witness, phone: v })}
+              placeholder="Téléphone du témoin"
+              placeholderTextColor={COLORS.muted}
+              keyboardType="phone-pad"
+            />
+          </View>
+        </View>
+
+        {/* Type de voie */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>🛣️ Type de voie</Text>
+          <FieldPicker
+            label="Type de voie"
+            value={roadType}
+            options={ROAD_TYPES}
+            onSelect={setRoadType}
+          />
+        </View>
+
+        {/* Dégâts matériels autres */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>🏗️ Dégâts matériels autres</Text>
+          <TextInput
+            style={styles.observationsInput}
+            value={otherDamage}
+            onChangeText={setOtherDamage}
+            placeholder="Mobilier urbain, clôture, autre véhicule... (optionnel)"
+            placeholderTextColor={COLORS.muted}
+            multiline
+            numberOfLines={3}
+            textAlignVertical="top"
+          />
         </View>
 
         {/* Croquis */}
@@ -438,4 +549,8 @@ const styles = StyleSheet.create({
   signedLabel: { color: COLORS.green, fontSize: 13, fontWeight: '600' },
   submitBtn: { backgroundColor: COLORS.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
   submitBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  toggleBtn: { flex: 1, borderRadius: 10, borderWidth: 1.5, borderColor: COLORS.border, paddingVertical: 10, alignItems: 'center' },
+  toggleBtnActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
+  toggleBtnText: { color: COLORS.muted, fontSize: 15, fontWeight: '600' },
+  toggleBtnTextActive: { color: '#fff' },
 });
