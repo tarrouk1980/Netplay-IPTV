@@ -66,9 +66,12 @@ import AdminReportsScreen from './screens/admin/AdminReportsScreen';
 import AdminActivityScreen from './screens/admin/AdminActivityScreen';
 import AdminFraudScreen from './screens/admin/AdminFraudScreen';
 import AdminAnalyticsScreen from './screens/admin/AdminAnalyticsScreen';
+import AdminMerchantsScreen from './screens/admin/AdminMerchantsScreen';
+import AdminDisputesScreen from './screens/admin/AdminDisputesScreen';
 
 // Settings
 import SettingsScreen from './screens/profile/SettingsScreen';
+import LanguageScreen from './screens/profile/LanguageScreen';
 
 // Referral & Profile extras
 import ReferralScreen from './screens/profile/ReferralScreen';
@@ -221,6 +224,8 @@ function MainStack() {
       <Stack.Screen name="AdminActivity" component={AdminActivityScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminFraud" component={AdminFraudScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminAnalytics" component={AdminAnalyticsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminMerchants" component={AdminMerchantsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminDisputes" component={AdminDisputesScreen} options={{ headerShown: false }} />
 
       {/* KYC Pending */}
       <Stack.Screen name="KYCPending" component={KYCPendingScreen} options={{ headerShown: false }} />
@@ -231,6 +236,7 @@ function MainStack() {
       <Stack.Screen name="History" component={HistoryScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ProviderProfile" component={ProviderProfileScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Settings" component={SettingsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Language" component={LanguageScreen} options={{ headerShown: false }} />
 
       {/* Subscriptions */}
       <Stack.Screen name="BuyPass" component={BuyPassScreen} options={{ title: 'Passer Premium' }} />

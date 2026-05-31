@@ -306,6 +306,14 @@ export default function SettingsScreen({ navigation }) {
               )}
             </TouchableOpacity>
           ))}
+          <TouchableOpacity
+            style={[lRow.container, { borderTopWidth: 1, borderTopColor: COLORS.border, borderBottomWidth: 0 }]}
+            onPress={() => navigation.navigate('Language')}
+            activeOpacity={0.7}
+          >
+            <Text style={[lRow.label, { flex: 1, color: COLORS.accent }]}>🌐 Paramètres langue avancés</Text>
+            <Text style={{ color: COLORS.muted, fontSize: 16 }}>›</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Apparence */}

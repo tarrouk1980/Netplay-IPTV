@@ -692,6 +692,33 @@ router.post('/disputes/:orderId/resolve', async (req, res) => {
 });
 
 // ─────────────────────────────────────────────
+// PATCH /api/admin/disputes/:id — Update dispute status/resolution
+// ─────────────────────────────────────────────
+router.patch('/disputes/:id', async (req, res) => {
+  try {
+    const { status, resolution } = req.body;
+    const VALID_STATUSES = ['OPEN', 'IN_REVIEW', 'RESOLVED', 'CLOSED'];
+    if (status && !VALID_STATUSES.includes(status)) {
+      return res.status(400).json({ error: 'Invalid status', code: 'VALIDATION_ERROR' });
+    }
+
+    const data = {};
+    if (status) data.status = status;
+    if (resolution) data.resolution = resolution;
+    if (status === 'RESOLVED') data.resolvedAt = new Date();
+
+    const updated = await prisma.dispute.update({
+      where: { id: req.params.id },
+      data,
+    });
+    return res.json({ dispute: updated });
+  } catch (err) {
+    console.error('[admin/disputes/patch]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─────────────────────────────────────────────
 // GET /api/admin/merchants — Liste marchands
 // ─────────────────────────────────────────────
 router.get('/merchants', async (req, res) => {
