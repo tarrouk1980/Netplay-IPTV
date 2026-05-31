@@ -97,8 +97,13 @@ router.post(
       await logEvent(order.id, 'ORDER_CREATED', { mode, sosType, clientId: req.user.id });
 
       // Find up to 5 nearby DEPANNEUR providers via Redis GEO
-      const nearby = await findNearby(lat, lng, 20, 'SOS');
-      const top5 = nearby.slice(0, 5);
+      let top5 = [];
+      try {
+        const nearby = await findNearby(lat, lng, 20, 'SOS');
+        top5 = nearby.slice(0, 5);
+      } catch (geoErr) {
+        console.warn('[SOS] findNearby failed (Redis unavailable?):', geoErr.message);
+      }
 
       const depanneurIds = top5.map((d) => d.userId);
 

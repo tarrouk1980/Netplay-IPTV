@@ -116,8 +116,10 @@ export default function SOSRequestScreen({ route, navigation }) {
   const [locating, setLocating] = useState(false);
   const [pickerModal, setPickerModal] = useState({ visible: false, field: '', title: '', options: [] });
   const [scheduleModal, setScheduleModal] = useState(false);
-  const [scheduleDate, setScheduleDate] = useState('');
-  const [scheduleTime, setScheduleTime] = useState('');
+  const [calMonth, setCalMonth] = useState(new Date());
+  const [selectedDay, setSelectedDay] = useState(null);
+  const [selectedHour, setSelectedHour] = useState(new Date().getHours() + 2 > 23 ? 9 : new Date().getHours() + 2);
+  const [selectedMin, setSelectedMin] = useState(0);
 
   useEffect(() => {
     if (step === 2) {
@@ -185,13 +187,11 @@ export default function SOSRequestScreen({ route, navigation }) {
     }
 
     if (submitMode === 'SCHEDULED') {
-      // Pré-remplir avec aujourd'hui + 2h
       const now = new Date();
-      const d = now.toISOString().slice(0, 10);
-      const h = String(now.getHours() + 2).padStart(2, '0');
-      const m = String(now.getMinutes()).padStart(2, '0');
-      setScheduleDate(d);
-      setScheduleTime(`${h}:${m}`);
+      setCalMonth(new Date(now.getFullYear(), now.getMonth(), 1));
+      setSelectedDay(now);
+      setSelectedHour(now.getHours() + 2 > 23 ? 9 : now.getHours() + 2);
+      setSelectedMin(0);
       setScheduleModal(true);
       return;
     }
@@ -233,67 +233,123 @@ export default function SOSRequestScreen({ route, navigation }) {
         onClose={closePicker}
       />
 
-      {/* Modal agenda — réservation dépanneur */}
+      {/* Modal agenda — calendrier réservation dépanneur */}
       <Modal visible={scheduleModal} transparent animationType="slide" onRequestClose={() => setScheduleModal(false)}>
         <TouchableOpacity style={modalStyles.overlay} activeOpacity={1} onPress={() => setScheduleModal(false)}>
-          <TouchableOpacity style={[modalStyles.sheet, { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 36 }]} activeOpacity={1}>
+          <TouchableOpacity style={[modalStyles.sheet, { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 36 }]} activeOpacity={1}>
             <View style={modalStyles.handle} />
-            <Text style={{ fontSize: 18, fontWeight: '800', color: '#FFF', marginBottom: 6 }}>📅 Programmer une intervention</Text>
-            <Text style={{ fontSize: 13, color: '#8E8E9A', marginBottom: 20 }}>Le dépanneur sera notifié et confirmera le créneau.</Text>
+            <Text style={{ fontSize: 17, fontWeight: '800', color: '#FFF', marginBottom: 2 }}>📅 Choisir un créneau</Text>
+            <Text style={{ fontSize: 12, color: '#8E8E9A', marginBottom: 14 }}>Le dépanneur confirmera le rendez-vous.</Text>
 
-            <Text style={scheduleStyles.label}>DATE (AAAA-MM-JJ)</Text>
-            <TextInput
-              style={scheduleStyles.input}
-              value={scheduleDate}
-              onChangeText={setScheduleDate}
-              placeholder="2025-06-15"
-              placeholderTextColor="#555"
-              keyboardType="numeric"
-              maxLength={10}
-            />
-
-            <Text style={scheduleStyles.label}>HEURE (HH:MM)</Text>
-            <TextInput
-              style={scheduleStyles.input}
-              value={scheduleTime}
-              onChangeText={setScheduleTime}
-              placeholder="14:30"
-              placeholderTextColor="#555"
-              keyboardType="numeric"
-              maxLength={5}
-            />
-
-            <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
-              {['+1h', '+2h', '+3h', 'Demain matin'].map((label) => (
-                <TouchableOpacity
-                  key={label}
-                  style={scheduleStyles.quickBtn}
-                  onPress={() => {
-                    const base = new Date();
-                    if (label === 'Demain matin') {
-                      base.setDate(base.getDate() + 1);
-                      base.setHours(9, 0, 0);
-                    } else {
-                      const h = parseInt(label.replace('+', '').replace('h', ''));
-                      base.setHours(base.getHours() + h);
-                    }
-                    setScheduleDate(base.toISOString().slice(0, 10));
-                    setScheduleTime(`${String(base.getHours()).padStart(2,'0')}:${String(base.getMinutes()).padStart(2,'0')}`);
-                  }}
-                >
+            {/* Raccourcis */}
+            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }}>
+              {['+1h', '+2h', '+3h', 'Demain 9h'].map((label) => (
+                <TouchableOpacity key={label} style={scheduleStyles.quickBtn} onPress={() => {
+                  const base = new Date();
+                  if (label === 'Demain 9h') { base.setDate(base.getDate() + 1); base.setHours(9, 0, 0); }
+                  else { const h = parseInt(label); base.setHours(base.getHours() + h, 0, 0); }
+                  setSelectedDay(new Date(base));
+                  setCalMonth(new Date(base.getFullYear(), base.getMonth(), 1));
+                  setSelectedHour(base.getHours());
+                  setSelectedMin(0);
+                }}>
                   <Text style={scheduleStyles.quickBtnText}>{label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
 
+            {/* Navigation mois */}
+            {(() => {
+              const year = calMonth.getFullYear();
+              const month = calMonth.getMonth();
+              const monthName = calMonth.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
+              const firstDay = new Date(year, month, 1).getDay(); // 0=dim
+              const daysInMonth = new Date(year, month + 1, 0).getDate();
+              const today = new Date(); today.setHours(0,0,0,0);
+              const blanks = (firstDay + 6) % 7; // lundi = 0
+              const cells = [...Array(blanks).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
+              return (
+                <View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                    <TouchableOpacity onPress={() => setCalMonth(new Date(year, month - 1, 1))} style={{ padding: 8 }}>
+                      <Text style={{ color: COLORS.accent, fontSize: 20, fontWeight: '700' }}>‹</Text>
+                    </TouchableOpacity>
+                    <Text style={{ color: '#FFF', fontWeight: '700', fontSize: 14, textTransform: 'capitalize' }}>{monthName}</Text>
+                    <TouchableOpacity onPress={() => setCalMonth(new Date(year, month + 1, 1))} style={{ padding: 8 }}>
+                      <Text style={{ color: COLORS.accent, fontSize: 20, fontWeight: '700' }}>›</Text>
+                    </TouchableOpacity>
+                  </View>
+                  {/* Jours de la semaine */}
+                  <View style={{ flexDirection: 'row', marginBottom: 4 }}>
+                    {['L','M','M','J','V','S','D'].map((d, i) => (
+                      <Text key={i} style={{ flex: 1, textAlign: 'center', color: '#8E8E9A', fontSize: 11, fontWeight: '700' }}>{d}</Text>
+                    ))}
+                  </View>
+                  {/* Grille des jours */}
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                    {cells.map((day, i) => {
+                      if (!day) return <View key={`b${i}`} style={{ width: '14.28%', aspectRatio: 1 }} />;
+                      const thisDate = new Date(year, month, day); thisDate.setHours(0,0,0,0);
+                      const isPast = thisDate < today;
+                      const isSelected = selectedDay && thisDate.toDateString() === new Date(selectedDay).toDateString();
+                      return (
+                        <TouchableOpacity key={day} disabled={isPast}
+                          style={{ width: '14.28%', aspectRatio: 1, alignItems: 'center', justifyContent: 'center' }}
+                          onPress={() => setSelectedDay(new Date(year, month, day))}
+                        >
+                          <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: isSelected ? COLORS.accent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                            <Text style={{ color: isPast ? '#444' : isSelected ? '#FFF' : '#FFF', fontSize: 13, fontWeight: isSelected ? '800' : '400' }}>{day}</Text>
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+              );
+            })()}
+
+            {/* Sélection heure */}
+            <Text style={{ color: '#8E8E9A', fontSize: 12, fontWeight: '700', marginTop: 14, marginBottom: 8 }}>HEURE</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+              <TouchableOpacity onPress={() => setSelectedHour((h) => h === 0 ? 23 : h - 1)} style={scheduleStyles.timeBtn}>
+                <Text style={scheduleStyles.timeBtnText}>−</Text>
+              </TouchableOpacity>
+              <Text style={{ color: '#FFF', fontSize: 28, fontWeight: '800', width: 52, textAlign: 'center' }}>
+                {String(selectedHour).padStart(2,'0')}
+              </Text>
+              <TouchableOpacity onPress={() => setSelectedHour((h) => h === 23 ? 0 : h + 1)} style={scheduleStyles.timeBtn}>
+                <Text style={scheduleStyles.timeBtnText}>+</Text>
+              </TouchableOpacity>
+              <Text style={{ color: '#8E8E9A', fontSize: 24, fontWeight: '300', marginHorizontal: 4 }}>:</Text>
+              <TouchableOpacity onPress={() => setSelectedMin((m) => m === 0 ? 45 : m - 15)} style={scheduleStyles.timeBtn}>
+                <Text style={scheduleStyles.timeBtnText}>−</Text>
+              </TouchableOpacity>
+              <Text style={{ color: '#FFF', fontSize: 28, fontWeight: '800', width: 52, textAlign: 'center' }}>
+                {String(selectedMin).padStart(2,'0')}
+              </Text>
+              <TouchableOpacity onPress={() => setSelectedMin((m) => m === 45 ? 0 : m + 15)} style={scheduleStyles.timeBtn}>
+                <Text style={scheduleStyles.timeBtnText}>+</Text>
+              </TouchableOpacity>
+            </View>
+
+            {selectedDay && (
+              <Text style={{ color: '#8E8E9A', fontSize: 12, textAlign: 'center', marginTop: 10 }}>
+                {new Date(selectedDay).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} à {String(selectedHour).padStart(2,'0')}:{String(selectedMin).padStart(2,'0')}
+              </Text>
+            )}
+
             <TouchableOpacity
-              style={[scheduleStyles.confirmBtn, { backgroundColor: COLORS.accent }]}
+              style={[scheduleStyles.confirmBtn, { backgroundColor: selectedDay ? COLORS.accent : '#444', marginTop: 14 }]}
+              disabled={!selectedDay}
               onPress={() => {
+                if (!selectedDay) return;
+                const d = new Date(selectedDay);
+                d.setHours(selectedHour, selectedMin, 0, 0);
                 setScheduleModal(false);
-                sendSOS('SCHEDULED', `${scheduleDate}T${scheduleTime}`);
+                sendSOS('SCHEDULED', d.toISOString());
               }}
             >
-              <Text style={scheduleStyles.confirmBtnText}>Confirmer le rendez-vous</Text>
+              <Text style={scheduleStyles.confirmBtnText}>✅ Confirmer le rendez-vous</Text>
             </TouchableOpacity>
           </TouchableOpacity>
         </TouchableOpacity>
@@ -752,4 +808,6 @@ const scheduleStyles = StyleSheet.create({
     marginTop: 20,
   },
   confirmBtnText: { color: '#FFF', fontWeight: '900', fontSize: 16 },
+  timeBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#2C2C3E', alignItems: 'center', justifyContent: 'center' },
+  timeBtnText: { color: '#FFF', fontSize: 20, fontWeight: '700', lineHeight: 24 },
 });
