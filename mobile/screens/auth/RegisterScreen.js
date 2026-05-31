@@ -41,10 +41,10 @@ const COLORS = {
 
 const ROLES = [
   { value: 'CLIENT', label: 'Client', emoji: '👤' },
-  { value: 'CHAUFFEUR', label: 'Chauffeur', emoji: '🚕' },
-  { value: 'LIVREUR', label: 'Livreur', emoji: '📦' },
-  { value: 'DEPANNEUR', label: 'Dépanneur', emoji: '🔧' },
-  { value: 'MARCHAND', label: 'Marchand', emoji: '🏪' },
+  { value: 'CHAUFFEUR', label: 'Chauffeur', svgKey: 'EASYTAXY' },
+  { value: 'LIVREUR', label: 'Livreur', svgKey: 'DELIVERY' },
+  { value: 'DEPANNEUR', label: 'Dépanneur', svgKey: 'SOS' },
+  { value: 'MARCHAND', label: 'Marchand', svgKey: 'GROCERY' },
 ];
 
 const CHAUFFEUR_VEHICLE_TYPES = [
