@@ -13,6 +13,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import useAuthStore from '../../store/authStore';
 import usePassStore from '../../store/passStore';
 import useNotificationStore from '../../store/notificationStore';
+import useTaxiStore from '../../store/taxiStore';
+import useSosStore from '../../store/sosStore';
 import ServiceCard from '../../components/ServiceCard';
 import PassStatusCard from '../../components/PassStatusCard';
 import AdBanner from '../../components/AdBanner';
@@ -68,6 +70,8 @@ export default function HomeScreen({ navigation }) {
   const { user } = useAuthStore();
   const { subscription, fetchSubscription } = usePassStore();
   const { unreadCount } = useNotificationStore();
+  const { currentOrder: taxiOrder } = useTaxiStore();
+  const { currentSOSOrder: sosOrder } = useSosStore();
   const [recentActivity, setRecentActivity] = useState([]);
   const [promos, setPromos] = useState(DEFAULT_PROMOS);
   const [heroBanner, setHeroBanner] = useState(null);
@@ -138,6 +142,16 @@ export default function HomeScreen({ navigation }) {
     // CLIENT → reste sur HomeScreen (ne pas rediriger)
   }, [user?.role, user?.kycStatus]);
 
+  const activeOrder = (() => {
+    if (taxiOrder && ['PENDING', 'ACCEPTED', 'IN_PROGRESS'].includes(taxiOrder.status)) {
+      return { type: 'TAXI', order: taxiOrder, screen: 'TaxiTracking', emoji: '🚕', color: '#F5A623', label: 'Course taxi en cours' };
+    }
+    if (sosOrder && ['PENDING', 'ACCEPTED', 'IN_PROGRESS'].includes(sosOrder.status)) {
+      return { type: 'SOS', order: sosOrder, screen: 'SOSTracking', emoji: '🚨', color: '#D32F2F', label: 'Assistance SOS en cours' };
+    }
+    return null;
+  })();
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Bonjour';
@@ -156,6 +170,25 @@ export default function HomeScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
+      {/* Active order sticky banner */}
+      {activeOrder && (
+        <TouchableOpacity
+          style={[styles.activeOrderBanner, { borderColor: activeOrder.color + '66', backgroundColor: activeOrder.color + '18' }]}
+          onPress={() => navigation.navigate(activeOrder.screen, { orderId: activeOrder.order.id })}
+          activeOpacity={0.85}
+        >
+          <View style={styles.activeOrderPulse}>
+            <Text style={styles.activeOrderEmoji}>{activeOrder.emoji}</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.activeOrderTitle, { color: activeOrder.color }]}>{activeOrder.label}</Text>
+            <Text style={styles.activeOrderSub}>
+              Statut : {activeOrder.order.status === 'PENDING' ? 'En attente de chauffeur' : activeOrder.order.status === 'ACCEPTED' ? 'Chauffeur en route' : 'En cours'}
+            </Text>
+          </View>
+          <Text style={[styles.activeOrderArrow, { color: activeOrder.color }]}>›</Text>
+        </TouchableOpacity>
+      )}
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
@@ -402,4 +435,27 @@ const styles = StyleSheet.create({
   activityDate: { color: COLORS.textMuted, fontSize: 11, marginTop: 2 },
   activityStatusBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, borderWidth: 1 },
   activityStatusText: { fontSize: 11, fontWeight: '700' },
+  activeOrderBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderTopWidth: 0,
+    borderLeftWidth: 0,
+    borderRightWidth: 0,
+    gap: 12,
+  },
+  activeOrderPulse: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activeOrderEmoji: { fontSize: 20 },
+  activeOrderTitle: { fontSize: 14, fontWeight: '700' },
+  activeOrderSub: { color: '#8E8E9A', fontSize: 11, marginTop: 2 },
+  activeOrderArrow: { fontSize: 24, fontWeight: '300' },
 });

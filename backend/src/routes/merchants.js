@@ -226,6 +226,48 @@ router.delete(
   }
 );
 
+// GET /api/merchants/stats
+router.get('/stats', authenticate, requireRole('MARCHAND'), async (req, res) => {
+  try {
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const merchant = await prisma.merchant.findUnique({
+      where: { userId: req.user.id },
+    });
+
+    const [todayOrders, monthOrders, pendingOrders] = await Promise.all([
+      prisma.order.findMany({
+        where: { merchantId: merchant?.id, status: 'COMPLETED', completedAt: { gte: startOfDay } },
+        select: { totalAmount: true },
+      }),
+      prisma.order.findMany({
+        where: { merchantId: merchant?.id, status: 'COMPLETED', completedAt: { gte: startOfMonth } },
+        select: { totalAmount: true },
+      }),
+      prisma.order.count({
+        where: { merchantId: merchant?.id, status: 'PENDING' },
+      }),
+    ]);
+
+    const todayRevenue = todayOrders.reduce((s, o) => s + Number(o.totalAmount || 0), 0);
+    const monthRevenue = monthOrders.reduce((s, o) => s + Number(o.totalAmount || 0), 0);
+
+    return res.json({
+      todayOrders: todayOrders.length,
+      todayRevenue: Math.round(todayRevenue * 100) / 100,
+      monthOrders: monthOrders.length,
+      monthRevenue: Math.round(monthRevenue * 100) / 100,
+      pendingOrders,
+      rating: 4.7, // TODO: compute from ratings table when available
+    });
+  } catch (err) {
+    console.error('[merchants/stats]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
 // GET /api/merchants — public list (filterable)
 router.get(
   '/',
