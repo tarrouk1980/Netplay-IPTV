@@ -19,6 +19,9 @@ module.exports = {
     plugins: ['expo-notifications', 'expo-location'],
     extra: {
       mapboxToken: process.env.MAPBOX_TOKEN || '',
+      eas: {
+        projectId: '028c05e2-49a4-41fd-b364-3e5be6bc7ca1',
+      },
     },
   },
 };
