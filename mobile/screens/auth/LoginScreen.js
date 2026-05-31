@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
+  Linking,
   View,
   Text,
   TextInput,
@@ -194,6 +195,29 @@ export default function LoginScreen({ navigation }) {
                 <Text style={styles.registerLink}>S'inscrire</Text>
               </TouchableOpacity>
             </View>
+
+            {/* Footer SNS + copyright */}
+            <View style={styles.footer}>
+              <View style={styles.socialsRow}>
+                {[
+                  { name: 'Facebook', icon: 'f', color: '#1877F2', url: null },
+                  { name: 'Instagram', icon: '📸', color: '#E1306C', url: null },
+                  { name: 'TikTok', icon: '♪', color: '#FFFFFF', url: null },
+                  { name: 'YouTube', icon: '▶', color: '#FF0000', url: null },
+                  { name: 'LinkedIn', icon: 'in', color: '#0A66C2', url: null },
+                ].map((s) => (
+                  <TouchableOpacity
+                    key={s.name}
+                    style={[styles.socialBtn, { borderColor: s.color, opacity: 0.4 }]}
+                    onPress={() => { if (s.url) Linking.openURL(s.url); }}
+                    activeOpacity={0.75}
+                  >
+                    <Text style={[styles.socialIcon, { color: s.color }]}>{s.icon}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <Text style={styles.copyright}>© 2025 EASYWAY. Tous droits réservés.</Text>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -300,4 +324,9 @@ const styles = StyleSheet.create({
   registerContainer: { flexDirection: 'row', justifyContent: 'center', marginTop: 20 },
   registerText: { color: COLORS.textMuted, fontSize: 14 },
   registerLink: { color: COLORS.primary, fontWeight: '600', fontSize: 14 },
+  footer: { alignItems: 'center', paddingTop: 28, paddingBottom: 8, gap: 8 },
+  socialsRow: { flexDirection: 'row', gap: 10 },
+  socialBtn: { width: 36, height: 36, borderRadius: 18, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', backgroundColor: '#1C1C28' },
+  socialIcon: { fontSize: 13, fontWeight: '800' },
+  copyright: { color: '#4A4A5A', fontSize: 11 },
 });

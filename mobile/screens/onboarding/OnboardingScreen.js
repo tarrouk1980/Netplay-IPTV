@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,9 +8,11 @@ import {
   Dimensions,
   StatusBar,
   Linking,
+  Image,
+  ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Svg, { Circle, Rect, Path, G } from 'react-native-svg';
+import api from '../../services/api';
 
 const { width } = Dimensions.get('window');
 
@@ -39,50 +41,42 @@ function EasywayBigLogo({ size = 100 }) {
   );
 }
 
-// ─── Slide icons ─────────────────────────────────────────────────────────────
-function TowTruckIcon({ size = 80 }) {
-  return (
-    <Text style={{ fontSize: size, marginBottom: 32 }}>🚚</Text>
-  );
-}
+// ─── Slide fixe 1 — Logo EASYWAY ─────────────────────────────────────────────
+const SLIDE_LOGO = {
+  key: 'slide_logo',
+  type: 'logo',
+  titleWhite: 'Bienvenue sur ',
+  titleEasy: 'EASY',
+  titleWay: 'WAY',
+  subtitle: 'La super-app tunisienne de mobilité et services.\n100% gratuite pour les utilisateurs.',
+};
 
-function ScooterIcon({ size = 80 }) {
-  return (
-    <Text style={{ fontSize: size, marginBottom: 32 }}>🛵</Text>
-  );
-}
-
-// ─── Slides data ──────────────────────────────────────────────────────────────
-const SLIDES = [
+// ─── Slides pub par défaut (si API indisponible) ──────────────────────────────
+const DEFAULT_AD_SLIDES = [
   {
-    key: 'slide1',
-    type: 'logo',
-    titleWhite: 'Bienvenue sur ',
-    titleEasy: 'EASY',
-    titleWay: 'WAY',
-    subtitle: 'La super-app tunisienne de mobilité et services.\n100% gratuite pour les utilisateurs.',
-  },
-  {
-    key: 'slide2',
-    type: 'services',
+    key: 'ad_default_1',
+    type: 'ad',
+    icon: '🚕',
     titleWhite: 'Taxi · ',
     titleRed: 'SOS',
     titleWhite2: ' · Livraison',
     subtitle: 'Tous vos services en un seul endroit, disponibles 24h/24',
-    icons: ['🚕', '🚚', '🛵'],
+    cta: null,
   },
   {
-    key: 'slide3',
-    type: 'pass',
+    key: 'ad_default_2',
+    type: 'ad',
     icon: '💳',
     titleWhite: 'Modèle ',
     titleRed: 'Zéro Commission',
+    titleWhite2: '',
     subtitle: 'Les prestataires payent seulement 1 TND/jour.\nLes clients utilisent l\'app gratuitement.',
+    cta: null,
     isLast: true,
   },
 ];
 
-// ─── Social Media Links — pages officielles EASYWAY (à configurer) ───────────
+// ─── Réseaux sociaux ──────────────────────────────────────────────────────────
 const SOCIALS = [
   { name: 'Facebook', icon: 'f', color: '#1877F2', url: null },
   { name: 'Instagram', icon: '📸', color: '#E1306C', url: null },
@@ -95,10 +89,7 @@ function SocialButton({ item }) {
   return (
     <TouchableOpacity
       style={[styles.socialBtn, { borderColor: item.color, opacity: 0.4 }]}
-      onPress={() => {
-        if (item.url) Linking.openURL(item.url);
-        // Pages EASYWAY en cours de création — bientôt disponibles
-      }}
+      onPress={() => { if (item.url) Linking.openURL(item.url); }}
       activeOpacity={0.75}
     >
       <Text style={[styles.socialIcon, { color: item.color }]}>{item.icon}</Text>
@@ -106,7 +97,6 @@ function SocialButton({ item }) {
   );
 }
 
-// ─── Header Logo ─────────────────────────────────────────────────────────────
 function LogoText() {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -120,6 +110,41 @@ function LogoText() {
 export default function OnboardingScreen({ navigation }) {
   const flatListRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [slides, setSlides] = useState([SLIDE_LOGO, ...DEFAULT_AD_SLIDES]);
+  const [adsLoading, setAdsLoading] = useState(true);
+
+  // Charger les pubs depuis l'API
+  useEffect(() => {
+    const loadAds = async () => {
+      try {
+        const res = await api.get('/api/ads?placement=onboarding&limit=2');
+        const ads = res.data?.ads || res.data || [];
+        if (ads.length > 0) {
+          const adSlides = ads.map((ad, i) => ({
+            key: `ad_${ad.id || i}`,
+            type: 'ad',
+            imageUrl: ad.imageUrl || null,
+            icon: ad.icon || '📢',
+            titleWhite: ad.title || '',
+            titleRed: ad.highlight || '',
+            titleWhite2: '',
+            subtitle: ad.description || '',
+            cta: ad.ctaUrl || null,
+            ctaLabel: ad.ctaLabel || 'En savoir plus',
+            isLast: i === ads.length - 1,
+          }));
+          setSlides([SLIDE_LOGO, ...adSlides]);
+        } else {
+          setSlides([SLIDE_LOGO, ...DEFAULT_AD_SLIDES]);
+        }
+      } catch {
+        setSlides([SLIDE_LOGO, ...DEFAULT_AD_SLIDES]);
+      } finally {
+        setAdsLoading(false);
+      }
+    };
+    loadAds();
+  }, []);
 
   const handleSkip = async () => {
     await AsyncStorage.setItem('onboardingDone', 'true');
@@ -132,15 +157,13 @@ export default function OnboardingScreen({ navigation }) {
   };
 
   const handleNext = () => {
-    if (currentIndex < SLIDES.length - 1) {
+    if (currentIndex < slides.length - 1) {
       flatListRef.current?.scrollToIndex({ index: currentIndex + 1 });
     }
   };
 
   const onViewableItemsChanged = useRef(({ viewableItems }) => {
-    if (viewableItems.length > 0) {
-      setCurrentIndex(viewableItems[0].index);
-    }
+    if (viewableItems.length > 0) setCurrentIndex(viewableItems[0].index);
   }).current;
 
   const renderSlide = ({ item }) => (
@@ -157,37 +180,51 @@ export default function OnboardingScreen({ navigation }) {
         </>
       )}
 
-      {item.type === 'services' && (
+      {item.type === 'ad' && (
         <>
-          <View style={styles.iconsRow}>
-            {item.icons.map((ic, i) => (
-              <Text key={i} style={styles.serviceIcon}>{ic}</Text>
-            ))}
-          </View>
+          {item.imageUrl ? (
+            <Image
+              source={{ uri: item.imageUrl }}
+              style={styles.adImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <Text style={styles.adIcon}>{item.icon}</Text>
+          )}
           <View style={styles.titleRow}>
-            <Text style={styles.slideTitle}>{item.titleWhite}</Text>
-            <Text style={[styles.slideTitle, styles.titleWay]}>{item.titleRed}</Text>
-            <Text style={styles.slideTitle}>{item.titleWhite2}</Text>
+            {item.titleWhite ? <Text style={styles.slideTitle}>{item.titleWhite}</Text> : null}
+            {item.titleRed ? <Text style={[styles.slideTitle, styles.titleWay]}>{item.titleRed}</Text> : null}
+            {item.titleWhite2 ? <Text style={styles.slideTitle}>{item.titleWhite2}</Text> : null}
           </View>
           <Text style={styles.slideSubtitle}>{item.subtitle}</Text>
-        </>
-      )}
-
-      {item.type === 'pass' && (
-        <>
-          <Text style={styles.slideIconLarge}>{item.icon}</Text>
-          <View style={styles.titleRow}>
-            <Text style={styles.slideTitle}>{item.titleWhite}</Text>
-            <Text style={[styles.slideTitle, styles.titleWay]}>{item.titleRed}</Text>
-          </View>
-          <Text style={styles.slideSubtitle}>{item.subtitle}</Text>
-          <TouchableOpacity style={styles.startButton} onPress={handleStart} activeOpacity={0.85}>
-            <Text style={styles.startButtonText}>Commencer gratuitement</Text>
-          </TouchableOpacity>
+          {item.cta && (
+            <TouchableOpacity
+              style={styles.ctaBtn}
+              onPress={() => Linking.openURL(item.cta)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.ctaBtnText}>{item.ctaLabel || 'En savoir plus'}</Text>
+            </TouchableOpacity>
+          )}
+          {item.isLast && (
+            <TouchableOpacity style={styles.startButton} onPress={handleStart} activeOpacity={0.85}>
+              <Text style={styles.startButtonText}>Commencer gratuitement</Text>
+            </TouchableOpacity>
+          )}
         </>
       )}
     </View>
   );
+
+  if (adsLoading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <StatusBar barStyle="light-content" backgroundColor="#0A0A0F" />
+        <EasywayBigLogo size={120} />
+        <ActivityIndicator color="#D32F2F" style={{ marginTop: 24 }} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -196,7 +233,7 @@ export default function OnboardingScreen({ navigation }) {
       {/* Top bar */}
       <View style={styles.topBar}>
         <LogoText />
-        {currentIndex < SLIDES.length - 1 && (
+        {currentIndex < slides.length - 1 && (
           <TouchableOpacity onPress={handleSkip} activeOpacity={0.75}>
             <Text style={styles.skipText}>Passer</Text>
           </TouchableOpacity>
@@ -205,7 +242,7 @@ export default function OnboardingScreen({ navigation }) {
 
       <FlatList
         ref={flatListRef}
-        data={SLIDES}
+        data={slides}
         keyExtractor={(item) => item.key}
         horizontal
         pagingEnabled
@@ -215,22 +252,21 @@ export default function OnboardingScreen({ navigation }) {
         viewabilityConfig={{ viewAreaCoveragePercentThreshold: 50 }}
       />
 
-      {/* Pagination dots + Next button */}
+      {/* Pagination dots + Next */}
       <View style={styles.bottomBar}>
         <View style={styles.pagination}>
-          {SLIDES.map((_, i) => (
+          {slides.map((_, i) => (
             <View key={i} style={[styles.dot, i === currentIndex && styles.dotActive]} />
           ))}
         </View>
-
-        {currentIndex < SLIDES.length - 1 && (
+        {currentIndex < slides.length - 1 && (
           <TouchableOpacity style={styles.nextBtn} onPress={handleNext} activeOpacity={0.85}>
             <Text style={styles.nextBtnText}>Suivant →</Text>
           </TouchableOpacity>
         )}
       </View>
 
-      {/* Social media + copyright */}
+      {/* Footer SNS + copyright */}
       <View style={styles.footer}>
         <View style={styles.socialsRow}>
           {SOCIALS.map((s) => (
@@ -264,13 +300,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 36,
     paddingBottom: 40,
   },
-  iconsRow: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 32,
+  adImage: {
+    width: width - 48,
+    height: 180,
+    borderRadius: 16,
+    marginBottom: 28,
   },
-  serviceIcon: { fontSize: 52 },
-  slideIconLarge: { fontSize: 80, marginBottom: 32 },
+  adIcon: { fontSize: 80, marginBottom: 32 },
   titleRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -291,8 +327,18 @@ const styles = StyleSheet.create({
     fontSize: 15,
     textAlign: 'center',
     lineHeight: 24,
-    marginBottom: 40,
+    marginBottom: 24,
   },
+  ctaBtn: {
+    backgroundColor: '#1C1C28',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderWidth: 1,
+    borderColor: '#D32F2F',
+    marginBottom: 12,
+  },
+  ctaBtnText: { color: '#D32F2F', fontWeight: '700', fontSize: 14 },
   startButton: {
     backgroundColor: '#D32F2F',
     borderRadius: 14,
@@ -301,11 +347,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   startButtonText: { color: '#FFFFFF', fontSize: 17, fontWeight: '800', letterSpacing: 0.5 },
-  bottomBar: {
-    alignItems: 'center',
-    paddingBottom: 12,
-    gap: 12,
-  },
+  bottomBar: { alignItems: 'center', paddingBottom: 12, gap: 12 },
   pagination: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#2C2C3E' },
   dotActive: { backgroundColor: '#D32F2F', width: 24 },
@@ -318,17 +360,8 @@ const styles = StyleSheet.create({
     borderColor: '#D32F2F',
   },
   nextBtnText: { color: '#D32F2F', fontWeight: '700', fontSize: 14 },
-  footer: {
-    alignItems: 'center',
-    paddingBottom: 24,
-    paddingHorizontal: 20,
-    gap: 8,
-  },
-  socialsRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 4,
-  },
+  footer: { alignItems: 'center', paddingBottom: 24, paddingHorizontal: 20, gap: 8 },
+  socialsRow: { flexDirection: 'row', gap: 10, marginBottom: 4 },
   socialBtn: {
     width: 36,
     height: 36,
