@@ -379,6 +379,15 @@ export default function DriverDashboardScreen({ navigation }) {
           </View>
         </View>
 
+        {/* Earnings link */}
+        <TouchableOpacity
+          style={styles.earningsLinkBtn}
+          onPress={() => navigation.navigate('ProviderEarnings')}
+          activeOpacity={0.75}
+        >
+          <Text style={styles.earningsLinkText}>📊 Voir l'analyse complète de mes gains →</Text>
+        </TouchableOpacity>
+
         <View style={{ height: 32 }} />
       </ScrollView>
     </SafeAreaView>
@@ -486,4 +495,15 @@ const styles = StyleSheet.create({
   earningsStat: { alignItems: 'center' },
   earningsValue: { fontSize: 22, fontWeight: '800', color: COLORS.text },
   earningsLabel: { fontSize: 12, color: COLORS.textMuted, marginTop: 4 },
+  earningsLinkBtn: {
+    marginHorizontal: 20,
+    marginTop: 12,
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  earningsLinkText: { color: COLORS.header, fontSize: 13, fontWeight: '600' },
 });

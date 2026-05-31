@@ -88,6 +88,7 @@ import BackHomeRideScreen from './screens/taxi/BackHomeRideScreen';
 import PaymentScreen from './screens/payment/PaymentScreen';
 import WalletScreen from './screens/wallet/WalletScreen';
 import ProviderDashboardScreen from './screens/provider/ProviderDashboardScreen';
+import ProviderEarningsScreen from './screens/provider/ProviderEarningsScreen';
 
 // Legal
 import CGUScreen from './screens/legal/CGUScreen';
@@ -193,6 +194,7 @@ function MainStack() {
       <Stack.Screen name="DriverDashboard" component={DriverDashboardScreen} options={{ title: 'Tableau de bord', headerShown: false }} />
       <Stack.Screen name="DriverRequest" component={DriverRequestScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ProviderDashboard" component={ProviderDashboardScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ProviderEarnings" component={ProviderEarningsScreen} options={{ headerShown: false }} />
 
       {/* SOS */}
       <Stack.Screen name="SOSHome" component={SOSHomeScreen} options={{ title: 'SOS Remorquage', headerShown: false }} />

@@ -29,6 +29,7 @@ const loyaltyRoutes = require('./routes/loyalty');
 const emergencyRoutes = require('./routes/emergency');
 const businessRoutes = require('./routes/business');
 const promoRoutes = require('./routes/promo');
+const providerRoutes = require('./routes/provider');
 
 const app = express();
 
@@ -71,6 +72,7 @@ app.use('/api/loyalty', loyaltyRoutes);
 app.use('/api/emergency', emergencyRoutes);
 app.use('/api/business', businessRoutes);
 app.use('/api/promo', promoRoutes);
+app.use('/api/provider', providerRoutes);
 
 // 404 handler
 app.use((req, res) => {
