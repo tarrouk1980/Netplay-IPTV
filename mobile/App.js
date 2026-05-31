@@ -82,6 +82,10 @@ import PaymentScreen from './screens/payment/PaymentScreen';
 // Legal
 import CGUScreen from './screens/legal/CGUScreen';
 
+// Loyalty & Emergency
+import EasyPointsScreen from './screens/loyalty/EasyPointsScreen';
+import EmergencyScreen from './screens/emergency/EmergencyScreen';
+
 const Stack = createNativeStackNavigator();
 
 // Configure notification behavior
@@ -188,6 +192,10 @@ function MainStack() {
 
       {/* Legal */}
       <Stack.Screen name="CGU" component={CGUScreen} options={{ headerShown: false }} />
+
+      {/* Loyalty & Emergency */}
+      <Stack.Screen name="EasyPoints" component={EasyPointsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Emergency" component={EmergencyScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }

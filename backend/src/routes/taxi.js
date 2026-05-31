@@ -633,4 +633,18 @@ router.post(
   }
 );
 
+// POST /api/taxi/split-fare
+router.post('/split-fare', authenticate, async (req, res) => {
+  const { orderId, totalAmount, persons } = req.body;
+  const shareToken = Math.random().toString(36).slice(2, 10).toUpperCase();
+  const shareUrl = `https://easyway.tn/split/${shareToken}`;
+  res.json({
+    shareToken,
+    shareUrl,
+    totalAmount,
+    persons,
+    perPerson: (parseFloat(totalAmount) / parseInt(persons)).toFixed(3),
+  });
+});
+
 module.exports = router;

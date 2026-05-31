@@ -25,6 +25,8 @@ const chatRoutes = require('./routes/chat');
 const walletRoutes = require('./routes/wallet');
 const reportsRoutes = require('./routes/reports');
 const paymentRoutes = require('./routes/payment');
+const loyaltyRoutes = require('./routes/loyalty');
+const emergencyRoutes = require('./routes/emergency');
 
 const app = express();
 
@@ -63,6 +65,8 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/loyalty', loyaltyRoutes);
+app.use('/api/emergency', emergencyRoutes);
 
 // 404 handler
 app.use((req, res) => {

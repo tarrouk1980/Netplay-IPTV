@@ -167,6 +167,9 @@ export default function HomeScreen({ navigation }) {
           <EasywayLogo size={40} showTagline={false} />
 
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <TouchableOpacity onPress={() => navigation.navigate('Emergency')} style={{ padding: 4 }}>
+              <Text style={{ fontSize: 22 }}>🆘</Text>
+            </TouchableOpacity>
             <NotificationBadge
               unreadCount={unreadCount}
               onPress={() => navigation.navigate('Notifications')}

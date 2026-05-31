@@ -18,6 +18,7 @@ import * as Location from 'expo-location';
 import MapView from '../../components/MapView';
 import RatingModal from '../../components/RatingModal';
 import ChatModal from '../../components/ChatModal';
+import SplitFareModal from '../../components/SplitFareModal';
 
 // TODO: Replace with Mapbox SDK — mapbox.com/pricing — free tier: 25,000 loads/month
 // TODO: Heatmap layer — uses aggregated Redis demand data — no extra cost with Redis
@@ -74,6 +75,7 @@ export default function TaxiTrackingScreen({ route, navigation }) {
   const [lastLocationUpdate, setLastLocationUpdate] = useState(null);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
+  const [showSplitModal, setShowSplitModal] = useState(false);
   const liveDotAnim = useRef(new Animated.Value(1)).current;
 
   // Récupérer la position utilisateur au montage
@@ -334,6 +336,13 @@ export default function TaxiTrackingScreen({ route, navigation }) {
               <Text style={styles.rateButtonText}>⭐ Noter la course</Text>
             </TouchableOpacity>
             <TouchableOpacity
+              style={[styles.rateButton, { borderColor: '#FFD700', borderColor: '#FFD700' }]}
+              onPress={() => setShowSplitModal(true)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.rateButtonText}>💸 Partager la course</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               style={[styles.rateButton, { borderColor: COLORS.blue }]}
               onPress={() => navigation.navigate('Home')}
               activeOpacity={0.85}
@@ -378,6 +387,14 @@ export default function TaxiTrackingScreen({ route, navigation }) {
         visible={showChatModal}
         orderId={orderId}
         onClose={() => setShowChatModal(false)}
+      />
+
+      {/* Split Fare Modal */}
+      <SplitFareModal
+        visible={showSplitModal}
+        onClose={() => setShowSplitModal(false)}
+        orderId={orderId}
+        totalAmount={localOrder?.fare || localOrder?.price || 0}
       />
     </SafeAreaView>
   );
