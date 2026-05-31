@@ -1,12 +1,18 @@
 import React, { useState } from 'react';
 import { View, Image, Text, StyleSheet, Dimensions } from 'react-native';
+import Constants from 'expo-constants';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
+const MAPBOX_TOKEN = Constants.expoConfig?.extra?.mapboxToken || '';
 
-// Free OpenStreetMap static tile (no API key needed)
+function mapboxStaticUrl(lat, lng, zoom, w, h, token) {
+  const z = zoom || 15;
+  const W = Math.round(w);
+  const H = Math.round(h);
+  return `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/pin-s+F5A623(${lng},${lat})/${lng},${lat},${z}/${W}x${H}@2x?access_token=${token}`;
+}
+
 function osmStaticUrl(lat, lng, zoom, w, h) {
-  // Use tile.openstreetmap.org to build a static image via a proxy-free trick:
-  // We use a free static map service that wraps OSM tiles
   const z = zoom || 15;
   return `https://staticmap.openstreetmap.de/staticmap.php?center=${lat},${lng}&zoom=${z}&size=${Math.round(w)}x${Math.round(h)}&markers=${lat},${lng},red-pushpin`;
 }
@@ -24,7 +30,6 @@ export default function StaticMap({ lat, lng, width = SCREEN_WIDTH - 32, height 
   }
 
   if (imgError) {
-    // Fallback élégant si le service OSM est indisponible
     return (
       <View style={[styles.placeholder, { width, height }, style]}>
         <View style={styles.pinContainer}>
@@ -39,10 +44,14 @@ export default function StaticMap({ lat, lng, width = SCREEN_WIDTH - 32, height 
     );
   }
 
+  const uri = MAPBOX_TOKEN
+    ? mapboxStaticUrl(lat, lng, zoom, width, height, MAPBOX_TOKEN)
+    : osmStaticUrl(lat, lng, zoom, width, height);
+
   return (
     <View style={[{ width, height, borderRadius: 14, overflow: 'hidden' }, style]}>
       <Image
-        source={{ uri: osmStaticUrl(lat, lng, zoom, width, height) }}
+        source={{ uri }}
         style={{ width, height }}
         resizeMode="cover"
         onError={() => setImgError(true)}
