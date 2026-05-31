@@ -93,7 +93,7 @@ export default function ProviderProfileScreen({ route, navigation }) {
           <View style={styles.heroCard}>
             <View style={styles.avatarCircle}>
               <Text style={styles.avatarEmoji}>
-                {provider.role === 'CHAUFFEUR' ? '🚕' : provider.role === 'LIVREUR' ? '🛵' : provider.role === 'DEPANNEUR' ? '🔧' : '🏪'}
+                {provider.role === 'CHAUFFEUR' ? '🚕' : provider.role === 'LIVREUR' ? '🛵' : provider.role === 'DEPANNEUR' ? '🚛' : '🏪'}
               </Text>
             </View>
             <Text style={styles.providerName}>{provider.name}</Text>

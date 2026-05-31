@@ -254,7 +254,7 @@ export default function DepanneurDashboardScreen({ navigation }) {
                 <Text style={[styles.statusBadgeText, {
                   color: currentSOSOrder.status === 'IN_PROGRESS' ? COLORS.sos : COLORS.green,
                 }]}>
-                  {currentSOSOrder.status === 'IN_PROGRESS' ? '🔧 En cours' : '✅ Acceptée'}
+                  {currentSOSOrder.status === 'IN_PROGRESS' ? '🚛 En cours' : '✅ Acceptée'}
                 </Text>
               </View>
 
@@ -300,7 +300,7 @@ export default function DepanneurDashboardScreen({ navigation }) {
                 <View key={req.orderId} style={styles.requestCard}>
                   <View style={styles.requestHeader}>
                     <Text style={styles.requestType}>{sosTypeLabel(req.sosType)}</Text>
-                    <Text style={styles.requestMode}>{req.mode === 'INSURANCE' ? '🔒 Assurance' : '🔧 Indépendant'}</Text>
+                    <Text style={styles.requestMode}>{req.mode === 'INSURANCE' ? '🔒 Assurance' : '🚛 Indépendant'}</Text>
                   </View>
 
                   {req.vehicleInfo && (

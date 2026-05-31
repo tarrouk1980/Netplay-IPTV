@@ -22,7 +22,7 @@ const COLORS = {
 const ROLES = [
   { key: 'CHAUFFEUR', icon: '🚕', label: 'Chauffeur Taxi', desc: 'Effectuez des courses dans votre région' },
   { key: 'LIVREUR', icon: '🛵', label: 'Livreur', desc: 'Livrez des commandes aux clients' },
-  { key: 'DEPANNEUR', icon: '🔧', label: 'Dépanneur SOS', desc: 'Assistance routière et remorquage' },
+  { key: 'DEPANNEUR', icon: '🚛', label: 'Dépanneur SOS', desc: 'Assistance routière et remorquage' },
 ];
 
 const STEPS = ['Rôle', 'Informations', 'Véhicule', 'Documents', 'Validation'];
