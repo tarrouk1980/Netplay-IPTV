@@ -124,10 +124,9 @@ const CHAUFFEUR_VEHICLE_TYPES = [
 ];
 
 const SEAT_OPTIONS = ['2', '3', '4', '5', '6', '7', '8'];
-const GENDER_PREF_OPTIONS = [
-  { value: 'ALL', label: 'Tous — hommes & femmes', emoji: '👥' },
-  { value: 'LADIES_ONLY', label: 'Femmes uniquement (EasyLady)', emoji: '👩' },
-  { value: 'MEN_ONLY', label: 'Hommes uniquement', emoji: '👨' },
+const DRIVER_GENDER_OPTIONS = [
+  { value: 'MALE', label: 'Homme', emoji: '👨' },
+  { value: 'FEMALE', label: 'Femme', emoji: '👩' },
 ];
 
 const BRANDS_MODELS = {
@@ -392,7 +391,7 @@ export default function RegisterScreen({ navigation }) {
   const [chauffeurZones, setChauffeurZones] = useState([]);
   const [chauffeurFacePhoto, setChauffeurFacePhoto] = useState(null);
   const [vSeats, setVSeats] = useState('4');
-  const [genderPref, setGenderPref] = useState('ALL');
+  const [driverGender, setDriverGender] = useState('');
   const [isEasyLady, setIsEasyLady] = useState(false);
   const [isPMR, setIsPMR] = useState(false);
   const [pmrPhoto, setPmrPhoto] = useState(null);
@@ -921,28 +920,49 @@ export default function RegisterScreen({ navigation }) {
             disabled={isLoading}
           />
 
-          {/* Genre de clientèle acceptée */}
+          {/* Genre du chauffeur */}
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Clientèle acceptée <Text style={{ color: COLORS.primary }}>*</Text></Text>
-            {GENDER_PREF_OPTIONS.map((opt) => (
+            <Text style={styles.inputLabel}>Votre genre <Text style={{ color: COLORS.primary }}>*</Text></Text>
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              {DRIVER_GENDER_OPTIONS.map((opt) => (
+                <TouchableOpacity
+                  key={opt.value}
+                  style={[styles.toggleBtn, { flex: 1 }, driverGender === opt.value && styles.toggleBtnActive]}
+                  onPress={() => {
+                    setDriverGender(opt.value);
+                    setIsEasyLady(false);
+                  }}
+                  disabled={isLoading}
+                >
+                  <Text style={{ fontSize: 24 }}>{opt.emoji}</Text>
+                  <Text style={[styles.toggleBtnText, driverGender === opt.value && styles.toggleBtnTextActive]}>
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Si femme → option EasyLady */}
+            {driverGender === 'FEMALE' && (
               <TouchableOpacity
-                key={opt.value}
-                style={[styles.radioRow, genderPref === opt.value && styles.radioRowSelected]}
-                onPress={() => {
-                  setGenderPref(opt.value);
-                  setIsEasyLady(opt.value === 'LADIES_ONLY');
-                }}
+                style={[styles.radioRow, { marginTop: 12 }, isEasyLady && styles.radioRowSelected]}
+                onPress={() => setIsEasyLady((v) => !v)}
                 disabled={isLoading}
               >
-                <View style={[styles.radioCircle, genderPref === opt.value && styles.radioCircleSelected]}>
-                  {genderPref === opt.value && <View style={styles.radioDot} />}
+                <View style={[styles.radioCircle, isEasyLady && styles.radioCircleSelected]}>
+                  {isEasyLady && <View style={styles.radioDot} />}
                 </View>
-                <Text style={styles.radioLabel}>{opt.emoji}  {opt.label}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.radioLabel}>👩 Je veux rejoindre EasyLady</Text>
+                  <Text style={{ color: COLORS.textMuted, fontSize: 11, marginTop: 2 }}>
+                    Réservé aux conductrices — vous n'accepterez que des clientes
+                  </Text>
+                </View>
               </TouchableOpacity>
-            ))}
-            {genderPref === 'LADIES_ONLY' && (
+            )}
+            {isEasyLady && (
               <View style={styles.easyLadyBadge}>
-                <Text style={styles.easyLadyText}>✅ Votre profil sera estampillé EasyLady — vous n'apparaîtrez que pour les clientes.</Text>
+                <Text style={styles.easyLadyText}>✅ Profil EasyLady activé — votre véhicule apparaîtra uniquement pour les clientes.</Text>
               </View>
             )}
           </View>
