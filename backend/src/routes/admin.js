@@ -1068,5 +1068,39 @@ router.get('/fraud/alerts', authenticate, async (req, res) => {
   }
 });
 
+// ─────────────────────────────────────────────
+// GET /api/admin/providers — Liste prestataires filtrée par statut
+// ─────────────────────────────────────────────
+router.get('/providers', async (req, res) => {
+  try {
+    const { status, limit = 20 } = req.query;
+    const where = { role: { not: 'CLIENT' } };
+    if (status === 'PENDING_KYC') where.kycStatus = 'PENDING';
+    else if (status === 'ACTIVE') where.subscriptionActive = true;
+    else if (status === 'SUSPENDED') where.suspended = true;
+
+    const providers = await prisma.user.findMany({
+      where,
+      take: Number(limit),
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        kycStatus: true,
+        subscriptionActive: true,
+        createdAt: true,
+      },
+    });
+
+    return res.json({ providers });
+  } catch (err) {
+    console.error('[admin/providers]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
 module.exports = router;
 
