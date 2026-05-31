@@ -96,7 +96,7 @@ const chips = StyleSheet.create({
 });
 
 // ── Order Detail Modal ───────────────────────────────────────────────────────
-function OrderDetailModal({ visible, order, onClose, onCancel }) {
+function OrderDetailModal({ visible, order, onClose, onCancel, onViewFull }) {
   const [cancelReason, setCancelReason] = useState('');
   const [showCancelInput, setShowCancelInput] = useState(false);
 
@@ -108,6 +108,9 @@ function OrderDetailModal({ visible, order, onClose, onCancel }) {
       <View style={modal.root}>
         <View style={modal.header}>
           <Text style={modal.title}>Commande #{order.id?.slice(-8)}</Text>
+          <TouchableOpacity onPress={() => { onClose(); onViewFull && onViewFull(order.id); }} style={modal.detailBtn}>
+            <Text style={modal.detailBtnTxt}>Détail →</Text>
+          </TouchableOpacity>
           <TouchableOpacity onPress={onClose} style={modal.closeBtn}>
             <Text style={modal.closeTxt}>✕</Text>
           </TouchableOpacity>
@@ -238,6 +241,8 @@ const modal = StyleSheet.create({
   title: { color: COLORS.white, fontSize: 18, fontWeight: '700' },
   closeBtn: { padding: 6 },
   closeTxt: { color: COLORS.muted, fontSize: 20 },
+  detailBtn: { paddingHorizontal: 10, paddingVertical: 6, backgroundColor: COLORS.accent + '22', borderRadius: 8 },
+  detailBtnTxt: { color: COLORS.accent, fontSize: 13, fontWeight: '700' },
   scroll: { flex: 1, paddingHorizontal: 16, paddingTop: 16 },
   row: { flexDirection: 'row', gap: 10, marginBottom: 16 },
   badge: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 10, borderWidth: 1 },
@@ -427,6 +432,7 @@ export default function AdminOrdersScreen({ navigation }) {
         order={selectedOrder}
         onClose={() => setDetailVisible(false)}
         onCancel={handleForceCancel}
+        onViewFull={(id) => navigation.navigate('AdminOrderDetail', { orderId: id })}
       />
     </View>
   );

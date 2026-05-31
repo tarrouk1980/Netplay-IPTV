@@ -408,6 +408,13 @@ export default function DriverDashboardScreen({ navigation }) {
         >
           <Text style={styles.earningsLinkText}>📄 Relevé de revenus mensuel →</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.earningsLinkBtn, { marginTop: 8 }]}
+          onPress={() => navigation.navigate('TaxiScheduleRide')}
+          activeOpacity={0.75}
+        >
+          <Text style={styles.earningsLinkText}>🗓️ Programmer une course →</Text>
+        </TouchableOpacity>
 
         <View style={{ height: 32 }} />
       </ScrollView>

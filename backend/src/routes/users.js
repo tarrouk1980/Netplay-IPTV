@@ -326,4 +326,51 @@ router.delete('/addresses/:id', authenticate, (req, res) => {
   res.json({ success: true });
 });
 
+// GET /api/users/nearby-providers?lat=&lng=
+router.get('/nearby-providers', authenticate, async (req, res) => {
+  try {
+    const lat = parseFloat(req.query.lat) || 36.8065;
+    const lng = parseFloat(req.query.lng) || 10.1815;
+    const radius = parseFloat(req.query.radius) || 10; // km
+
+    const providers = await prisma.user.findMany({
+      where: {
+        role: { in: ['CHAUFFEUR', 'LIVREUR', 'DEPANNEUR'] },
+        isOnline: true,
+        lastLat: { not: null },
+        lastLng: { not: null },
+      },
+      select: {
+        id: true, name: true, role: true, rating: true,
+        lastLat: true, lastLng: true, vehicleInfo: true,
+      },
+    });
+
+    const toRad = d => (d * Math.PI) / 180;
+    const haversine = (la1, lo1, la2, lo2) => {
+      const R = 6371;
+      const dLat = toRad(la2 - la1);
+      const dLon = toRad(lo2 - lo1);
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(la1)) * Math.cos(toRad(la2)) * Math.sin(dLon / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    };
+
+    const nearby = providers
+      .map(p => ({ ...p, distance: Math.round(haversine(lat, lng, p.lastLat, p.lastLng) * 10) / 10 }))
+      .filter(p => p.distance <= radius);
+
+    const roleMap = { CHAUFFEUR: 'TAXI', LIVREUR: 'DELIVERY', DEPANNEUR: 'SOS' };
+    const result = { TAXI: [], SOS: [], DELIVERY: [] };
+    nearby.forEach(p => {
+      const key = roleMap[p.role];
+      if (key) result[key].push({ id: p.id, name: p.name, lat: p.lastLat, lng: p.lastLng, rating: p.rating || 4.5, distance: p.distance });
+    });
+
+    res.json({ providers: result });
+  } catch (err) {
+    console.error('[NearbyProviders]', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

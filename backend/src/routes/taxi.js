@@ -683,4 +683,37 @@ router.post('/split-fare', authenticate, async (req, res) => {
   });
 });
 
+// POST /api/taxi/schedule — schedule a future taxi ride
+router.post('/schedule', authenticate, async (req, res) => {
+  try {
+    const { scheduledAt, originAddress, originLat, originLng, destinationAddress, destinationLat, destinationLng, note } = req.body;
+    if (!scheduledAt || !originAddress || !destinationAddress) {
+      return res.status(400).json({ error: 'scheduledAt, originAddress and destinationAddress are required' });
+    }
+    const scheduledDate = new Date(scheduledAt);
+    if (scheduledDate <= new Date(Date.now() + 29 * 60 * 1000)) {
+      return res.status(400).json({ error: 'Scheduled time must be at least 30 minutes in the future' });
+    }
+    const order = await prisma.order.create({
+      data: {
+        userId: req.user.id,
+        serviceType: 'TAXI',
+        status: 'SCHEDULED',
+        originAddress,
+        originLat: originLat ? parseFloat(originLat) : null,
+        originLng: originLng ? parseFloat(originLng) : null,
+        destinationAddress,
+        destinationLat: destinationLat ? parseFloat(destinationLat) : null,
+        destinationLng: destinationLng ? parseFloat(destinationLng) : null,
+        note: note || null,
+        scheduledAt: scheduledDate,
+      },
+    });
+    res.status(201).json({ order });
+  } catch (err) {
+    console.error('[TaxiSchedule]', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
