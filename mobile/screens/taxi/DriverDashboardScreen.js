@@ -394,6 +394,13 @@ export default function DriverDashboardScreen({ navigation }) {
         >
           <Text style={styles.earningsLinkText}>✅ Checklist véhicule du jour →</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.earningsLinkBtn, { marginTop: 8 }]}
+          onPress={() => navigation.navigate('ProviderSchedule')}
+          activeOpacity={0.75}
+        >
+          <Text style={styles.earningsLinkText}>🗓️ Mes disponibilités →</Text>
+        </TouchableOpacity>
 
         <View style={{ height: 32 }} />
       </ScrollView>

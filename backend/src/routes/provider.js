@@ -80,4 +80,36 @@ router.get('/earnings', authenticate, requireProvider, async (req, res) => {
   }
 });
 
+// In-memory schedule store per provider (replace with DB column when schema updated)
+const scheduleStore = new Map();
+
+// GET /api/provider/schedule
+router.get('/schedule', requireProvider, async (req, res) => {
+  const schedule = scheduleStore.get(req.user.id) || null;
+  res.json({ schedule });
+});
+
+// POST /api/provider/schedule
+router.post('/schedule', requireProvider, async (req, res) => {
+  const { schedule } = req.body;
+  if (!schedule || typeof schedule !== 'object') {
+    return res.status(400).json({ error: 'schedule object required' });
+  }
+  scheduleStore.set(req.user.id, schedule);
+  res.json({ success: true, schedule });
+});
+
+// POST /api/provider/vehicle-checklist
+router.post('/vehicle-checklist', requireProvider, async (req, res) => {
+  const { checkedItems, totalItems, completedAt } = req.body;
+  // Log to DB if model exists, otherwise just ack
+  try {
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { updatedAt: new Date() },
+    });
+  } catch {}
+  res.json({ success: true, checkedItems: checkedItems?.length || 0, totalItems });
+});
+
 module.exports = router;

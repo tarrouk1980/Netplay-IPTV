@@ -315,6 +315,11 @@ export default function AdminDashboardScreen({ navigation }) {
                 label="Codes promo"
                 onPress={() => navigation.navigate('AdminPromoCodes')}
               />
+              <NavButton
+                emoji="🎫"
+                label="Support"
+                onPress={() => navigation.navigate('AdminSupport')}
+              />
             </View>
 
             {/* Revenue total */}

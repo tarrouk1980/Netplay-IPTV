@@ -71,6 +71,7 @@ import AdminDisputesScreen from './screens/admin/AdminDisputesScreen';
 import AdminWalletScreen from './screens/admin/AdminWalletScreen';
 import AdminDriverMapScreen from './screens/admin/AdminDriverMapScreen';
 import AdminPromoCodesScreen from './screens/admin/AdminPromoCodesScreen';
+import AdminSupportScreen from './screens/admin/AdminSupportScreen';
 
 // Settings
 import SettingsScreen from './screens/profile/SettingsScreen';
@@ -96,6 +97,8 @@ import WalletRechargeScreen from './screens/wallet/WalletRechargeScreen';
 import ProviderDashboardScreen from './screens/provider/ProviderDashboardScreen';
 import VehicleChecklistScreen from './screens/provider/VehicleChecklistScreen';
 import ProviderEarningsScreen from './screens/provider/ProviderEarningsScreen';
+import ProviderScheduleScreen from './screens/provider/ProviderScheduleScreen';
+import OrderCancelScreen from './screens/shared/OrderCancelScreen';
 
 // Legal
 import CGUScreen from './screens/legal/CGUScreen';
@@ -238,6 +241,7 @@ function MainStack() {
       <Stack.Screen name="AdminWallet" component={AdminWalletScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminDriverMap" component={AdminDriverMapScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminPromoCodes" component={AdminPromoCodesScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminSupport" component={AdminSupportScreen} options={{ headerShown: false }} />
 
       {/* KYC Pending */}
       <Stack.Screen name="KYCPending" component={KYCPendingScreen} options={{ headerShown: false }} />
@@ -247,6 +251,8 @@ function MainStack() {
       <Stack.Screen name="PromoCode" component={PromoCodeScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Support" component={SupportScreen} options={{ headerShown: false }} />
       <Stack.Screen name="VehicleChecklist" component={VehicleChecklistScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ProviderSchedule" component={ProviderScheduleScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="OrderCancel" component={OrderCancelScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ShareApp" component={ShareAppScreen} options={{ title: 'Inviter des amis' }} />
       <Stack.Screen name="History" component={HistoryScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ProviderProfile" component={ProviderProfileScreen} options={{ headerShown: false }} />

@@ -330,7 +330,12 @@ export default function TaxiTrackingScreen({ route, navigation }) {
         {['PENDING', 'ACCEPTED'].includes(status) && (
           <TouchableOpacity
             style={styles.cancelButton}
-            onPress={handleCancel}
+            onPress={() => navigation.navigate('OrderCancel', {
+              orderId: currentOrder?.id,
+              serviceType: 'TAXI',
+              orderStatus: status,
+              price: currentOrder?.price,
+            })}
             activeOpacity={0.85}
           >
             <Text style={styles.cancelButtonText}>✖ Annuler la course</Text>
