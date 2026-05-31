@@ -1,16 +1,19 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  FlatList,
   TouchableOpacity,
-  RefreshControl,
   Alert,
   StatusBar,
   ActivityIndicator,
+  RefreshControl,
+  Modal,
+  ScrollView,
+  TextInput,
 } from 'react-native';
-import useAdminStore from '../../store/adminStore';
+import api from '../../services/api';
 
 const COLORS = {
   bg: '#0A0A0F',
@@ -23,233 +26,329 @@ const COLORS = {
   green: '#2E7D32',
   amber: '#F57C00',
   blue: '#1565C0',
-  purple: '#6A1B9A',
-  teal: '#00838F',
 };
 
-const PLAN_LABELS = {
-  DECOUVERTE: 'Découverte',
-  SEMAINE: 'Semaine',
-  MENSUEL: 'Mensuel',
-  PRO: 'Pro',
+const STATUS_CONFIG = {
+  PENDING: { label: 'En attente', color: COLORS.amber, bg: '#F57C0022' },
+  RESOLVED: { label: 'Résolu', color: COLORS.green, bg: '#2E7D3222' },
+  DISMISSED: { label: 'Ignoré', color: COLORS.muted, bg: '#8A8A9A22' },
 };
 
-const PLAN_COLORS = {
-  DECOUVERTE: COLORS.muted,
-  SEMAINE: COLORS.blue,
-  MENSUEL: COLORS.amber,
-  PRO: COLORS.accent,
-};
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
 
-// ── Section Header ────────────────────────────────────────────────────────────
-function SectionHeader({ emoji, title, count }) {
+function ReportCard({ item, onResolve, onDismiss, onDetail }) {
+  const sc = STATUS_CONFIG[item.status] || STATUS_CONFIG.PENDING;
+  const reasons = Array.isArray(item.reasons) ? item.reasons : [];
+
   return (
-    <View style={sec.header}>
-      <Text style={sec.emoji}>{emoji}</Text>
-      <Text style={sec.title}>{title}</Text>
-      {count !== undefined ? (
-        <View style={sec.badge}>
-          <Text style={sec.badgeTxt}>{count}</Text>
+    <View style={card.container}>
+      <View style={card.header}>
+        <View style={card.names}>
+          <Text style={card.signalant}>
+            <Text style={card.labelMuted}>Signalant: </Text>
+            {item.reporter?.name || `#${(item.reporterId || '').slice(-6)}`}
+          </Text>
+          <Text style={card.signale}>
+            <Text style={card.labelMuted}>Signalé: </Text>
+            {item.reported?.name || `#${(item.reportedId || '').slice(-6)}`}
+            {item.reported?.role ? <Text style={card.role}>  [{item.reported.role}]</Text> : null}
+          </Text>
         </View>
+        <View style={[card.badge, { backgroundColor: sc.bg, borderColor: sc.color }]}>
+          <Text style={[card.badgeTxt, { color: sc.color }]}>{sc.label}</Text>
+        </View>
+      </View>
+
+      {reasons.length > 0 && (
+        <View style={card.reasons}>
+          {reasons.map((r, i) => (
+            <View key={i} style={card.reasonTag}>
+              <Text style={card.reasonTxt}>{r}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {item.details ? (
+        <Text style={card.details} numberOfLines={2}>{item.details}</Text>
       ) : null}
+
+      <Text style={card.date}>{formatDate(item.createdAt)}</Text>
+
+      {item.status === 'PENDING' && (
+        <View style={card.actions}>
+          <TouchableOpacity style={[card.btn, card.btnResolve]} onPress={() => onResolve(item)}>
+            <Text style={card.btnTxt}>Résoudre</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[card.btn, card.btnDismiss]} onPress={() => onDismiss(item)}>
+            <Text style={[card.btnTxt, { color: COLORS.muted }]}>Ignorer</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[card.btn, card.btnDetail]} onPress={() => onDetail(item)}>
+            <Text style={[card.btnTxt, { color: COLORS.blue }]}>Détail</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {item.status !== 'PENDING' && (
+        <TouchableOpacity onPress={() => onDetail(item)}>
+          <Text style={card.viewDetail}>Voir détail ›</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
 
-const sec = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 10,
-    gap: 8,
+const card = StyleSheet.create({
+  container: {
+    backgroundColor: COLORS.surface,
+    marginHorizontal: 14,
+    marginVertical: 6,
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
-  emoji: { fontSize: 18 },
-  title: { color: COLORS.white, fontSize: 16, fontWeight: '700', flex: 1 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 },
+  names: { flex: 1, gap: 4 },
+  signalant: { color: COLORS.white, fontSize: 13, fontWeight: '600' },
+  signale: { color: COLORS.white, fontSize: 13, fontWeight: '600' },
+  labelMuted: { color: COLORS.muted, fontWeight: '400' },
+  role: { color: COLORS.muted, fontSize: 11 },
   badge: {
-    backgroundColor: COLORS.surfaceAlt,
-    borderRadius: 10,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    marginLeft: 8,
+  },
+  badgeTxt: { fontSize: 11, fontWeight: '700' },
+  reasons: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 },
+  reasonTag: {
+    backgroundColor: COLORS.accent + '22',
+    borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: COLORS.accent + '44',
   },
-  badgeTxt: { color: COLORS.muted, fontSize: 11, fontWeight: '600' },
+  reasonTxt: { color: COLORS.accent, fontSize: 11 },
+  details: { color: COLORS.muted, fontSize: 12, marginBottom: 8, fontStyle: 'italic' },
+  date: { color: COLORS.muted, fontSize: 11, marginBottom: 10 },
+  actions: { flexDirection: 'row', gap: 8 },
+  btn: {
+    flex: 1,
+    borderRadius: 8,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  btnResolve: { backgroundColor: COLORS.green + '22', borderColor: COLORS.green },
+  btnDismiss: { backgroundColor: COLORS.surfaceAlt, borderColor: COLORS.border },
+  btnDetail: { backgroundColor: COLORS.blue + '22', borderColor: COLORS.blue },
+  btnTxt: { color: COLORS.white, fontSize: 12, fontWeight: '700' },
+  viewDetail: { color: COLORS.blue, fontSize: 12, marginTop: 4, textAlign: 'right' },
 });
 
-// ── Provider Row ──────────────────────────────────────────────────────────────
-function ProviderRow({ rank, data }) {
-  const stars = data.avgRating ? '⭐'.repeat(Math.round(data.avgRating)) : null;
+function DetailModal({ visible, report, onClose }) {
+  if (!report) return null;
+  const sc = STATUS_CONFIG[report.status] || STATUS_CONFIG.PENDING;
+  const reasons = Array.isArray(report.reasons) ? report.reasons : [];
+
   return (
-    <View style={pRow.row}>
-      <View style={pRow.rankCircle}>
-        <Text style={pRow.rankTxt}>{rank}</Text>
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+      <View style={modal.overlay}>
+        <View style={modal.container}>
+          <View style={modal.header}>
+            <Text style={modal.title}>Détail du signalement</Text>
+            <TouchableOpacity onPress={onClose}>
+              <Text style={modal.close}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView style={modal.scroll} showsVerticalScrollIndicator={false}>
+            <View style={modal.row}>
+              <Text style={modal.label}>Statut</Text>
+              <Text style={[modal.value, { color: sc.color }]}>{sc.label}</Text>
+            </View>
+            <View style={modal.row}>
+              <Text style={modal.label}>Signalant</Text>
+              <Text style={modal.value}>
+                {report.reporter?.name || '—'} — {report.reporter?.phone || ''}
+              </Text>
+            </View>
+            <View style={modal.row}>
+              <Text style={modal.label}>Signalé</Text>
+              <Text style={modal.value}>
+                {report.reported?.name || '—'} — {report.reported?.phone || ''}
+                {report.reported?.role ? `  (${report.reported.role})` : ''}
+              </Text>
+            </View>
+            <View style={modal.row}>
+              <Text style={modal.label}>Date</Text>
+              <Text style={modal.value}>{formatDate(report.createdAt)}</Text>
+            </View>
+            {report.orderId && (
+              <View style={modal.row}>
+                <Text style={modal.label}>Commande</Text>
+                <Text style={modal.value}>#{report.orderId.slice(-8)}</Text>
+              </View>
+            )}
+            {reasons.length > 0 && (
+              <View style={modal.block}>
+                <Text style={modal.label}>Motifs</Text>
+                {reasons.map((r, i) => (
+                  <Text key={i} style={modal.bullet}>• {r}</Text>
+                ))}
+              </View>
+            )}
+            {report.details ? (
+              <View style={modal.block}>
+                <Text style={modal.label}>Détails</Text>
+                <Text style={modal.details}>{report.details}</Text>
+              </View>
+            ) : null}
+            {report.adminNote ? (
+              <View style={modal.block}>
+                <Text style={modal.label}>Note admin</Text>
+                <Text style={modal.details}>{report.adminNote}</Text>
+              </View>
+            ) : null}
+            {report.resolvedAt && (
+              <View style={modal.row}>
+                <Text style={modal.label}>Résolu le</Text>
+                <Text style={modal.value}>{formatDate(report.resolvedAt)}</Text>
+              </View>
+            )}
+          </ScrollView>
+          <TouchableOpacity style={modal.closeBtn} onPress={onClose}>
+            <Text style={modal.closeBtnTxt}>Fermer</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-      <View style={pRow.info}>
-        <Text style={pRow.name} numberOfLines={1}>{data.provider?.name || `ID:${(data.provider?.id || '').slice(-6)}`}</Text>
-        <Text style={pRow.phone}>{data.provider?.phone || '—'}</Text>
-      </View>
-      <View style={pRow.right}>
-        <Text style={pRow.count}>{data.completedOrders}</Text>
-        <Text style={pRow.countLabel}>courses</Text>
-        {data.avgRating ? (
-          <Text style={pRow.rating}>{data.avgRating.toFixed(1)} ★</Text>
-        ) : null}
-      </View>
-    </View>
+    </Modal>
   );
 }
 
-const pRow = StyleSheet.create({
-  row: {
+const modal = StyleSheet.create({
+  overlay: { flex: 1, backgroundColor: '#00000099', justifyContent: 'flex-end' },
+  container: {
+    backgroundColor: COLORS.surface,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '80%',
+    paddingBottom: 24,
+  },
+  header: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    marginHorizontal: 14,
-    marginVertical: 4,
+    padding: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  title: { color: COLORS.white, fontSize: 16, fontWeight: '700' },
+  close: { color: COLORS.muted, fontSize: 20 },
+  scroll: { padding: 18 },
+  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: COLORS.border + '66' },
+  block: { paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: COLORS.border + '66' },
+  label: { color: COLORS.muted, fontSize: 12, marginBottom: 2 },
+  value: { color: COLORS.white, fontSize: 13, fontWeight: '600', flexShrink: 1, textAlign: 'right' },
+  bullet: { color: COLORS.white, fontSize: 13, marginTop: 4 },
+  details: { color: COLORS.white, fontSize: 13, marginTop: 4, lineHeight: 20 },
+  closeBtn: {
+    marginHorizontal: 18,
+    marginTop: 8,
+    backgroundColor: COLORS.accent,
     borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    gap: 12,
-  },
-  rankCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: COLORS.accent + '22',
+    paddingVertical: 14,
     alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.accent,
   },
-  rankTxt: { color: COLORS.accent, fontWeight: '700', fontSize: 14 },
-  info: { flex: 1 },
-  name: { color: COLORS.white, fontSize: 14, fontWeight: '600' },
-  phone: { color: COLORS.muted, fontSize: 12, marginTop: 2 },
-  right: { alignItems: 'flex-end' },
-  count: { color: COLORS.white, fontSize: 18, fontWeight: '700' },
-  countLabel: { color: COLORS.muted, fontSize: 10 },
-  rating: { color: COLORS.amber, fontSize: 12, fontWeight: '600', marginTop: 2 },
+  closeBtnTxt: { color: COLORS.white, fontWeight: '700', fontSize: 15 },
 });
 
-// ── Merchant Row ──────────────────────────────────────────────────────────────
-function MerchantRow({ rank, data }) {
-  const name = data.merchant?.name || data.merchant?.user?.name || `ID:${(data.merchant?.userId || '').slice(-6)}`;
-  return (
-    <View style={mRow.row}>
-      <View style={mRow.rankCircle}>
-        <Text style={mRow.rankTxt}>{rank}</Text>
-      </View>
-      <View style={mRow.info}>
-        <Text style={mRow.name} numberOfLines={1}>{name}</Text>
-        {data.merchant?.category ? <Text style={mRow.cat}>{data.merchant.category}</Text> : null}
-      </View>
-      <View style={mRow.right}>
-        <Text style={mRow.count}>{data.totalOrders}</Text>
-        <Text style={mRow.countLabel}>commandes</Text>
-      </View>
-    </View>
-  );
-}
+const TABS = [
+  { key: 'PENDING', label: 'En attente' },
+  { key: 'RESOLVED', label: 'Résolus' },
+];
 
-const mRow = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    marginHorizontal: 14,
-    marginVertical: 4,
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    gap: 12,
-  },
-  rankCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: COLORS.teal + '22',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.teal,
-  },
-  rankTxt: { color: COLORS.teal, fontWeight: '700', fontSize: 14 },
-  info: { flex: 1 },
-  name: { color: COLORS.white, fontSize: 14, fontWeight: '600' },
-  cat: { color: COLORS.muted, fontSize: 12, marginTop: 2 },
-  right: { alignItems: 'flex-end' },
-  count: { color: COLORS.white, fontSize: 18, fontWeight: '700' },
-  countLabel: { color: COLORS.muted, fontSize: 10 },
-});
-
-// ── Subscription Plan Card ────────────────────────────────────────────────────
-function PlanCard({ planKey, planData }) {
-  const color = PLAN_COLORS[planKey] || COLORS.muted;
-  const label = PLAN_LABELS[planKey] || planKey;
-  return (
-    <View style={[planCard.card, { borderTopColor: color }]}>
-      <Text style={[planCard.label, { color }]}>{label}</Text>
-      <View style={planCard.row}>
-        <View style={planCard.stat}>
-          <Text style={planCard.statNum}>{planData.active || 0}</Text>
-          <Text style={planCard.statLbl}>Actifs</Text>
-        </View>
-        <View style={planCard.stat}>
-          <Text style={planCard.statNum}>{planData.expired || 0}</Text>
-          <Text style={planCard.statLbl}>Expirés</Text>
-        </View>
-        <View style={planCard.stat}>
-          <Text style={[planCard.statNum, { color: COLORS.green }]}>
-            {planData.estimatedRevenueTND || 0} TND
-          </Text>
-          <Text style={planCard.statLbl}>Revenus est.</Text>
-        </View>
-      </View>
-    </View>
-  );
-}
-
-const planCard = StyleSheet.create({
-  card: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    padding: 14,
-    marginHorizontal: 14,
-    marginVertical: 5,
-    borderTopWidth: 3,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  label: { fontSize: 14, fontWeight: '700', marginBottom: 10 },
-  row: { flexDirection: 'row', justifyContent: 'space-between' },
-  stat: { alignItems: 'center', flex: 1 },
-  statNum: { color: COLORS.white, fontSize: 18, fontWeight: '700' },
-  statLbl: { color: COLORS.muted, fontSize: 10, marginTop: 2 },
-});
-
-// ── Screen ────────────────────────────────────────────────────────────────────
 export default function AdminReportsScreen({ navigation }) {
-  const { reports, isLoading, fetchReports } = useAdminStore();
+  const [activeTab, setActiveTab] = useState('PENDING');
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [detailReport, setDetailReport] = useState(null);
 
-  const load = useCallback(() => {
-    fetchReports();
-  }, [fetchReports]);
+  const fetchReports = useCallback(async (status = activeTab, isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+    try {
+      const res = await api.get(`/api/reports/admin?status=${status}`);
+      setReports(res.data || []);
+    } catch (err) {
+      Alert.alert('Erreur', err.response?.data?.error || 'Impossible de charger les signalements');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [activeTab]);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    fetchReports(activeTab);
+  }, [activeTab]);
 
-  const handleExport = () => {
-    Alert.alert('Export', 'Export disponible en version web.\nConnectez-vous au panel admin sur votre navigateur.');
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setReports([]);
   };
 
-  const subs = reports?.subscriptions;
-  const providers = reports?.topProviders?.providers || [];
-  const merchants = reports?.topMerchants?.merchants || [];
+  const updateReport = async (id, status, adminNote = '') => {
+    try {
+      await api.patch(`/api/reports/admin/${id}`, { status, adminNote });
+      fetchReports(activeTab);
+    } catch (err) {
+      Alert.alert('Erreur', err.response?.data?.error || 'Mise à jour échouée');
+    }
+  };
+
+  const handleResolve = (item) => {
+    Alert.prompt
+      ? Alert.prompt(
+          'Résoudre',
+          'Note admin (optionnel)',
+          [
+            { text: 'Annuler', style: 'cancel' },
+            { text: 'Résoudre', onPress: (note) => updateReport(item.id, 'RESOLVED', note || '') },
+          ],
+          'plain-text'
+        )
+      : Alert.alert('Résoudre le signalement', `Signalement de ${item.reporter?.name || 'inconnu'} contre ${item.reported?.name || 'inconnu'}`, [
+          { text: 'Annuler', style: 'cancel' },
+          { text: 'Résoudre', onPress: () => updateReport(item.id, 'RESOLVED') },
+        ]);
+  };
+
+  const handleDismiss = (item) => {
+    Alert.alert(
+      'Ignorer le signalement',
+      `Êtes-vous sûr de vouloir ignorer ce signalement ?`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Ignorer', style: 'destructive', onPress: () => updateReport(item.id, 'DISMISSED') },
+      ]
+    );
+  };
+
+  const renderItem = ({ item }) => (
+    <ReportCard
+      item={item}
+      onResolve={handleResolve}
+      onDismiss={handleDismiss}
+      onDetail={setDetailReport}
+    />
+  );
 
   return (
     <View style={styles.root}>
@@ -259,69 +358,58 @@ export default function AdminReportsScreen({ navigation }) {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Text style={styles.backTxt}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>📊 Rapports</Text>
-        <TouchableOpacity style={styles.exportBtn} onPress={handleExport}>
-          <Text style={styles.exportTxt}>⬇ Export</Text>
-        </TouchableOpacity>
+        <Text style={styles.headerTitle}>🚨 Signalements</Text>
+        <View style={{ width: 40 }} />
       </View>
 
-      {isLoading && !subs ? (
+      {/* Tabs */}
+      <View style={styles.tabs}>
+        {TABS.map((tab) => (
+          <TouchableOpacity
+            key={tab.key}
+            style={[styles.tab, activeTab === tab.key && styles.tabActive]}
+            onPress={() => handleTabChange(tab.key)}
+          >
+            <Text style={[styles.tabTxt, activeTab === tab.key && styles.tabTxtActive]}>
+              {tab.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {loading && reports.length === 0 ? (
         <View style={styles.loader}>
           <ActivityIndicator size="large" color={COLORS.accent} />
-          <Text style={styles.loaderTxt}>Chargement des rapports...</Text>
+          <Text style={styles.loaderTxt}>Chargement...</Text>
         </View>
       ) : (
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={{ paddingBottom: 40 }}
-          refreshControl={<RefreshControl refreshing={isLoading} onRefresh={load} tintColor={COLORS.accent} />}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Subscriptions */}
-          <SectionHeader emoji="💳" title="Abonnements" />
-          {subs?.byPlan ? (
-            <>
-              {Object.entries(subs.byPlan).map(([planKey, planData]) => (
-                <PlanCard key={planKey} planKey={planKey} planData={planData} />
-              ))}
-              <View style={styles.summaryCard}>
-                <Text style={styles.summaryLabel}>Total actifs</Text>
-                <Text style={styles.summaryValue}>{subs.totalActive || 0}</Text>
-                <Text style={styles.summaryLabel}>Renouvellement auto</Text>
-                <Text style={styles.summaryValue}>{subs.autoRenewCount || 0}</Text>
-              </View>
-            </>
-          ) : (
-            <Text style={styles.noData}>Aucune donnée</Text>
-          )}
-
-          {/* Top Providers */}
-          <SectionHeader emoji="🏆" title="Top Prestataires" count={providers.length} />
-          {providers.length > 0 ? (
-            providers.map((p, i) => <ProviderRow key={p.provider?.id || i} rank={i + 1} data={p} />)
-          ) : (
-            <Text style={styles.noData}>Aucune donnée</Text>
-          )}
-
-          {/* Top Merchants */}
-          <SectionHeader emoji="🏪" title="Top Marchands" count={merchants.length} />
-          {merchants.length > 0 ? (
-            merchants.map((m, i) => <MerchantRow key={m.merchant?.userId || i} rank={i + 1} data={m} />)
-          ) : (
-            <Text style={styles.noData}>Aucune donnée</Text>
-          )}
-
-          {/* Export note */}
-          <TouchableOpacity style={styles.exportCard} onPress={handleExport}>
-            <Text style={styles.exportCardEmoji}>🖥️</Text>
-            <View>
-              <Text style={styles.exportCardTitle}>Export complet</Text>
-              <Text style={styles.exportCardSub}>Disponible en version web</Text>
+        <FlatList
+          data={reports}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => fetchReports(activeTab, true)}
+              tintColor={COLORS.accent}
+            />
+          }
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Text style={styles.emptyEmoji}>✅</Text>
+              <Text style={styles.emptyTxt}>Aucun signalement {activeTab === 'PENDING' ? 'en attente' : 'résolu'}</Text>
             </View>
-            <Text style={styles.exportCardArrow}>›</Text>
-          </TouchableOpacity>
-        </ScrollView>
+          }
+          contentContainerStyle={{ paddingBottom: 40, paddingTop: 8 }}
+          showsVerticalScrollIndicator={false}
+        />
       )}
+
+      <DetailModal
+        visible={!!detailReport}
+        report={detailReport}
+        onClose={() => setDetailReport(null)}
+      />
     </View>
   );
 }
@@ -337,52 +425,29 @@ const styles = StyleSheet.create({
     paddingBottom: 14,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
-    gap: 14,
   },
-  backBtn: { padding: 4 },
+  backBtn: { padding: 4, width: 40 },
   backTxt: { color: COLORS.white, fontSize: 22 },
-  headerTitle: { color: COLORS.white, fontSize: 18, fontWeight: '700', flex: 1 },
-  exportBtn: {
-    backgroundColor: COLORS.surfaceAlt,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+  headerTitle: { color: COLORS.white, fontSize: 18, fontWeight: '700', flex: 1, textAlign: 'center' },
+  tabs: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
-  exportTxt: { color: COLORS.muted, fontSize: 12, fontWeight: '600' },
+  tab: {
+    flex: 1,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  tabActive: { borderBottomColor: COLORS.accent },
+  tabTxt: { color: COLORS.muted, fontSize: 14, fontWeight: '600' },
+  tabTxtActive: { color: COLORS.white },
   loader: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
   loaderTxt: { color: COLORS.muted, fontSize: 14 },
-  scroll: { flex: 1 },
-  noData: { color: COLORS.muted, textAlign: 'center', paddingVertical: 16, fontSize: 13 },
-  summaryCard: {
-    backgroundColor: COLORS.surfaceAlt,
-    borderRadius: 12,
-    marginHorizontal: 14,
-    marginTop: 8,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  summaryLabel: { color: COLORS.muted, fontSize: 12 },
-  summaryValue: { color: COLORS.white, fontSize: 18, fontWeight: '700' },
-  exportCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    marginHorizontal: 14,
-    marginTop: 24,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    gap: 14,
-  },
-  exportCardEmoji: { fontSize: 28 },
-  exportCardTitle: { color: COLORS.white, fontSize: 14, fontWeight: '600' },
-  exportCardSub: { color: COLORS.muted, fontSize: 12, marginTop: 2 },
-  exportCardArrow: { color: COLORS.muted, fontSize: 22, marginLeft: 'auto' },
+  empty: { alignItems: 'center', paddingTop: 80, gap: 12 },
+  emptyEmoji: { fontSize: 48 },
+  emptyTxt: { color: COLORS.muted, fontSize: 15 },
 });

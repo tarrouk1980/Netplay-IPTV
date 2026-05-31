@@ -210,6 +210,10 @@ export default function ProfileScreen({ navigation }) {
         {/* Quick Links */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Autres</Text>
+          <TouchableOpacity style={styles.quickLink} onPress={() => navigation.navigate('Settings')}>
+            <Text style={styles.quickLinkText}>⚙️ Paramètres</Text>
+            <Text style={styles.quickLinkArrow}>›</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.quickLink} onPress={() => navigation.navigate('History')}>
             <Text style={styles.quickLinkText}>📋 Historique de mes commandes</Text>
             <Text style={styles.quickLinkArrow}>›</Text>

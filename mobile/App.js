@@ -61,6 +61,9 @@ import AdminReportsScreen from './screens/admin/AdminReportsScreen';
 import AdminActivityScreen from './screens/admin/AdminActivityScreen';
 import AdminFraudScreen from './screens/admin/AdminFraudScreen';
 
+// Settings
+import SettingsScreen from './screens/profile/SettingsScreen';
+
 // Referral & Profile extras
 import ReferralScreen from './screens/profile/ReferralScreen';
 import ShareAppScreen from './screens/profile/ShareAppScreen';
@@ -169,6 +172,7 @@ function MainStack() {
       <Stack.Screen name="ShareApp" component={ShareAppScreen} options={{ title: 'Inviter des amis' }} />
       <Stack.Screen name="History" component={HistoryScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ProviderProfile" component={ProviderProfileScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Settings" component={SettingsScreen} options={{ headerShown: false }} />
 
       {/* Subscriptions */}
       <Stack.Screen name="BuyPass" component={BuyPassScreen} options={{ title: 'Passer Premium' }} />
