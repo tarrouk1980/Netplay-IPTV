@@ -292,4 +292,38 @@ router.post('/provider-onboarding', authenticate, async (req, res) => {
   }
 });
 
+// ── Address book (in-memory until schema supports it) ─────────────────────
+const addressStore = new Map(); // userId → [{id, label, type, address, lat, lng}]
+
+router.get('/addresses', authenticate, (req, res) => {
+  res.json({ addresses: addressStore.get(req.user.id) || [] });
+});
+
+router.post('/addresses', authenticate, (req, res) => {
+  const { label, type, address, lat, lng } = req.body;
+  if (!label?.trim() || !address?.trim()) {
+    return res.status(400).json({ error: 'label and address required' });
+  }
+  const list = addressStore.get(req.user.id) || [];
+  const entry = { id: `addr_${Date.now()}`, label: label.trim(), type: type || 'CUSTOM', address: address.trim(), lat: lat || null, lng: lng || null };
+  addressStore.set(req.user.id, [...list, entry]);
+  res.status(201).json({ address: entry });
+});
+
+router.put('/addresses/:id', authenticate, (req, res) => {
+  const list = addressStore.get(req.user.id) || [];
+  const idx = list.findIndex(a => a.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Address not found' });
+  const updated = { ...list[idx], ...req.body, id: list[idx].id };
+  list[idx] = updated;
+  addressStore.set(req.user.id, list);
+  res.json({ address: updated });
+});
+
+router.delete('/addresses/:id', authenticate, (req, res) => {
+  const list = addressStore.get(req.user.id) || [];
+  addressStore.set(req.user.id, list.filter(a => a.id !== req.params.id));
+  res.json({ success: true });
+});
+
 module.exports = router;

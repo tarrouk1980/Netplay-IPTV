@@ -112,4 +112,84 @@ router.post('/vehicle-checklist', requireProvider, async (req, res) => {
   res.json({ success: true, checkedItems: checkedItems?.length || 0, totalItems });
 });
 
+// GET /api/provider/income?month=N&year=N
+router.get('/income', requireProvider, async (req, res) => {
+  try {
+    const month = parseInt(req.query.month, 10) || new Date().getMonth() + 1;
+    const year = parseInt(req.query.year, 10) || new Date().getFullYear();
+
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 1);
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { name: true, role: true },
+    });
+
+    const orders = await prisma.order.findMany({
+      where: {
+        providerId: req.user.id,
+        status: 'COMPLETED',
+        createdAt: { gte: startDate, lt: endDate },
+      },
+      select: { price: true, createdAt: true, type: true },
+    });
+
+    const totalGross = orders.reduce((s, o) => s + Number(o.price || 0), 0);
+    const ordersCount = orders.length;
+    const avgPerOrder = ordersCount > 0 ? totalGross / ordersCount : 0;
+
+    // Work days (distinct dates)
+    const workDays = new Set(orders.map(o => o.createdAt.toISOString().split('T')[0])).size;
+
+    // Best day
+    const byDate = {};
+    orders.forEach(o => {
+      const d = o.createdAt.toISOString().split('T')[0];
+      byDate[d] = (byDate[d] || 0) + Number(o.price || 0);
+    });
+    const bestDayEntry = Object.entries(byDate).sort((a, b) => b[1] - a[1])[0];
+    const bestDay = bestDayEntry ? { date: bestDayEntry[0], amount: bestDayEntry[1] } : { date: '-', amount: 0 };
+
+    // Weekly breakdown (up to 4 weeks)
+    const byWeek = [
+      { week: 'S1 (1-7)', amount: 0 },
+      { week: 'S2 (8-14)', amount: 0 },
+      { week: 'S3 (15-21)', amount: 0 },
+      { week: 'S4 (22-31)', amount: 0 },
+    ];
+    orders.forEach(o => {
+      const day = o.createdAt.getDate();
+      const wi = day <= 7 ? 0 : day <= 14 ? 1 : day <= 21 ? 2 : 3;
+      byWeek[wi].amount += Number(o.price || 0);
+    });
+
+    // By service
+    const serviceMap = {};
+    orders.forEach(o => {
+      serviceMap[o.type] = serviceMap[o.type] || { service: o.type, count: 0, amount: 0 };
+      serviceMap[o.type].count++;
+      serviceMap[o.type].amount += Number(o.price || 0);
+    });
+
+    res.json({
+      providerName: user?.name || 'Prestataire',
+      role: user?.role || req.user.role,
+      totalGross,
+      platformFee: 0,
+      totalNet: totalGross,
+      ordersCount,
+      avgPerOrder,
+      workDays,
+      bestDay,
+      byService: Object.values(serviceMap),
+      byWeek,
+      taxNote: 'Revenus soumis à l\'impôt sur le revenu (IR) selon le barème tunisien en vigueur.',
+    });
+  } catch (err) {
+    console.error('[provider/income]', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;

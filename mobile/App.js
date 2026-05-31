@@ -72,11 +72,13 @@ import AdminWalletScreen from './screens/admin/AdminWalletScreen';
 import AdminDriverMapScreen from './screens/admin/AdminDriverMapScreen';
 import AdminPromoCodesScreen from './screens/admin/AdminPromoCodesScreen';
 import AdminSupportScreen from './screens/admin/AdminSupportScreen';
+import AdminBroadcastScreen from './screens/admin/AdminBroadcastScreen';
 
 // Settings
 import SettingsScreen from './screens/profile/SettingsScreen';
 import LanguageScreen from './screens/profile/LanguageScreen';
 import SupportScreen from './screens/profile/SupportScreen';
+import AddressBookScreen from './screens/profile/AddressBookScreen';
 
 // Referral & Profile extras
 import ReferralScreen from './screens/profile/ReferralScreen';
@@ -98,6 +100,7 @@ import ProviderDashboardScreen from './screens/provider/ProviderDashboardScreen'
 import VehicleChecklistScreen from './screens/provider/VehicleChecklistScreen';
 import ProviderEarningsScreen from './screens/provider/ProviderEarningsScreen';
 import ProviderScheduleScreen from './screens/provider/ProviderScheduleScreen';
+import ProviderIncomeScreen from './screens/provider/ProviderIncomeScreen';
 import OrderCancelScreen from './screens/shared/OrderCancelScreen';
 
 // Legal
@@ -242,6 +245,7 @@ function MainStack() {
       <Stack.Screen name="AdminDriverMap" component={AdminDriverMapScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminPromoCodes" component={AdminPromoCodesScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminSupport" component={AdminSupportScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminBroadcast" component={AdminBroadcastScreen} options={{ headerShown: false }} />
 
       {/* KYC Pending */}
       <Stack.Screen name="KYCPending" component={KYCPendingScreen} options={{ headerShown: false }} />
@@ -252,6 +256,8 @@ function MainStack() {
       <Stack.Screen name="Support" component={SupportScreen} options={{ headerShown: false }} />
       <Stack.Screen name="VehicleChecklist" component={VehicleChecklistScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ProviderSchedule" component={ProviderScheduleScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ProviderIncome" component={ProviderIncomeScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AddressBook" component={AddressBookScreen} options={{ headerShown: false }} />
       <Stack.Screen name="OrderCancel" component={OrderCancelScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ShareApp" component={ShareAppScreen} options={{ title: 'Inviter des amis' }} />
       <Stack.Screen name="History" component={HistoryScreen} options={{ headerShown: false }} />

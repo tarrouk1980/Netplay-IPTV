@@ -99,4 +99,48 @@ router.post('/weather-check', authenticate, async (req, res) => {
   }
 });
 
+// POST /api/notifications/broadcast — Admin: send push to all or specific roles
+router.post('/broadcast', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'ADMIN') return res.status(403).json({ error: 'Admin only' });
+    const { title, body, type, roles } = req.body;
+    if (!title?.trim() || !body?.trim()) {
+      return res.status(400).json({ error: 'title and body required' });
+    }
+
+    const where = { fcmToken: { not: null } };
+    if (roles && Array.isArray(roles) && roles.length > 0) {
+      where.role = { in: roles };
+    }
+
+    const users = await prisma.user.findMany({ where, select: { id: true, fcmToken: true } });
+    const tokens = users.map(u => u.fcmToken).filter(Boolean);
+
+    let result = { successCount: 0, failureCount: 0 };
+    if (tokens.length > 0) {
+      result = await sendNotification(tokens, type || 'SYSTEM', title.trim(), body.trim(), {});
+    }
+
+    // Store in DB notification table for each user
+    if (users.length > 0) {
+      await prisma.notification.createMany({
+        data: users.map(u => ({
+          userId: u.id,
+          type: type || 'SYSTEM',
+          title: title.trim(),
+          body: body.trim(),
+          data: JSON.stringify({}),
+        })),
+        skipDuplicates: true,
+      }).catch(() => {});
+    }
+
+    res.json({ sent: result.successCount, failed: result.failureCount, total: tokens.length });
+  } catch (err) {
+    console.error('[Notifications/Broadcast]', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Add /api/users/addresses endpoints inline (simple in-memory for now)
 module.exports = router;
