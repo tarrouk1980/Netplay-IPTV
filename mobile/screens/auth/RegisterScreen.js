@@ -90,10 +90,10 @@ const ROLES = [
 ];
 
 const CHAUFFEUR_VEHICLE_TYPES = [
-  { value: 'BERLINE', label: 'Berline', emoji: '🚗' },
-  { value: 'SUV', label: 'SUV', emoji: '🚙' },
-  { value: 'MINIVAN', label: 'Minivan', emoji: '🚐' },
-  { value: 'MOTO', label: 'Moto', emoji: '🛵' },
+  { value: 'BERLINE', label: 'Berline', svgKey: 'VEHICLE_BERLINE' },
+  { value: 'SUV', label: 'SUV', svgKey: 'VEHICLE_SUV' },
+  { value: 'MINIVAN', label: 'Minivan', svgKey: 'VEHICLE_MINIVAN' },
+  { value: 'MOTO', label: 'Moto', svgKey: 'VEHICLE_MOTO' },
 ];
 
 const BRANDS_MODELS = {
@@ -119,11 +119,11 @@ const VEHICLE_YEARS = Array.from({ length: 26 }, (_, i) => String(2025 - i));
 const CAR_COLORS = ['Blanc','Noir','Gris','Argent','Rouge','Bleu','Vert','Beige','Marron','Jaune','Orange','Autre'];
 
 const DELIVERY_VEHICLE_TYPES = [
-  { value: 'MOTO', label: 'Moto', emoji: '🛵' },
-  { value: 'SCOOTER', label: 'Scooter', emoji: '🛺' },
-  { value: 'VELO', label: 'Vélo', emoji: '🚲' },
-  { value: 'APIED', label: 'À pied', emoji: '🚶' },
-  { value: 'VOITURE', label: 'Voiture', emoji: '🚗' },
+  { value: 'MOTO', label: 'Moto', svgKey: 'VEHICLE_MOTO' },
+  { value: 'SCOOTER', label: 'Scooter', svgKey: 'VEHICLE_MOTO' },
+  { value: 'VELO', label: 'Vélo', svgKey: 'DELIV_VELO' },
+  { value: 'APIED', label: 'À pied', svgKey: 'DELIV_APIED' },
+  { value: 'VOITURE', label: 'Voiture', svgKey: 'VEHICLE_BERLINE' },
 ];
 
 const MOTORIZED_DELIVERY = ['MOTO', 'SCOOTER', 'VOITURE'];
@@ -598,7 +598,7 @@ export default function RegisterScreen({ navigation }) {
       const cvInfo = CHAUFFEUR_VEHICLE_TYPES.find((t) => t.value === chauffeurVehicleType);
       rows.push(
         { label: 'Permis', value: licenseNumber },
-        { label: 'Type véhicule', value: cvInfo ? `${cvInfo.emoji} ${cvInfo.label}` : chauffeurVehicleType },
+        { label: 'Type véhicule', value: cvInfo ? cvInfo.label : chauffeurVehicleType },
         { label: 'Véhicule', value: [vMake, vModel, vYear ? `(${vYear})` : ''].filter(Boolean).join(' ') },
         { label: 'Plaque', value: vPlate },
       );
@@ -606,7 +606,7 @@ export default function RegisterScreen({ navigation }) {
     }
     if (role === 'LIVREUR') {
       const dvInfo = DELIVERY_VEHICLE_TYPES.find((v) => v.value === deliveryVehicle);
-      rows.push({ label: 'Véhicule', value: dvInfo ? `${dvInfo.emoji} ${dvInfo.label}` : deliveryVehicle });
+      rows.push({ label: 'Véhicule', value: dvInfo ? dvInfo.label : deliveryVehicle });
       if (MOTORIZED_DELIVERY.includes(deliveryVehicle) && deliveryPlate) {
         rows.push({ label: 'Plaque', value: deliveryPlate });
       }

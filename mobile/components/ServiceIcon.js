@@ -556,6 +556,102 @@ export default function ServiceIcon({ service, size = 60 }) {
         </Svg>
       );
 
+    // ── VEHICLE_BERLINE — berline grise ──
+case 'VEHICLE_BERLINE':
+  return (
+    <Svg width={s} height={s} viewBox="0 0 80 60">
+      <Path d="M8 38 Q8 30 14 28 L20 18 Q22 14 28 14 L52 14 Q58 14 60 18 L66 28 Q72 30 72 38 L72 44 Q72 46 70 46 L10 46 Q8 46 8 44 Z" fill="#546E7A" />
+      <Path d="M22 28 L25 17 Q26 14 30 14 L50 14 Q54 14 55 17 L58 28 Z" fill="#455A64" />
+      <Path d="M24 27 L27 18 Q28 15 31 15 L49 15 Q52 15 53 18 L56 27 Z" fill="#B3E5FC" opacity="0.7" />
+      <Rect x="14" y="26" width="10" height="8" rx="2" fill="#B3E5FC" opacity="0.7" />
+      <Rect x="9" y="36" width="6" height="4" rx="2" fill="#FFFDE7" />
+      <Rect x="65" y="36" width="6" height="4" rx="2" fill="#E53935" />
+      <Circle cx="22" cy="47" r="9" fill="#1A1A1A" /><Circle cx="22" cy="47" r="5.5" fill="#444" /><Circle cx="22" cy="47" r="2.5" fill="#888" />
+      <Circle cx="58" cy="47" r="9" fill="#1A1A1A" /><Circle cx="58" cy="47" r="5.5" fill="#444" /><Circle cx="58" cy="47" r="2.5" fill="#888" />
+    </Svg>
+  );
+
+// ── VEHICLE_SUV — SUV/4x4 haut ──
+case 'VEHICLE_SUV':
+  return (
+    <Svg width={s} height={s} viewBox="0 0 80 60">
+      <Path d="M6 40 Q6 30 12 28 L18 16 Q20 12 26 12 L54 12 Q60 12 62 16 L68 28 Q74 30 74 40 L74 46 Q74 48 72 48 L8 48 Q6 48 6 46 Z" fill="#37474F" />
+      <Path d="M20 28 L23 15 Q24 12 28 12 L52 12 Q56 12 57 15 L60 28 Z" fill="#2E3F4C" />
+      <Path d="M22 27 L25 16 Q26 13 29 13 L51 13 Q54 13 55 16 L58 27 Z" fill="#B3E5FC" opacity="0.6" />
+      <Rect x="8" y="28" width="10" height="10" rx="2" fill="#B3E5FC" opacity="0.6" />
+      <Rect x="6" y="38" width="6" height="4" rx="2" fill="#FFFDE7" />
+      <Rect x="68" y="38" width="6" height="4" rx="2" fill="#E53935" />
+      <Rect x="6" y="44" width="68" height="3" fill="#263238" />
+      <Circle cx="20" cy="49" r="9" fill="#1A1A1A" /><Circle cx="20" cy="49" r="5.5" fill="#444" /><Circle cx="20" cy="49" r="2.5" fill="#888" />
+      <Circle cx="60" cy="49" r="9" fill="#1A1A1A" /><Circle cx="60" cy="49" r="5.5" fill="#444" /><Circle cx="60" cy="49" r="2.5" fill="#888" />
+    </Svg>
+  );
+
+// ── VEHICLE_MINIVAN — minivan spacieux ──
+case 'VEHICLE_MINIVAN':
+  return (
+    <Svg width={s} height={s} viewBox="0 0 80 60">
+      <Path d="M4 40 Q4 30 10 28 L14 14 Q16 10 22 10 L58 10 Q64 10 66 14 L70 28 Q76 30 76 40 L76 46 L4 46 Z" fill="#4527A0" />
+      <Path d="M14 28 L17 13 Q18 10 22 10 L56 10 Q60 10 62 13 L66 28 Z" fill="#311B92" />
+      <Path d="M16 27 L19 14 Q20 11 23 11 L55 11 Q58 11 60 14 L63 27 Z" fill="#B3E5FC" opacity="0.55" />
+      <Rect x="6" y="28" width="10" height="12" rx="2" fill="#B3E5FC" opacity="0.55" />
+      <Rect x="4" y="38" width="6" height="5" rx="2" fill="#FFFDE7" />
+      <Rect x="70" y="38" width="6" height="5" rx="2" fill="#E53935" />
+      <Rect x="4" y="44" width="72" height="3" fill="#1A237E" />
+      <Circle cx="18" cy="48" r="9" fill="#1A1A1A" /><Circle cx="18" cy="48" r="5.5" fill="#444" /><Circle cx="18" cy="48" r="2.5" fill="#888" />
+      <Circle cx="62" cy="48" r="9" fill="#1A1A1A" /><Circle cx="62" cy="48" r="5.5" fill="#444" /><Circle cx="62" cy="48" r="2.5" fill="#888" />
+    </Svg>
+  );
+
+// ── VEHICLE_MOTO — moto taxi ──
+case 'VEHICLE_MOTO':
+  return (
+    <Svg width={s} height={s} viewBox="0 0 80 60">
+      <Path d="M30 38 Q30 28 38 24 L50 22 Q58 20 62 26 L68 34 Q70 38 68 42 L30 42 Z" fill="#F5A623" />
+      <Path d="M44 22 Q48 16 56 18 L60 22" fill="#E69520" />
+      <Rect x="42" y="14" width="16" height="6" rx="3" fill="#E69520" />
+      <Path d="M58 22 L64 18 L68 20" stroke="#2D3142" strokeWidth="3" fill="none" strokeLinecap="round" />
+      <Circle cx="36" cy="44" r="11" fill="#1A1A1A" /><Circle cx="36" cy="44" r="7" fill="#374151" /><Circle cx="36" cy="44" r="3" fill="#6B7280" />
+      <Circle cx="64" cy="44" r="11" fill="#1A1A1A" /><Circle cx="64" cy="44" r="7" fill="#374151" /><Circle cx="64" cy="44" r="3" fill="#6B7280" />
+      <Path d="M30 40 L24 42 L18 44" stroke="#B0BEC5" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <Circle cx="50" cy="18" r="6" fill="#1565C0" />
+      <Circle cx="50" cy="14" r="5" fill="#0D47A1" />
+    </Svg>
+  );
+
+// ── DELIV_VELO — vélo de livraison ──
+case 'DELIV_VELO':
+  return (
+    <Svg width={s} height={s} viewBox="0 0 80 60">
+      <Circle cx="20" cy="42" r="14" fill="none" stroke="#27AE60" strokeWidth="3.5" />
+      <Circle cx="60" cy="42" r="14" fill="none" stroke="#27AE60" strokeWidth="3.5" />
+      <Circle cx="20" cy="42" r="3" fill="#27AE60" />
+      <Circle cx="60" cy="42" r="3" fill="#27AE60" />
+      <Path d="M20 42 L36 22 L60 42" stroke="#27AE60" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M36 22 L44 42" stroke="#27AE60" strokeWidth="3" fill="none" strokeLinecap="round" />
+      <Path d="M30 22 L42 22" stroke="#27AE60" strokeWidth="3" strokeLinecap="round" />
+      <Path d="M36 22 L36 16 L30 12 L42 12 L36 16" stroke="#27AE60" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <Rect x="46" y="12" width="16" height="14" rx="3" fill="#F5A623" />
+      <Rect x="48" y="14" width="12" height="10" rx="2" fill="#E69520" />
+      <Path d="M50 14 L50 26 M54 14 L54 26" stroke="#F5A623" strokeWidth="1" />
+    </Svg>
+  );
+
+// ── DELIV_APIED — livreur à pied ──
+case 'DELIV_APIED':
+  return (
+    <Svg width={s} height={s} viewBox="0 0 60 60">
+      <Circle cx="30" cy="10" r="7" fill="#27AE60" />
+      <Path d="M30 17 L30 36" stroke="#27AE60" strokeWidth="4" strokeLinecap="round" />
+      <Path d="M30 26 L20 34" stroke="#27AE60" strokeWidth="3.5" strokeLinecap="round" />
+      <Path d="M30 26 L40 30" stroke="#27AE60" strokeWidth="3.5" strokeLinecap="round" />
+      <Path d="M30 36 L22 48" stroke="#27AE60" strokeWidth="3.5" strokeLinecap="round" />
+      <Path d="M30 36 L38 48" stroke="#27AE60" strokeWidth="3.5" strokeLinecap="round" />
+      <Rect x="36" y="20" width="14" height="12" rx="3" fill="#F5A623" />
+      <Rect x="38" y="22" width="10" height="8" rx="2" fill="#E69520" />
+    </Svg>
+  );
+
     default:
       return (
         <Svg width={s} height={s} viewBox="0 0 60 60">
