@@ -10,11 +10,13 @@ import {
   StatusBar,
   Alert,
   Animated,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import useTaxiStore from '../../store/taxiStore';
 import FareEstimateCard from '../../components/FareEstimateCard';
+import PriceEstimate from '../../components/PriceEstimate';
 import StaticMap from '../../components/StaticMap';
 import ServiceIcon from '../../components/ServiceIcon';
 import api from '../../services/api';
@@ -52,6 +54,8 @@ export default function TaxiRequestScreen({ route, navigation }) {
   const [loadingLocation, setLoadingLocation] = useState(true);
   const [loadingEstimate, setLoadingEstimate] = useState(false);
   const [demandZones, setDemandZones] = useState([]);
+  const [showPriceEstimate, setShowPriceEstimate] = useState(false);
+  const [estimatedDistanceKm, setEstimatedDistanceKm] = useState(5);
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   // Detect origin via expo-location
@@ -172,12 +176,7 @@ export default function TaxiRequestScreen({ route, navigation }) {
     }
   };
 
-  const handleSearch = async () => {
-    if (!origin) {
-      Alert.alert('Position requise', 'Veuillez activer la localisation.');
-      return;
-    }
-
+  const doRequestTaxi = async () => {
     try {
       const order = await requestTaxi(
         { lat: origin.lat, lng: origin.lng, address: originAddress },
@@ -189,6 +188,17 @@ export default function TaxiRequestScreen({ route, navigation }) {
     } catch (err) {
       Alert.alert('Erreur', err?.message || 'Impossible de créer la demande de taxi.');
     }
+  };
+
+  const handleSearch = () => {
+    if (!origin) {
+      Alert.alert('Position requise', 'Veuillez activer la localisation.');
+      return;
+    }
+    // Compute a fictional distance estimate between 3 and 8 km if none known
+    const dist = fareEstimate?.distanceKm || (3 + Math.random() * 5);
+    setEstimatedDistanceKm(parseFloat(dist.toFixed(1)));
+    setShowPriceEstimate(true);
   };
 
   return (
@@ -340,6 +350,28 @@ export default function TaxiRequestScreen({ route, navigation }) {
 
         <View style={{ height: 32 }} />
       </ScrollView>
+
+      {/* PriceEstimate Modal */}
+      <Modal
+        visible={showPriceEstimate}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowPriceEstimate(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <PriceEstimate
+              serviceType="TAXI"
+              distanceKm={estimatedDistanceKm}
+              onConfirm={() => {
+                setShowPriceEstimate(false);
+                doRequestTaxi();
+              }}
+              onCancel={() => setShowPriceEstimate(false)}
+            />
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -458,4 +490,13 @@ const styles = StyleSheet.create({
   heatmapLabel: { fontSize: 13, color: COLORS.text, fontWeight: '600' },
   heatmapLevel: { fontSize: 11, fontWeight: '700', marginTop: 1 },
   heatmapHint: { fontSize: 10, color: COLORS.textMuted, marginTop: 4, fontStyle: 'italic' },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.75)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    padding: 16,
+    paddingBottom: 32,
+  },
 });

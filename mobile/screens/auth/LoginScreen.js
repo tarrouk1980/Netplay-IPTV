@@ -69,8 +69,16 @@ export default function LoginScreen({ navigation }) {
   };
 
   const handleLogin = async () => {
-    if (!phone.trim() || !password.trim()) {
-      Alert.alert('Erreur', 'Veuillez remplir tous les champs');
+    if (!phone.trim()) {
+      Alert.alert('Erreur', 'Veuillez saisir votre numéro de téléphone.');
+      return;
+    }
+    if (!password.trim()) {
+      Alert.alert('Erreur', 'Veuillez saisir votre mot de passe.');
+      return;
+    }
+    if (password.length < 6) {
+      Alert.alert('Erreur', 'Le mot de passe doit contenir au moins 6 caractères.');
       return;
     }
 

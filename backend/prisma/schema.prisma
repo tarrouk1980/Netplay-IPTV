@@ -82,6 +82,13 @@ model User {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
+  walletBalance         Float     @default(0)
+  loyaltyPoints         Int       @default(0)
+  subscriptionActive    Boolean   @default(false)
+  subscriptionExpiresAt DateTime?
+  suspended             Boolean   @default(false)
+  avgRating             Float     @default(0)
+
   subscription        Subscription[]
   vehicle             Vehicle[]
   merchant            Merchant?
@@ -95,6 +102,11 @@ model User {
   insuranceContracts  InsuranceContract[]
   referralRewardsGiven  ReferralReward[] @relation("ReferrerRewards")
   referralRewardsReceived ReferralReward[] @relation("RefereeRewards")
+  walletTransactions  WalletTransaction[]
+  loyaltyTransactions LoyaltyTransaction[]
+  reportsGiven        Report[]         @relation("ReporterReports")
+  reportsReceived     Report[]         @relation("ReportedReports")
+  backHomeRides       BackHomeRide[]
 }
 
 enum RewardType {
@@ -302,4 +314,53 @@ model Advertisement {
   isActive    Boolean     @default(true)
   createdAt   DateTime    @default(now())
   merchant    Merchant?   @relation(fields: [merchantId], references: [id])
+}
+
+model WalletTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  amount      Float
+  type        String   // RECHARGE | DEBIT | REFUND
+  description String
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model LoyaltyTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  points      Int
+  type        String   // EARN | REDEEM
+  description String
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model Report {
+  id          String    @id @default(cuid())
+  reporterId  String
+  reportedId  String
+  orderId     String?
+  reasons     String[]
+  details     String    @default("")
+  status      String    @default("PENDING") // PENDING | RESOLVED | DISMISSED
+  adminNote   String?
+  resolvedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  reporter    User      @relation("ReporterReports", fields: [reporterId], references: [id])
+  reported    User      @relation("ReportedReports", fields: [reportedId], references: [id])
+}
+
+model BackHomeRide {
+  id          String   @id @default(cuid())
+  driverId    String
+  destLat     Float
+  destLng     Float
+  destAddress String   @default("")
+  seatsTotal  Int      @default(1)
+  seatsLeft   Int      @default(1)
+  price       Float    @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  driver      User     @relation(fields: [driverId], references: [id])
 }

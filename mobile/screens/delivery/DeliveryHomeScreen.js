@@ -8,12 +8,14 @@ import {
   FlatList,
   ActivityIndicator,
   StatusBar,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import useDeliveryStore from '../../store/deliveryStore';
 import useLocationStore from '../../store/locationStore';
 import AdBanner from '../../components/AdBanner';
 import ServiceIcon from '../../components/ServiceIcon';
+import PriceEstimate from '../../components/PriceEstimate';
 
 const COLORS = {
   background: '#0A0A0F',
@@ -47,6 +49,8 @@ export default function DeliveryHomeScreen({ navigation }) {
   const { location } = useLocationStore();
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [pendingMerchant, setPendingMerchant] = useState(null);
+  const [showPriceEstimate, setShowPriceEstimate] = useState(false);
 
   const load = useCallback(() => {
     const filters = {};
@@ -90,10 +94,15 @@ export default function DeliveryHomeScreen({ navigation }) {
     </TouchableOpacity>
   );
 
+  const handleMerchantPress = (item) => {
+    setPendingMerchant(item);
+    setShowPriceEstimate(true);
+  };
+
   const renderMerchant = ({ item }) => (
     <TouchableOpacity
       style={styles.merchantCard}
-      onPress={() => navigation.navigate('Merchant', { merchantId: item.id })}
+      onPress={() => handleMerchantPress(item)}
       activeOpacity={0.85}
     >
       <View style={styles.merchantInfo}>
@@ -168,6 +177,34 @@ export default function DeliveryHomeScreen({ navigation }) {
           }
         />
       )}
+
+      {/* PriceEstimate Modal avant confirmation commande */}
+      <Modal
+        visible={showPriceEstimate}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowPriceEstimate(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <PriceEstimate
+              serviceType="DELIVERY"
+              distanceKm={pendingMerchant?.distanceKm ?? 3}
+              onConfirm={() => {
+                setShowPriceEstimate(false);
+                if (pendingMerchant) {
+                  navigation.navigate('Merchant', { merchantId: pendingMerchant.id });
+                }
+                setPendingMerchant(null);
+              }}
+              onCancel={() => {
+                setShowPriceEstimate(false);
+                setPendingMerchant(null);
+              }}
+            />
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -243,4 +280,13 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   emptyText: { color: COLORS.textMuted, textAlign: 'center', marginTop: 40, fontSize: 14 },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.75)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    padding: 16,
+    paddingBottom: 32,
+  },
 });

@@ -469,6 +469,42 @@ export default function RegisterScreen({ navigation }) {
     return Object.keys(errors).length === 0;
   }
 
+  // ── Alert-based step validation ─────────────────────────────────────────────
+
+  function validateStep() {
+    // Step 1 — infos de base
+    if (step === 1) {
+      if (!name.trim() || name.trim().length < 2) {
+        Alert.alert('Erreur', 'Le nom doit contenir au moins 2 caractères.');
+        return false;
+      }
+      // Validation téléphone tunisien: commence par +216 ou 00216, suivi de 8 chiffres
+      // Ou format local: 2x, 5x, 7x, 9x (8 chiffres)
+      const phoneClean = phone.replace(/\s/g, '');
+      const phoneRegex = /^(\+216|00216)?[2579]\d{7}$/;
+      // Pour les autres pays, on accepte le format générique
+      const isOtherCountry = selectedCountry.key !== 'TN';
+      if (!isOtherCountry && !phoneRegex.test(phoneClean)) {
+        Alert.alert('Erreur', 'Numéro de téléphone tunisien invalide.\nFormat: 5X XXX XXX ou +216 5X XXX XXX');
+        return false;
+      }
+      if (isOtherCountry && phoneClean.length < 7) {
+        Alert.alert('Erreur', 'Numéro de téléphone invalide.');
+        return false;
+      }
+      if (password.length < 8) {
+        Alert.alert('Erreur', 'Le mot de passe doit contenir au moins 8 caractères.');
+        return false;
+      }
+    }
+    // Step 2 — rôle (only for CLIENT going to recap, as role is on step 1 for non-CLIENT)
+    if (step === 1 && !role) {
+      Alert.alert('Erreur', 'Veuillez choisir un rôle.');
+      return false;
+    }
+    return true;
+  }
+
   // ── Step transitions ────────────────────────────────────────────────────────
 
   function animateToStep(nextStep) {
@@ -485,6 +521,7 @@ export default function RegisterScreen({ navigation }) {
 
   function handleNext() {
     setFieldErrors({});
+    if (!validateStep()) return;
     if (step === 1) {
       if (!validateStep1()) return;
       animateToStep(2);
