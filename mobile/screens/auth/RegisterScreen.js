@@ -123,6 +123,13 @@ const CHAUFFEUR_VEHICLE_TYPES = [
   { value: 'MOTO', label: 'Moto', svgKey: 'VEHICLE_MOTO' },
 ];
 
+const SEAT_OPTIONS = ['2', '3', '4', '5', '6', '7', '8'];
+const GENDER_PREF_OPTIONS = [
+  { value: 'ALL', label: 'Tous — hommes & femmes', emoji: '👥' },
+  { value: 'LADIES_ONLY', label: 'Femmes uniquement (EasyLady)', emoji: '👩' },
+  { value: 'MEN_ONLY', label: 'Hommes uniquement', emoji: '👨' },
+];
+
 const BRANDS_MODELS = {
   'Volkswagen': ['Golf','Polo','Passat','Tiguan','T-Roc','Caddy','Transporter','Autre'],
   'Renault': ['Clio','Megane','Scenic','Kadjar','Captur','Duster','Symbol','Logan','Sandero','Kangoo','Autre'],
@@ -384,6 +391,11 @@ export default function RegisterScreen({ navigation }) {
   const [vColor, setVColor] = useState('');
   const [chauffeurZones, setChauffeurZones] = useState([]);
   const [chauffeurFacePhoto, setChauffeurFacePhoto] = useState(null);
+  const [vSeats, setVSeats] = useState('4');
+  const [genderPref, setGenderPref] = useState('ALL');
+  const [isEasyLady, setIsEasyLady] = useState(false);
+  const [isPMR, setIsPMR] = useState(false);
+  const [pmrPhoto, setPmrPhoto] = useState(null);
 
   // Step 2 — LIVREUR
   const [deliveryVehicle, setDeliveryVehicle] = useState('MOTO');
@@ -889,6 +901,16 @@ export default function RegisterScreen({ navigation }) {
             editable={!isLoading}
           />
 
+          <PickerField
+            label="Nombre de places passagers"
+            required
+            value={vSeats}
+            options={SEAT_OPTIONS}
+            onSelect={setVSeats}
+            placeholder="Sélectionner..."
+            disabled={isLoading}
+          />
+
           <MultiPickerField
             label="Zone légale d'opération"
             required
@@ -898,6 +920,70 @@ export default function RegisterScreen({ navigation }) {
             placeholder="Gouvernorats autorisés..."
             disabled={isLoading}
           />
+
+          {/* Genre de clientèle acceptée */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Clientèle acceptée <Text style={{ color: COLORS.primary }}>*</Text></Text>
+            {GENDER_PREF_OPTIONS.map((opt) => (
+              <TouchableOpacity
+                key={opt.value}
+                style={[styles.radioRow, genderPref === opt.value && styles.radioRowSelected]}
+                onPress={() => {
+                  setGenderPref(opt.value);
+                  setIsEasyLady(opt.value === 'LADIES_ONLY');
+                }}
+                disabled={isLoading}
+              >
+                <View style={[styles.radioCircle, genderPref === opt.value && styles.radioCircleSelected]}>
+                  {genderPref === opt.value && <View style={styles.radioDot} />}
+                </View>
+                <Text style={styles.radioLabel}>{opt.emoji}  {opt.label}</Text>
+              </TouchableOpacity>
+            ))}
+            {genderPref === 'LADIES_ONLY' && (
+              <View style={styles.easyLadyBadge}>
+                <Text style={styles.easyLadyText}>✅ Votre profil sera estampillé EasyLady — vous n'apparaîtrez que pour les clientes.</Text>
+              </View>
+            )}
+          </View>
+
+          {/* Véhicule adapté PMR */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Véhicule adapté PMR (personnes à mobilité réduite) ?</Text>
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <TouchableOpacity
+                style={[styles.toggleBtn, isPMR && styles.toggleBtnActive]}
+                onPress={() => setIsPMR(true)}
+                disabled={isLoading}
+              >
+                <Text style={[styles.toggleBtnText, isPMR && styles.toggleBtnTextActive]}>♿ Oui, EasyAccess</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.toggleBtn, !isPMR && styles.toggleBtnActive]}
+                onPress={() => { setIsPMR(false); setPmrPhoto(null); }}
+                disabled={isLoading}
+              >
+                <Text style={[styles.toggleBtnText, !isPMR && styles.toggleBtnTextActive]}>Non</Text>
+              </TouchableOpacity>
+            </View>
+            {isPMR && (
+              <View style={{ marginTop: 12 }}>
+                <Text style={{ color: COLORS.textMuted, fontSize: 11, marginBottom: 8 }}>
+                  Photo de preuve : rampe d'accès, espace fauteuil roulant, etc.
+                </Text>
+                <TouchableOpacity style={styles.photoBtn} onPress={() => pickPhoto(setPmrPhoto, [4, 3])} disabled={isLoading}>
+                  {pmrPhoto ? (
+                    <Image source={{ uri: pmrPhoto }} style={styles.photoPreview} />
+                  ) : (
+                    <View style={styles.photoPlaceholder}>
+                      <Text style={{ fontSize: 28 }}>♿</Text>
+                      <Text style={{ color: COLORS.textMuted, fontSize: 12, marginTop: 6 }}>Photo de l'aménagement PMR</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
 
           <FacePhotoField
             value={chauffeurFacePhoto}
@@ -1401,4 +1487,25 @@ const styles = StyleSheet.create({
   loginContainer: { flexDirection: 'row', justifyContent: 'center', marginTop: 8 },
   loginText: { color: COLORS.textMuted, fontSize: 14 },
   loginLink: { color: COLORS.primary, fontWeight: '600', fontSize: 14 },
+
+  // ── Radio buttons (genre pref)
+  radioRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    paddingVertical: 12, paddingHorizontal: 14,
+    borderRadius: 12, borderWidth: 1, borderColor: COLORS.border,
+    marginBottom: 8, backgroundColor: COLORS.surface,
+  },
+  radioRowSelected: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryDim },
+  radioCircle: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center' },
+  radioCircleSelected: { borderColor: COLORS.primary },
+  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.primary },
+  radioLabel: { color: COLORS.text, fontSize: 14, flex: 1 },
+  easyLadyBadge: { backgroundColor: '#2A0A1A', borderRadius: 10, padding: 10, borderWidth: 1, borderColor: '#E91E8C44', marginTop: 4 },
+  easyLadyText: { color: '#E91E8C', fontSize: 12, lineHeight: 18 },
+
+  // ── Toggle buttons (PMR)
+  toggleBtn: { flex: 1, borderRadius: 10, paddingVertical: 12, alignItems: 'center', borderWidth: 1.5, borderColor: COLORS.border, backgroundColor: COLORS.surface },
+  toggleBtnActive: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryDim },
+  toggleBtnText: { color: COLORS.textMuted, fontSize: 13, fontWeight: '600' },
+  toggleBtnTextActive: { color: COLORS.primary },
 });

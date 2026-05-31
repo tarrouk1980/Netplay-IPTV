@@ -82,20 +82,23 @@ const SLIDES = [
   },
 ];
 
-// ─── Social Media Links ───────────────────────────────────────────────────────
+// ─── Social Media Links — pages officielles EASYWAY (à configurer) ───────────
 const SOCIALS = [
-  { name: 'Facebook', icon: 'f', color: '#1877F2', url: 'https://facebook.com' },
-  { name: 'Instagram', icon: '📸', color: '#E1306C', url: 'https://instagram.com' },
-  { name: 'TikTok', icon: '♪', color: '#FFFFFF', url: 'https://tiktok.com' },
-  { name: 'YouTube', icon: '▶', color: '#FF0000', url: 'https://youtube.com' },
-  { name: 'LinkedIn', icon: 'in', color: '#0A66C2', url: 'https://linkedin.com' },
+  { name: 'Facebook', icon: 'f', color: '#1877F2', url: null },
+  { name: 'Instagram', icon: '📸', color: '#E1306C', url: null },
+  { name: 'TikTok', icon: '♪', color: '#FFFFFF', url: null },
+  { name: 'YouTube', icon: '▶', color: '#FF0000', url: null },
+  { name: 'LinkedIn', icon: 'in', color: '#0A66C2', url: null },
 ];
 
 function SocialButton({ item }) {
   return (
     <TouchableOpacity
-      style={[styles.socialBtn, { borderColor: item.color }]}
-      onPress={() => Linking.openURL(item.url)}
+      style={[styles.socialBtn, { borderColor: item.color, opacity: 0.4 }]}
+      onPress={() => {
+        if (item.url) Linking.openURL(item.url);
+        // Pages EASYWAY en cours de création — bientôt disponibles
+      }}
       activeOpacity={0.75}
     >
       <Text style={[styles.socialIcon, { color: item.color }]}>{item.icon}</Text>
