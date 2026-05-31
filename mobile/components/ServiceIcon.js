@@ -493,13 +493,66 @@ export default function ServiceIcon({ service, size = 60 }) {
         </Svg>
       );
 
-    // ── ELECTRO — éclair ──
+    // ── ELECTRO — washing machine with porthole ──
     case 'ELECTRO':
       return (
         <Svg width={s} height={s} viewBox="0 0 60 60">
-          <Rect x="6" y="6" width="48" height="48" rx="10" fill="#F5A623" />
-          <Path d="M34 8 L20 32 L28 32 L26 52 L42 26 L34 26 Z" fill="#0A0A0F" />
-          <Path d="M34 14 L24 32 L30 32 L28 46 L38 28 L32 28 Z" fill="#F5A623" opacity="0.3" />
+          {/* Machine body */}
+          <Rect x="8" y="8" width="44" height="48" rx="6" fill="#37474F" />
+          <Rect x="10" y="10" width="40" height="44" rx="4" fill="#455A64" />
+          {/* Top panel */}
+          <Rect x="10" y="10" width="40" height="10" rx="4" fill="#263238" />
+          {/* Control buttons */}
+          <Circle cx="18" cy="15" r="2.5" fill="#F5A623" />
+          <Circle cx="26" cy="15" r="2.5" fill="#4FC3F7" />
+          <Rect x="32" y="12.5" width="14" height="5" rx="2.5" fill="#1565C0" />
+          <Rect x="34" y="13.5" width="10" height="3" rx="1.5" fill="#37474F" />
+          {/* Door ring */}
+          <Circle cx="30" cy="36" r="14" fill="#263238" />
+          <Circle cx="30" cy="36" r="12" fill="#37474F" />
+          {/* Porthole glass */}
+          <Circle cx="30" cy="36" r="10" fill="#1565C0" opacity="0.7" />
+          <Circle cx="30" cy="36" r="8" fill="#1976D2" opacity="0.5" />
+          {/* Water swirl */}
+          <Path d="M24 34 Q27 30 30 34 Q33 38 36 34" stroke="#4FC3F7" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+          <Path d="M24 37 Q27 33 30 37 Q33 41 36 37" stroke="#4FC3F7" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity="0.5" />
+          {/* Door handle */}
+          <Rect x="38" y="34" width="4" height="4" rx="2" fill="#546E7A" />
+          {/* Bottom panel */}
+          <Rect x="12" y="50" width="36" height="3" rx="1.5" fill="#263238" />
+          <Rect x="16" y="51" width="6" height="1.5" rx="1" fill="#455A64" />
+        </Svg>
+      );
+
+    // ── SUPERMARKET — storefront with sign, shelves, shopping cart ──
+    case 'SUPERMARKET':
+      return (
+        <Svg width={s} height={s} viewBox="0 0 60 60">
+          {/* Building */}
+          <Rect x="6" y="22" width="48" height="34" rx="3" fill="#1565C0" />
+          {/* Roof / awning */}
+          <Rect x="4" y="18" width="52" height="8" rx="3" fill="#0D47A1" />
+          {/* Awning stripes */}
+          <Rect x="4" y="18" width="8" height="8" rx="0" fill="#1976D2" />
+          <Rect x="20" y="18" width="8" height="8" rx="0" fill="#1976D2" />
+          <Rect x="36" y="18" width="8" height="8" rx="0" fill="#1976D2" />
+          {/* Sign */}
+          <Rect x="12" y="8" width="36" height="12" rx="3" fill="#F5A623" />
+          <Rect x="16" y="10" width="28" height="8" rx="2" fill="#E69520" />
+          {/* Door */}
+          <Rect x="23" y="38" width="14" height="18" rx="2" fill="#0D47A1" />
+          <Rect x="27" y="44" width="6" height="1.5" rx="1" fill="#4FC3F7" />
+          {/* Windows / shelves */}
+          <Rect x="8" y="28" width="14" height="12" rx="2" fill="#0D47A1" />
+          <Rect x="9" y="30" width="12" height="2" fill="#4FC3F7" opacity="0.5" />
+          <Rect x="9" y="34" width="12" height="2" fill="#4FC3F7" opacity="0.5" />
+          <Rect x="38" y="28" width="14" height="12" rx="2" fill="#0D47A1" />
+          <Rect x="39" y="30" width="12" height="2" fill="#4FC3F7" opacity="0.5" />
+          <Rect x="39" y="34" width="12" height="2" fill="#4FC3F7" opacity="0.5" />
+          {/* Cart icon on sign */}
+          <Path d="M22 12 L24 12 L26 17 L32 17 L33 14 L26 14" stroke="#FFFFFF" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+          <Circle cx="27" cy="18.5" r="1" fill="#FFFFFF" />
+          <Circle cx="31" cy="18.5" r="1" fill="#FFFFFF" />
         </Svg>
       );
 

@@ -373,8 +373,12 @@ export default function RegisterScreen({ navigation }) {
   const [shopName, setShopName] = useState('');
   const [shopCategory, setShopCategory] = useState('RESTAURANT');
   const [shopAddress, setShopAddress] = useState('');
+  const [shopGov, setShopGov] = useState('');
   const [shopPhone, setShopPhone] = useState('');
+  const [shopPhoneCountry, setShopPhoneCountry] = useState(COUNTRY_CODES[0]);
+  const [shopPhonePickerOpen, setShopPhonePickerOpen] = useState(false);
   const [shopCity, setShopCity] = useState('');
+  const [shopLogo, setShopLogo] = useState(null);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -622,9 +626,10 @@ export default function RegisterScreen({ navigation }) {
       rows.push(
         { label: 'Boutique', value: shopName },
         { label: 'Catégorie', value: catInfo ? `${catInfo.emoji} ${catInfo.label}` : shopCategory },
+        { label: 'Gouvernorat', value: shopGov },
         { label: 'Adresse', value: shopAddress },
       );
-      if (shopPhone) rows.push({ label: 'Tél. boutique', value: shopPhone });
+      if (shopPhone) rows.push({ label: 'Tél. boutique', value: `${shopPhoneCountry.code} ${shopPhone}` });
     }
 
     return rows.map((row, idx) => <RecapRow key={idx} label={row.label} value={row.value} />);
@@ -913,6 +918,22 @@ export default function RegisterScreen({ navigation }) {
           <Text style={styles.stepTitle}>Infos boutique</Text>
           <Text style={styles.stepSubtitle}>Votre établissement commercial</Text>
 
+          {/* Logo de la boutique */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Logo / Photo de la boutique <Text style={{ color: COLORS.primary }}>*</Text></Text>
+            <TouchableOpacity style={styles.photoBtn} onPress={() => pickPhoto(setShopLogo)} disabled={isLoading}>
+              {shopLogo ? (
+                <Image source={{ uri: shopLogo }} style={styles.photoPreview} />
+              ) : (
+                <View style={styles.photoPlaceholder}>
+                  <Text style={{ fontSize: 32 }}>🏪</Text>
+                  <Text style={{ color: COLORS.textMuted, fontSize: 13, marginTop: 6 }}>Ajouter un logo ou photo</Text>
+                  <Text style={{ color: COLORS.textMuted, fontSize: 11, marginTop: 2 }}>Façade, enseigne ou logo</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
+
           <InputField
             label="Nom de la boutique"
             required
@@ -932,26 +953,70 @@ export default function RegisterScreen({ navigation }) {
             disabled={isLoading}
           />
 
-          <InputField
-            label="Adresse de la boutique"
+          <PickerField
+            label="Gouvernorat / Wilaya"
             required
-            placeholder="Numéro, rue, ville"
+            value={shopGov}
+            options={ZONES_BY_COUNTRY[selectedCountry.key] || ZONES_BY_COUNTRY['TN']}
+            onSelect={(v) => { setShopGov(v); setFieldErrors((e) => ({ ...e, shopAddress: undefined })); }}
+            placeholder="Sélectionner votre région..."
+            disabled={isLoading}
+          />
+
+          <InputField
+            label="Adresse exacte"
+            required
+            placeholder="N° rue, quartier, ville"
             value={shopAddress}
             onChangeText={(v) => { setShopAddress(v); setFieldErrors((e) => ({ ...e, shopAddress: undefined })); }}
             error={fieldErrors.shopAddress}
             editable={!isLoading}
           />
 
-          <InputField
-            label="Téléphone boutique"
-            placeholder="Ex: +216 XX XXX XXX"
-            value={shopPhone}
-            onChangeText={setShopPhone}
-            keyboardType="phone-pad"
-            editable={!isLoading}
-          />
+          {/* Téléphone boutique avec indicatif */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Téléphone boutique</Text>
+            <View style={styles.phoneRow}>
+              <TouchableOpacity style={styles.countryPicker} onPress={() => setShopPhonePickerOpen(true)}>
+                <Modal visible={shopPhonePickerOpen} transparent animationType="slide" onRequestClose={() => setShopPhonePickerOpen(false)}>
+                  <TouchableOpacity style={pickerStyles.overlay} activeOpacity={1} onPress={() => setShopPhonePickerOpen(false)}>
+                    <View style={pickerStyles.sheet}>
+                      <View style={pickerStyles.handle} />
+                      <Text style={pickerStyles.title}>Indicatif pays</Text>
+                      <ScrollView style={pickerStyles.scroll} showsVerticalScrollIndicator={false}>
+                        {COUNTRY_CODES.map((c) => (
+                          <TouchableOpacity
+                            key={c.key}
+                            style={[pickerStyles.option, shopPhoneCountry.key === c.key && pickerStyles.optionSelected]}
+                            onPress={() => { setShopPhoneCountry(c); setShopPhonePickerOpen(false); }}
+                          >
+                            <Text style={[pickerStyles.optionText, shopPhoneCountry.key === c.key && { color: COLORS.primary, fontWeight: '700' }]}>
+                              {c.flag}  {c.code}  {c.label}
+                            </Text>
+                            {shopPhoneCountry.key === c.key && <Text style={{ color: COLORS.primary }}>✓</Text>}
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+                    </View>
+                  </TouchableOpacity>
+                </Modal>
+                <Text style={styles.countryFlag}>{shopPhoneCountry.flag}</Text>
+                <Text style={styles.countryCode}>{shopPhoneCountry.code}</Text>
+                <Text style={styles.countryChevron}>▼</Text>
+              </TouchableOpacity>
+              <TextInput
+                style={styles.phoneInput}
+                placeholder="XX XXX XXX"
+                placeholderTextColor={COLORS.textMuted}
+                value={shopPhone}
+                onChangeText={setShopPhone}
+                keyboardType="phone-pad"
+                editable={!isLoading}
+              />
+            </View>
+          </View>
 
-          <KycNote text="📷 Vous pourrez ajouter vos produits après validation" />
+          <KycNote text="📷 Après validation, vous pourrez ajouter vos produits et prix depuis votre tableau de bord" />
         </View>
       );
     }
