@@ -32,6 +32,7 @@ import TaxiHomeScreen from './screens/taxi/TaxiHomeScreen';
 import TaxiRequestScreen from './screens/taxi/TaxiRequestScreen';
 import TaxiTrackingScreen from './screens/taxi/TaxiTrackingScreen';
 import DriverDashboardScreen from './screens/taxi/DriverDashboardScreen';
+import DriverRequestScreen from './screens/taxi/DriverRequestScreen';
 
 // SOS Screens
 import SOSHomeScreen from './screens/sos/SOSHomeScreen';
@@ -78,6 +79,8 @@ import BuyPassScreen from './screens/subscriptions/BuyPassScreen';
 // Back Home Ride & Payment
 import BackHomeRideScreen from './screens/taxi/BackHomeRideScreen';
 import PaymentScreen from './screens/payment/PaymentScreen';
+import WalletScreen from './screens/wallet/WalletScreen';
+import ProviderDashboardScreen from './screens/provider/ProviderDashboardScreen';
 
 // Legal
 import CGUScreen from './screens/legal/CGUScreen';
@@ -143,6 +146,8 @@ function MainStack() {
       <Stack.Screen name="TaxiRequest" component={TaxiRequestScreen} options={{ title: 'Commander un taxi' }} />
       <Stack.Screen name="TaxiTracking" component={TaxiTrackingScreen} options={{ title: 'Suivi course', headerShown: false }} />
       <Stack.Screen name="DriverDashboard" component={DriverDashboardScreen} options={{ title: 'Tableau de bord', headerShown: false }} />
+      <Stack.Screen name="DriverRequest" component={DriverRequestScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ProviderDashboard" component={ProviderDashboardScreen} options={{ headerShown: false }} />
 
       {/* SOS */}
       <Stack.Screen name="SOSHome" component={SOSHomeScreen} options={{ title: 'SOS Remorquage', headerShown: false }} />
@@ -186,9 +191,10 @@ function MainStack() {
       {/* Subscriptions */}
       <Stack.Screen name="BuyPass" component={BuyPassScreen} options={{ title: 'Passer Premium' }} />
 
-      {/* Back Home Ride & Payment */}
+      {/* Back Home Ride & Payment & Wallet */}
       <Stack.Screen name="BackHomeRide" component={BackHomeRideScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Payment" component={PaymentScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Wallet" component={WalletScreen} options={{ headerShown: false }} />
 
       {/* Legal */}
       <Stack.Screen name="CGU" component={CGUScreen} options={{ headerShown: false }} />

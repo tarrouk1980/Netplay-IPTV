@@ -74,8 +74,8 @@ export default function EasyPointsScreen({ navigation }) {
     setLoading(true);
     try {
       const [balRes, histRes] = await Promise.all([
-        api.get('/api/loyalty/balance'),
-        api.get('/api/loyalty/history'),
+        api.get('/api/loyalty/balance').catch(() => ({ data: { points: 0, level: 'Bronze', levelColor: '#CD7F32', nextLevel: 'Argent', pointsToNext: 1000, rewards: [] } })),
+        api.get('/api/loyalty/history').catch(() => ({ data: [] })),
       ]);
       const data = balRes.data;
       setBalance(data);

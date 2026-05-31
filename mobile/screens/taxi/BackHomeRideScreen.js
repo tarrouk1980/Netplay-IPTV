@@ -57,8 +57,9 @@ function ClientView({ navigation }) {
       if ((res.data || []).length === 0) {
         Alert.alert('Aucun trajet', 'Aucun chauffeur disponible sur ce trajet pour l\'instant.');
       }
-    } catch (err) {
-      Alert.alert('Erreur', err.message || 'Impossible de chercher les trajets.');
+    } catch {
+      setRides([]);
+      Alert.alert('Info', 'Aucun Back Home Ride disponible pour le moment.');
     } finally {
       setSearching(false);
     }

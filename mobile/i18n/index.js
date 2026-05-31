@@ -130,8 +130,9 @@ export async function initI18n() {
     const saved = await AsyncStorage.getItem('appLanguage');
     if (saved && translations[saved]) {
       currentLang = saved;
-      if (saved === 'ar') I18nManager.forceRTL(true);
-      else I18nManager.forceRTL(false);
+      // RTL désactivé pour l'instant — sera activé quand l'UI arabe sera validée
+      // if (saved === 'ar') I18nManager.forceRTL(true);
+      I18nManager.forceRTL(false);
     }
   } catch {}
 }
@@ -140,8 +141,8 @@ export async function setLanguage(lang) {
   if (!translations[lang]) return;
   currentLang = lang;
   await AsyncStorage.setItem('appLanguage', lang);
-  if (lang === 'ar') I18nManager.forceRTL(true);
-  else I18nManager.forceRTL(false);
+  // RTL désactivé pour l'instant
+  I18nManager.forceRTL(false);
 }
 
 export function t(key) {
