@@ -194,6 +194,35 @@ router.get('/provider/:userId/profile', authenticate, async (req, res) => {
   }
 });
 
+// GET /api/users/provider/:userId/reviews
+router.get('/provider/:userId/reviews', authenticate, async (req, res) => {
+  try {
+    const ratings = await prisma.rating.findMany({
+      where: { providerId: req.params.userId },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+      select: {
+        id: true,
+        rating: true,
+        comment: true,
+        createdAt: true,
+        client: { select: { name: true } },
+      },
+    });
+    const formatted = ratings.map(r => ({
+      id: r.id,
+      rating: r.rating,
+      comment: r.comment,
+      clientName: r.client?.name || 'Client anonyme',
+      createdAt: r.createdAt,
+    }));
+    return res.json(formatted);
+  } catch (err) {
+    console.error('[users/provider/reviews]', err);
+    return res.json([]);
+  }
+});
+
 // GET /api/users/me/activity — 5 dernières commandes du CLIENT tous services confondus
 router.get('/me/activity', authenticate, async (req, res) => {
   const SERVICE_META = {

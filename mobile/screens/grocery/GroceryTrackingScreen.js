@@ -38,6 +38,7 @@ export default function GroceryTrackingScreen({ navigation, route }) {
   const [livreurLocation, setLivreurLocation] = useState(null);
   const [lastLocationUpdate, setLastLocationUpdate] = useState(null);
   const [showChat, setShowChat] = useState(false);
+  const [showRatingPrompt, setShowRatingPrompt] = useState(false);
   const liveDotAnim = useRef(new Animated.Value(1)).current;
 
   const order = currentOrder?.id === orderId ? currentOrder : null;
@@ -70,9 +71,21 @@ export default function GroceryTrackingScreen({ navigation, route }) {
     };
 
     socket.on('location:update', onLocationUpdate);
-    socket.on('grocery:accepted', () => {});
-    socket.on('grocery:in_progress', () => {});
-    socket.on('grocery:delivered', () => {});
+    socket.on('grocery:accepted', (data) => {
+      if (!data.orderId || data.orderId === orderId) {
+        // Store already handles state update via subscription
+      }
+    });
+    socket.on('grocery:in_progress', (data) => {
+      if (!data.orderId || data.orderId === orderId) {
+        // In progress — livreur heading to client
+      }
+    });
+    socket.on('grocery:delivered', (data) => {
+      if (!data.orderId || data.orderId === orderId) {
+        setTimeout(() => setShowRatingPrompt(true), 1500);
+      }
+    });
 
     return () => {
       socket.off('location:update', onLocationUpdate);
@@ -181,9 +194,27 @@ export default function GroceryTrackingScreen({ navigation, route }) {
           </TouchableOpacity>
         )}
         {status === 'COMPLETED' && (
-          <TouchableOpacity style={styles.homeBtn} onPress={() => navigation.navigate('GroceryHome')}>
-            <Text style={styles.homeBtnText}>Nouvelle commande</Text>
-          </TouchableOpacity>
+          <>
+            {showRatingPrompt && (
+              <TouchableOpacity
+                style={styles.rateBtn}
+                onPress={() => {
+                  setShowRatingPrompt(false);
+                  navigation.navigate('Rating', {
+                    orderId,
+                    serviceType: 'GROCERY',
+                    providerName: order?.driver?.name || 'Le livreur',
+                  });
+                }}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.rateBtnText}>⭐ Évaluer la livraison</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity style={styles.homeBtn} onPress={() => navigation.navigate('GroceryHome')}>
+              <Text style={styles.homeBtnText}>Nouvelle commande</Text>
+            </TouchableOpacity>
+          </>
         )}
       </ScrollView>
 
@@ -228,4 +259,12 @@ const styles = StyleSheet.create({
   cancelBtnText: { color: '#E74C3C', fontSize: 14, fontWeight: '600' },
   homeBtn: { backgroundColor: VIOLET, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
   homeBtnText: { color: TEXT, fontSize: 15, fontWeight: '700' },
+  rateBtn: {
+    backgroundColor: '#F5A623',
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  rateBtnText: { color: '#0A0A0F', fontSize: 15, fontWeight: '700' },
 });
