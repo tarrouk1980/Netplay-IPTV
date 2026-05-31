@@ -16,6 +16,7 @@ import useDeliveryStore from '../../store/deliveryStore';
 import useLocationStore from '../../store/locationStore';
 import usePassStore from '../../store/passStore';
 import PassAlertBanner from '../../components/PassAlertBanner';
+import StaticMap from '../../components/StaticMap';
 
 const COLORS = {
   background: '#0A0A0F',
@@ -35,11 +36,21 @@ export default function LivreurDashboardScreen({ navigation }) {
   const [isOnline, setIsOnline] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [earnings, setEarnings] = useState({ today: 0, week: 0, month: 0, deliveries: 0 });
 
   useEffect(() => {
     fetchAssignments();
     fetchPassStatus();
+    fetchEarnings();
   }, []);
+
+  const fetchEarnings = async () => {
+    try {
+      const api = (await import('../../services/api')).default;
+      const res = await api.get('/api/delivery/earnings').catch(() => ({ data: null }));
+      if (res.data) setEarnings(res.data);
+    } catch {}
+  };
 
   const handleToggleOnline = (value) => {
     if (value) {
@@ -106,10 +117,21 @@ export default function LivreurDashboardScreen({ navigation }) {
           </View>
         </View>
 
+        {/* Mini carte de livraison */}
+        {(meta.destLat || meta.clientLat) && (
+          <StaticMap
+            lat={meta.destLat || meta.clientLat}
+            lng={meta.destLng || meta.clientLng}
+            height={120}
+            zoom={14}
+            style={{ borderRadius: 10, marginBottom: 10 }}
+          />
+        )}
+
         <View style={styles.addressSection}>
           <View style={styles.addressRow}>
             <Text style={styles.addressIcon}>🏪</Text>
-            <Text style={styles.addressText}>Récupérer chez le marchand</Text>
+            <Text style={styles.addressText}>{meta.merchantAddress || 'Récupérer chez le marchand'}</Text>
           </View>
           <View style={styles.addressDivider} />
           <View style={styles.addressRow}>
@@ -206,6 +228,22 @@ export default function LivreurDashboardScreen({ navigation }) {
         )}
       </View>
 
+      {/* Gains */}
+      <View style={styles.earningsRow}>
+        <View style={styles.earningCard}>
+          <Text style={styles.earningValue}>{earnings.today.toFixed(1)}</Text>
+          <Text style={styles.earningLabel}>TND aujourd'hui</Text>
+        </View>
+        <View style={styles.earningCard}>
+          <Text style={styles.earningValue}>{earnings.week.toFixed(1)}</Text>
+          <Text style={styles.earningLabel}>TND cette semaine</Text>
+        </View>
+        <View style={styles.earningCard}>
+          <Text style={[styles.earningValue, { color: COLORS.green }]}>{earnings.deliveries}</Text>
+          <Text style={styles.earningLabel}>Livraisons</Text>
+        </View>
+      </View>
+
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Mes assignations</Text>
         <Text style={styles.sectionCount}>{livreurAssignments.length}</Text>
@@ -289,6 +327,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   listContent: { paddingHorizontal: 20, paddingBottom: 40 },
+  earningsRow: { flexDirection: 'row', marginHorizontal: 20, marginBottom: 12, gap: 10 },
+  earningCard: { flex: 1, backgroundColor: COLORS.surface, borderRadius: 12, padding: 12, alignItems: 'center' },
+  earningValue: { color: COLORS.text, fontSize: 18, fontWeight: '800' },
+  earningLabel: { color: COLORS.textMuted, fontSize: 10, marginTop: 2, textAlign: 'center' },
   orderCard: {
     backgroundColor: COLORS.surface,
     borderRadius: 14,

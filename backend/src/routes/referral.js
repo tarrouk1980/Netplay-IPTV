@@ -69,6 +69,21 @@ router.get('/my-stats', authenticate, async (req, res) => {
   }
 });
 
+// GET /api/referral/history — list users referred by me
+router.get('/history', authenticate, async (req, res) => {
+  try {
+    const referrals = await prisma.user.findMany({
+      where: { referredBy: req.user.id },
+      select: { id: true, name: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+    res.json(referrals);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /api/referral/apply — CLIENT authenticated — body: { code }
 router.post(
   '/apply',

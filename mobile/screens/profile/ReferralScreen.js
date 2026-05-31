@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import useReferralStore from '../../store/referralStore';
+import api from '../../services/api';
 
 const COLORS = {
   background: '#0A0A0F',
@@ -29,10 +30,23 @@ export default function ReferralScreen({ navigation }) {
   const { code, stats, isLoading, fetchMyCode, fetchStats, applyCode, clearError } = useReferralStore();
   const [friendCode, setFriendCode] = useState('');
   const [applying, setApplying] = useState(false);
+  const [referrals, setReferrals] = useState([]);
+  const [loadingReferrals, setLoadingReferrals] = useState(false);
 
   useEffect(() => {
-    fetchStats(); // also returns code
+    fetchStats();
+    fetchReferralHistory();
   }, []);
+
+  const fetchReferralHistory = async () => {
+    setLoadingReferrals(true);
+    try {
+      const res = await api.get('/api/referral/history').catch(() => ({ data: [] }));
+      setReferrals(res.data || []);
+    } finally {
+      setLoadingReferrals(false);
+    }
+  };
 
   const handleShare = async () => {
     if (!code) return;
@@ -100,8 +114,39 @@ export default function ReferralScreen({ navigation }) {
             </View>
             <View style={[styles.statBox, styles.statBoxAccent]}>
               <Text style={[styles.statValue, { color: COLORS.accent }]}>{stats.totalRewardsEarned}</Text>
-              <Text style={styles.statLabel}>Amis invités</Text>
+              <Text style={styles.statLabel}>Jours gagnés</Text>
             </View>
+            <View style={styles.statBox}>
+              <Text style={[styles.statValue, { color: '#27AE60' }]}>{(stats.referrals || 0) * 100}</Text>
+              <Text style={styles.statLabel}>EasyPoints</Text>
+            </View>
+          </View>
+        )}
+
+        {/* Referral history */}
+        {(referrals.length > 0 || loadingReferrals) && (
+          <View style={styles.card}>
+            <Text style={styles.cardLabel}>MES FILLEULS</Text>
+            {loadingReferrals ? (
+              <ActivityIndicator color={COLORS.accent} />
+            ) : (
+              referrals.map((r, i) => (
+                <View key={r.id || i} style={styles.referralRow}>
+                  <View style={styles.referralAvatar}>
+                    <Text style={styles.referralAvatarText}>{(r.name || 'F')[0].toUpperCase()}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.referralName}>{r.name || 'Filleul'}</Text>
+                    <Text style={styles.referralDate}>
+                      Inscrit le {r.createdAt ? new Date(r.createdAt).toLocaleDateString('fr-TN') : ''}
+                    </Text>
+                  </View>
+                  <View style={styles.referralReward}>
+                    <Text style={styles.referralRewardText}>+1j 🎁</Text>
+                  </View>
+                </View>
+              ))
+            )}
           </View>
         )}
 
@@ -242,4 +287,11 @@ const styles = StyleSheet.create({
     lineHeight: 28,
   },
   stepText: { flex: 1, color: COLORS.text, fontSize: 14, lineHeight: 20 },
+  referralRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: COLORS.border, gap: 12 },
+  referralAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: COLORS.accent + '33', alignItems: 'center', justifyContent: 'center' },
+  referralAvatarText: { color: COLORS.accent, fontWeight: '700', fontSize: 16 },
+  referralName: { color: COLORS.text, fontWeight: '600', fontSize: 14 },
+  referralDate: { color: COLORS.textMuted, fontSize: 11, marginTop: 2 },
+  referralReward: { backgroundColor: COLORS.success + '22', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10 },
+  referralRewardText: { color: COLORS.success, fontWeight: '700', fontSize: 12 },
 });

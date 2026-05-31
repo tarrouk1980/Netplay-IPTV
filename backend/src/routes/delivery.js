@@ -549,4 +549,43 @@ router.post('/:id/complete', authenticate, requireRole('LIVREUR'), async (req, r
   return res.json({ order: completed });
 });
 
+// GET /api/delivery/earnings — livreur gains today/week/month
+router.get('/earnings', authenticate, async (req, res) => {
+  try {
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const [todayRes, weekRes, monthRes, countRes] = await Promise.all([
+      prisma.order.aggregate({
+        where: { driverId: req.user.id, status: 'COMPLETED', updatedAt: { gte: startOfDay } },
+        _sum: { price: true },
+      }),
+      prisma.order.aggregate({
+        where: { driverId: req.user.id, status: 'COMPLETED', updatedAt: { gte: startOfWeek } },
+        _sum: { price: true },
+      }),
+      prisma.order.aggregate({
+        where: { driverId: req.user.id, status: 'COMPLETED', updatedAt: { gte: startOfMonth } },
+        _sum: { price: true },
+      }),
+      prisma.order.count({
+        where: { driverId: req.user.id, status: 'COMPLETED', updatedAt: { gte: startOfMonth } },
+      }),
+    ]);
+
+    res.json({
+      today: todayRes._sum.price || 0,
+      week: weekRes._sum.price || 0,
+      month: monthRes._sum.price || 0,
+      deliveries: countRes,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
