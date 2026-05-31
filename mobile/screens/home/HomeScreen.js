@@ -77,20 +77,30 @@ export default function HomeScreen({ navigation }) {
     fetchSubscription();
     fetchActivity();
 
+    if (!user?.role) return;
+
     const PROVIDER_ROLES = ['CHAUFFEUR', 'LIVREUR', 'DEPANNEUR', 'MARCHAND'];
 
-    // Prestataires avec KYC en attente → écran d'attente
-    if (PROVIDER_ROLES.includes(user?.role) && user?.kycStatus === 'PENDING') {
-      navigation.replace('KYCPending');
+    if (user.role === 'ADMIN') {
+      navigation.replace('AdminDashboard');
       return;
     }
 
-    // Rediriger les prestataires approuvés vers leur dashboard
-    if (user?.role === 'CHAUFFEUR') navigation.replace('DriverDashboard');
-    else if (user?.role === 'LIVREUR') navigation.replace('LivreurDashboard');
-    else if (user?.role === 'DEPANNEUR') navigation.replace('DepanneurDashboard');
-    else if (user?.role === 'MARCHAND') navigation.replace('MerchantDashboard');
-    else if (user?.role === 'ADMIN') navigation.replace('AdminDashboard');
+    if (PROVIDER_ROLES.includes(user.role)) {
+      // Tout prestataire non encore approuvé → attente KYC
+      if (user.kycStatus !== 'APPROVED') {
+        navigation.replace('KYCPending');
+        return;
+      }
+      // Prestataire approuvé → son tableau de bord
+      if (user.role === 'CHAUFFEUR') navigation.replace('DriverDashboard');
+      else if (user.role === 'LIVREUR') navigation.replace('LivreurDashboard');
+      else if (user.role === 'DEPANNEUR') navigation.replace('DepanneurDashboard');
+      else if (user.role === 'MARCHAND') navigation.replace('MerchantDashboard');
+      return;
+    }
+
+    // CLIENT → reste sur HomeScreen (ne pas rediriger)
   }, [user?.role, user?.kycStatus]);
 
   const getGreeting = () => {
