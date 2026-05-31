@@ -184,6 +184,21 @@ export default function ServiceIcon({ service, size = 60 }) {
       );
 
     // ── GROCERY — caddie violet stylisé ──
+    // ── CLIENT — silhouette personne bleu moderne ──
+    case 'CLIENT':
+      return (
+        <Svg width={s} height={s} viewBox="0 0 60 60">
+          {/* Fond cercle */}
+          <Circle cx="30" cy="30" r="28" fill="#1565C0" opacity="0.15" />
+          {/* Tête */}
+          <Circle cx="30" cy="20" r="10" fill="#1976D2" />
+          {/* Corps */}
+          <Path d="M10 52 Q10 36 30 36 Q50 36 50 52 Z" fill="#1976D2" />
+          {/* Reflet tête */}
+          <Circle cx="26" cy="17" r="3.5" fill="#42A5F5" opacity="0.4" />
+        </Svg>
+      );
+
     case 'GROCERY':
       return (
         <Svg width={s} height={s} viewBox="0 0 60 60">

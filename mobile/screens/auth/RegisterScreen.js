@@ -40,7 +40,7 @@ const COLORS = {
 };
 
 const ROLES = [
-  { value: 'CLIENT', label: 'Client', emoji: '👤' },
+  { value: 'CLIENT', label: 'Client', svgKey: 'CLIENT' },
   { value: 'CHAUFFEUR', label: 'Chauffeur', svgKey: 'EASYTAXY' },
   { value: 'LIVREUR', label: 'Livreur', svgKey: 'DELIVERY' },
   { value: 'DEPANNEUR', label: 'Dépanneur', svgKey: 'SOS' },
