@@ -49,13 +49,13 @@ const TAB_SERVICE_MAP = {
   'Livraison': 'DELIVERY',
 };
 
-function OrderItem({ item }) {
+function OrderItem({ item, onPress }) {
   const meta = SERVICE_META[item.serviceType] || { label: item.serviceType, emoji: '📦', color: COLORS.textMuted };
   const statusCfg = STATUS_LABELS[item.status] || { label: item.status, color: COLORS.textMuted };
   const price = item.finalPrice ?? item.price;
 
   return (
-    <View style={styles.item}>
+    <TouchableOpacity style={styles.item} onPress={onPress} activeOpacity={0.85}>
       <View style={styles.itemHeader}>
         <Text style={[styles.itemEmoji]}>{meta.emoji}</Text>
         <View style={styles.itemHeaderInfo}>
@@ -84,7 +84,8 @@ function OrderItem({ item }) {
       {price != null && (
         <Text style={styles.itemPrice}>{parseFloat(price).toFixed(3)} TND</Text>
       )}
-    </View>
+      <Text style={{ color: '#4A4A5A', fontSize: 11, textAlign: 'right', marginTop: 4 }}>Voir détails ›</Text>
+    </TouchableOpacity>
   );
 }
 
@@ -154,7 +155,12 @@ export default function HistoryScreen({ navigation }) {
         <FlatList
           data={filtered}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <OrderItem item={item} />}
+          renderItem={({ item }) => (
+            <OrderItem
+              item={item}
+              onPress={() => navigation.navigate('HistoryDetail', { orderId: item.id, orderData: item })}
+            />
+          )}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />}
           contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
           ListEmptyComponent={

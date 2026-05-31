@@ -20,6 +20,7 @@ import NotificationBadge from '../../components/NotificationBadge';
 import EasywayLogo from '../../components/EasywayLogo';
 import ServiceIcon from '../../components/ServiceIcon';
 import api from '../../services/api';
+import WeatherWidget from './WeatherWidget';
 
 const COLORS = {
   background: '#0A0A0F',
@@ -208,6 +209,9 @@ export default function HomeScreen({ navigation }) {
             />
           ))}
         </View>
+
+        {/* Widget météo + suggestion taxi si pluie */}
+        <WeatherWidget onTaxiSuggest={() => navigation.navigate('TaxiHome')} />
 
         {/* Bannière pub héro dynamique */}
         {heroBanner && (

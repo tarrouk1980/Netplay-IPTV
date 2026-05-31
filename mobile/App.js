@@ -88,6 +88,13 @@ import CGUScreen from './screens/legal/CGUScreen';
 // Loyalty & Emergency
 import EasyPointsScreen from './screens/loyalty/EasyPointsScreen';
 import EmergencyScreen from './screens/emergency/EmergencyScreen';
+import SilentSOSScreen from './screens/emergency/SilentSOSScreen';
+
+// Business
+import EasyBusinessScreen from './screens/business/EasyBusinessScreen';
+
+// History Detail
+import HistoryDetailScreen from './screens/profile/HistoryDetailScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -202,6 +209,13 @@ function MainStack() {
       {/* Loyalty & Emergency */}
       <Stack.Screen name="EasyPoints" component={EasyPointsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Emergency" component={EmergencyScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="SilentSOS" component={SilentSOSScreen} options={{ headerShown: false }} />
+
+      {/* Business */}
+      <Stack.Screen name="EasyBusiness" component={EasyBusinessScreen} options={{ headerShown: false }} />
+
+      {/* History Detail */}
+      <Stack.Screen name="HistoryDetail" component={HistoryDetailScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }

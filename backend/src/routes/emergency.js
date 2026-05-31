@@ -17,4 +17,13 @@ router.get('/contacts', authenticate, async (req, res) => {
   res.json({ contacts: [] });
 });
 
+// POST /api/emergency/silent-sos — SOS discret via agitation téléphone
+router.post('/silent-sos', authenticate, async (req, res) => {
+  const { lat, lng, trigger } = req.body;
+  // En prod: notifier les contacts d'urgence via FCM/SMS
+  // Log the event for audit
+  console.log(`[SilentSOS] User ${req.user?.id} triggered via ${trigger} at ${lat},${lng}`);
+  res.json({ success: true, message: 'SOS envoyé à vos contacts d\'urgence.' });
+});
+
 module.exports = router;

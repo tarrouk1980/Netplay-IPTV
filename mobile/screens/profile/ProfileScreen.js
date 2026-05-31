@@ -214,6 +214,14 @@ export default function ProfileScreen({ navigation }) {
             <Text style={styles.quickLinkText}>🏆 EasyPoints</Text>
             <Text style={styles.quickLinkArrow}>›</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={styles.quickLink} onPress={() => navigation.navigate('EasyBusiness')}>
+            <Text style={styles.quickLinkText}>🏢 EasyBusiness</Text>
+            <Text style={styles.quickLinkArrow}>›</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.quickLink} onPress={() => navigation.navigate('SilentSOS')}>
+            <Text style={styles.quickLinkText}>📱 SOS Discret</Text>
+            <Text style={styles.quickLinkArrow}>›</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.quickLink} onPress={() => navigation.navigate('Emergency')}>
             <Text style={styles.quickLinkText}>🆘 Urgence Famille</Text>
             <Text style={styles.quickLinkArrow}>›</Text>
