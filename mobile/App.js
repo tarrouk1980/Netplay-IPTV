@@ -275,6 +275,11 @@ import ClientOrdersAllScreen from './screens/profile/ClientOrdersAllScreen';
 import AdminCouponListScreen from './screens/admin/AdminCouponListScreen';
 import DeliveryRatingScreen from './screens/delivery/DeliveryRatingScreen';
 
+// Batch 35
+import DeliveryOrderSummaryScreen from './screens/delivery/DeliveryOrderSummaryScreen';
+import AdminProviderPayoutsScreen from './screens/admin/AdminProviderPayoutsScreen';
+import ClientNotificationPrefsScreen from './screens/profile/ClientNotificationPrefsScreen';
+
 // Batch 34
 import GroceryStoreAnalyticsScreen from './screens/grocery/GroceryStoreAnalyticsScreen';
 import AdminAppVersionScreen from './screens/admin/AdminAppVersionScreen';
@@ -542,6 +547,9 @@ function MainStack() {
       <Stack.Screen name="GroceryStoreAnalytics" component={GroceryStoreAnalyticsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminAppVersion" component={AdminAppVersionScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiReceipt" component={TaxiReceiptScreen} options={{ headerShown: false, gestureEnabled: false }} />
+      <Stack.Screen name="DeliveryOrderSummary" component={DeliveryOrderSummaryScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminProviderPayouts" component={AdminProviderPayoutsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ClientNotificationPrefs" component={ClientNotificationPrefsScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
