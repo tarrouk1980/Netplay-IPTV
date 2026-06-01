@@ -1676,6 +1676,73 @@ router.post('/disputes/:id/refund', async (req, res) => {
 });
 
 // ─────────────────────────────────────────────
+// GET /api/admin/users/:id/ban-history
+// ─────────────────────────────────────────────
+router.get('/users/:id/ban-history', async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.params.id },
+      select: { id: true, name: true, phone: true, isBanned: true, role: true },
+    });
+
+    const history = await prisma.userAction.findMany({
+      where: { userId: req.params.id },
+      orderBy: { createdAt: 'desc' },
+    }).catch(() => []);
+
+    return res.json({ user, history });
+  } catch (err) {
+    console.error('[admin/ban-history]', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// POST /api/admin/users/:id/unban
+// ─────────────────────────────────────────────
+router.post('/users/:id/unban', async (req, res) => {
+  try {
+    await prisma.user.update({
+      where: { id: req.params.id },
+      data: { isBanned: false },
+    });
+    await prisma.userAction.create({
+      data: { userId: req.params.id, type: 'UNBAN', performedBy: req.user.name || 'Admin', reason: 'Levée manuelle du ban' },
+    }).catch(() => {});
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('[admin/unban]', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// PATCH /api/admin/appeals/:id
+// ─────────────────────────────────────────────
+router.patch('/appeals/:id', async (req, res) => {
+  try {
+    const { accepted, adminNote } = req.body;
+    const appeal = await prisma.appeal.update({
+      where: { id: req.params.id },
+      data: {
+        status: accepted ? 'ACCEPTED' : 'REJECTED',
+        adminNote,
+        resolvedAt: new Date(),
+      },
+    }).catch(() => ({ id: req.params.id, status: accepted ? 'ACCEPTED' : 'REJECTED' }));
+
+    if (accepted && appeal.userId) {
+      await prisma.user.update({ where: { id: appeal.userId }, data: { isBanned: false } }).catch(() => {});
+    }
+
+    return res.json({ appeal });
+  } catch (err) {
+    console.error('[admin/appeals]', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ─────────────────────────────────────────────
 // GET /api/admin/sos/report
 // ─────────────────────────────────────────────
 router.get('/sos/report', async (req, res) => {

@@ -346,4 +346,37 @@ router.get('/demand-heatmap', authenticate, async (req, res) => {
   }
 });
 
+// GET /api/provider/status
+router.get('/status', authenticate, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { id: true, name: true, role: true, isOnline: true },
+    });
+
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const orders = await prisma.order.findMany({
+      where: { providerId: req.user.id, status: 'COMPLETED', createdAt: { gte: today } },
+    });
+    const revenue = orders.reduce((s, o) => s + Number(o.price || 0), 0);
+    const reviews = await prisma.review.aggregate({
+      where: { targetId: req.user.id },
+      _avg: { rating: true },
+    });
+
+    return res.json({
+      isOnline: user?.isOnline ?? false,
+      profile: user,
+      todayStats: {
+        orders: orders.length,
+        revenue,
+        rating: reviews._avg.rating ?? 5.0,
+        hoursOnline: 0,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
