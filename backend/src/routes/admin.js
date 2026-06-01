@@ -1587,6 +1587,48 @@ router.post('/promo-codes/bulk', requireAdmin, async (req, res) => {
 });
 
 // ─────────────────────────────────────────────
+// GET /api/admin/promo-codes/:id
+// PATCH /api/admin/promo-codes/:id
+// ─────────────────────────────────────────────
+router.get('/promo-codes/:id', async (req, res) => {
+  try {
+    const promo = await prisma.promoCode.findFirst({
+      where: { OR: [{ id: req.params.id }, { code: req.params.id }] },
+    }).catch(() => null);
+    if (!promo) return res.status(404).json({ error: 'Not found' });
+
+    const usages = await prisma.promoUsage.findMany({
+      where: { promoCodeId: promo.id },
+      include: { user: { select: { name: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+    }).catch(() => []);
+
+    const totalSavings = usages.reduce((s, u) => s + Number(u.discount || 0), 0);
+    return res.json({ promo: { ...promo, usedCount: usages.length, totalSavings }, usages });
+  } catch (err) {
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.patch('/promo-codes/:id', async (req, res) => {
+  try {
+    const { maxUses, expiresAt, active } = req.body;
+    const updated = await prisma.promoCode.update({
+      where: { id: req.params.id },
+      data: {
+        ...(maxUses !== undefined ? { maxUses: maxUses || null } : {}),
+        ...(expiresAt !== undefined ? { expiresAt: expiresAt ? new Date(expiresAt) : null } : {}),
+        ...(active !== undefined ? { active } : {}),
+      },
+    });
+    return res.json({ promo: updated });
+  } catch (err) {
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ─────────────────────────────────────────────
 // GET/PUT /api/admin/config
 // ─────────────────────────────────────────────
 router.get('/config', async (req, res) => {

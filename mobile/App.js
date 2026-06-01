@@ -226,6 +226,11 @@ import ClientProfileEditScreen from './screens/profile/ClientProfileEditScreen';
 import AdminAppConfigScreen from './screens/admin/AdminAppConfigScreen';
 import DeliveryOrderDetailScreen from './screens/delivery/DeliveryOrderDetailScreen';
 
+// Batch 23
+import TaxiOrderDetailScreen from './screens/taxi/TaxiOrderDetailScreen';
+import AdminPromoDetailScreen from './screens/admin/AdminPromoDetailScreen';
+import ProviderRatingDetailScreen from './screens/provider/ProviderRatingDetailScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -448,6 +453,9 @@ function MainStack() {
       <Stack.Screen name="ClientProfileEdit" component={ClientProfileEditScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminAppConfig" component={AdminAppConfigScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DeliveryOrderDetail" component={DeliveryOrderDetailScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="TaxiOrderDetail" component={TaxiOrderDetailScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminPromoDetail" component={AdminPromoDetailScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ProviderRatingDetail" component={ProviderRatingDetailScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
