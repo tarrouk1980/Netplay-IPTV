@@ -861,6 +861,35 @@ router.post(
   }
 );
 
+// PATCH /api/sos/orders/:id/status
+router.patch('/orders/:id/status', authenticate, async (req, res) => {
+  try {
+    const { status } = req.body;
+    const order = await prisma.order.update({
+      where: { id: req.params.id },
+      data: { status, ...(status === 'COMPLETED' ? { completedAt: new Date() } : {}) },
+    });
+    return res.json({ order });
+  } catch (err) {
+    console.error('[sos/orders/status]', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PATCH /api/sos/orders/:id/complete
+router.patch('/orders/:id/complete', authenticate, async (req, res) => {
+  try {
+    const order = await prisma.order.update({
+      where: { id: req.params.id },
+      data: { status: 'COMPLETED', completedAt: new Date() },
+    });
+    return res.json({ order });
+  } catch (err) {
+    console.error('[sos/orders/complete]', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // ─────────────────────────────────────────────
 // GET /api/sos/depanneur/dashboard
 // ─────────────────────────────────────────────

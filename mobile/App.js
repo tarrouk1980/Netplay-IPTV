@@ -216,6 +216,11 @@ import AdminPassManagementScreen from './screens/admin/AdminPassManagementScreen
 import DriverRideHistoryScreen from './screens/taxi/DriverRideHistoryScreen';
 import AppSettingsScreen from './screens/profile/AppSettingsScreen';
 
+// Batch 21
+import SOSOrderDetailScreen from './screens/sos/SOSOrderDetailScreen';
+import AdminZoneManagementScreen from './screens/admin/AdminZoneManagementScreen';
+import ProviderEarningsDashboardScreen from './screens/provider/ProviderEarningsDashboardScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -432,6 +437,9 @@ function MainStack() {
       <Stack.Screen name="AdminPassManagement" component={AdminPassManagementScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DriverRideHistory" component={DriverRideHistoryScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AppSettings" component={AppSettingsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="SOSOrderDetail" component={SOSOrderDetailScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminZoneManagement" component={AdminZoneManagementScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ProviderEarningsDashboard" component={ProviderEarningsDashboardScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }

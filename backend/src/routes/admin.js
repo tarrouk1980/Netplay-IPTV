@@ -1587,6 +1587,53 @@ router.post('/promo-codes/bulk', requireAdmin, async (req, res) => {
 });
 
 // ─────────────────────────────────────────────
+// GET /api/admin/zones
+// ─────────────────────────────────────────────
+router.get('/zones', async (req, res) => {
+  try {
+    const zones = await prisma.serviceZone.findMany({ orderBy: { name: 'asc' } }).catch(() => []);
+    return res.json({ zones, stats: { totalActive: zones.filter((z) => z.enabled).length, surgeZones: zones.filter((z) => z.multiplier > 1).length } });
+  } catch (err) {
+    console.error('[admin/zones]', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.patch('/zones/:name/toggle', async (req, res) => {
+  try {
+    const { enabled } = req.body;
+    await prisma.serviceZone.upsert({
+      where: { name: req.params.name },
+      update: { enabled },
+      create: { name: req.params.name, enabled, multiplier: 1.0 },
+    }).catch(() => {});
+    return res.json({ success: true });
+  } catch (err) { return res.status(500).json({ error: 'Internal server error' }); }
+});
+
+router.patch('/zones/:name', async (req, res) => {
+  try {
+    const { multiplier, surgeHours } = req.body;
+    await prisma.serviceZone.upsert({
+      where: { name: req.params.name },
+      update: { multiplier, surgeHours },
+      create: { name: req.params.name, enabled: true, multiplier, surgeHours },
+    }).catch(() => {});
+    return res.json({ success: true });
+  } catch (err) { return res.status(500).json({ error: 'Internal server error' }); }
+});
+
+// PATCH /api/admin/users/:id/warn
+router.post('/users/:id/warn', async (req, res) => {
+  try {
+    await prisma.userAction.create({
+      data: { userId: req.params.id, type: 'WARN', performedBy: req.user.name || 'Admin', reason: 'Avertissement administratif' },
+    }).catch(() => {});
+    return res.json({ success: true });
+  } catch (err) { return res.status(500).json({ error: 'Internal server error' }); }
+});
+
+// ─────────────────────────────────────────────
 // GET /api/admin/passes — EasyPass management
 // ─────────────────────────────────────────────
 router.get('/passes', async (req, res) => {

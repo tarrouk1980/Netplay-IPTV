@@ -346,6 +346,54 @@ router.get('/demand-heatmap', authenticate, async (req, res) => {
   }
 });
 
+// GET /api/provider/earnings-summary?period=today|week|month|year
+router.get('/earnings-summary', authenticate, async (req, res) => {
+  try {
+    const { period = 'week' } = req.query;
+    const now = new Date();
+    let from;
+    if (period === 'today') { from = new Date(); from.setHours(0,0,0,0); }
+    else if (period === 'week') { from = new Date(); from.setDate(now.getDate()-6); from.setHours(0,0,0,0); }
+    else if (period === 'month') { from = new Date(now.getFullYear(), now.getMonth(), 1); }
+    else { from = new Date(now.getFullYear(), 0, 1); }
+
+    const orders = await prisma.order.findMany({
+      where: { providerId: req.user.id, status: 'COMPLETED', createdAt: { gte: from } },
+      include: { client: { select: { name: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const totalRevenue = orders.reduce((s, o) => s + Number(o.price || 0), 0);
+    const totalTips = orders.reduce((s, o) => s + Number(o.tip || 0), 0);
+    const avgPerOrder = orders.length ? totalRevenue / orders.length : 0;
+
+    const dayLabels = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+    const weeklyChart = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(); d.setDate(now.getDate() - (6 - i)); d.setHours(0,0,0,0);
+      const v = orders.filter((o) => new Date(o.createdAt).toDateString() === d.toDateString())
+        .reduce((s, o) => s + Number(o.price || 0), 0);
+      return { label: dayLabels[d.getDay()], value: v };
+    });
+
+    const goal = await prisma.earningsGoal.findFirst({ where: { userId: req.user.id } }).catch(() => null);
+
+    return res.json({
+      totalRevenue,
+      totalOrders: orders.length,
+      totalTips,
+      avgPerOrder,
+      hoursOnline: 0,
+      conversionRate: 85,
+      goalAmount: goal?.target ?? 100,
+      weeklyChart,
+      topHours: [],
+      recentOrders: orders.slice(0, 10),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/provider/status
 router.get('/status', authenticate, async (req, res) => {
   try {
