@@ -250,6 +250,11 @@ import TaxiRideScheduleListScreen from './screens/taxi/TaxiRideScheduleListScree
 import AdminProviderVerificationScreen from './screens/admin/AdminProviderVerificationScreen';
 import MerchantOrdersLiveScreen from './screens/delivery/MerchantOrdersLiveScreen';
 
+// Batch 28
+import ProviderWorkScheduleScreen from './screens/provider/ProviderWorkScheduleScreen';
+import AdminSupportTicketsScreen from './screens/admin/AdminSupportTicketsScreen';
+import EasyRewardsScreen from './screens/loyalty/EasyRewardsScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -486,6 +491,9 @@ function MainStack() {
       <Stack.Screen name="TaxiRideScheduleList" component={TaxiRideScheduleListScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminProviderVerification" component={AdminProviderVerificationScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MerchantOrdersLive" component={MerchantOrdersLiveScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ProviderWorkSchedule" component={ProviderWorkScheduleScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminSupportTickets" component={AdminSupportTicketsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="EasyRewards" component={EasyRewardsScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }

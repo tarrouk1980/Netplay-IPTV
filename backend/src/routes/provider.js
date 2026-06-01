@@ -427,4 +427,27 @@ router.get('/status', authenticate, async (req, res) => {
   }
 });
 
+// GET /api/provider/work-schedule
+// PUT /api/provider/work-schedule
+const workSchedules = new Map();
+
+router.get('/work-schedule', authenticate, async (req, res) => {
+  try {
+    const saved = workSchedules.get(req.user.id) || [];
+    return res.json({ schedule: saved });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/work-schedule', authenticate, async (req, res) => {
+  try {
+    const { schedule } = req.body;
+    workSchedules.set(req.user.id, schedule);
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

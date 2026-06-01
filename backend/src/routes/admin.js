@@ -2100,5 +2100,47 @@ router.post('/providers/:id/verify', async (req, res) => {
   }
 });
 
+// ─────────────────────────────────────────────
+// GET /api/admin/support/tickets
+// PATCH /api/admin/support/:id
+// POST /api/admin/support/:id/reply
+// ─────────────────────────────────────────────
+router.get('/support/tickets', async (req, res) => {
+  try {
+    const tickets = await prisma.supportTicket.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { user: { select: { name: true, role: true } } },
+    }).catch(() => []);
+    return res.json({ tickets: tickets.map((t) => ({ ...t, userName: t.user?.name, userRole: t.user?.role })) });
+  } catch {
+    return res.json({ tickets: [] });
+  }
+});
+
+router.patch('/support/:id', async (req, res) => {
+  try {
+    const { status } = req.body;
+    const ticket = await prisma.supportTicket.update({
+      where: { id: req.params.id },
+      data: { status },
+    }).catch(() => null);
+    return res.json({ success: true, ticket });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/support/:id/reply', async (req, res) => {
+  try {
+    const { message } = req.body;
+    await prisma.supportMessage.create({
+      data: { ticketId: req.params.id, from: 'admin', text: message, adminId: req.user.id },
+    }).catch(() => null);
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
 
