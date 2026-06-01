@@ -20,6 +20,7 @@
     "react": "18.2.0",
     "react-native": "0.74.5",
     "react-native-svg": "15.2.0",
+    "react-native-webview": "13.8.6",
     "@react-navigation/native": "^6.1.17",
     "@react-navigation/native-stack": "^6.9.26",
     "@react-navigation/bottom-tabs": "^6.5.20",
