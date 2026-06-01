@@ -75,6 +75,7 @@ app.use('/api/promo', promoRoutes);
 app.use('/api/provider', providerRoutes);
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/support', require('./routes/support'));
+app.use('/api/payments', require('./routes/payments'));
 
 // 404 handler
 app.use((req, res) => {

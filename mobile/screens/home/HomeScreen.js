@@ -206,7 +206,7 @@ export default function HomeScreen({ navigation }) {
             </TouchableOpacity>
             <NotificationBadge
               unreadCount={unreadCount}
-              onPress={() => navigation.navigate('Notifications')}
+              onPress={() => navigation.navigate('NotificationCenter')}
             />
             <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
               <Text style={{ fontSize: 28 }}>👤</Text>

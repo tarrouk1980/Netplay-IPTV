@@ -187,6 +187,11 @@ import LiveChatScreen from './screens/support/LiveChatScreen';
 import AvailabilityScheduleScreen from './screens/provider/AvailabilityScheduleScreen';
 import AdminBulkActionsScreen from './screens/admin/AdminBulkActionsScreen';
 
+// Batch 15
+import ClientOnboardingScreen from './screens/onboarding/ClientOnboardingScreen';
+import KonnectPaymentScreen from './screens/payment/KonnectPaymentScreen';
+import NotificationCenterScreen from './screens/notifications/NotificationCenterScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -386,6 +391,9 @@ function MainStack() {
       <Stack.Screen name="LiveChat" component={LiveChatScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AvailabilitySchedule" component={AvailabilityScheduleScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminBulkActions" component={AdminBulkActionsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ClientOnboarding" component={ClientOnboardingScreen} options={{ headerShown: false, gestureEnabled: false }} />
+      <Stack.Screen name="KonnectPayment" component={KonnectPaymentScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="NotificationCenter" component={NotificationCenterScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
