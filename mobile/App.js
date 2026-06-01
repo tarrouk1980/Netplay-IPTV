@@ -182,6 +182,11 @@ import DriverDocumentsScreen from './screens/provider/DriverDocumentsScreen';
 import AdminRevenueReportScreen from './screens/admin/AdminRevenueReportScreen';
 import MultiOrderTrackerScreen from './screens/shared/MultiOrderTrackerScreen';
 
+// Batch 14
+import LiveChatScreen from './screens/support/LiveChatScreen';
+import AvailabilityScheduleScreen from './screens/provider/AvailabilityScheduleScreen';
+import AdminBulkActionsScreen from './screens/admin/AdminBulkActionsScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -378,6 +383,9 @@ function MainStack() {
       <Stack.Screen name="DriverDocuments" component={DriverDocumentsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminRevenueReport" component={AdminRevenueReportScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MultiOrderTracker" component={MultiOrderTrackerScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="LiveChat" component={LiveChatScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AvailabilitySchedule" component={AvailabilityScheduleScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminBulkActions" component={AdminBulkActionsScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }

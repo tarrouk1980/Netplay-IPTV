@@ -64,4 +64,30 @@ router.get('/admin/tickets', authenticate, async (req, res) => {
   res.json({ tickets: result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) });
 });
 
+router.get('/tickets/:id/messages', authenticate, async (req, res) => {
+  const ticket = tickets.find(t => t.id === req.params.id);
+  if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+  res.json({ messages: ticket.messages || [], status: ticket.status });
+});
+
+router.post('/tickets/:id/messages', authenticate, async (req, res) => {
+  const ticket = tickets.find(t => t.id === req.params.id);
+  if (!ticket) {
+    const newTicket = { id: req.params.id, userId: req.user.id, status: 'OPEN', messages: [], createdAt: new Date().toISOString() };
+    tickets.push(newTicket);
+  }
+  const t = tickets.find(t => t.id === req.params.id);
+  const { text, image } = req.body;
+  const msg = { id: Date.now().toString(), role: 'CLIENT', text, image, time: new Date().toISOString(), read: false };
+  if (!t.messages) t.messages = [];
+  t.messages.push(msg);
+  res.json({ ok: true, message: msg });
+});
+
+router.post('/tickets/:id/resolve', authenticate, async (req, res) => {
+  const ticket = tickets.find(t => t.id === req.params.id);
+  if (ticket) ticket.status = 'RESOLVED';
+  res.json({ ok: true });
+});
+
 module.exports = router;

@@ -443,6 +443,13 @@ export default function DriverDashboardScreen({ navigation }) {
         >
           <Text style={styles.earningsLinkText}>📂 Mes documents →</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.earningsLinkBtn, { marginTop: 8 }]}
+          onPress={() => navigation.navigate('AvailabilitySchedule')}
+          activeOpacity={0.75}
+        >
+          <Text style={styles.earningsLinkText}>🗓️ Mes disponibilités →</Text>
+        </TouchableOpacity>
 
         <View style={{ height: 32 }} />
       </ScrollView>

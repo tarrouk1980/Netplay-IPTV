@@ -350,6 +350,11 @@ export default function AdminDashboardScreen({ navigation }) {
                 label="Rev. détaillés"
                 onPress={() => navigation.navigate('AdminRevenueReport')}
               />
+              <NavButton
+                emoji="⚡"
+                label="Actions groupées"
+                onPress={() => navigation.navigate('AdminBulkActions')}
+              />
             </View>
 
             {/* Revenue total */}

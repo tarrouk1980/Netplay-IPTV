@@ -219,6 +219,35 @@ router.get('/reviews', authenticate, async (req, res) => {
   }
 });
 
+router.get('/availability', authenticate, async (req, res) => {
+  try {
+    const rec = await prisma.providerAvailability.findFirst({ where: { providerId: req.user.id } });
+    res.json({
+      schedule: rec?.schedule ? JSON.parse(rec.schedule) : null,
+      onlineNow: req.user.isOnline || false,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/availability', authenticate, async (req, res) => {
+  try {
+    const { schedule, onlineNow } = req.body;
+    await prisma.providerAvailability.upsert({
+      where: { providerId: req.user.id },
+      create: { providerId: req.user.id, schedule: JSON.stringify(schedule) },
+      update: { schedule: JSON.stringify(schedule) },
+    });
+    if (onlineNow !== undefined) {
+      await prisma.user.update({ where: { id: req.user.id }, data: { isOnline: onlineNow } });
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/documents', authenticate, async (req, res) => {
   try {
     const docs = await prisma.providerDocument.findMany({

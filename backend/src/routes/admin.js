@@ -1424,6 +1424,36 @@ router.get('/providers/live', authenticate, async (req, res) => {
   }
 });
 
+router.post('/users/bulk', requireAdmin, async (req, res) => {
+  try {
+    const { action, ids, message } = req.body;
+    if (!Array.isArray(ids) || !ids.length) return res.status(400).json({ error: 'ids required' });
+
+    if (action === 'BAN') {
+      await prisma.user.updateMany({ where: { id: { in: ids } }, data: { isBanned: true } });
+    } else if (action === 'UNBAN') {
+      await prisma.user.updateMany({ where: { id: { in: ids } }, data: { isBanned: false } });
+    } else if (action === 'VERIFY_KYC') {
+      await prisma.user.updateMany({ where: { id: { in: ids } }, data: { kycStatus: 'APPROVED' } });
+    } else if (action === 'REVOKE_KYC') {
+      await prisma.user.updateMany({ where: { id: { in: ids } }, data: { kycStatus: 'REJECTED' } });
+    } else if (action === 'NOTIFY' && message) {
+      const users = await prisma.user.findMany({ where: { id: { in: ids }, pushToken: { not: null } }, select: { pushToken: true } });
+      const tokens = users.map(u => u.pushToken).filter(Boolean);
+      if (tokens.length) {
+        await fetch('https://exp.host/--/api/v2/push/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(tokens.map(to => ({ to, title: 'EASYWAY', body: message }))),
+        });
+      }
+    }
+    res.json({ ok: true, affected: ids.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/revenue', requireAdmin, async (req, res) => {
   try {
     const { period = 'week' } = req.query;
