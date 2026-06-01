@@ -2149,7 +2149,7 @@ router.post('/support/:id/reply', async (req, res) => {
 const campaignsStore = [];
 
 router.get('/notifications/campaigns', async (req, res) => {
-  return res.json({ campaigns: campaignsStore.slice().reverse() });
+  return res.json({ campaigns: [...campaignsStore].reverse() });
 });
 
 router.post('/notifications/campaigns', async (req, res) => {
@@ -2171,6 +2171,29 @@ router.post('/notifications/campaigns', async (req, res) => {
     return res.json({ success: true, campaign });
   } catch (err) {
     return res.status(500).json({ error: err.message });
+  }
+});
+
+// ─────────────────────────────────────────────
+// GET /api/admin/financial/report
+// ─────────────────────────────────────────────
+router.get('/financial/report', async (req, res) => {
+  try {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const orders = await prisma.order.findMany({
+      where: { status: 'COMPLETED', createdAt: { gte: startOfMonth } },
+      select: { price: true, serviceType: true, createdAt: true },
+    }).catch(() => []);
+    const revenue = orders.reduce((s, o) => s + (parseFloat(o.price) || 0), 0);
+    return res.json({
+      currentMonth: { revenue, expenses: 0, profit: revenue, growth: 0, passRevenue: 0, commissions: 0, refunds: 0, walletDeposits: 0 },
+      monthly: Array(12).fill(0),
+      paymentMethods: [],
+      taxBreakdown: { grossRevenue: revenue, vatCollected: 0, vatPaid: 0, netProfit: revenue },
+    });
+  } catch (err) {
+    return res.json({ currentMonth: {}, monthly: [], paymentMethods: [], taxBreakdown: {} });
   }
 });
 
