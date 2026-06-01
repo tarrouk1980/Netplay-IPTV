@@ -2,6 +2,7 @@
   "expo": {
     "name": "EASYWAY",
     "slug": "easyway",
+    "owner": "tarekclubiste",
     "scheme": "easyway",
     "version": "1.0.0",
     "orientation": "portrait",
