@@ -2020,5 +2020,24 @@ router.get('/sos/report', async (req, res) => {
   }
 });
 
+// ─────────────────────────────────────────────
+// GET /api/admin/orders/live — active orders
+// ─────────────────────────────────────────────
+router.get('/orders/live', async (req, res) => {
+  try {
+    const orders = await prisma.order.findMany({
+      where: { status: { in: ['PENDING', 'ACCEPTED', 'IN_PROGRESS'] } },
+      include: {
+        client: { select: { id: true, name: true } },
+        provider: { select: { id: true, name: true } },
+      },
+      orderBy: { createdAt: 'asc' },
+    }).catch(() => []);
+    return res.json({ orders });
+  } catch (err) {
+    return res.json({ orders: [] });
+  }
+});
+
 module.exports = router;
 

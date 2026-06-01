@@ -57,20 +57,42 @@ router.post(
 );
 
 // ─────────────────────────────────────────────
-// GET /api/vehicles/my — list own vehicles
+// GET /api/vehicles/my — get own vehicle info
 // ─────────────────────────────────────────────
-router.get(
-  '/my',
-  authenticate,
-  requireRole('CHAUFFEUR'),
-  async (req, res) => {
-    const vehicles = await prisma.vehicle.findMany({
+router.get('/my', authenticate, async (req, res) => {
+  try {
+    const vehicle = await prisma.vehicle.findFirst({
       where: { userId: req.user.id },
       orderBy: { createdAt: 'desc' },
-    });
-
-    return res.json({ vehicles, count: vehicles.length });
+    }).catch(() => null);
+    return res.json({ vehicle: vehicle || null });
+  } catch (err) {
+    return res.json({ vehicle: null });
   }
-);
+});
+
+// ─────────────────────────────────────────────
+// POST /api/vehicles/my — upsert vehicle info
+// ─────────────────────────────────────────────
+router.post('/my', authenticate, async (req, res) => {
+  try {
+    const { vehicleType, brand, model, year, licensePlate, color, insuranceExpiry, techControlExpiry } = req.body;
+    const existing = await prisma.vehicle.findFirst({ where: { userId: req.user.id } }).catch(() => null);
+    let vehicle;
+    if (existing) {
+      vehicle = await prisma.vehicle.update({
+        where: { id: existing.id },
+        data: { vehicleType, brand, model, year, licensePlate, color, insuranceExpiry: insuranceExpiry ? new Date(insuranceExpiry) : null, techControlExpiry: techControlExpiry ? new Date(techControlExpiry) : null },
+      }).catch(() => existing);
+    } else {
+      vehicle = await prisma.vehicle.create({
+        data: { userId: req.user.id, vehicleType, brand, model, year, licensePlate, color, insuranceExpiry: insuranceExpiry ? new Date(insuranceExpiry) : null, techControlExpiry: techControlExpiry ? new Date(techControlExpiry) : null },
+      }).catch(() => null);
+    }
+    return res.json({ success: true, vehicle });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
 
 module.exports = router;
