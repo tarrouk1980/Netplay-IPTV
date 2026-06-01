@@ -278,6 +278,7 @@ import DeliveryRatingScreen from './screens/delivery/DeliveryRatingScreen';
 // Batch 33
 import TaxiPromoScreen from './screens/taxi/TaxiPromoScreen';
 import AdminUserSessionsScreen from './screens/admin/AdminUserSessionsScreen';
+import DepanneurEarningsScreen from './screens/provider/DepanneurEarningsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -530,6 +531,9 @@ function MainStack() {
       <Stack.Screen name="ClientOrdersAll" component={ClientOrdersAllScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminCouponList" component={AdminCouponListScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DeliveryRating" component={DeliveryRatingScreen} options={{ headerShown: false, gestureEnabled: false }} />
+      <Stack.Screen name="TaxiPromo" component={TaxiPromoScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminUserSessions" component={AdminUserSessionsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="DepanneurEarnings" component={DepanneurEarningsScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
