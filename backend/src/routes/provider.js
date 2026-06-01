@@ -192,4 +192,31 @@ router.get('/income', requireProvider, async (req, res) => {
   }
 });
 
+// GET /api/provider/reviews — ratings received as provider
+router.get('/reviews', authenticate, async (req, res) => {
+  try {
+    const reviews = await prisma.review.findMany({
+      where: { providerId: req.user.id },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      include: {
+        client: { select: { name: true } },
+        order: { select: { serviceType: true } },
+      },
+    });
+    res.json({
+      reviews: reviews.map(r => ({
+        id: r.id,
+        rating: r.rating,
+        comment: r.comment,
+        serviceType: r.order?.serviceType,
+        clientName: r.client?.name,
+        createdAt: r.createdAt,
+      })),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

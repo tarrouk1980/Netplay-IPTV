@@ -97,6 +97,15 @@ import EasyPassScreen from './screens/subscriptions/EasyPassScreen';
 // Merchant Order Detail
 import MerchantOrderDetailScreen from './screens/delivery/MerchantOrderDetailScreen';
 
+// Grocery Checkout
+import GroceryCheckoutScreen from './screens/grocery/GroceryCheckoutScreen';
+
+// Provider Reviews
+import ProviderReviewsScreen from './screens/provider/ProviderReviewsScreen';
+
+// Admin Geo Stats
+import AdminGeoStatsScreen from './screens/admin/AdminGeoStatsScreen';
+
 // Settings
 import SettingsScreen from './screens/profile/SettingsScreen';
 import LanguageScreen from './screens/profile/LanguageScreen';
@@ -280,6 +289,9 @@ function MainStack() {
       <Stack.Screen name="LiveOrderMap" component={LiveOrderMapScreen} options={{ headerShown: false }} />
       <Stack.Screen name="EasyPass" component={EasyPassScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MerchantOrderDetail" component={MerchantOrderDetailScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="GroceryCheckout" component={GroceryCheckoutScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ProviderReviews" component={ProviderReviewsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminGeoStats" component={AdminGeoStatsScreen} options={{ headerShown: false }} />
 
       {/* KYC Pending */}
       <Stack.Screen name="KYCPending" component={KYCPendingScreen} options={{ headerShown: false }} />

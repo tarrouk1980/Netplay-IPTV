@@ -1024,6 +1024,43 @@ router.get('/activity', authenticate, async (req, res) => {
   }
 });
 
+// GET /api/admin/stats/geo — order density by Tunisian zone
+router.get('/stats/geo', async (req, res) => {
+  try {
+    const zones = [
+      { key: 'tunis_center', label: 'Tunis Centre',     lat: 36.8065, lng: 10.1815, latMin: 36.78, latMax: 36.83, lngMin: 10.16, lngMax: 10.21 },
+      { key: 'lac',          label: 'Les Berges du Lac', lat: 36.833,  lng: 10.237,  latMin: 36.82, latMax: 36.86, lngMin: 10.22, lngMax: 10.26 },
+      { key: 'ariana',       label: 'Ariana',            lat: 36.860,  lng: 10.193,  latMin: 36.84, latMax: 36.89, lngMin: 10.17, lngMax: 10.22 },
+      { key: 'ben_arous',    label: 'Ben Arous',         lat: 36.753,  lng: 10.222,  latMin: 36.72, latMax: 36.78, lngMin: 10.20, lngMax: 10.25 },
+      { key: 'manouba',      label: 'Manouba',           lat: 36.808,  lng: 10.098,  latMin: 36.78, latMax: 36.84, lngMin: 10.06, lngMax: 10.13 },
+      { key: 'ennasr',       label: 'Ennasr',            lat: 36.877,  lng: 10.216,  latMin: 36.86, latMax: 36.90, lngMin: 10.20, lngMax: 10.23 },
+    ];
+
+    const orders = await prisma.order.findMany({
+      where: { originLat: { not: null }, originLng: { not: null } },
+      select: { serviceType: true, originLat: true, originLng: true, totalAmount: true, price: true },
+    });
+
+    const result = zones.map(zone => {
+      const zOrders = orders.filter(o => o.originLat >= zone.latMin && o.originLat <= zone.latMax && o.originLng >= zone.lngMin && o.originLng <= zone.lngMax);
+      return {
+        key: zone.key, label: zone.label, lat: zone.lat, lng: zone.lng,
+        orders: zOrders.length,
+        revenue: zOrders.reduce((s, o) => s + (o.totalAmount || o.price || 0), 0),
+        taxi:     zOrders.filter(o => o.serviceType === 'TAXI').length,
+        sos:      zOrders.filter(o => o.serviceType === 'SOS').length,
+        delivery: zOrders.filter(o => o.serviceType === 'DELIVERY').length,
+        grocery:  zOrders.filter(o => o.serviceType === 'GROCERY').length,
+      };
+    });
+
+    res.json({ zones: result });
+  } catch (err) {
+    console.error('[admin/stats/geo]', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/admin/users/:id/orders — commandes d'un utilisateur
 router.get('/users/:id/orders', async (req, res) => {
   try {

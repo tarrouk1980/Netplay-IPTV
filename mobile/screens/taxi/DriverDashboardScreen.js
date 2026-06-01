@@ -415,6 +415,13 @@ export default function DriverDashboardScreen({ navigation }) {
         >
           <Text style={styles.earningsLinkText}>🗓️ Programmer une course →</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.earningsLinkBtn, { marginTop: 8 }]}
+          onPress={() => navigation.navigate('ProviderReviews')}
+          activeOpacity={0.75}
+        >
+          <Text style={styles.earningsLinkText}>⭐ Mes avis clients →</Text>
+        </TouchableOpacity>
 
         <View style={{ height: 32 }} />
       </ScrollView>

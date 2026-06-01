@@ -221,6 +221,19 @@ export default function GroceryCartScreen({ navigation, route }) {
 
       {/* Order button */}
       <View style={styles.footer}>
+        {hasItems && (
+          <TouchableOpacity
+            style={{ marginBottom: 8, borderRadius: 12, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: '#27AE60', backgroundColor: '#27AE6018' }}
+            onPress={() => navigation.navigate('GroceryCheckout', {
+              cart: cart.items,
+              merchantId: cart.merchantId,
+              merchantName: route.params?.merchantName,
+              deliveryFee,
+            })}
+          >
+            <Text style={{ color: '#27AE60', fontWeight: '700', fontSize: 14 }}>🗓️ Choisir créneau & paiement →</Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity
           style={[styles.orderBtn, !hasItems && styles.orderBtnDisabled]}
           onPress={handleOrder}
