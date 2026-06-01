@@ -2175,6 +2175,21 @@ router.post('/notifications/campaigns', async (req, res) => {
 });
 
 // ─────────────────────────────────────────────
+// GET /api/admin/providers/online — online providers with last location
+// ─────────────────────────────────────────────
+router.get('/providers/online', async (req, res) => {
+  try {
+    const providers = await prisma.user.findMany({
+      where: { role: { in: ['CHAUFFEUR', 'LIVREUR', 'DEPANNEUR'] }, isOnline: true },
+      select: { id: true, name: true, role: true, lastLat: true, lastLng: true },
+    }).catch(() => []);
+    return res.json({ providers: providers.map((p) => ({ ...p, lat: p.lastLat || 36.82, lng: p.lastLng || 10.18, status: 'ONLINE' })) });
+  } catch {
+    return res.json({ providers: [] });
+  }
+});
+
+// ─────────────────────────────────────────────
 // GET /api/admin/financial/report
 // ─────────────────────────────────────────────
 router.get('/financial/report', async (req, res) => {

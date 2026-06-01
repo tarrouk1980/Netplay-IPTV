@@ -265,6 +265,11 @@ import LivreurMapScreen from './screens/delivery/LivreurMapScreen';
 import AdminFinancialReportScreen from './screens/admin/AdminFinancialReportScreen';
 import SOSNearbyDepanneursScreen from './screens/sos/SOSNearbyDepanneursScreen';
 
+// Batch 31
+import TaxiDriverStatsScreen from './screens/taxi/TaxiDriverStatsScreen';
+import AdminMapOverviewScreen from './screens/admin/AdminMapOverviewScreen';
+import GroceryCheckoutSuccessScreen from './screens/grocery/GroceryCheckoutSuccessScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -510,6 +515,9 @@ function MainStack() {
       <Stack.Screen name="LivreurMap" component={LivreurMapScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminFinancialReport" component={AdminFinancialReportScreen} options={{ headerShown: false }} />
       <Stack.Screen name="SOSNearbyDepanneurs" component={SOSNearbyDepanneursScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="TaxiDriverStats" component={TaxiDriverStatsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminMapOverview" component={AdminMapOverviewScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="GroceryCheckoutSuccess" component={GroceryCheckoutSuccessScreen} options={{ headerShown: false, gestureEnabled: false }} />
     </Stack.Navigator>
   );
 }
