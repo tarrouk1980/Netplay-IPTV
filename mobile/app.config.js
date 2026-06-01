@@ -27,6 +27,15 @@ module.exports = {
         'VIBRATE',
       ],
     },
+    updates: {
+      url: 'https://u.expo.dev/028c05e2-49a4-41fd-b364-3e5be6bc7ca1',
+      enabled: true,
+      checkAutomatically: 'ON_LOAD',
+      fallbackToCacheTimeout: 0,
+    },
+    runtimeVersion: {
+      policy: 'sdkVersion',
+    },
     plugins: ['expo-notifications', 'expo-location', 'expo-av'],
     extra: {
       mapboxToken: process.env.MAPBOX_TOKEN || 'pk.eyJ1IjoiZWFzeXdheXRhcmVrIiwiYSI6ImNtcHNuaGJ1ODBoc2Qyc3FxenU0aGFvd3QifQ.K-z5zbFtY8v5lyMUn7TryQ',
