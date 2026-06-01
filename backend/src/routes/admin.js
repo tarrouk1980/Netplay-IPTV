@@ -1024,6 +1024,35 @@ router.get('/activity', authenticate, async (req, res) => {
   }
 });
 
+// GET /api/admin/users/:id/orders — commandes d'un utilisateur
+router.get('/users/:id/orders', async (req, res) => {
+  try {
+    const orders = await prisma.order.findMany({
+      where: { OR: [{ userId: req.params.id }, { providerId: req.params.id }] },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+      select: { id: true, serviceType: true, status: true, totalAmount: true, price: true, createdAt: true },
+    });
+    res.json({ orders });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/admin/users/:id/transactions — transactions wallet d'un utilisateur
+router.get('/users/:id/transactions', async (req, res) => {
+  try {
+    const txs = await prisma.walletTransaction.findMany({
+      where: { userId: req.params.id },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+    });
+    res.json({ transactions: txs });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /api/admin/users/:id/ban — Bannir un utilisateur
 router.post('/users/:id/ban', authenticate, async (req, res) => {
   const { reason } = req.body;

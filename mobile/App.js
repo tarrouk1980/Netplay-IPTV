@@ -74,12 +74,19 @@ import AdminPromoCodesScreen from './screens/admin/AdminPromoCodesScreen';
 import AdminSupportScreen from './screens/admin/AdminSupportScreen';
 import AdminBroadcastScreen from './screens/admin/AdminBroadcastScreen';
 import AdminOrderDetailScreen from './screens/admin/AdminOrderDetailScreen';
+import AdminUserDetailScreen from './screens/admin/AdminUserDetailScreen';
 
 // Nearby Providers
 import NearbyProvidersScreen from './screens/home/NearbyProvidersScreen';
 
 // Schedule Ride
 import TaxiScheduleRideScreen from './screens/taxi/TaxiScheduleRideScreen';
+
+// Quick Taxi
+import QuickTaxiScreen from './screens/taxi/QuickTaxiScreen';
+
+// Wallet Transactions
+import WalletTransactionsScreen from './screens/wallet/WalletTransactionsScreen';
 
 // Settings
 import SettingsScreen from './screens/profile/SettingsScreen';
@@ -254,10 +261,13 @@ function MainStack() {
       <Stack.Screen name="AdminSupport" component={AdminSupportScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminBroadcast" component={AdminBroadcastScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminOrderDetail" component={AdminOrderDetailScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminUserDetail" component={AdminUserDetailScreen} options={{ headerShown: false }} />
 
       {/* Nearby & Schedule */}
       <Stack.Screen name="NearbyProviders" component={NearbyProvidersScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiScheduleRide" component={TaxiScheduleRideScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="QuickTaxi" component={QuickTaxiScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="WalletTransactions" component={WalletTransactionsScreen} options={{ headerShown: false }} />
 
       {/* KYC Pending */}
       <Stack.Screen name="KYCPending" component={KYCPendingScreen} options={{ headerShown: false }} />

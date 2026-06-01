@@ -191,7 +191,12 @@ export default function WalletScreen({ navigation }) {
 
           {/* Transactions */}
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>📜 Historique</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <Text style={styles.cardTitle}>📜 Historique</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('WalletTransactions')}>
+                <Text style={{ color: '#F5A623', fontSize: 12, fontWeight: '700' }}>Voir tout →</Text>
+              </TouchableOpacity>
+            </View>
             {transactions.length === 0 ? (
               <Text style={styles.emptyText}>Aucune transaction pour le moment.</Text>
             ) : (
