@@ -1424,5 +1424,31 @@ router.get('/providers/live', authenticate, async (req, res) => {
   }
 });
 
+router.post('/promo-codes/bulk', requireAdmin, async (req, res) => {
+  try {
+    const { codes, discountType, discountValue, maxUses, services, expiresAt, minOrderAmount } = req.body;
+    if (!Array.isArray(codes) || !codes.length) return res.status(400).json({ error: 'codes required' });
+    const created = await prisma.$transaction(
+      codes.map(code =>
+        prisma.promoCode.create({
+          data: {
+            code,
+            discountType: discountType || 'PERCENT',
+            discountValue: parseFloat(discountValue) || 0,
+            maxUses: parseInt(maxUses) || 1,
+            usedCount: 0,
+            services: services && services.length ? JSON.stringify(services) : null,
+            expiresAt: expiresAt ? new Date(expiresAt) : null,
+            minOrderAmount: minOrderAmount ? parseFloat(minOrderAmount) : null,
+          },
+        })
+      )
+    );
+    res.json({ created: created.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
 

@@ -167,6 +167,11 @@ import HistoryDetailScreen from './screens/profile/HistoryDetailScreen';
 // Provider Onboarding
 import ProviderOnboardingScreen from './screens/onboarding/ProviderOnboardingScreen';
 
+// Batch 11
+import SOSPreDiagnosticScreen from './screens/sos/SOSPreDiagnosticScreen';
+import DriverHeatmapScreen from './screens/taxi/DriverHeatmapScreen';
+import AdminCouponGeneratorScreen from './screens/admin/AdminCouponGeneratorScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -354,6 +359,9 @@ function MainStack() {
 
       {/* Provider Onboarding */}
       <Stack.Screen name="ProviderOnboarding" component={ProviderOnboardingScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="SOSPreDiagnostic" component={SOSPreDiagnosticScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="DriverHeatmap" component={DriverHeatmapScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminCouponGenerator" component={AdminCouponGeneratorScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }

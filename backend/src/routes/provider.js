@@ -219,4 +219,32 @@ router.get('/reviews', authenticate, async (req, res) => {
   }
 });
 
+router.get('/demand-heatmap', authenticate, async (req, res) => {
+  try {
+    const now = new Date();
+    const fourWeeksAgo = new Date(now - 28 * 24 * 3600 * 1000);
+    const orders = await prisma.order.findMany({
+      where: { createdAt: { gte: fourWeeksAgo }, status: { in: ['COMPLETED', 'IN_PROGRESS'] } },
+      select: { createdAt: true, pickupLat: true, pickupLng: true },
+    });
+
+    const DAYS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+    const heatmap = Array.from({ length: 7 }, () => Array(24).fill(0));
+    orders.forEach(o => {
+      const d = new Date(o.createdAt);
+      heatmap[d.getDay()][d.getHours()]++;
+    });
+
+    const zones = [
+      { name: 'Tunis Centre', lat: 36.8189, lng: 10.1658 },
+      { name: 'La Marsa', lat: 36.8771, lng: 10.3243 },
+      { name: 'Sfax', lat: 34.7398, lng: 10.7600 },
+    ];
+
+    res.json({ heatmap, days: DAYS, zones });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

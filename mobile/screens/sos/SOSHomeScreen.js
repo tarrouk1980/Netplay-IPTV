@@ -37,7 +37,7 @@ export default function SOSHomeScreen({ navigation }) {
   };
 
   const handleIndependent = () => {
-    navigation.navigate('SOSRequest', { mode: 'INDEPENDENT' });
+    navigation.navigate('SOSPreDiagnostic', { mode: 'INDEPENDENT' });
   };
 
   const contractValid = myContract && new Date(myContract.expiresAt) >= new Date();
