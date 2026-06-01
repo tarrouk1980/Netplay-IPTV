@@ -221,6 +221,11 @@ import SOSOrderDetailScreen from './screens/sos/SOSOrderDetailScreen';
 import AdminZoneManagementScreen from './screens/admin/AdminZoneManagementScreen';
 import ProviderEarningsDashboardScreen from './screens/provider/ProviderEarningsDashboardScreen';
 
+// Batch 22
+import ClientProfileEditScreen from './screens/profile/ClientProfileEditScreen';
+import AdminAppConfigScreen from './screens/admin/AdminAppConfigScreen';
+import DeliveryOrderDetailScreen from './screens/delivery/DeliveryOrderDetailScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -440,6 +445,9 @@ function MainStack() {
       <Stack.Screen name="SOSOrderDetail" component={SOSOrderDetailScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminZoneManagement" component={AdminZoneManagementScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ProviderEarningsDashboard" component={ProviderEarningsDashboardScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ClientProfileEdit" component={ClientProfileEditScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminAppConfig" component={AdminAppConfigScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="DeliveryOrderDetail" component={DeliveryOrderDetailScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }

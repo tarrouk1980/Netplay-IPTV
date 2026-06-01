@@ -1587,6 +1587,32 @@ router.post('/promo-codes/bulk', requireAdmin, async (req, res) => {
 });
 
 // ─────────────────────────────────────────────
+// GET/PUT /api/admin/config
+// ─────────────────────────────────────────────
+router.get('/config', async (req, res) => {
+  try {
+    const config = await prisma.appConfig.findFirst().catch(() => null);
+    return res.json({ config: config?.data || {} });
+  } catch (err) {
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.put('/config', async (req, res) => {
+  try {
+    const { config } = req.body;
+    await prisma.appConfig.upsert({
+      where: { id: 1 },
+      update: { data: config, updatedAt: new Date() },
+      create: { id: 1, data: config },
+    }).catch(() => {});
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ─────────────────────────────────────────────
 // GET /api/admin/zones
 // ─────────────────────────────────────────────
 router.get('/zones', async (req, res) => {
