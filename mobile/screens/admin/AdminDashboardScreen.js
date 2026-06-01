@@ -330,6 +330,11 @@ export default function AdminDashboardScreen({ navigation }) {
                 label="Zones geo"
                 onPress={() => navigation.navigate('AdminGeoStats')}
               />
+              <NavButton
+                emoji="🏥"
+                label="Santé sys."
+                onPress={() => navigation.navigate('AdminSystemHealth')}
+              />
             </View>
 
             {/* Revenue total */}

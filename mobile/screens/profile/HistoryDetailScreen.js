@@ -274,6 +274,12 @@ export default function HistoryDetailScreen({ route, navigation }) {
           <TouchableOpacity style={[styles.shareBtn, { borderColor: '#4A4A5A' }]} onPress={handleShareReceipt}>
             <Text style={styles.shareBtnText}>📤 Partager le texte</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.shareBtn, { borderColor: '#F5A623', marginTop: 8 }]}
+            onPress={() => navigation.navigate('Invoice', { orderId: order.id })}
+          >
+            <Text style={[styles.shareBtnText, { color: '#F5A623' }]}>🧾 Voir la facture PDF</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={{ height: 32 }} />

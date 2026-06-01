@@ -347,14 +347,15 @@ export default function TaxiTrackingScreen({ route, navigation }) {
           <View style={{ width: '100%', gap: 10 }}>
             <TouchableOpacity
               style={styles.rateButton}
-              onPress={() => navigation.navigate('Rating', {
+              onPress={() => navigation.navigate('TipAndRating', {
                 orderId,
-                driverName: localOrder?.driver?.name,
-                driverInitial: localOrder?.driver?.name?.[0]?.toUpperCase(),
+                serviceType: 'TAXI',
+                providerName: localOrder?.driver?.name,
+                orderPrice: localOrder?.price,
               })}
               activeOpacity={0.85}
             >
-              <Text style={styles.rateButtonText}>⭐ Noter la course</Text>
+              <Text style={styles.rateButtonText}>⭐ Noter & Pourboire</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.rateButton, { borderColor: '#FFD700', borderColor: '#FFD700' }]}

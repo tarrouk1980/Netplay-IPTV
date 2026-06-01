@@ -106,6 +106,15 @@ import ProviderReviewsScreen from './screens/provider/ProviderReviewsScreen';
 // Admin Geo Stats
 import AdminGeoStatsScreen from './screens/admin/AdminGeoStatsScreen';
 
+// Tip & Rating
+import TipAndRatingScreen from './screens/shared/TipAndRatingScreen';
+
+// Invoice
+import InvoiceScreen from './screens/shared/InvoiceScreen';
+
+// Admin System Health
+import AdminSystemHealthScreen from './screens/admin/AdminSystemHealthScreen';
+
 // Settings
 import SettingsScreen from './screens/profile/SettingsScreen';
 import LanguageScreen from './screens/profile/LanguageScreen';
@@ -292,6 +301,9 @@ function MainStack() {
       <Stack.Screen name="GroceryCheckout" component={GroceryCheckoutScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ProviderReviews" component={ProviderReviewsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminGeoStats" component={AdminGeoStatsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="TipAndRating" component={TipAndRatingScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Invoice" component={InvoiceScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminSystemHealth" component={AdminSystemHealthScreen} options={{ headerShown: false }} />
 
       {/* KYC Pending */}
       <Stack.Screen name="KYCPending" component={KYCPendingScreen} options={{ headerShown: false }} />

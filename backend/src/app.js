@@ -73,6 +73,7 @@ app.use('/api/emergency', emergencyRoutes);
 app.use('/api/business', businessRoutes);
 app.use('/api/promo', promoRoutes);
 app.use('/api/provider', providerRoutes);
+app.use('/api/orders', require('./routes/orders'));
 app.use('/api/support', require('./routes/support'));
 
 // 404 handler
