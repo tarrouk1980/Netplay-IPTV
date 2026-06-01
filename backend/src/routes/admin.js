@@ -2069,5 +2069,36 @@ router.get('/revenue/detail', async (req, res) => {
   }
 });
 
+// ─────────────────────────────────────────────
+// GET /api/admin/providers/pending — providers awaiting verification
+// POST /api/admin/providers/:id/verify — approve or reject
+// ─────────────────────────────────────────────
+router.get('/providers/pending', async (req, res) => {
+  try {
+    const providers = await prisma.user.findMany({
+      where: { kycStatus: 'PENDING', role: { in: ['CHAUFFEUR', 'LIVREUR', 'DEPANNEUR', 'MARCHAND'] } },
+      select: { id: true, name: true, phone: true, role: true, kycStatus: true, kycDocuments: true, createdAt: true },
+      orderBy: { createdAt: 'asc' },
+    }).catch(() => []);
+    return res.json({ providers: providers.map((p) => ({ ...p, submittedAt: p.createdAt, docs: p.kycDocuments || {} })) });
+  } catch (err) {
+    return res.json({ providers: [] });
+  }
+});
+
+router.post('/providers/:id/verify', async (req, res) => {
+  try {
+    const { action, note } = req.body;
+    const newStatus = action === 'approve' ? 'APPROVED' : 'REJECTED';
+    const user = await prisma.user.update({
+      where: { id: req.params.id },
+      data: { kycStatus: newStatus },
+    }).catch(() => null);
+    return res.json({ success: true, kycStatus: newStatus });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
 
