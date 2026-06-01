@@ -13,7 +13,6 @@ import {
   ScrollView,
   TextInput,
 } from 'react-native';
-import * as FileSystem from 'expo-file-system';
 
 import api from '../../services/api';
 

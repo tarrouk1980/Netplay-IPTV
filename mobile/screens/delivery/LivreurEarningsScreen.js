@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
-import * as FileSystem from 'expo-file-system';
 
 
 const COLORS = {

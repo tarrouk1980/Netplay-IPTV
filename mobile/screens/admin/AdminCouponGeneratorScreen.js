@@ -4,7 +4,6 @@ import {
   TextInput, Alert, ActivityIndicator, Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as FileSystem from 'expo-file-system';
 
 import api from '../../services/api';
 
