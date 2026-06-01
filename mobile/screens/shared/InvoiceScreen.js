@@ -4,8 +4,8 @@ import {
   ActivityIndicator, StatusBar, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as Print from 'expo-print';
-import * as Sharing from 'expo-sharing';
+
+
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
 

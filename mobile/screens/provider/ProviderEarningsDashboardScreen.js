@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
 import * as FileSystem from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
+
 
 const COLORS = {
   bg: '#0A0A0F',

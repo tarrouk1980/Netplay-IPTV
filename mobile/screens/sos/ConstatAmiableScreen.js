@@ -6,8 +6,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
-import * as Print from 'expo-print';
-import * as Sharing from 'expo-sharing';
+
+
 import api from '../../services/api';
 
 const COLORS = {
