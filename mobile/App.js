@@ -270,6 +270,11 @@ import TaxiDriverStatsScreen from './screens/taxi/TaxiDriverStatsScreen';
 import AdminMapOverviewScreen from './screens/admin/AdminMapOverviewScreen';
 import GroceryCheckoutSuccessScreen from './screens/grocery/GroceryCheckoutSuccessScreen';
 
+// Batch 32
+import ClientOrdersAllScreen from './screens/profile/ClientOrdersAllScreen';
+import AdminCouponListScreen from './screens/admin/AdminCouponListScreen';
+import DeliveryRatingScreen from './screens/delivery/DeliveryRatingScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -518,6 +523,9 @@ function MainStack() {
       <Stack.Screen name="TaxiDriverStats" component={TaxiDriverStatsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminMapOverview" component={AdminMapOverviewScreen} options={{ headerShown: false }} />
       <Stack.Screen name="GroceryCheckoutSuccess" component={GroceryCheckoutSuccessScreen} options={{ headerShown: false, gestureEnabled: false }} />
+      <Stack.Screen name="ClientOrdersAll" component={ClientOrdersAllScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminCouponList" component={AdminCouponListScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="DeliveryRating" component={DeliveryRatingScreen} options={{ headerShown: false, gestureEnabled: false }} />
     </Stack.Navigator>
   );
 }
