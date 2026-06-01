@@ -275,6 +275,11 @@ import ClientOrdersAllScreen from './screens/profile/ClientOrdersAllScreen';
 import AdminCouponListScreen from './screens/admin/AdminCouponListScreen';
 import DeliveryRatingScreen from './screens/delivery/DeliveryRatingScreen';
 
+// Batch 34
+import GroceryStoreAnalyticsScreen from './screens/grocery/GroceryStoreAnalyticsScreen';
+import AdminAppVersionScreen from './screens/admin/AdminAppVersionScreen';
+import TaxiReceiptScreen from './screens/taxi/TaxiReceiptScreen';
+
 // Batch 33
 import TaxiPromoScreen from './screens/taxi/TaxiPromoScreen';
 import AdminUserSessionsScreen from './screens/admin/AdminUserSessionsScreen';
@@ -534,6 +539,9 @@ function MainStack() {
       <Stack.Screen name="TaxiPromo" component={TaxiPromoScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminUserSessions" component={AdminUserSessionsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DepanneurEarnings" component={DepanneurEarningsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="GroceryStoreAnalytics" component={GroceryStoreAnalyticsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminAppVersion" component={AdminAppVersionScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="TaxiReceipt" component={TaxiReceiptScreen} options={{ headerShown: false, gestureEnabled: false }} />
     </Stack.Navigator>
   );
 }
