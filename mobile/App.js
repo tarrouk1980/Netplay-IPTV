@@ -192,6 +192,11 @@ import ClientOnboardingScreen from './screens/onboarding/ClientOnboardingScreen'
 import KonnectPaymentScreen from './screens/payment/KonnectPaymentScreen';
 import NotificationCenterScreen from './screens/notifications/NotificationCenterScreen';
 
+// Batch 16
+import MapAddressPickerScreen from './screens/shared/MapAddressPickerScreen';
+import MerchantStatsScreen from './screens/merchant/MerchantStatsScreen';
+import AdminKYCDetailScreen from './screens/admin/AdminKYCDetailScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -394,6 +399,9 @@ function MainStack() {
       <Stack.Screen name="ClientOnboarding" component={ClientOnboardingScreen} options={{ headerShown: false, gestureEnabled: false }} />
       <Stack.Screen name="KonnectPayment" component={KonnectPaymentScreen} options={{ headerShown: false }} />
       <Stack.Screen name="NotificationCenter" component={NotificationCenterScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="MapAddressPicker" component={MapAddressPickerScreen} options={{ headerShown: false, presentation: 'fullScreenModal' }} />
+      <Stack.Screen name="MerchantStats" component={MerchantStatsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminKYCDetail" component={AdminKYCDetailScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }

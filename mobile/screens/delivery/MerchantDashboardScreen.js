@@ -211,8 +211,8 @@ export default function MerchantDashboardScreen({ navigation }) {
           <Text style={styles.backArrow}>‹</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Ma Boutique</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('MerchantProducts')}>
-          <Text style={styles.headerAction}>Produits</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('MerchantStats')}>
+          <Text style={styles.headerAction}>Stats</Text>
         </TouchableOpacity>
       </View>
 

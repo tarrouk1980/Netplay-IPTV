@@ -146,7 +146,7 @@ const rModal = StyleSheet.create({
 });
 
 // ── KYC Item ─────────────────────────────────────────────────────────────────
-function KYCItem({ user, onApprove, onReject }) {
+function KYCItem({ user, onApprove, onReject, onViewDetail }) {
   const roleColor = ROLE_COLORS[user.role] || COLORS.muted;
   const [approving, setApproving] = useState(false);
 
@@ -223,6 +223,11 @@ function KYCItem({ user, onApprove, onReject }) {
         <TouchableOpacity style={kItem.rejectBtn} onPress={() => onReject(user)}>
           <Text style={kItem.rejectTxt}>❌ Rejeter</Text>
         </TouchableOpacity>
+        {onViewDetail && (
+          <TouchableOpacity style={[kItem.rejectBtn, { borderColor: '#1565C0', backgroundColor: '#1565C022' }]} onPress={onViewDetail}>
+            <Text style={[kItem.rejectTxt, { color: '#4A9EFF' }]}>🔍 Détail</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -332,6 +337,7 @@ export default function AdminKYCScreen({ navigation }) {
               user={user}
               onApprove={handleApprove}
               onReject={(u) => setRejectModalUser(u)}
+              onViewDetail={() => navigation.navigate('AdminKYCDetail', { userId: user.id, userName: user.name })}
             />
           )}
           refreshControl={

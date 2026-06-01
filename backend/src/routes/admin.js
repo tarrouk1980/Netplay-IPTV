@@ -1424,6 +1424,37 @@ router.get('/providers/live', authenticate, async (req, res) => {
   }
 });
 
+router.get('/kyc/:userId', requireAdmin, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.params.userId }, select: { id: true, name: true, role: true, phone: true, email: true, kycStatus: true, createdAt: true } });
+    const documents = await prisma.providerDocument.findMany({ where: { providerId: req.params.userId } });
+    res.json({ user, documents });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.post('/kyc/:userId/documents/:type/approve', requireAdmin, async (req, res) => {
+  try {
+    await prisma.providerDocument.updateMany({ where: { providerId: req.params.userId, type: req.params.type }, data: { status: 'APPROVED', note: '' } });
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.post('/kyc/:userId/documents/:type/reject', requireAdmin, async (req, res) => {
+  try {
+    const { reason } = req.body;
+    await prisma.providerDocument.updateMany({ where: { providerId: req.params.userId, type: req.params.type }, data: { status: 'REJECTED', note: reason || '' } });
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.post('/kyc/:userId/approve-all', requireAdmin, async (req, res) => {
+  try {
+    await prisma.providerDocument.updateMany({ where: { providerId: req.params.userId, status: 'PENDING' }, data: { status: 'APPROVED' } });
+    await prisma.user.update({ where: { id: req.params.userId }, data: { kycStatus: 'APPROVED' } });
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 router.post('/users/bulk', requireAdmin, async (req, res) => {
   try {
     const { action, ids, message } = req.body;
