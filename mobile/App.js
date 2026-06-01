@@ -275,6 +275,10 @@ import ClientOrdersAllScreen from './screens/profile/ClientOrdersAllScreen';
 import AdminCouponListScreen from './screens/admin/AdminCouponListScreen';
 import DeliveryRatingScreen from './screens/delivery/DeliveryRatingScreen';
 
+// Batch 33
+import TaxiPromoScreen from './screens/taxi/TaxiPromoScreen';
+import AdminUserSessionsScreen from './screens/admin/AdminUserSessionsScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
