@@ -183,6 +183,13 @@ export default function MerchantDashboardScreen({ navigation }) {
             <Text style={styles.inProgressText}>🛵 En cours de livraison</Text>
           </View>
         )}
+
+        <TouchableOpacity
+          style={{ marginTop: 8, alignSelf: 'flex-end' }}
+          onPress={() => navigation.navigate('MerchantOrderDetail', { orderId: item.id })}
+        >
+          <Text style={{ color: '#27AE60', fontSize: 12, fontWeight: '700' }}>Détail complet →</Text>
+        </TouchableOpacity>
       </View>
     );
   };

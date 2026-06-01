@@ -683,6 +683,31 @@ router.post('/split-fare', authenticate, async (req, res) => {
   });
 });
 
+// GET /api/taxi/orders/:id/tracking — live tracking info
+router.get('/orders/:id/tracking', authenticate, async (req, res) => {
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: req.params.id },
+      include: {
+        provider: { select: { id: true, name: true, rating: true, lastLat: true, lastLng: true, vehicleInfo: true } },
+      },
+    });
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    res.json({
+      order: { id: order.id, status: order.status },
+      provider: order.provider ? {
+        name: order.provider.name,
+        rating: order.provider.rating,
+        lat: order.provider.lastLat,
+        lng: order.provider.lastLng,
+        vehicle: order.provider.vehicleInfo,
+      } : null,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /api/taxi/schedule — schedule a future taxi ride
 router.post('/schedule', authenticate, async (req, res) => {
   try {

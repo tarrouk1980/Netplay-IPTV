@@ -626,4 +626,46 @@ router.get('/earnings', authenticate, async (req, res) => {
   }
 });
 
+// GET /api/delivery/merchant/orders/:id — détail commande marchand
+router.get('/merchant/orders/:id', authenticate, async (req, res) => {
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: req.params.id },
+      include: {
+        client: { select: { id: true, name: true, phone: true } },
+        provider: { select: { id: true, name: true, rating: true } },
+      },
+    });
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    const meta = order.metadata || {};
+    res.json({
+      order: {
+        ...order,
+        deliveryAddress: meta.deliveryAddress,
+        note: meta.note,
+        items: meta.items || [],
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PATCH /api/delivery/merchant/orders/:id/status
+router.patch('/merchant/orders/:id/status', authenticate, async (req, res) => {
+  try {
+    const { status } = req.body;
+    const allowed = ['ACCEPTED', 'PREPARING', 'READY', 'PICKED_UP', 'CANCELLED'];
+    if (!allowed.includes(status)) return res.status(400).json({ error: 'Invalid status' });
+    const order = await prisma.order.update({
+      where: { id: req.params.id },
+      data: { status },
+    });
+    res.json({ order });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/taxi/orders/:id/tracking — position du chauffeur
 module.exports = router;

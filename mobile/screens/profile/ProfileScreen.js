@@ -210,6 +210,10 @@ export default function ProfileScreen({ navigation }) {
         {/* Quick Links */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Autres</Text>
+          <TouchableOpacity style={styles.quickLink} onPress={() => navigation.navigate('EasyPass')}>
+            <Text style={styles.quickLinkText}>⭐ EasyPass — Abonnements</Text>
+            <Text style={styles.quickLinkArrow}>›</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.quickLink} onPress={() => navigation.navigate('EasyPoints')}>
             <Text style={styles.quickLinkText}>🏆 EasyPoints</Text>
             <Text style={styles.quickLinkArrow}>›</Text>

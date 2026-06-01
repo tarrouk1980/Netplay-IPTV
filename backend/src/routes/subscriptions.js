@@ -204,4 +204,49 @@ router.post(
   }
 );
 
+// GET /api/subscriptions/me — active subscription of current user
+router.get('/me', authenticate, async (req, res) => {
+  try {
+    const sub = await prisma.subscription.findFirst({
+      where: { userId: req.user.id, isActive: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json({ subscription: sub || null });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/subscriptions/subscribe
+router.post('/subscribe', authenticate, async (req, res) => {
+  const { plan } = req.body;
+  const prices = { BASIC: 9.9, PREMIUM: 19.9, GOLD: 39.9 };
+  const price = prices[plan];
+  if (!price) return res.status(400).json({ error: 'Invalid plan' });
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user.id }, select: { walletBalance: true } });
+    if ((user?.walletBalance || 0) < price) return res.status(402).json({ error: 'Solde insuffisant' });
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    await prisma.user.update({ where: { id: req.user.id }, data: { walletBalance: { decrement: price } } });
+    const sub = await prisma.subscription.create({
+      data: { userId: req.user.id, plan, isActive: true, expiresAt },
+    });
+    res.status(201).json({ subscription: sub });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/subscriptions/cancel
+router.post('/cancel', authenticate, async (req, res) => {
+  try {
+    const sub = await prisma.subscription.findFirst({ where: { userId: req.user.id, isActive: true } });
+    if (!sub) return res.status(404).json({ error: 'No active subscription' });
+    await prisma.subscription.update({ where: { id: sub.id }, data: { cancelAtPeriodEnd: true } });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

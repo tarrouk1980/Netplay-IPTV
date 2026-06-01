@@ -88,6 +88,15 @@ import QuickTaxiScreen from './screens/taxi/QuickTaxiScreen';
 // Wallet Transactions
 import WalletTransactionsScreen from './screens/wallet/WalletTransactionsScreen';
 
+// Live Order Map
+import LiveOrderMapScreen from './screens/shared/LiveOrderMapScreen';
+
+// EasyPass
+import EasyPassScreen from './screens/subscriptions/EasyPassScreen';
+
+// Merchant Order Detail
+import MerchantOrderDetailScreen from './screens/delivery/MerchantOrderDetailScreen';
+
 // Settings
 import SettingsScreen from './screens/profile/SettingsScreen';
 import LanguageScreen from './screens/profile/LanguageScreen';
@@ -268,6 +277,9 @@ function MainStack() {
       <Stack.Screen name="TaxiScheduleRide" component={TaxiScheduleRideScreen} options={{ headerShown: false }} />
       <Stack.Screen name="QuickTaxi" component={QuickTaxiScreen} options={{ headerShown: false }} />
       <Stack.Screen name="WalletTransactions" component={WalletTransactionsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="LiveOrderMap" component={LiveOrderMapScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="EasyPass" component={EasyPassScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="MerchantOrderDetail" component={MerchantOrderDetailScreen} options={{ headerShown: false }} />
 
       {/* KYC Pending */}
       <Stack.Screen name="KYCPending" component={KYCPendingScreen} options={{ headerShown: false }} />
