@@ -1587,6 +1587,81 @@ router.post('/promo-codes/bulk', requireAdmin, async (req, res) => {
 });
 
 // ─────────────────────────────────────────────
+// GET /api/admin/passes — EasyPass management
+// ─────────────────────────────────────────────
+router.get('/passes', async (req, res) => {
+  try {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const [subs, monthSubs] = await Promise.all([
+      prisma.subscription.findMany({
+        where: { status: 'ACTIVE', expiresAt: { gte: now } },
+        include: { user: { select: { id: true, name: true, phone: true } } },
+        orderBy: { createdAt: 'desc' },
+      }).catch(() => []),
+      prisma.subscription.findMany({
+        where: { createdAt: { gte: monthStart } },
+        select: { plan: true, price: true },
+      }).catch(() => []),
+    ]);
+
+    const byPlan = { STARTER: 0, PRO: 0, UNLIMITED: 0 };
+    for (const s of subs) { if (byPlan[s.plan] !== undefined) byPlan[s.plan]++; }
+    const totalRevenue = monthSubs.reduce((s, x) => s + Number(x.price || 0), 0);
+
+    return res.json({
+      stats: {
+        totalActive: subs.length,
+        totalRevenue,
+        starter: byPlan.STARTER,
+        pro: byPlan.PRO,
+        unlimited: byPlan.UNLIMITED,
+        churnRate: 0,
+      },
+      subscriptions: subs,
+    });
+  } catch (err) {
+    console.error('[admin/passes]', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// POST /api/admin/passes/grant
+// ─────────────────────────────────────────────
+router.post('/passes/grant', async (req, res) => {
+  try {
+    const { userId, plan, days } = req.body;
+    const expiresAt = new Date(Date.now() + (days || 30) * 86400000);
+    const PRICES = { STARTER: 1, PRO: 3, UNLIMITED: 5 };
+    const sub = await prisma.subscription.create({
+      data: { userId, plan: plan || 'PRO', status: 'ACTIVE', price: PRICES[plan] || 3, expiresAt, autoRenew: false },
+    });
+    return res.json({ subscription: sub });
+  } catch (err) {
+    console.error('[admin/passes/grant]', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// POST /api/admin/passes/:id/revoke
+// ─────────────────────────────────────────────
+router.post('/passes/:id/revoke', async (req, res) => {
+  try {
+    await prisma.subscription.update({
+      where: { id: req.params.id },
+      data: { status: 'CANCELLED', cancelledAt: new Date() },
+    });
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('[admin/passes/revoke]', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ─────────────────────────────────────────────
 // GET /api/admin/disputes/:id — dispute detail
 // ─────────────────────────────────────────────
 router.get('/disputes/:id', async (req, res) => {

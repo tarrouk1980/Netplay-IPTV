@@ -741,4 +741,41 @@ router.post('/schedule', authenticate, async (req, res) => {
   }
 });
 
+// GET /api/taxi/driver/history?period=today|week|month|all
+router.get('/driver/history', authenticate, requireRole('CHAUFFEUR'), async (req, res) => {
+  try {
+    const { period = 'week' } = req.query;
+    const now = new Date();
+    let from;
+    if (period === 'today') { from = new Date(); from.setHours(0,0,0,0); }
+    else if (period === 'week') { from = new Date(); from.setDate(now.getDate()-6); from.setHours(0,0,0,0); }
+    else if (period === 'month') { from = new Date(now.getFullYear(), now.getMonth(), 1); }
+
+    const where = {
+      providerId: req.user.id,
+      serviceType: 'TAXI',
+      status: 'COMPLETED',
+      ...(from ? { createdAt: { gte: from } } : {}),
+    };
+
+    const rides = await prisma.order.findMany({
+      where,
+      include: { client: { select: { name: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const totalRevenue = rides.reduce((s, r) => s + Number(r.price || 0), 0);
+    const ratedRides = rides.filter((r) => r.rating);
+    const avgRating = ratedRides.length ? ratedRides.reduce((s, r) => s + r.rating, 0) / ratedRides.length : 0;
+    const totalKm = rides.reduce((s, r) => s + Number(r.metadata?.distance || 0), 0);
+
+    return res.json({
+      rides,
+      summary: { total: rides.length, revenue: totalRevenue, avgRating, totalKm },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

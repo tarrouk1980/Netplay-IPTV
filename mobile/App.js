@@ -211,6 +211,11 @@ import ProviderOnlineStatusScreen from './screens/provider/ProviderOnlineStatusS
 import AdminUserBanHistoryScreen from './screens/admin/AdminUserBanHistoryScreen';
 import GroceryStoreDetailScreen from './screens/grocery/GroceryStoreDetailScreen';
 
+// Batch 20
+import AdminPassManagementScreen from './screens/admin/AdminPassManagementScreen';
+import DriverRideHistoryScreen from './screens/taxi/DriverRideHistoryScreen';
+import AppSettingsScreen from './screens/profile/AppSettingsScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -424,6 +429,9 @@ function MainStack() {
       <Stack.Screen name="ProviderOnlineStatus" component={ProviderOnlineStatusScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminUserBanHistory" component={AdminUserBanHistoryScreen} options={{ headerShown: false }} />
       <Stack.Screen name="GroceryStoreDetail" component={GroceryStoreDetailScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminPassManagement" component={AdminPassManagementScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="DriverRideHistory" component={DriverRideHistoryScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AppSettings" component={AppSettingsScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
