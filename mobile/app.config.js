@@ -2,21 +2,32 @@ module.exports = {
   expo: {
     name: 'EASYWAY',
     slug: 'easyway',
+    owner: 'tarekclubiste',
     version: '1.0.0',
     orientation: 'portrait',
     icon: './assets/icon.png',
     backgroundColor: '#0A0A0F',
     splash: { image: './assets/splash.png', backgroundColor: '#0A0A0F' },
     assetBundlePatterns: ['**/*'],
-    ios: { supportsTablet: false, bundleIdentifier: 'com.easyway.app' },
+    ios: { supportsTablet: false, bundleIdentifier: 'com.easyway.app', scheme: 'easyway' },
     android: {
       adaptiveIcon: {
         foregroundImage: './assets/adaptive-icon.png',
         backgroundColor: '#0A0A0F',
       },
       package: 'com.easyway.app',
+      scheme: 'easyway',
+      permissions: [
+        'ACCESS_FINE_LOCATION',
+        'ACCESS_COARSE_LOCATION',
+        'CAMERA',
+        'READ_EXTERNAL_STORAGE',
+        'WRITE_EXTERNAL_STORAGE',
+        'RECEIVE_BOOT_COMPLETED',
+        'VIBRATE',
+      ],
     },
-    plugins: ['expo-notifications', 'expo-location'],
+    plugins: ['expo-notifications', 'expo-location', 'expo-av'],
     extra: {
       mapboxToken: process.env.MAPBOX_TOKEN || 'pk.eyJ1IjoiZWFzeXdheXRhcmVrIiwiYSI6ImNtcHNuaGJ1ODBoc2Qyc3FxenU0aGFvd3QifQ.K-z5zbFtY8v5lyMUn7TryQ',
       eas: {
