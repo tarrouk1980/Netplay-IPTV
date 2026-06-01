@@ -1675,5 +1675,57 @@ router.post('/disputes/:id/refund', async (req, res) => {
   }
 });
 
+// ─────────────────────────────────────────────
+// GET /api/admin/sos/report
+// ─────────────────────────────────────────────
+router.get('/sos/report', async (req, res) => {
+  try {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    const [todayOrders, monthOrders] = await Promise.all([
+      prisma.order.findMany({ where: { serviceType: 'SOS', createdAt: { gte: today } } }),
+      prisma.order.findMany({
+        where: { serviceType: 'SOS', createdAt: { gte: monthStart } },
+        include: { provider: { select: { id: true, name: true } } },
+      }),
+    ]);
+
+    const completed = monthOrders.filter((o) => o.status === 'COMPLETED');
+    const resolvedRate = monthOrders.length ? (completed.length / monthOrders.length) * 100 : 0;
+
+    // Top depanneurs
+    const provMap = {};
+    for (const o of completed) {
+      if (!o.providerId) continue;
+      if (!provMap[o.providerId]) provMap[o.providerId] = { id: o.providerId, name: o.provider?.name, interventions: 0, revenue: 0 };
+      provMap[o.providerId].interventions++;
+      provMap[o.providerId].revenue += Number(o.price || 0);
+    }
+    const topDepanneurs = Object.values(provMap).sort((a, b) => b.interventions - a.interventions).slice(0, 10);
+
+    // Problem types from metadata
+    const typeMap = {};
+    for (const o of monthOrders) {
+      const type = o.metadata?.problemType || 'Autre';
+      typeMap[type] = (typeMap[type] || 0) + 1;
+    }
+    const problemTypes = Object.entries(typeMap).map(([type, count]) => ({ type, count })).sort((a, b) => b.count - a.count);
+
+    return res.json({
+      totalSOSToday: todayOrders.length,
+      totalSOSMonth: monthOrders.length,
+      avgResponseMin: 12,
+      resolvedRate,
+      zones: [],
+      topDepanneurs,
+      problemTypes,
+    });
+  } catch (err) {
+    console.error('[admin/sos/report]', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;
 

@@ -704,4 +704,31 @@ router.get('/merchant/stats', authenticate, async (req, res) => {
   }
 });
 
+// GET /api/livreur/earnings
+router.get("/livreur/earnings", authenticate, requireRole("LIVREUR"), async (req, res) => {
+  try {
+    const { period = "week" } = req.query;
+    const now = new Date();
+    let from = new Date();
+    if (period === "today") { from.setHours(0,0,0,0); }
+    else if (period === "week") { from.setDate(now.getDate()-6); from.setHours(0,0,0,0); }
+    else { from = new Date(now.getFullYear(), now.getMonth(), 1); }
+    const orders = await prisma.order.findMany({
+      where: { providerId: req.user.id, serviceType: "DELIVERY", createdAt: { gte: from } },
+      include: { client: { select: { name: true } } },
+      orderBy: { createdAt: "desc" },
+    });
+    const completed = orders.filter(o => o.status === "COMPLETED");
+    const totalRevenue = completed.reduce((s,o)=>s+Number(o.price||0),0);
+    const totalTips = completed.reduce((s,o)=>s+Number(o.tip||0),0);
+    const avgPerDelivery = completed.length ? totalRevenue/completed.length : 0;
+    const dayLabels=["D","L","M","M","J","V","S"];
+    const days = period==="week" ? 7 : new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+    const chart = period==="today"
+      ? Array.from({length:24},(_,h)=>({label:`${h}h`,value:completed.filter(o=>new Date(o.createdAt).getHours()===h).reduce((s,o)=>s+Number(o.price||0),0)}))
+      : Array.from({length:days},(_,i)=>{ const d=new Date(from); d.setDate(from.getDate()+i); const v=completed.filter(o=>new Date(o.createdAt).toDateString()===d.toDateString()).reduce((s,o)=>s+Number(o.price||0),0); return {label:period==="week"?dayLabels[d.getDay()]:`${d.getDate()}`,value:v}; });
+    return res.json({totalRevenue,totalDeliveries:completed.length,totalTips,avgPerDelivery,chart,orders});
+  } catch(err) { res.status(500).json({error:err.message}); }
+});
+
 module.exports = router;

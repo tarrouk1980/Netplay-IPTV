@@ -201,6 +201,11 @@ import AdminKYCDetailScreen from './screens/admin/AdminKYCDetailScreen';
 import ClientFavoriteProvidersScreen from './screens/profile/ClientFavoriteProvidersScreen';
 import AdminDisputeDetailScreen from './screens/admin/AdminDisputeDetailScreen';
 
+// Batch 18
+import LivreurEarningsScreen from './screens/delivery/LivreurEarningsScreen';
+import AdminSOSReportScreen from './screens/admin/AdminSOSReportScreen';
+import ClientOrderHistoryDetailScreen from './screens/profile/ClientOrderHistoryDetailScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -408,6 +413,9 @@ function MainStack() {
       <Stack.Screen name="AdminKYCDetail" component={AdminKYCDetailScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientFavoriteProviders" component={ClientFavoriteProvidersScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminDisputeDetail" component={AdminDisputeDetailScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="LivreurEarnings" component={LivreurEarningsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminSOSReport" component={AdminSOSReportScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ClientOrderHistoryDetail" component={ClientOrderHistoryDetailScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
