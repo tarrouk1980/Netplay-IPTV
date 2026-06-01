@@ -2142,5 +2142,37 @@ router.post('/support/:id/reply', async (req, res) => {
   }
 });
 
+// ─────────────────────────────────────────────
+// GET /api/admin/notifications/campaigns
+// POST /api/admin/notifications/campaigns
+// ─────────────────────────────────────────────
+const campaignsStore = [];
+
+router.get('/notifications/campaigns', async (req, res) => {
+  return res.json({ campaigns: campaignsStore.slice().reverse() });
+});
+
+router.post('/notifications/campaigns', async (req, res) => {
+  try {
+    const { title, body, audience, sendNow, scheduledAt } = req.body;
+    const campaign = {
+      id: `camp-${Date.now()}`,
+      title,
+      body,
+      audience,
+      status: sendNow ? 'SENT' : scheduledAt ? 'SCHEDULED' : 'DRAFT',
+      scheduledAt: scheduledAt || null,
+      sentAt: sendNow ? new Date().toISOString() : null,
+      reached: sendNow ? Math.floor(Math.random() * 5000 + 500) : 0,
+      opened: 0,
+      createdAt: new Date().toISOString(),
+    };
+    campaignsStore.push(campaign);
+    return res.json({ success: true, campaign });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
 

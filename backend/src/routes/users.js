@@ -444,4 +444,43 @@ router.post('/clients/favorites/:providerId', authenticate, async (req, res) => 
   }
 });
 
+// ─── Address book ───────────────────────────
+const addressStore = new Map();
+
+router.get('/clients/addresses', authenticate, (req, res) => {
+  return res.json({ addresses: addressStore.get(req.user.id) || [] });
+});
+
+router.post('/clients/addresses', authenticate, (req, res) => {
+  const list = addressStore.get(req.user.id) || [];
+  const addr = { ...req.body, id: `addr-${Date.now()}` };
+  if (addr.isDefault) list.forEach((a) => { a.isDefault = false; });
+  list.push(addr);
+  addressStore.set(req.user.id, list);
+  return res.json({ success: true, address: addr });
+});
+
+router.put('/clients/addresses/:id', authenticate, (req, res) => {
+  const list = addressStore.get(req.user.id) || [];
+  const idx = list.findIndex((a) => a.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Not found' });
+  if (req.body.isDefault) list.forEach((a) => { a.isDefault = false; });
+  list[idx] = { ...list[idx], ...req.body };
+  addressStore.set(req.user.id, list);
+  return res.json({ success: true });
+});
+
+router.delete('/clients/addresses/:id', authenticate, (req, res) => {
+  const list = (addressStore.get(req.user.id) || []).filter((a) => a.id !== req.params.id);
+  addressStore.set(req.user.id, list);
+  return res.json({ success: true });
+});
+
+router.patch('/clients/addresses/:id/default', authenticate, (req, res) => {
+  const list = addressStore.get(req.user.id) || [];
+  list.forEach((a) => { a.isDefault = a.id === req.params.id; });
+  addressStore.set(req.user.id, list);
+  return res.json({ success: true });
+});
+
 module.exports = router;

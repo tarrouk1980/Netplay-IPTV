@@ -778,4 +778,13 @@ router.get('/driver/history', authenticate, requireRole('CHAUFFEUR'), async (req
   }
 });
 
+// GET /api/taxi/surge — surge multipliers by wilaya
+const surgeData = {
+  Tunis: 1.8, Ariana: 1.5, 'Ben Arous': 1.3, Sousse: 1.6, Nabeul: 1.9,
+};
+
+router.get('/surge', authenticate, async (req, res) => {
+  return res.json({ surge: surgeData, updatedAt: new Date().toISOString() });
+});
+
 module.exports = router;
