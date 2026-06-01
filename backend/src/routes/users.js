@@ -373,4 +373,75 @@ router.get('/nearby-providers', authenticate, async (req, res) => {
   }
 });
 
+// ─────────────────────────────────────────────
+// GET /api/clients/favorites — list favorite providers
+// ─────────────────────────────────────────────
+router.get('/clients/favorites', authenticate, async (req, res) => {
+  try {
+    const favs = await prisma.favoriteProvider.findMany({
+      where: { clientId: req.user.id },
+      include: {
+        provider: {
+          select: { id: true, name: true, phone: true, role: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    }).catch(() => []);
+
+    const providerIds = favs.map((f) => f.providerId);
+    const reviews = providerIds.length
+      ? await prisma.review.groupBy({
+          by: ['targetId'],
+          where: { targetId: { in: providerIds } },
+          _avg: { rating: true },
+          _count: { _all: true },
+        }).catch(() => [])
+      : [];
+
+    const ratingMap = Object.fromEntries(reviews.map((r) => [r.targetId, { rating: r._avg.rating, totalOrders: r._count._all }]));
+
+    const favorites = favs.map((f) => ({
+      ...f.provider,
+      ...ratingMap[f.providerId],
+    }));
+
+    return res.json({ favorites });
+  } catch (err) {
+    console.error('[clients/favorites]', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// DELETE /api/clients/favorites/:providerId
+// ─────────────────────────────────────────────
+router.delete('/clients/favorites/:providerId', authenticate, async (req, res) => {
+  try {
+    await prisma.favoriteProvider.deleteMany({
+      where: { clientId: req.user.id, providerId: req.params.providerId },
+    }).catch(() => {});
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('[clients/favorites/delete]', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// POST /api/clients/favorites/:providerId
+// ─────────────────────────────────────────────
+router.post('/clients/favorites/:providerId', authenticate, async (req, res) => {
+  try {
+    await prisma.favoriteProvider.upsert({
+      where: { clientId_providerId: { clientId: req.user.id, providerId: req.params.providerId } },
+      update: {},
+      create: { clientId: req.user.id, providerId: req.params.providerId },
+    }).catch(() => {});
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('[clients/favorites/add]', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;

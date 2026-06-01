@@ -197,6 +197,10 @@ import MapAddressPickerScreen from './screens/shared/MapAddressPickerScreen';
 import MerchantStatsScreen from './screens/merchant/MerchantStatsScreen';
 import AdminKYCDetailScreen from './screens/admin/AdminKYCDetailScreen';
 
+// Batch 17
+import ClientFavoriteProvidersScreen from './screens/profile/ClientFavoriteProvidersScreen';
+import AdminDisputeDetailScreen from './screens/admin/AdminDisputeDetailScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -402,6 +406,8 @@ function MainStack() {
       <Stack.Screen name="MapAddressPicker" component={MapAddressPickerScreen} options={{ headerShown: false, presentation: 'fullScreenModal' }} />
       <Stack.Screen name="MerchantStats" component={MerchantStatsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminKYCDetail" component={AdminKYCDetailScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ClientFavoriteProviders" component={ClientFavoriteProvidersScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminDisputeDetail" component={AdminDisputeDetailScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }

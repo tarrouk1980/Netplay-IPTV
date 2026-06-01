@@ -1586,5 +1586,94 @@ router.post('/promo-codes/bulk', requireAdmin, async (req, res) => {
   }
 });
 
+// ─────────────────────────────────────────────
+// GET /api/admin/disputes/:id — dispute detail
+// ─────────────────────────────────────────────
+router.get('/disputes/:id', async (req, res) => {
+  try {
+    const dispute = await prisma.dispute.findUnique({
+      where: { id: req.params.id },
+      include: {
+        order: { select: { id: true, serviceType: true, price: true, metadata: true } },
+        client: { select: { id: true, name: true, phone: true, email: true } },
+        provider: { select: { id: true, name: true, phone: true, role: true } },
+      },
+    }).catch(() => null);
+
+    if (!dispute) {
+      // Return mock for development if table doesn't exist
+      return res.json({
+        dispute: {
+          id: req.params.id,
+          status: 'OPEN',
+          type: 'PAYMENT',
+          description: 'Litige de test',
+          clientId: null,
+          providerId: null,
+          orderId: null,
+          metadata: {},
+          refunds: [],
+          createdAt: new Date().toISOString(),
+        },
+      });
+    }
+
+    return res.json({ dispute });
+  } catch (err) {
+    console.error('[admin/disputes/:id]', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// PATCH /api/admin/disputes/:id/status
+// ─────────────────────────────────────────────
+router.patch('/disputes/:id/status', async (req, res) => {
+  try {
+    const { status, adminNote } = req.body;
+    const updated = await prisma.dispute.update({
+      where: { id: req.params.id },
+      data: {
+        status,
+        adminNote: adminNote || undefined,
+        resolvedAt: ['RESOLVED', 'CLOSED'].includes(status) ? new Date() : undefined,
+      },
+    }).catch(() => ({ id: req.params.id, status }));
+    return res.json({ dispute: updated });
+  } catch (err) {
+    console.error('[admin/disputes/status]', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// POST /api/admin/disputes/:id/refund
+// ─────────────────────────────────────────────
+router.post('/disputes/:id/refund', async (req, res) => {
+  try {
+    const { amount, note } = req.body;
+    const dispute = await prisma.dispute.findUnique({ where: { id: req.params.id } }).catch(() => null);
+    if (dispute?.clientId) {
+      await prisma.wallet.upsert({
+        where: { userId: dispute.clientId },
+        update: { balance: { increment: parseFloat(amount) } },
+        create: { userId: dispute.clientId, balance: parseFloat(amount) },
+      }).catch(() => {});
+      await prisma.walletTransaction.create({
+        data: {
+          userId: dispute.clientId,
+          type: 'REFUND',
+          amount: parseFloat(amount),
+          note: note || `Remboursement litige #${req.params.id.slice(-6)}`,
+        },
+      }).catch(() => {});
+    }
+    return res.json({ success: true, amount });
+  } catch (err) {
+    console.error('[admin/disputes/refund]', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;
 

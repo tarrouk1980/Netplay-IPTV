@@ -861,4 +861,69 @@ router.post(
   }
 );
 
+// ─────────────────────────────────────────────
+// GET /api/sos/depanneur/dashboard
+// ─────────────────────────────────────────────
+router.get('/depanneur/dashboard', authenticate, requireRole('DEPANNEUR'), async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const [user, activeOrders, historyOrders, reviews] = await Promise.all([
+      prisma.user.findUnique({ where: { id: req.user.id }, select: { isOnline: true } }),
+      prisma.order.findMany({
+        where: { providerId: req.user.id, status: { in: ['PENDING', 'ACCEPTED', 'IN_PROGRESS'] } },
+        include: { client: { select: { name: true, phone: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+      }),
+      prisma.order.findMany({
+        where: { providerId: req.user.id, status: { in: ['COMPLETED', 'CANCELLED'] } },
+        include: { client: { select: { name: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+      }),
+      prisma.review.aggregate({
+        where: { targetId: req.user.id },
+        _avg: { rating: true },
+      }),
+    ]);
+
+    const todayOrders = historyOrders.filter((o) => new Date(o.createdAt) >= today);
+    const todayRevenue = todayOrders.reduce((s, o) => s + Number(o.price || 0), 0);
+
+    return res.json({
+      isOnline: user?.isOnline ?? false,
+      activeIntervention: activeOrders[0] || null,
+      history: historyOrders,
+      stats: {
+        interventions: todayOrders.filter((o) => o.status === 'COMPLETED').length,
+        revenue: todayRevenue,
+        rating: reviews._avg.rating ?? 5.0,
+        streak: 0,
+      },
+    });
+  } catch (err) {
+    console.error('[sos/depanneur/dashboard]', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// PATCH /api/sos/depanneur/toggle
+// ─────────────────────────────────────────────
+router.patch('/depanneur/toggle', authenticate, requireRole('DEPANNEUR'), async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user.id }, select: { isOnline: true } });
+    const updated = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { isOnline: !user?.isOnline },
+    });
+    return res.json({ isOnline: updated.isOnline });
+  } catch (err) {
+    console.error('[sos/depanneur/toggle]', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;
