@@ -1424,6 +1424,51 @@ router.get('/providers/live', authenticate, async (req, res) => {
   }
 });
 
+router.get('/revenue', requireAdmin, async (req, res) => {
+  try {
+    const { period = 'week' } = req.query;
+    const now = new Date();
+    const starts = {
+      today: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+      week: new Date(now - 7 * 86400000),
+      month: new Date(now - 30 * 86400000),
+      quarter: new Date(now - 90 * 86400000),
+    };
+    const since = starts[period] || starts.week;
+
+    const [orders, prevOrders] = await Promise.all([
+      prisma.order.findMany({
+        where: { status: 'COMPLETED', completedAt: { gte: since } },
+        select: { serviceType: true, fare: true, providerId: true, completedAt: true },
+      }),
+      prisma.order.findMany({
+        where: { status: 'COMPLETED', completedAt: { gte: new Date(since.getTime() - (now - since)), lt: since } },
+        select: { fare: true },
+      }),
+    ]);
+
+    const totalTND = orders.reduce((s, o) => s + (o.fare || 0), 0);
+    const prevTotal = prevOrders.reduce((s, o) => s + (o.fare || 0), 0);
+    const growth = prevTotal > 0 ? ((totalTND - prevTotal) / prevTotal) * 100 : 0;
+
+    const serviceMap = {};
+    orders.forEach(o => {
+      const t = o.serviceType || 'TAXI';
+      if (!serviceMap[t]) serviceMap[t] = { revenue: 0, orders: 0 };
+      serviceMap[t].revenue += o.fare || 0;
+      serviceMap[t].orders++;
+    });
+    const byService = Object.entries(serviceMap).map(([service, v]) => ({
+      service, revenue: Math.round(v.revenue), orders: v.orders,
+      pct: totalTND > 0 ? Math.round((v.revenue / totalTND) * 100) : 0,
+    })).sort((a, b) => b.revenue - a.revenue);
+
+    res.json({ totalTND: Math.round(totalTND), totalOrders: orders.length, avgOrderValue: orders.length ? Math.round(totalTND / orders.length * 10) / 10 : 0, growth: Math.round(growth * 10) / 10, byService });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.post('/notifications/push', requireAdmin, async (req, res) => {
   try {
     const { audience, title, body, silent, schedule } = req.body;

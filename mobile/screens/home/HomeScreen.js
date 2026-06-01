@@ -283,6 +283,20 @@ export default function HomeScreen({ navigation }) {
           <Text style={{ color: '#F5A623', fontSize: 20 }}>›</Text>
         </TouchableOpacity>
 
+        {/* Multi-order tracker shortcut */}
+        <TouchableOpacity
+          style={{ marginHorizontal: 16, marginBottom: 16, backgroundColor: '#1C1C28', borderRadius: 14, padding: 14, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#2C2C3E' }}
+          onPress={() => navigation.navigate('MultiOrderTracker')}
+          activeOpacity={0.8}
+        >
+          <Text style={{ fontSize: 22, marginRight: 10 }}>📡</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: '#FFF', fontWeight: '700', fontSize: 14 }}>Suivi de commandes</Text>
+            <Text style={{ color: '#8E8E9A', fontSize: 12, marginTop: 2 }}>Suivez toutes vos commandes en temps réel</Text>
+          </View>
+          <Text style={{ color: '#F5A623', fontSize: 20 }}>›</Text>
+        </TouchableOpacity>
+
         {/* Offres du moment */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>🔥 Offres du moment</Text>

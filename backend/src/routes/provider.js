@@ -219,6 +219,35 @@ router.get('/reviews', authenticate, async (req, res) => {
   }
 });
 
+router.get('/documents', authenticate, async (req, res) => {
+  try {
+    const docs = await prisma.providerDocument.findMany({
+      where: { providerId: req.user.id },
+      select: { type: true, status: true, uploadedAt: true, expiresAt: true, note: true },
+    });
+    const map = {};
+    docs.forEach(d => { map[d.type] = d; });
+    res.json({ documents: map });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/documents', authenticate, async (req, res) => {
+  try {
+    const { type } = req.body;
+    const existing = await prisma.providerDocument.findFirst({ where: { providerId: req.user.id, type } });
+    if (existing) {
+      await prisma.providerDocument.update({ where: { id: existing.id }, data: { status: 'PENDING', uploadedAt: new Date() } });
+    } else {
+      await prisma.providerDocument.create({ data: { providerId: req.user.id, type, status: 'PENDING', uploadedAt: new Date() } });
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/earnings-goal', authenticate, async (req, res) => {
   try {
     const now = new Date();

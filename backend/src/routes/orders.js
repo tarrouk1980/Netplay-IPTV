@@ -78,4 +78,23 @@ router.get('/:id', authenticate, async (req, res) => {
   }
 });
 
+router.get('/active', authenticate, async (req, res) => {
+  try {
+    const orders = await prisma.order.findMany({
+      where: {
+        clientId: req.user.id,
+        status: { in: ['PENDING', 'ACCEPTED', 'IN_PROGRESS', 'ARRIVED', 'PREPARING', 'PICKED_UP'] },
+      },
+      include: {
+        provider: { select: { name: true, phone: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+    });
+    res.json({ orders });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

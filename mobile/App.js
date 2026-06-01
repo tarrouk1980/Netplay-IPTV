@@ -177,6 +177,11 @@ import EasyPointsDashboardScreen from './screens/loyalty/EasyPointsDashboardScre
 import EarningsGoalScreen from './screens/provider/EarningsGoalScreen';
 import AdminPushNotificationScreen from './screens/admin/AdminPushNotificationScreen';
 
+// Batch 13
+import DriverDocumentsScreen from './screens/provider/DriverDocumentsScreen';
+import AdminRevenueReportScreen from './screens/admin/AdminRevenueReportScreen';
+import MultiOrderTrackerScreen from './screens/shared/MultiOrderTrackerScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -370,6 +375,9 @@ function MainStack() {
       <Stack.Screen name="EasyPointsDashboard" component={EasyPointsDashboardScreen} options={{ headerShown: false }} />
       <Stack.Screen name="EarningsGoal" component={EarningsGoalScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminPushNotification" component={AdminPushNotificationScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="DriverDocuments" component={DriverDocumentsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminRevenueReport" component={AdminRevenueReportScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="MultiOrderTracker" component={MultiOrderTrackerScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }

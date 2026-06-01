@@ -345,6 +345,11 @@ export default function AdminDashboardScreen({ navigation }) {
                 label="Push notifs"
                 onPress={() => navigation.navigate('AdminPushNotification')}
               />
+              <NavButton
+                emoji="💹"
+                label="Rev. détaillés"
+                onPress={() => navigation.navigate('AdminRevenueReport')}
+              />
             </View>
 
             {/* Revenue total */}
