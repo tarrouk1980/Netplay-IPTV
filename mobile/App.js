@@ -240,6 +240,11 @@ import AdminLiveOrdersScreen from './screens/admin/AdminLiveOrdersScreen';
 import ProviderVehicleInfoScreen from './screens/provider/ProviderVehicleInfoScreen';
 import ClientSOSHistoryScreen from './screens/sos/ClientSOSHistoryScreen';
 
+// Batch 26
+import ProviderDocumentStatusScreen from './screens/provider/ProviderDocumentStatusScreen';
+import AdminRevenueDetailScreen from './screens/admin/AdminRevenueDetailScreen';
+import GroceryOrderHistoryScreen from './screens/grocery/GroceryOrderHistoryScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -470,6 +475,9 @@ function MainStack() {
       <Stack.Screen name="AdminLiveOrders" component={AdminLiveOrdersScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ProviderVehicleInfo" component={ProviderVehicleInfoScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientSOSHistory" component={ClientSOSHistoryScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ProviderDocumentStatus" component={ProviderDocumentStatusScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminRevenueDetail" component={AdminRevenueDetailScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="GroceryOrderHistory" component={GroceryOrderHistoryScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }

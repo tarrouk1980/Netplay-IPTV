@@ -2039,5 +2039,35 @@ router.get('/orders/live', async (req, res) => {
   }
 });
 
+// ─────────────────────────────────────────────
+// GET /api/admin/revenue/detail — revenue breakdown by period
+// ─────────────────────────────────────────────
+router.get('/revenue/detail', async (req, res) => {
+  try {
+    const { period = '30j' } = req.query;
+    const days = { '7j': 7, '30j': 30, '90j': 90, '1an': 365 }[period] || 30;
+    const since = new Date(Date.now() - days * 24 * 3600000);
+    const orders = await prisma.order.findMany({
+      where: { status: 'COMPLETED', createdAt: { gte: since } },
+      select: { price: true, serviceType: true, createdAt: true, providerId: true, provider: { select: { name: true, role: true } } },
+    }).catch(() => []);
+    const totalRevenue = orders.reduce((s, o) => s + (parseFloat(o.price) || 0), 0);
+    const totalOrders = orders.length;
+    const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+    const byServiceMap = {};
+    orders.forEach((o) => {
+      if (!byServiceMap[o.serviceType]) byServiceMap[o.serviceType] = { revenue: 0, orders: 0 };
+      byServiceMap[o.serviceType].revenue += parseFloat(o.price) || 0;
+      byServiceMap[o.serviceType].orders += 1;
+    });
+    const byService = Object.entries(byServiceMap).map(([type, v]) => ({
+      type, revenue: v.revenue, orders: v.orders, pct: totalRevenue > 0 ? Math.round((v.revenue / totalRevenue) * 100) : 0,
+    }));
+    return res.json({ totalRevenue, totalOrders, avgOrderValue, growthPct: 0, byService, daily: [], topProviders: [] });
+  } catch (err) {
+    return res.json({ totalRevenue: 0, totalOrders: 0, avgOrderValue: 0, growthPct: 0, byService: [], daily: [], topProviders: [] });
+  }
+});
+
 module.exports = router;
 
