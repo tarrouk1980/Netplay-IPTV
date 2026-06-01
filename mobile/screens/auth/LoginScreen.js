@@ -68,6 +68,25 @@ export default function LoginScreen({ navigation }) {
     );
   };
 
+  const DEMO_ACCOUNTS = [
+    { label: '🛡 Admin', role: 'ADMIN', phone: '+21600000001', password: 'demo123', name: 'Admin EasyWay' },
+    { label: '👤 Client', role: 'CLIENT', phone: '+21600000002', password: 'demo123', name: 'Sami Ben Ali' },
+    { label: '🚕 Chauffeur', role: 'CHAUFFEUR', phone: '+21600000003', password: 'demo123', name: 'Karim Bouzid' },
+    { label: '🛵 Livreur', role: 'LIVREUR', phone: '+21600000004', password: 'demo123', name: 'Yassine Dhouib' },
+    { label: '🛻 Dépanneur', role: 'DEPANNEUR', phone: '+21600000005', password: 'demo123', name: 'Ahmed Trabelsi' },
+    { label: '🏪 Marchand', role: 'MARCHAND', phone: '+21600000006', password: 'demo123', name: 'Leila Mansour' },
+  ];
+
+  const { setUser, setTokens: storeSetTokens } = useAuthStore();
+
+  const handleDemoLogin = async (account) => {
+    const user = { id: account.role.toLowerCase() + '_demo', name: account.name, phone: account.phone, role: account.role };
+    await AsyncStorage.setItem('user', JSON.stringify(user));
+    await AsyncStorage.setItem('accessToken', 'demo_token_' + account.role);
+    storeSetTokens('demo_token_' + account.role, 'demo_refresh_' + account.role);
+    setUser(user);
+  };
+
   const handleLogin = async () => {
     if (!phone.trim()) {
       Alert.alert('Erreur', 'Veuillez saisir votre numéro de téléphone.');
@@ -184,6 +203,24 @@ export default function LoginScreen({ navigation }) {
               </View>
               <Text style={styles.rememberText}>Se souvenir de moi</Text>
             </TouchableOpacity>
+
+            {/* Mode démo */}
+            <View style={{ marginBottom: 16 }}>
+              <Text style={{ color: COLORS.textMuted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, textAlign: 'center' }}>
+                — Mode démo —
+              </Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
+                {DEMO_ACCOUNTS.map((acc) => (
+                  <TouchableOpacity
+                    key={acc.role}
+                    style={{ backgroundColor: COLORS.surface, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: COLORS.border }}
+                    onPress={() => handleDemoLogin(acc)}
+                  >
+                    <Text style={{ color: COLORS.text, fontSize: 12, fontWeight: '700' }}>{acc.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
 
             <TouchableOpacity
               style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
