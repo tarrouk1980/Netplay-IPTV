@@ -219,6 +219,47 @@ router.get('/reviews', authenticate, async (req, res) => {
   }
 });
 
+router.get('/earnings-goal', authenticate, async (req, res) => {
+  try {
+    const now = new Date();
+    const startOfDay = new Date(now); startOfDay.setHours(0, 0, 0, 0);
+    const startOfWeek = new Date(now); startOfWeek.setDate(now.getDate() - now.getDay()); startOfWeek.setHours(0, 0, 0, 0);
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOf28Days = new Date(now - 28 * 86400000);
+
+    const [daily, weekly, monthly, history28] = await Promise.all([
+      prisma.order.aggregate({ where: { providerId: req.user.id, status: 'COMPLETED', completedAt: { gte: startOfDay } }, _sum: { fare: true } }),
+      prisma.order.aggregate({ where: { providerId: req.user.id, status: 'COMPLETED', completedAt: { gte: startOfWeek } }, _sum: { fare: true } }),
+      prisma.order.aggregate({ where: { providerId: req.user.id, status: 'COMPLETED', completedAt: { gte: startOfMonth } }, _sum: { fare: true } }),
+      prisma.order.findMany({ where: { providerId: req.user.id, status: 'COMPLETED', completedAt: { gte: startOf28Days } }, select: { completedAt: true, fare: true } }),
+    ]);
+
+    const dayMap = {};
+    history28.forEach(o => {
+      if (!o.completedAt) return;
+      const key = new Date(o.completedAt).toISOString().slice(0, 10);
+      dayMap[key] = (dayMap[key] || 0) + (o.fare || 0);
+    });
+
+    res.json({
+      earnings: {
+        daily: daily._sum.fare || 0,
+        weekly: weekly._sum.fare || 0,
+        monthly: monthly._sum.fare || 0,
+      },
+      streakData: Object.fromEntries(Object.entries(dayMap).map(([k, v]) => [k, v > 0])),
+      streak: 0,
+      goals: { daily: 100, weekly: 500, monthly: 2000 },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/earnings-goal', authenticate, async (req, res) => {
+  res.json({ ok: true });
+});
+
 router.get('/demand-heatmap', authenticate, async (req, res) => {
   try {
     const now = new Date();

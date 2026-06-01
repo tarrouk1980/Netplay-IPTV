@@ -172,6 +172,11 @@ import SOSPreDiagnosticScreen from './screens/sos/SOSPreDiagnosticScreen';
 import DriverHeatmapScreen from './screens/taxi/DriverHeatmapScreen';
 import AdminCouponGeneratorScreen from './screens/admin/AdminCouponGeneratorScreen';
 
+// Batch 12
+import EasyPointsDashboardScreen from './screens/loyalty/EasyPointsDashboardScreen';
+import EarningsGoalScreen from './screens/provider/EarningsGoalScreen';
+import AdminPushNotificationScreen from './screens/admin/AdminPushNotificationScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -362,6 +367,9 @@ function MainStack() {
       <Stack.Screen name="SOSPreDiagnostic" component={SOSPreDiagnosticScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DriverHeatmap" component={DriverHeatmapScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminCouponGenerator" component={AdminCouponGeneratorScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="EasyPointsDashboard" component={EasyPointsDashboardScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="EarningsGoal" component={EarningsGoalScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminPushNotification" component={AdminPushNotificationScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }

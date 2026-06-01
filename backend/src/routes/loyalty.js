@@ -92,4 +92,28 @@ router.post('/redeem', authenticate, async (req, res) => {
   }
 });
 
+router.get('/me', authenticate, async (req, res) => {
+  try {
+    const profile = await prisma.user.findUnique({ where: { id: req.user.id }, select: { loyaltyPoints: true } });
+    const history = await prisma.loyaltyTransaction.findMany({
+      where: { userId: req.user.id },
+      orderBy: { createdAt: 'desc' },
+      take: 30,
+      select: { id: true, type: true, points: true, description: true, createdAt: true },
+    });
+    res.json({
+      points: profile?.loyaltyPoints || 0,
+      history: history.map(h => ({
+        id: h.id,
+        type: h.type,
+        points: h.points,
+        desc: h.description,
+        createdAt: h.createdAt,
+      })),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

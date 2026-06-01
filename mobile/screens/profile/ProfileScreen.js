@@ -214,8 +214,8 @@ export default function ProfileScreen({ navigation }) {
             <Text style={styles.quickLinkText}>⭐ EasyPass — Abonnements</Text>
             <Text style={styles.quickLinkArrow}>›</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.quickLink} onPress={() => navigation.navigate('EasyPoints')}>
-            <Text style={styles.quickLinkText}>🏆 EasyPoints</Text>
+          <TouchableOpacity style={styles.quickLink} onPress={() => navigation.navigate('EasyPointsDashboard')}>
+            <Text style={styles.quickLinkText}>🏆 EasyPoints & Récompenses</Text>
             <Text style={styles.quickLinkArrow}>›</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.quickLink} onPress={() => navigation.navigate('EasyBusiness')}>

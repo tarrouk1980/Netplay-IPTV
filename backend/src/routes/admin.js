@@ -1424,6 +1424,36 @@ router.get('/providers/live', authenticate, async (req, res) => {
   }
 });
 
+router.post('/notifications/push', requireAdmin, async (req, res) => {
+  try {
+    const { audience, title, body, silent, schedule } = req.body;
+    if (!title || !body) return res.status(400).json({ error: 'title and body required' });
+
+    const roleFilter = audience && audience !== 'ALL' ? { role: audience } : {};
+    const users = await prisma.user.findMany({
+      where: { ...roleFilter, pushToken: { not: null } },
+      select: { pushToken: true },
+    });
+    const tokens = users.map(u => u.pushToken).filter(Boolean);
+
+    if (tokens.length > 0) {
+      const messages = tokens.map(to => ({
+        to, sound: silent ? undefined : 'default', title, body,
+        data: { audience },
+      }));
+      await fetch('https://exp.host/--/api/v2/push/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(messages),
+      });
+    }
+
+    res.json({ sent: tokens.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.post('/promo-codes/bulk', requireAdmin, async (req, res) => {
   try {
     const { codes, discountType, discountValue, maxUses, services, expiresAt, minOrderAmount } = req.body;
