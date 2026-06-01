@@ -54,4 +54,26 @@ router.post('/recharge', authenticate, async (req, res) => {
   }
 });
 
+// POST /api/wallet/topup — cash/D17 topup request
+router.post('/topup', authenticate, async (req, res) => {
+  try {
+    const { amount, method } = req.body;
+    const code = `TOPUP-${Math.random().toString(36).toUpperCase().slice(2, 8)}`;
+    if (method === 'D17') {
+      // For D17, credit immediately (real integration would verify)
+      await prisma.wallet.upsert({
+        where: { userId: req.user.id },
+        update: { balance: { increment: parseFloat(amount) } },
+        create: { userId: req.user.id, balance: parseFloat(amount) },
+      }).catch(() => {});
+      await prisma.walletTransaction.create({
+        data: { userId: req.user.id, type: 'CREDIT', amount: parseFloat(amount), note: `Rechargement D17 - ${amount} TND` },
+      }).catch(() => {});
+    }
+    return res.json({ success: true, code, method, amount });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

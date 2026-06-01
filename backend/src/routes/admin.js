@@ -1587,6 +1587,42 @@ router.post('/promo-codes/bulk', requireAdmin, async (req, res) => {
 });
 
 // ─────────────────────────────────────────────
+// GET /api/admin/users/:id/wallet
+// POST /api/admin/users/:id/wallet/adjust
+// ─────────────────────────────────────────────
+router.get('/users/:id/wallet', async (req, res) => {
+  try {
+    const wallet = await prisma.wallet.findUnique({ where: { userId: req.params.id } }).catch(() => null);
+    const transactions = await prisma.walletTransaction.findMany({
+      where: { userId: req.params.id },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    }).catch(() => []);
+    return res.json({ wallet: wallet || { balance: 0 }, transactions });
+  } catch (err) {
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/users/:id/wallet/adjust', async (req, res) => {
+  try {
+    const { type, amount, note } = req.body;
+    const delta = type === 'CREDIT' ? parseFloat(amount) : -parseFloat(amount);
+    await prisma.wallet.upsert({
+      where: { userId: req.params.id },
+      update: { balance: { increment: delta } },
+      create: { userId: req.params.id, balance: Math.max(0, delta) },
+    });
+    await prisma.walletTransaction.create({
+      data: { userId: req.params.id, type: 'ADMIN', amount: parseFloat(amount), note: note || `Ajustement admin (${type})` },
+    }).catch(() => {});
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ─────────────────────────────────────────────
 // GET /api/admin/promo-codes/:id
 // PATCH /api/admin/promo-codes/:id
 // ─────────────────────────────────────────────

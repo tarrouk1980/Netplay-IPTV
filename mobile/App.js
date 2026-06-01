@@ -231,6 +231,10 @@ import TaxiOrderDetailScreen from './screens/taxi/TaxiOrderDetailScreen';
 import AdminPromoDetailScreen from './screens/admin/AdminPromoDetailScreen';
 import ProviderRatingDetailScreen from './screens/provider/ProviderRatingDetailScreen';
 
+// Batch 24
+import WalletTopUpScreen from './screens/wallet/WalletTopUpScreen';
+import AdminUserWalletScreen from './screens/admin/AdminUserWalletScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -456,6 +460,8 @@ function MainStack() {
       <Stack.Screen name="TaxiOrderDetail" component={TaxiOrderDetailScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminPromoDetail" component={AdminPromoDetailScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ProviderRatingDetail" component={ProviderRatingDetailScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="WalletTopUp" component={WalletTopUpScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminUserWallet" component={AdminUserWalletScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
