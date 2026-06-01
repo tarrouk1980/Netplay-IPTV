@@ -4,7 +4,7 @@ import {
   ActivityIndicator, FlatList, Dimensions, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
+
 import * as Location from 'expo-location';
 
 const { width, height } = Dimensions.get('window');
