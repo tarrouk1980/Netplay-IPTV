@@ -11,7 +11,11 @@
     "splash": { "image": "./assets/splash.png", "backgroundColor": "#0A0A0F" },
     "assetBundlePatterns": ["**/*"],
     "ios": { "supportsTablet": false, "bundleIdentifier": "com.easyway.app", "scheme": "easyway" },
-    "android": { "adaptiveIcon": { "foregroundImage": "./assets/adaptive-icon.png", "backgroundColor": "#0A0A0F" }, "package": "com.easyway.app", "scheme": "easyway" },
-    "plugins": ["expo-notifications", "expo-location"]
+    "android": { "adaptiveIcon": { "foregroundImage": "./assets/adaptive-icon.png", "backgroundColor": "#0A0A0F" }, "package": "com.easyway.app", "scheme": "easyway", "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION", "CAMERA", "READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE", "RECEIVE_BOOT_COMPLETED", "VIBRATE"] },
+    "plugins": [
+      "expo-notifications",
+      "expo-location",
+      "expo-av"
+    ]
   }
 }
