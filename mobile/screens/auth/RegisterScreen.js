@@ -478,7 +478,7 @@ export default function RegisterScreen({ navigation }) {
         Alert.alert('Erreur', 'Le nom doit contenir au moins 2 caractères.');
         return false;
       }
-      const phoneClean = phone.replace(/\s/g, '').replace(/^0+/, '');
+      const phoneClean = phone.replace(/\s/g, '');
       if (phoneClean.length < 6 || phoneClean.length > 15 || !/^\d+$/.test(phoneClean)) {
         Alert.alert('Erreur', 'Numéro de téléphone invalide (6 à 15 chiffres).');
         return false;
