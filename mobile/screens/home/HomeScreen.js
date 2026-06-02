@@ -160,6 +160,17 @@ export default function HomeScreen({ navigation }) {
   };
 
   const handleServicePress = (serviceKey) => {
+    if (user?.role && user.role !== 'CLIENT') {
+      const ROLE_SCREENS = {
+        CHAUFFEUR: 'DriverDashboard',
+        LIVREUR: 'LivreurDashboard',
+        DEPANNEUR: 'DepanneurDashboard',
+        MARCHAND: 'MerchantDashboard',
+        ADMIN: 'AdminDashboard',
+      };
+      const screen = ROLE_SCREENS[user.role];
+      if (screen) { navigation.replace(screen); return; }
+    }
     if (serviceKey === 'EASYTAXY') navigation.navigate('TaxiHome');
     else if (serviceKey === 'SOS') navigation.navigate('SOSHome');
     else if (serviceKey === 'DELIVERY') navigation.navigate('DeliveryHome');
