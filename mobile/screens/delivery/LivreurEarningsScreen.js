@@ -1,280 +1,225 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
-  StatusBar,
-  RefreshControl,
+  StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import api from '../../services/api';
-
 
 const COLORS = {
-  bg: '#0A0A0F',
+  background: '#0A0A0F',
   surface: '#1C1C28',
-  surfaceAlt: '#16161F',
-  border: '#2A2A3A',
+  primary: '#F5A623',
   text: '#FFFFFF',
-  muted: '#8A8A9A',
-  green: '#27AE60',
-  orange: '#F57C00',
-  blue: '#1565C0',
+  muted: '#8E8E9A',
+  border: '#2C2C3A',
 };
 
-const PERIODS = [
-  { key: 'today', label: "Aujourd'hui" },
-  { key: 'week', label: 'Cette semaine' },
-  { key: 'month', label: 'Ce mois' },
+const DELIVERIES = [
+  { id: '1', heure: '08:30', marchand: 'Pizza Roma', adresse: "Rue de l'Indépendance, Tunis", distance: '3.1 km', montant: 8.5, bonus: null },
+  { id: '2', heure: '09:55', marchand: 'Burger House', adresse: 'Avenue Habib Bourguiba, Lac 1', distance: '5.2 km', montant: 11.0, bonus: 'Bonus rush' },
+  { id: '3', heure: '11:10', marchand: 'Sushi Express', adresse: 'Cité El Khadra, Tunis', distance: '7.8 km', montant: 16.5, bonus: null },
+  { id: '4', heure: '12:40', marchand: 'Chez Mounir', adresse: 'Ariana Soghra', distance: '4.5 km', montant: 9.5, bonus: null },
+  { id: '5', heure: '14:15', marchand: 'Green Garden', adresse: 'Menzah 9, Tunis', distance: '6.3 km', montant: 13.0, bonus: 'Bonus fidélité' },
+  { id: '6', heure: '16:00', marchand: 'Tacos Nation', adresse: 'La Marsa Centre', distance: '2.8 km', montant: 7.0, bonus: null },
+  { id: '7', heure: '17:30', marchand: 'Café Orient', adresse: 'Ennasr 2, Ariana', distance: '5.0 km', montant: 10.5, bonus: null },
+  { id: '8', heure: '19:20', marchand: 'Le Gourmet', adresse: 'Les Berges du Lac 2', distance: '8.5 km', montant: 18.0, bonus: 'Bonus soirée' },
 ];
 
-function BarChart({ data, maxVal, color }) {
-  if (!data || data.length === 0) return null;
-  const max = maxVal || Math.max(...data.map((d) => d.value), 1);
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'flex-end', height: 80, gap: 4, marginVertical: 8 }}>
-      {data.map((d, i) => {
-        const pct = max > 0 ? d.value / max : 0;
-        return (
-          <View key={i} style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end' }}>
-            <View
-              style={{
-                width: '80%',
-                height: Math.max(4, pct * 70),
-                backgroundColor: color || COLORS.green,
-                borderRadius: 3,
-              }}
-            />
-            <Text style={{ color: COLORS.muted, fontSize: 8, marginTop: 3 }}>{d.label}</Text>
-          </View>
-        );
-      })}
-    </View>
-  );
-}
-
-function StatCard({ label, value, sub, color }) {
-  return (
-    <View style={s.statCard}>
-      <Text style={[s.statValue, { color: color || COLORS.text }]}>{value}</Text>
-      <Text style={s.statLabel}>{label}</Text>
-      {sub ? <Text style={s.statSub}>{sub}</Text> : null}
-    </View>
-  );
-}
+const PERIODS = ["Aujourd'hui", 'Semaine', 'Mois'];
 
 export default function LivreurEarningsScreen({ navigation }) {
-  const [period, setPeriod] = useState('week');
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [exporting, setExporting] = useState(false);
-
-  const load = useCallback(async () => {
-    try {
-      const res = await api.get(`/api/livreur/earnings?period=${period}`);
-      setData(res.data);
-    } catch {
-      // mock
-      const days = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-      setData({
-        totalRevenue: 0,
-        totalDeliveries: 0,
-        totalTips: 0,
-        avgPerDelivery: 0,
-        chart: days.map((l) => ({ label: l, value: 0 })),
-        orders: [],
-      });
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [period]);
-
-  useEffect(() => { load(); }, [load]);
-
-  const exportCSV = async () => {
-    if (!data?.orders?.length) return;
-    setExporting(true);
-    try {
-      const header = 'ID,Date,Client,Montant,Pourboire,Statut\n';
-      const rows = data.orders.map((o) =>
-        `${o.id},${o.createdAt},${o.client?.name || ''},${o.price || 0},${o.tip || 0},${o.status}`
-      ).join('\n');
-      const uri = FileSystem.documentDirectory + 'livreur_gains.csv';
-      await FileSystem.writeAsStringAsync(uri, header + rows, { encoding: FileSystem.EncodingType.UTF8 });
-      await Sharing.shareAsync(uri, { mimeType: 'text/csv', dialogTitle: 'Exporter les gains' });
-    } catch { /* ignore */ } finally {
-      setExporting(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <View style={s.centered}>
-        <ActivityIndicator color={COLORS.green} size="large" />
-      </View>
-    );
-  }
+  const [activePeriod, setActivePeriod] = useState(0);
 
   return (
-    <SafeAreaView style={s.root}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
-
-      <View style={s.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={s.back}>‹</Text>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
-        <Text style={s.title}>💰 Mes gains</Text>
-        <TouchableOpacity onPress={exportCSV} disabled={exporting}>
-          {exporting ? (
-            <ActivityIndicator color={COLORS.green} size="small" />
-          ) : (
-            <Text style={s.exportBtn}>CSV</Text>
-          )}
-        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Mes gains livraison</Text>
+        <View style={styles.headerRight} />
       </View>
 
-      {/* Period selector */}
-      <View style={s.periodRow}>
-        {PERIODS.map((p) => (
-          <TouchableOpacity
-            key={p.key}
-            style={[s.periodBtn, period === p.key && s.periodActive]}
-            onPress={() => setPeriod(p.key)}
-          >
-            <Text style={[s.periodTxt, period === p.key && s.periodActiveTxt]}>{p.label}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <ScrollView
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={COLORS.green} />}
-        contentContainerStyle={{ paddingBottom: 40 }}
-      >
-        {/* KPI cards */}
-        <View style={s.kpiRow}>
-          <StatCard label="Total gains" value={`${(data?.totalRevenue || 0).toFixed(3)} TND`} color={COLORS.green} />
-          <StatCard label="Livraisons" value={data?.totalDeliveries || 0} />
-          <StatCard label="Pourboires" value={`${(data?.totalTips || 0).toFixed(3)} TND`} color={COLORS.orange} />
-          <StatCard label="Moy/livraison" value={`${(data?.avgPerDelivery || 0).toFixed(3)} TND`} />
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Summary Cards */}
+        <View style={styles.summaryRow}>
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryLabel}>{"Aujourd'hui"}</Text>
+            <Text style={styles.summaryValue}>93,50</Text>
+            <Text style={styles.summaryUnit}>TND</Text>
+          </View>
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryLabel}>Cette semaine</Text>
+            <Text style={styles.summaryValue}>487,00</Text>
+            <Text style={styles.summaryUnit}>TND</Text>
+          </View>
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryLabel}>Ce mois</Text>
+            <Text style={styles.summaryValue}>1 920,00</Text>
+            <Text style={styles.summaryUnit}>TND</Text>
+          </View>
         </View>
 
-        {/* Bar chart */}
-        {data?.chart?.length > 0 && (
-          <View style={s.chartCard}>
-            <Text style={s.cardTitle}>Évolution des gains</Text>
-            <BarChart data={data.chart} color={COLORS.green} />
+        {/* Performance Stats */}
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}>
+            <Text style={styles.statEmoji}>📦</Text>
+            <Text style={styles.statValue}>142</Text>
+            <Text style={styles.statLabel}>Livraisons réussies</Text>
           </View>
-        )}
+          <View style={styles.statCard}>
+            <Text style={styles.statEmoji}>⭐</Text>
+            <Text style={styles.statValue}>4.8</Text>
+            <Text style={styles.statLabel}>Note moyenne</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statEmoji}>✅</Text>
+            <Text style={styles.statValue}>94%</Text>
+            <Text style={styles.statLabel}>Taux acceptation</Text>
+          </View>
+        </View>
 
-        {/* Orders list */}
-        <Text style={s.sectionTitle}>Détail des courses</Text>
-        {(!data?.orders || data.orders.length === 0) ? (
-          <Text style={s.emptyTxt}>Aucune course sur cette période.</Text>
-        ) : (
-          data.orders.map((order) => (
-            <View key={order.id} style={s.orderCard}>
-              <View style={{ flex: 1 }}>
-                <Text style={s.orderClient}>{order.client?.name || 'Client'}</Text>
-                <Text style={s.orderDate}>
-                  {new Date(order.createdAt).toLocaleString('fr-TN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                </Text>
-                {order.metadata?.deliveryAddress ? (
-                  <Text style={s.orderAddr}>📍 {order.metadata.deliveryAddress}</Text>
-                ) : null}
-              </View>
-              <View style={{ alignItems: 'flex-end', gap: 4 }}>
-                <Text style={s.orderAmount}>{parseFloat(order.price || 0).toFixed(3)} TND</Text>
-                {order.tip > 0 && (
-                  <Text style={s.orderTip}>+{parseFloat(order.tip).toFixed(3)} TND 🎁</Text>
-                )}
-                <View style={[s.statusBadge, { backgroundColor: order.status === 'COMPLETED' ? COLORS.green + '22' : COLORS.muted + '22' }]}>
-                  <Text style={[s.statusTxt, { color: order.status === 'COMPLETED' ? COLORS.green : COLORS.muted }]}>
-                    {order.status === 'COMPLETED' ? 'Livrée' : order.status}
-                  </Text>
-                </View>
-              </View>
+        {/* Period Tabs */}
+        <View style={styles.tabsRow}>
+          {PERIODS.map((p, i) => (
+            <TouchableOpacity
+              key={p}
+              style={[styles.tab, activePeriod === i && styles.tabActive]}
+              onPress={() => setActivePeriod(i)}
+            >
+              <Text style={[styles.tabText, activePeriod === i && styles.tabTextActive]}>{p}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Deliveries List */}
+        <Text style={styles.sectionTitle}>Livraisons récentes</Text>
+        {DELIVERIES.map((d) => (
+          <View key={d.id} style={styles.deliveryCard}>
+            <View style={styles.deliveryLeft}>
+              <Text style={styles.deliveryTime}>{d.heure}</Text>
+              <Text style={styles.deliveryRoute}>{d.marchand} → client</Text>
+              <Text style={styles.deliveryAddress} numberOfLines={1}>{d.adresse}</Text>
+              <Text style={styles.deliveryMeta}>{d.distance}</Text>
             </View>
-          ))
-        )}
+            <View style={styles.deliveryRight}>
+              <Text style={styles.deliveryAmount}>{d.montant.toFixed(2)}</Text>
+              <Text style={styles.deliveryAmountUnit}>TND</Text>
+              {d.bonus && (
+                <View style={styles.bonusBadge}>
+                  <Text style={styles.bonusBadgeText}>{d.bonus}</Text>
+                </View>
+              )}
+            </View>
+          </View>
+        ))}
       </ScrollView>
+
+      <View style={styles.footer}>
+        <TouchableOpacity style={styles.withdrawBtn}>
+          <Text style={styles.withdrawBtnText}>Retirer mes gains</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
 
-const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.bg },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.bg },
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: COLORS.background },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
-    gap: 12,
   },
-  back: { color: COLORS.text, fontSize: 28, fontWeight: '300' },
-  title: { color: COLORS.text, fontSize: 18, fontWeight: '700', flex: 1 },
-  exportBtn: { color: COLORS.green, fontSize: 14, fontWeight: '700', borderWidth: 1, borderColor: COLORS.green, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
-  periodRow: { flexDirection: 'row', paddingHorizontal: 16, paddingVertical: 12, gap: 8 },
-  periodBtn: {
+  backBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
+  backArrow: { color: COLORS.text, fontSize: 22 },
+  headerTitle: { flex: 1, color: COLORS.text, fontSize: 18, fontWeight: '700', textAlign: 'center' },
+  headerRight: { width: 36 },
+  scrollContent: { padding: 16, paddingBottom: 100 },
+  summaryRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
+  summaryCard: {
     flex: 1,
     backgroundColor: COLORS.surface,
-    borderRadius: 10,
-    paddingVertical: 8,
+    borderRadius: 12,
+    padding: 12,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: COLORS.border,
   },
-  periodActive: { borderColor: COLORS.green, backgroundColor: COLORS.green + '22' },
-  periodTxt: { color: COLORS.muted, fontSize: 12, fontWeight: '600' },
-  periodActiveTxt: { color: COLORS.green },
-  kpiRow: { flexDirection: 'row', paddingHorizontal: 16, gap: 8, marginBottom: 12 },
+  summaryLabel: { color: COLORS.muted, fontSize: 11, marginBottom: 4, textAlign: 'center' },
+  summaryValue: { color: COLORS.primary, fontSize: 14, fontWeight: '700' },
+  summaryUnit: { color: COLORS.muted, fontSize: 10, marginTop: 2 },
+  statsRow: { flexDirection: 'row', gap: 8, marginBottom: 20 },
   statCard: {
     flex: 1,
     backgroundColor: COLORS.surface,
     borderRadius: 12,
-    padding: 10,
+    padding: 12,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: COLORS.border,
   },
-  statValue: { color: COLORS.text, fontSize: 13, fontWeight: '800', marginBottom: 4 },
-  statLabel: { color: COLORS.muted, fontSize: 9, textAlign: 'center' },
-  statSub: { color: COLORS.muted, fontSize: 9, marginTop: 2 },
-  chartCard: {
+  statEmoji: { fontSize: 20, marginBottom: 6 },
+  statValue: { color: COLORS.text, fontSize: 16, fontWeight: '700', marginBottom: 4 },
+  statLabel: { color: COLORS.muted, fontSize: 10, textAlign: 'center' },
+  tabsRow: {
+    flexDirection: 'row',
     backgroundColor: COLORS.surface,
-    borderRadius: 14,
-    marginHorizontal: 16,
-    padding: 14,
+    borderRadius: 10,
+    padding: 4,
+    marginBottom: 20,
     borderWidth: 1,
     borderColor: COLORS.border,
-    marginBottom: 16,
   },
-  cardTitle: { color: COLORS.text, fontSize: 14, fontWeight: '700', marginBottom: 4 },
-  sectionTitle: { color: COLORS.text, fontSize: 15, fontWeight: '700', marginHorizontal: 16, marginBottom: 8 },
-  emptyTxt: { color: COLORS.muted, textAlign: 'center', fontSize: 13, marginTop: 8 },
-  orderCard: {
+  tab: { flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center' },
+  tabActive: { backgroundColor: COLORS.primary },
+  tabText: { color: COLORS.muted, fontSize: 13, fontWeight: '600' },
+  tabTextActive: { color: '#000000' },
+  sectionTitle: { color: COLORS.text, fontSize: 16, fontWeight: '700', marginBottom: 12 },
+  deliveryCard: {
     backgroundColor: COLORS.surface,
     borderRadius: 12,
-    marginHorizontal: 16,
-    marginBottom: 8,
     padding: 14,
+    marginBottom: 10,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     borderWidth: 1,
     borderColor: COLORS.border,
   },
-  orderClient: { color: COLORS.text, fontSize: 14, fontWeight: '600', marginBottom: 2 },
-  orderDate: { color: COLORS.muted, fontSize: 11, marginBottom: 2 },
-  orderAddr: { color: COLORS.muted, fontSize: 11 },
-  orderAmount: { color: COLORS.green, fontSize: 14, fontWeight: '700' },
-  orderTip: { color: COLORS.orange, fontSize: 11, fontWeight: '600' },
-  statusBadge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
-  statusTxt: { fontSize: 10, fontWeight: '700' },
+  deliveryLeft: { flex: 1, marginRight: 8 },
+  deliveryTime: { color: COLORS.muted, fontSize: 12, marginBottom: 4 },
+  deliveryRoute: { color: COLORS.text, fontSize: 14, fontWeight: '600', marginBottom: 2 },
+  deliveryAddress: { color: COLORS.muted, fontSize: 12, marginBottom: 4 },
+  deliveryMeta: { color: COLORS.muted, fontSize: 12 },
+  deliveryRight: { alignItems: 'flex-end' },
+  deliveryAmount: { color: COLORS.primary, fontSize: 18, fontWeight: '700' },
+  deliveryAmountUnit: { color: COLORS.muted, fontSize: 11, marginTop: 2 },
+  bonusBadge: {
+    backgroundColor: '#1A3A1A',
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    marginTop: 6,
+    borderWidth: 1,
+    borderColor: '#2ECC71',
+  },
+  bonusBadgeText: { color: '#2ECC71', fontSize: 10, fontWeight: '600' },
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 16,
+    backgroundColor: COLORS.background,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  withdrawBtn: { backgroundColor: COLORS.primary, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
+  withdrawBtnText: { color: '#000000', fontSize: 16, fontWeight: '700' },
 });
