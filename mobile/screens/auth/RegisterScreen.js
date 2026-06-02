@@ -478,18 +478,9 @@ export default function RegisterScreen({ navigation }) {
         Alert.alert('Erreur', 'Le nom doit contenir au moins 2 caractères.');
         return false;
       }
-      // Validation téléphone tunisien: commence par +216 ou 00216, suivi de 8 chiffres
-      // Ou format local: 2x, 5x, 7x, 9x (8 chiffres)
-      const phoneClean = phone.replace(/\s/g, '');
-      const phoneRegex = /^(\+216|00216)?[2579]\d{7}$/;
-      // Pour les autres pays, on accepte le format générique
-      const isOtherCountry = selectedCountry.key !== 'TN';
-      if (!isOtherCountry && !phoneRegex.test(phoneClean)) {
-        Alert.alert('Erreur', 'Numéro de téléphone tunisien invalide.\nFormat: 5X XXX XXX ou +216 5X XXX XXX');
-        return false;
-      }
-      if (isOtherCountry && phoneClean.length < 7) {
-        Alert.alert('Erreur', 'Numéro de téléphone invalide.');
+      const phoneClean = phone.replace(/\s/g, '').replace(/^0+/, '');
+      if (phoneClean.length < 6 || phoneClean.length > 15 || !/^\d+$/.test(phoneClean)) {
+        Alert.alert('Erreur', 'Numéro de téléphone invalide (6 à 15 chiffres).');
         return false;
       }
       if (password.length < 8) {
