@@ -54,24 +54,56 @@ const SLIDE_LOGO = {
 // ─── Slides pub par défaut (si API indisponible) ──────────────────────────────
 const DEFAULT_AD_SLIDES = [
   {
-    key: 'ad_default_1',
-    type: 'ad',
+    key: 'ad_taxi',
+    type: 'banner',
+    bg: '#1A1200',
+    accent: '#F5A623',
     icon: '🚕',
-    titleWhite: 'Taxi · ',
-    titleRed: 'SOS',
-    titleWhite2: ' · Livraison',
-    subtitle: 'Tous vos services en un seul endroit, disponibles 24h/24',
-    cta: null,
+    badge: 'NOUVEAU',
+    badgeColor: '#F5A623',
+    titleLine1: 'Réservez votre taxi',
+    titleLine2: 'en 30 secondes',
+    subtitle: 'Chauffeurs vérifiés · Prix fixe · Disponible 24h/24 · Zéro commission',
+    features: ['✅ Pas de majoration', '✅ Paiement flexible', '✅ Suivi en temps réel'],
   },
   {
-    key: 'ad_default_2',
-    type: 'ad',
-    icon: '💳',
-    titleWhite: 'Modèle ',
-    titleRed: 'Zéro Commission',
-    titleWhite2: '',
-    subtitle: 'Les prestataires payent seulement 1 TND/jour.\nLes clients utilisent l\'app gratuitement.',
-    cta: null,
+    key: 'ad_sos',
+    type: 'banner',
+    bg: '#1A0000',
+    accent: '#E74C3C',
+    icon: '🛻',
+    badge: 'SOS',
+    badgeColor: '#E74C3C',
+    titleLine1: 'Dépannage rapide',
+    titleLine2: 'où que vous soyez',
+    subtitle: 'Panne · Crevaison · Batterie · Remorquage · Intervention en moins de 30 min',
+    features: ['✅ Dépanneurs certifiés', '✅ Devis avant intervention', '✅ Paiement après'],
+  },
+  {
+    key: 'ad_delivery',
+    type: 'banner',
+    bg: '#001A0A',
+    accent: '#2ECC71',
+    icon: '🛵',
+    badge: 'LIVRAISON',
+    badgeColor: '#2ECC71',
+    titleLine1: 'Vos repas livrés',
+    titleLine2: 'en moins de 45 min',
+    subtitle: 'Restaurants · Épiceries · Pharmacies · Frais de livraison à partir de 2 TND',
+    features: ['✅ Suivi livreur en direct', '✅ Commande groupée', '✅ Évaluation garantie'],
+  },
+  {
+    key: 'ad_zerocom',
+    type: 'banner',
+    bg: '#0A001A',
+    accent: '#9B59B6',
+    icon: '💎',
+    badge: 'EXCLUSIF',
+    badgeColor: '#9B59B6',
+    titleLine1: 'Modèle zéro commission',
+    titleLine2: 'unique en Tunisie',
+    subtitle: 'Les prestataires paient 1 TND/jour max. L\'app est 100% gratuite pour les clients.',
+    features: ['✅ EasyPass 29 TND/mois', '✅ EasyPoints & récompenses', '✅ Support 24/7'],
     isLast: true,
   },
 ];
@@ -180,14 +212,32 @@ export default function OnboardingScreen({ navigation }) {
         </>
       )}
 
+      {item.type === 'banner' && (
+        <View style={[styles.bannerCard, { borderColor: item.accent + '44', backgroundColor: item.bg }]}>
+          <View style={[styles.bannerBadge, { backgroundColor: item.accent + '22', borderColor: item.accent }]}>
+            <Text style={[styles.bannerBadgeText, { color: item.accent }]}>{item.badge}</Text>
+          </View>
+          <Text style={styles.bannerIcon}>{item.icon}</Text>
+          <Text style={[styles.bannerTitle1, { color: item.accent }]}>{item.titleLine1}</Text>
+          <Text style={styles.bannerTitle2}>{item.titleLine2}</Text>
+          <Text style={styles.bannerSubtitle}>{item.subtitle}</Text>
+          <View style={styles.bannerFeatures}>
+            {item.features.map((f, i) => (
+              <Text key={i} style={[styles.bannerFeature, { color: item.accent }]}>{f}</Text>
+            ))}
+          </View>
+          {item.isLast && (
+            <TouchableOpacity style={[styles.startButton, { backgroundColor: item.accent }]} onPress={handleStart} activeOpacity={0.85}>
+              <Text style={[styles.startButtonText, { color: '#0A0A0F' }]}>Commencer gratuitement 🚀</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
       {item.type === 'ad' && (
         <>
           {item.imageUrl ? (
-            <Image
-              source={{ uri: item.imageUrl }}
-              style={styles.adImage}
-              resizeMode="cover"
-            />
+            <Image source={{ uri: item.imageUrl }} style={styles.adImage} resizeMode="cover" />
           ) : (
             <Text style={styles.adIcon}>{item.icon}</Text>
           )}
@@ -198,11 +248,7 @@ export default function OnboardingScreen({ navigation }) {
           </View>
           <Text style={styles.slideSubtitle}>{item.subtitle}</Text>
           {item.cta && (
-            <TouchableOpacity
-              style={styles.ctaBtn}
-              onPress={() => Linking.openURL(item.cta)}
-              activeOpacity={0.85}
-            >
+            <TouchableOpacity style={styles.ctaBtn} onPress={() => Linking.openURL(item.cta)} activeOpacity={0.85}>
               <Text style={styles.ctaBtnText}>{item.ctaLabel || 'En savoir plus'}</Text>
             </TouchableOpacity>
           )}
@@ -307,6 +353,15 @@ const styles = StyleSheet.create({
     marginBottom: 28,
   },
   adIcon: { fontSize: 80, marginBottom: 32 },
+  bannerCard: { width: width - 32, borderRadius: 24, borderWidth: 1.5, padding: 24, alignItems: 'center' },
+  bannerBadge: { borderRadius: 20, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 4, marginBottom: 16 },
+  bannerBadgeText: { fontSize: 11, fontWeight: '800', letterSpacing: 1.5 },
+  bannerIcon: { fontSize: 70, marginBottom: 12 },
+  bannerTitle1: { fontSize: 22, fontWeight: '900', textAlign: 'center', marginBottom: 4 },
+  bannerTitle2: { fontSize: 20, fontWeight: '800', color: '#FFFFFF', textAlign: 'center', marginBottom: 12 },
+  bannerSubtitle: { color: '#8E8E9A', fontSize: 13, textAlign: 'center', lineHeight: 20, marginBottom: 16 },
+  bannerFeatures: { width: '100%', gap: 6, marginBottom: 20 },
+  bannerFeature: { fontSize: 13, fontWeight: '600' },
   titleRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
