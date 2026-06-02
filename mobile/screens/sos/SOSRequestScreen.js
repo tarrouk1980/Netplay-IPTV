@@ -10,6 +10,7 @@ import {
   Alert,
   StatusBar,
   Modal,
+  Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
@@ -35,7 +36,6 @@ const VEHICLE_CHECKS = [
   { key: 'fuel', label: 'Manque de carburant', icon: '⛽' },
   { key: 'flatTire', label: 'Pneu crevé', icon: '🔴' },
   { key: 'keysLocked', label: 'Clés enfermées', icon: '🔒' },
-  { key: 'automatic', label: 'Boîte automatique', icon: '⚙️' },
 ];
 
 const BRANDS_MODELS = {
@@ -92,10 +92,11 @@ const modalStyles = StyleSheet.create({
 });
 
 export default function SOSRequestScreen({ route, navigation }) {
-  const { mode, contract } = route.params || {};
+  const { mode, contract, breakdownType: preBreakdownType } = route.params || {};
   const { requestSOS, isSearching } = useSosStore();
 
-  const [step, setStep] = useState(0);
+  // Si on vient du pré-diagnostic, sauter l'étape "état du véhicule"
+  const [step, setStep] = useState(preBreakdownType ? 1 : 0);
   const [vehicleState, setVehicleState] = useState({
     starts: false,
     accident: false,
@@ -103,7 +104,6 @@ export default function SOSRequestScreen({ route, navigation }) {
     fuel: false,
     flatTire: false,
     keysLocked: false,
-    automatic: false,
   });
   const [vehicleInfo, setVehicleInfo] = useState({
     brand: '',
@@ -498,6 +498,17 @@ export default function SOSRequestScreen({ route, navigation }) {
                 </Text>
                 <Text style={styles.pickerChevron}>›</Text>
               </TouchableOpacity>
+            </View>
+
+            {/* Boîte automatique */}
+            <View style={[styles.inputGroup, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}>
+              <Text style={styles.inputLabel}>Boîte automatique ⚙️</Text>
+              <Switch
+                value={vehicleState.automatic || false}
+                onValueChange={(v) => setVehicleState((prev) => ({ ...prev, automatic: v }))}
+                trackColor={{ false: '#2C2C3A', true: '#F5A623' }}
+                thumbColor="#FFFFFF"
+              />
             </View>
           </View>
         )}
