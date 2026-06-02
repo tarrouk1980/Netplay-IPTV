@@ -9,11 +9,11 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Request interceptor: attach Bearer token
+// Request interceptor: attach Bearer token (skip demo tokens)
 api.interceptors.request.use(
   async (config) => {
     const token = await AsyncStorage.getItem('accessToken');
-    if (token) {
+    if (token && !token.startsWith('demo_')) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -58,7 +58,7 @@ api.interceptors.response.use(
 
       try {
         const refreshToken = await AsyncStorage.getItem('refreshToken');
-        if (!refreshToken) throw new Error('No refresh token');
+        if (!refreshToken || refreshToken.startsWith('demo_')) throw new Error('No refresh token');
 
         const response = await axios.post(`${BASE_URL}/api/auth/refresh`, { refreshToken });
         const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data;

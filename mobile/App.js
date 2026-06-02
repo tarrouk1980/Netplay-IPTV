@@ -752,6 +752,8 @@ export default function App() {
     };
   }, []);
 
+  if (onboardingDone === null) return null;
+
   return (
     <NavigationContainer linking={linking}>
       <StatusBar style="light" />
