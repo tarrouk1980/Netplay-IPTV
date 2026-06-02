@@ -275,6 +275,11 @@ import ClientOrdersAllScreen from './screens/profile/ClientOrdersAllScreen';
 import AdminCouponListScreen from './screens/admin/AdminCouponListScreen';
 import DeliveryRatingScreen from './screens/delivery/DeliveryRatingScreen';
 
+// Batch 49
+import TaxiActiveRideScreen from './screens/taxi/TaxiActiveRideScreen';
+import AdminEarningsScreen from './screens/admin/AdminEarningsScreen';
+import DeliveryOrderConfirmScreen from './screens/delivery/DeliveryOrderConfirmScreen';
+
 // Batch 48
 import DeliveryLivreurTrackingScreen from './screens/delivery/DeliveryLivreurTrackingScreen';
 import AdminUsersExportScreen from './screens/admin/AdminUsersExportScreen';
@@ -618,6 +623,9 @@ function MainStack() {
       <Stack.Screen name="SOSRating" component={SOSRatingScreen} options={{ headerShown: false, gestureEnabled: false }} />
       <Stack.Screen name="AdminReferralStats" component={AdminReferralStatsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="GroceryProductDetail" component={GroceryProductDetailScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="TaxiActiveRide" component={TaxiActiveRideScreen} options={{ headerShown: false, gestureEnabled: false }} />
+      <Stack.Screen name="AdminEarnings" component={AdminEarningsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="DeliveryOrderConfirm" component={DeliveryOrderConfirmScreen} options={{ headerShown: false, gestureEnabled: false }} />
       <Stack.Screen name="DeliveryLivreurTracking" component={DeliveryLivreurTrackingScreen} options={{ headerShown: false, gestureEnabled: false }} />
       <Stack.Screen name="AdminUsersExport" component={AdminUsersExportScreen} options={{ headerShown: false }} />
       <Stack.Screen name="SOSPayment" component={SOSPaymentScreen} options={{ headerShown: false, gestureEnabled: false }} />
