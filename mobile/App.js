@@ -278,6 +278,7 @@ import DeliveryRatingScreen from './screens/delivery/DeliveryRatingScreen';
 // Batch 51
 import TaxiScheduledRidesScreen from './screens/taxi/TaxiScheduledRidesScreen';
 import AdminDriverEarningsScreen from './screens/admin/AdminDriverEarningsScreen';
+import GroceryFavoritesScreen from './screens/grocery/GroceryFavoritesScreen';
 
 // Batch 50
 import ClientDeliveryHistoryScreen from './screens/profile/ClientDeliveryHistoryScreen';
@@ -634,6 +635,7 @@ function MainStack() {
       <Stack.Screen name="GroceryProductDetail" component={GroceryProductDetailScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiScheduledRides" component={TaxiScheduledRidesScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminDriverEarnings" component={AdminDriverEarningsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="GroceryFavorites" component={GroceryFavoritesScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientDeliveryHistory" component={ClientDeliveryHistoryScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminPlatformSettings" component={AdminPlatformSettingsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiOrderSuccess" component={TaxiOrderSuccessScreen} options={{ headerShown: false, gestureEnabled: false }} />
