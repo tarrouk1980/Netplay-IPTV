@@ -276,7 +276,9 @@ import AdminCouponListScreen from './screens/admin/AdminCouponListScreen';
 import DeliveryRatingScreen from './screens/delivery/DeliveryRatingScreen';
 
 // Batch 52
-import ClientSOSHistoryScreen from './screens/profile/ClientSOSHistoryScreen';
+import ProfileSOSHistoryScreen from './screens/profile/ProfileSOSHistoryScreen';
+import AdminPromoCodesV2Screen from './screens/admin/AdminPromoCodesV2Screen';
+import MerchantMenuScreen from './screens/delivery/MerchantMenuScreen';
 
 // Batch 51
 import TaxiScheduledRidesScreen from './screens/taxi/TaxiScheduledRidesScreen';
@@ -636,7 +638,7 @@ function MainStack() {
       <Stack.Screen name="SOSRating" component={SOSRatingScreen} options={{ headerShown: false, gestureEnabled: false }} />
       <Stack.Screen name="AdminReferralStats" component={AdminReferralStatsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="GroceryProductDetail" component={GroceryProductDetailScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="ClientSOSHistory" component={ClientSOSHistoryScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ProfileSOSHistory" component={ProfileSOSHistoryScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiScheduledRides" component={TaxiScheduledRidesScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminDriverEarnings" component={AdminDriverEarningsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="GroceryFavorites" component={GroceryFavoritesScreen} options={{ headerShown: false }} />
