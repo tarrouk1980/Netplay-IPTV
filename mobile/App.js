@@ -395,6 +395,10 @@ import EditProfileScreen from './screens/profile/EditProfileScreen';
 // Batch 59
 import SOSContractScreen from './screens/sos/SOSContractScreen';
 import AdminSettingsScreen from './screens/admin/AdminSettingsScreen';
+// Batch 60
+import TaxiHistoryScreen from './screens/taxi/TaxiHistoryScreen';
+import DeliveryOrderHistoryScreen from './screens/delivery/DeliveryOrderHistoryScreen';
+import NotificationPreferencesScreen from './screens/profile/NotificationPreferencesScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -715,6 +719,9 @@ function MainStack() {
       <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ headerShown: false }} />
       <Stack.Screen name="SOSContract" component={SOSContractScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminSettings" component={AdminSettingsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="TaxiHistory" component={TaxiHistoryScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="DeliveryOrderHistory" component={DeliveryOrderHistoryScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="NotificationPreferences" component={NotificationPreferencesScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
