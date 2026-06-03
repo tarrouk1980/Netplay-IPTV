@@ -58,7 +58,7 @@ api.interceptors.response.use(
 
       try {
         const refreshToken = await AsyncStorage.getItem('refreshToken');
-        if (!refreshToken || refreshToken.startsWith('demo_')) throw new Error('No refresh token');
+        if (!refreshToken || refreshToken.startsWith('demo_')) return Promise.reject(new Error('demo'));
 
         const response = await axios.post(`${BASE_URL}/api/auth/refresh`, { refreshToken });
         const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data;

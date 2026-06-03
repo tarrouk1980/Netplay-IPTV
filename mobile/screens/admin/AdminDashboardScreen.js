@@ -175,8 +175,13 @@ export default function AdminDashboardScreen({ navigation }) {
 
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>⚙️ Administration EASYWAY</Text>
-        <Text style={styles.headerSub}>Supervision complète · <Text style={{ color: '#4CAF50' }}>● LIVE</Text></Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 12 }}>
+          <Text style={{ color: '#F5A623', fontSize: 22 }}>‹</Text>
+        </TouchableOpacity>
+        <View>
+          <Text style={styles.headerTitle}>⚙️ Administration EASYWAY</Text>
+          <Text style={styles.headerSub}>Supervision complète · <Text style={{ color: '#4CAF50' }}>● LIVE</Text></Text>
+        </View>
       </View>
 
       <ScrollView
@@ -374,6 +379,8 @@ export default function AdminDashboardScreen({ navigation }) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.bg },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: COLORS.surface,
     paddingHorizontal: 20,
     paddingTop: 50,
