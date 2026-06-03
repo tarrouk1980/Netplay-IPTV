@@ -2,370 +2,426 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
+  StyleSheet,
   FlatList,
   TouchableOpacity,
-  StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const COULEURS = {
+const COLORS = {
   bg: '#0A0A0F',
   surface: '#1C1C28',
   primary: '#F5A623',
-  texte: '#FFFFFF',
-  muet: '#8E8E9A',
-  bordure: '#2C2C3A',
-  succes: '#22C55E',
-  danger: '#EF4444',
-  info: '#3B82F6',
+  text: '#FFFFFF',
+  muted: '#8E8E9A',
+  border: '#2C2C3A',
+  green: '#22C55E',
+  red: '#EF4444',
+  blue: '#3B82F6',
 };
 
-const DEMANDES_MOCK = [
+const MOCK_INTERVENTIONS = [
   {
-    id: 'SOS001',
-    type: 'Crevaison',
-    depanneur: 'Karim Benali',
-    date: '28 mai 2026',
-    heure: '14:32',
-    duree: '45 min',
-    prix: 1500,
-    statut: 'Terminé',
-  },
-  {
-    id: 'SOS002',
-    type: 'Panne de batterie',
-    depanneur: 'Moussa Traoré',
-    date: '20 mai 2026',
-    heure: '09:15',
+    id: 'INT001',
+    date: '02/06/2026',
+    heure: '09:10',
+    typeEmoji: '🔋',
+    typeLabel: 'Batterie',
+    client: "M. ****",
+    adresse: "Avenue Habib Bourguiba, Tunis",
+    montant: 45.00,
     duree: '30 min',
-    prix: 2000,
-    statut: 'Terminé',
+    statut: 'Terminée',
   },
   {
-    id: 'SOS003',
-    type: 'Panne moteur',
-    depanneur: 'Idriss Koné',
-    date: '2 juin 2026',
+    id: 'INT002',
+    date: '01/06/2026',
+    heure: '14:45',
+    typeEmoji: '🛞',
+    typeLabel: 'Pneu crevé',
+    client: "M. ****",
+    adresse: "Route de La Marsa, Carthage",
+    montant: 35.00,
+    duree: '25 min',
+    statut: 'Terminée',
+  },
+  {
+    id: 'INT003',
+    date: '01/06/2026',
+    heure: '18:30',
+    typeEmoji: '⚙️',
+    typeLabel: 'Panne moteur',
+    client: "M. ****",
+    adresse: "Autoroute A1, Km 24",
+    montant: 80.00,
+    duree: '55 min',
+    statut: 'En cours',
+  },
+  {
+    id: 'INT004',
+    date: '31/05/2026',
     heure: '11:00',
-    duree: null,
-    prix: 3500,
-    statut: 'En cours',
+    typeEmoji: '🚨',
+    typeLabel: 'Accident',
+    client: "M. ****",
+    adresse: "Carrefour Bardo, Tunis",
+    montant: 0,
+    duree: '0 min',
+    statut: 'Annulée',
   },
   {
-    id: 'SOS004',
-    type: 'Manque de carburant',
-    depanneur: 'Seydou Diallo',
-    date: '15 mai 2026',
-    heure: '17:45',
+    id: 'INT005',
+    date: '30/05/2026',
+    heure: '07:20',
+    typeEmoji: '⛽',
+    typeLabel: 'Carburant',
+    client: "M. ****",
+    adresse: "Route Nationale 1, Mégrine",
+    montant: 20.00,
+    duree: '15 min',
+    statut: 'Terminée',
+  },
+  {
+    id: 'INT006',
+    date: '29/05/2026',
+    heure: '16:55',
+    typeEmoji: '🔋',
+    typeLabel: 'Batterie',
+    client: "M. ****",
+    adresse: "Cité El Khadra, Tunis",
+    montant: 45.00,
+    duree: '28 min',
+    statut: 'Terminée',
+  },
+  {
+    id: 'INT007',
+    date: '28/05/2026',
+    heure: '10:30',
+    typeEmoji: '🛞',
+    typeLabel: 'Pneu crevé',
+    client: "M. ****",
+    adresse: "Avenue de la Liberté, Sfax",
+    montant: 35.00,
     duree: '20 min',
-    prix: 800,
-    statut: 'Terminé',
+    statut: 'Terminée',
   },
   {
-    id: 'SOS005',
-    type: 'Accident léger',
-    depanneur: null,
-    date: '10 mai 2026',
-    heure: '08:22',
-    duree: null,
-    prix: 0,
-    statut: 'Annulé',
+    id: 'INT008',
+    date: '27/05/2026',
+    heure: '20:15',
+    typeEmoji: '⚙️',
+    typeLabel: 'Panne moteur',
+    client: "M. ****",
+    adresse: "Route de Bizerte, Ariana",
+    montant: 0,
+    duree: '0 min',
+    statut: 'Annulée',
   },
   {
-    id: 'SOS006',
-    type: 'Remorquage',
-    depanneur: 'Oumar Sy',
-    date: '5 mai 2026',
-    heure: '21:10',
-    duree: '60 min',
-    prix: 5000,
-    statut: 'Terminé',
+    id: 'INT009',
+    date: '26/05/2026',
+    heure: '13:40',
+    typeEmoji: '🚨',
+    typeLabel: 'Accident',
+    client: "M. ****",
+    adresse: "Boulevard 7 novembre, Sousse",
+    montant: 95.00,
+    duree: '70 min',
+    statut: 'Terminée',
   },
   {
-    id: 'SOS007',
-    type: 'Crevaison',
-    depanneur: null,
-    date: '2 juin 2026',
-    heure: '16:30',
-    duree: null,
-    prix: 1500,
-    statut: 'En cours',
-  },
-  {
-    id: 'SOS008',
-    type: 'Panne de batterie',
-    depanneur: null,
-    date: '1 juin 2026',
-    heure: '13:05',
-    duree: null,
-    prix: 0,
-    statut: 'Annulé',
+    id: 'INT010',
+    date: '25/05/2026',
+    heure: '08:05',
+    typeEmoji: '⛽',
+    typeLabel: 'Carburant',
+    client: "M. ****",
+    adresse: "Route de Hammamet, Nabeul",
+    montant: 20.00,
+    duree: '12 min',
+    statut: 'Terminée',
   },
 ];
 
-const FILTRES = ['Tous', 'En cours', 'Terminé', 'Annulé'];
+const FILTERS = ['Tout', 'En cours', 'Terminées', 'Annulées'];
 
-const couleurStatut = (statut) => {
-  if (statut === 'En cours') return COULEURS.info;
-  if (statut === 'Terminé') return COULEURS.succes;
-  if (statut === 'Annulé') return COULEURS.danger;
-  return COULEURS.muet;
-};
+function getStatusColor(statut) {
+  if (statut === 'En cours') return COLORS.blue;
+  if (statut === 'Terminée') return COLORS.green;
+  if (statut === 'Annulée') return COLORS.red;
+  return COLORS.muted;
+}
 
 export default function SOSHistoryScreen({ navigation }) {
-  const [filtreActif, setFiltreActif] = useState('Tous');
+  const [activeFilter, setActiveFilter] = useState('Tout');
 
-  const demandesFiltrees =
-    filtreActif === 'Tous'
-      ? DEMANDES_MOCK
-      : DEMANDES_MOCK.filter((d) => d.statut === filtreActif);
+  const filtered = MOCK_INTERVENTIONS.filter((item) => {
+    if (activeFilter === 'Tout') return true;
+    if (activeFilter === 'En cours') return item.statut === 'En cours';
+    if (activeFilter === 'Terminées') return item.statut === 'Terminée';
+    if (activeFilter === 'Annulées') return item.statut === 'Annulée';
+    return true;
+  });
 
-  const rendreCarte = ({ item }) => (
-    <TouchableOpacity
-      style={styles.carte}
-      onPress={() => navigation.navigate('SOSOrderDetail', { orderId: item.id })}
-      activeOpacity={0.75}
-    >
-      <View style={styles.carteEntete}>
-        <View style={styles.carteGauche}>
-          <Text style={styles.emoji}>🛻</Text>
-          <View>
-            <Text style={styles.typeTexte}>{item.type}</Text>
-            <Text style={styles.dateTexte}>
-              {item.date} à {item.heure}
-            </Text>
+  const totalEarned = MOCK_INTERVENTIONS.filter((i) => i.statut === 'Terminée').reduce((sum, i) => sum + i.montant, 0);
+
+  const renderItem = ({ item }) => {
+    const color = getStatusColor(item.statut);
+    return (
+      <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <View style={styles.cardLeft}>
+            <Text style={styles.typeEmoji}>{item.typeEmoji}</Text>
+            <View>
+              <Text style={styles.typeLabel}>{item.typeLabel}</Text>
+              <Text style={styles.cardDate}>{item.date} — {item.heure}</Text>
+            </View>
+          </View>
+          <View style={[styles.badge, { backgroundColor: color + '22' }]}>
+            <Text style={[styles.badgeText, { color }]}>{item.statut}</Text>
           </View>
         </View>
-        <View style={[styles.badgeStatut, { backgroundColor: couleurStatut(item.statut) + '22' }]}>
-          <Text style={[styles.badgeTexte, { color: couleurStatut(item.statut) }]}>
-            {item.statut}
-          </Text>
+        <View style={styles.divider} />
+        <Text style={styles.adresse} numberOfLines={1}>📍 {item.adresse}</Text>
+        <Text style={styles.clientName}>👤 {item.client}</Text>
+        <View style={styles.cardFooter}>
+          <Text style={styles.metaText}>⏱ {item.duree}</Text>
+          <Text style={styles.montant}>{item.montant.toFixed(2)} TND</Text>
         </View>
       </View>
-
-      <View style={styles.separateur} />
-
-      <View style={styles.carteBas}>
-        <View style={styles.infoGroupe}>
-          <Text style={styles.infoLabel}>Dépanneur</Text>
-          <Text style={styles.infoValeur}>
-            {item.depanneur || '—'}
-          </Text>
-        </View>
-        {item.duree && (
-          <View style={styles.infoGroupe}>
-            <Text style={styles.infoLabel}>Durée</Text>
-            <Text style={styles.infoValeur}>{item.duree}</Text>
-          </View>
-        )}
-        {item.prix > 0 && (
-          <View style={styles.infoGroupe}>
-            <Text style={styles.infoLabel}>Prix</Text>
-            <Text style={[styles.infoValeur, { color: COULEURS.primary }]}>
-              {item.prix.toLocaleString()} FCFA
-            </Text>
-          </View>
-        )}
-      </View>
-    </TouchableOpacity>
-  );
+    );
+  };
 
   return (
-    <SafeAreaView style={styles.conteneur}>
-      <View style={styles.entete}>
-        <Text style={styles.titre}>Historique SOS</Text>
-        <Text style={styles.sousTitre}>{demandesFiltrees.length} demande{demandesFiltrees.length > 1 ? 's' : ''}</Text>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Text style={styles.backIcon}>‹</Text>
+        </TouchableOpacity>
+        <Text style={styles.title}>Historique interventions</Text>
+        <View style={styles.backBtn} />
       </View>
 
-      <View style={styles.filtreBarre}>
-        {FILTRES.map((f) => (
+      {/* Summary bar */}
+      <View style={styles.summaryBar}>
+        <View style={styles.summaryItem}>
+          <Text style={styles.summaryValue}>{MOCK_INTERVENTIONS.length}</Text>
+          <Text style={styles.summaryLabel}>Interventions</Text>
+        </View>
+        <View style={styles.summaryDivider} />
+        <View style={styles.summaryItem}>
+          <Text style={[styles.summaryValue, { color: COLORS.primary }]}>{totalEarned.toFixed(2)} TND</Text>
+          <Text style={styles.summaryLabel}>Total gagné</Text>
+        </View>
+        <View style={styles.summaryDivider} />
+        <View style={styles.summaryItem}>
+          <Text style={styles.summaryLabel}>Dépanneur</Text>
+          <Text style={styles.depanneurEmoji}>🛻</Text>
+        </View>
+      </View>
+
+      {/* Filter tabs */}
+      <View style={styles.tabs}>
+        {FILTERS.map((f) => (
           <TouchableOpacity
             key={f}
-            style={[
-              styles.filtreBouton,
-              filtreActif === f && styles.filtreBoutonActif,
-            ]}
-            onPress={() => setFiltreActif(f)}
+            style={[styles.tab, activeFilter === f && styles.tabActive]}
+            onPress={() => setActiveFilter(f)}
           >
-            <Text
-              style={[
-                styles.filtreTexte,
-                filtreActif === f && styles.filtreTexteActif,
-              ]}
-            >
-              {f}
-            </Text>
+            <Text style={[styles.tabText, activeFilter === f && styles.tabTextActive]}>{f}</Text>
           </TouchableOpacity>
         ))}
       </View>
 
       <FlatList
-        data={demandesFiltrees}
+        data={filtered}
         keyExtractor={(item) => item.id}
-        renderItem={rendreCarte}
-        contentContainerStyle={styles.liste}
+        renderItem={renderItem}
+        contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
-          <View style={styles.vide}>
-            <Text style={styles.videEmoji}>📭</Text>
-            <Text style={styles.videTexte}>Aucune demande trouvée</Text>
+          <View style={styles.empty}>
+            <Text style={styles.emptyText}>Aucune intervention trouvée</Text>
           </View>
         }
       />
-
-      <View style={styles.piedPage}>
-        <TouchableOpacity
-          style={styles.boutonNouvelle}
-          onPress={() => navigation.navigate('SOSHome')}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.boutonNouvelleTexte}>🛻  Nouvelle demande</Text>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  conteneur: {
+  container: {
     flex: 1,
-    backgroundColor: COULEURS.bg,
+    backgroundColor: COLORS.bg,
   },
-  entete: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 8,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
-  titre: {
-    fontSize: 24,
+  backBtn: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backIcon: {
+    color: COLORS.text,
+    fontSize: 28,
+    lineHeight: 32,
+  },
+  title: {
+    color: COLORS.text,
+    fontSize: 17,
     fontWeight: '700',
-    color: COULEURS.texte,
   },
-  sousTitre: {
-    fontSize: 14,
-    color: COULEURS.muet,
+  summaryBar: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.surface,
+    marginHorizontal: 16,
+    marginTop: 12,
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'space-around',
+  },
+  summaryItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  summaryValue: {
+    color: COLORS.text,
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  summaryLabel: {
+    color: COLORS.muted,
+    fontSize: 11,
     marginTop: 2,
   },
-  filtreBarre: {
+  summaryDivider: {
+    width: 1,
+    height: 32,
+    backgroundColor: COLORS.border,
+  },
+  depanneurEmoji: {
+    fontSize: 22,
+    marginTop: 2,
+  },
+  tabs: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
-    marginVertical: 12,
-    gap: 8,
+    marginHorizontal: 16,
+    marginVertical: 10,
+    backgroundColor: COLORS.surface,
+    borderRadius: 10,
+    padding: 4,
   },
-  filtreBouton: {
-    paddingHorizontal: 14,
+  tab: {
+    flex: 1,
     paddingVertical: 7,
-    borderRadius: 20,
-    backgroundColor: COULEURS.surface,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  tabActive: {
+    backgroundColor: COLORS.primary,
+  },
+  tabText: {
+    color: COLORS.muted,
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  tabTextActive: {
+    color: '#000',
+  },
+  list: {
+    paddingHorizontal: 16,
+    paddingBottom: 24,
+  },
+  card: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
     borderWidth: 1,
-    borderColor: COULEURS.bordure,
+    borderColor: COLORS.border,
   },
-  filtreBoutonActif: {
-    backgroundColor: COULEURS.primary,
-    borderColor: COULEURS.primary,
-  },
-  filtreTexte: {
-    fontSize: 13,
-    color: COULEURS.muet,
-    fontWeight: '500',
-  },
-  filtreTexteActif: {
-    color: COULEURS.bg,
-    fontWeight: '700',
-  },
-  liste: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    gap: 12,
-  },
-  carte: {
-    backgroundColor: COULEURS.surface,
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: COULEURS.bordure,
-  },
-  carteEntete: {
+  cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 10,
   },
-  carteGauche: {
+  cardLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
-  emoji: {
-    fontSize: 28,
+  typeEmoji: {
+    fontSize: 26,
   },
-  typeTexte: {
-    fontSize: 16,
+  typeLabel: {
+    color: COLORS.text,
+    fontSize: 14,
     fontWeight: '600',
-    color: COULEURS.texte,
   },
-  dateTexte: {
-    fontSize: 12,
-    color: COULEURS.muet,
+  cardDate: {
+    color: COLORS.muted,
+    fontSize: 11,
     marginTop: 2,
   },
-  badgeStatut: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+  badge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
   },
-  badgeTexte: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  separateur: {
-    height: 1,
-    backgroundColor: COULEURS.bordure,
-    marginVertical: 12,
-  },
-  carteBas: {
-    flexDirection: 'row',
-    gap: 24,
-  },
-  infoGroupe: {
-    gap: 2,
-  },
-  infoLabel: {
+  badgeText: {
     fontSize: 11,
-    color: COULEURS.muet,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  infoValeur: {
-    fontSize: 13,
-    color: COULEURS.texte,
-    fontWeight: '500',
-  },
-  vide: {
-    alignItems: 'center',
-    paddingVertical: 60,
-    gap: 12,
-  },
-  videEmoji: {
-    fontSize: 48,
-  },
-  videTexte: {
-    fontSize: 16,
-    color: COULEURS.muet,
-  },
-  piedPage: {
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: COULEURS.bordure,
-  },
-  boutonNouvelle: {
-    backgroundColor: COULEURS.primary,
-    borderRadius: 14,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  boutonNouvelleTexte: {
-    fontSize: 16,
     fontWeight: '700',
-    color: COULEURS.bg,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: COLORS.border,
+    marginBottom: 10,
+  },
+  adresse: {
+    color: COLORS.muted,
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  clientName: {
+    color: COLORS.muted,
+    fontSize: 12,
+    marginBottom: 8,
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  metaText: {
+    color: COLORS.muted,
+    fontSize: 12,
+  },
+  montant: {
+    color: COLORS.primary,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  empty: {
+    alignItems: 'center',
+    paddingVertical: 48,
+  },
+  emptyText: {
+    color: COLORS.muted,
+    fontSize: 15,
   },
 });
