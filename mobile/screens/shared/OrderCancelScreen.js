@@ -1,284 +1,174 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  TextInput, Alert, ActivityIndicator, StatusBar,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  StatusBar, TextInput, ActivityIndicator, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
 
 const COLORS = {
-  bg: '#0A0A0F',
-  surface: '#1C1C28',
-  border: '#2C2C3E',
-  text: '#FFFFFF',
-  muted: '#8E8E9A',
-  green: '#27AE60',
-  error: '#E74C3C',
-  amber: '#F57C00',
+  bg: '#0A0A0F', surface: '#1C1C28',
+  accent: '#F5A623', white: '#FFFFFF', muted: '#8A8A9A',
+  border: '#2A2A3A', green: '#27AE60', red: '#D32F2F', orange: '#E67E22',
 };
 
 const CANCEL_REASONS = [
-  { key: 'WRONG_ADDRESS', label: 'Mauvaise adresse saisie', refund: true },
-  { key: 'WAIT_TOO_LONG', label: 'Temps d\'attente trop long', refund: true },
-  { key: 'CHANGED_MIND', label: 'J\'ai changé d\'avis', refund: false },
-  { key: 'DRIVER_ISSUE', label: 'Problème avec le chauffeur', refund: true },
-  { key: 'EMERGENCY', label: 'Urgence personnelle', refund: true },
-  { key: 'OTHER', label: 'Autre raison', refund: false },
+  { key: 'changed_mind',  label: 'J\'ai changé d\'avis',          fee: false },
+  { key: 'too_long',      label: 'Attente trop longue',           fee: false },
+  { key: 'wrong_address', label: 'Mauvaise adresse saisie',       fee: false },
+  { key: 'driver_late',   label: 'Chauffeur/livreur en retard',   fee: false },
+  { key: 'emergency',     label: 'Urgence personnelle',           fee: false },
+  { key: 'price',         label: 'Prix trop élevé',               fee: true  },
+  { key: 'other',         label: 'Autre raison',                  fee: true  },
 ];
 
-const SERVICE_ENDPOINTS = {
-  TAXI: '/api/taxi',
-  DELIVERY: '/api/delivery',
-  SOS: '/api/sos',
-  GROCERY: '/api/grocery',
-};
+export default function OrderCancelScreen({ navigation, route }) {
+  const { orderId, orderType = 'commande', hasFee = false } = route?.params || {};
 
-const SERVICE_LABEL = {
-  TAXI: '🚕 Course taxi',
-  DELIVERY: '🛵 Livraison',
-  SOS: '🚨 Assistance SOS',
-  GROCERY: '🛒 Courses',
-};
-
-export default function OrderCancelScreen({ route, navigation }) {
-  const { orderId, serviceType = 'TAXI', orderStatus = 'PENDING', price } = route?.params || {};
   const [reason, setReason] = useState('');
-  const [customReason, setCustomReason] = useState('');
-  const [cancelling, setCancelling] = useState(false);
+  const [details, setDetails] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const selectedReason = CANCEL_REASONS.find(r => r.key === reason);
-  const mayGetRefund = selectedReason?.refund ?? false;
-  const isStarted = ['IN_PROGRESS', 'ACCEPTED'].includes(orderStatus);
-
-  // Penalty applies if ACCEPTED + user changes mind
-  const hasPenalty = isStarted && !mayGetRefund;
+  const selected = CANCEL_REASONS.find(r => r.key === reason);
+  const willChargeFee = hasFee && selected?.fee;
 
   const handleCancel = async () => {
-    if (!reason) {
-      Alert.alert('Raison requise', 'Veuillez sélectionner une raison d\'annulation.');
-      return;
-    }
+    if (!reason) { Alert.alert('Erreur', 'Choisissez une raison'); return; }
 
-    const finalReason = reason === 'OTHER' ? (customReason.trim() || 'Autre') : selectedReason?.label;
+    const confirmMsg = willChargeFee
+      ? `Des frais d'annulation peuvent s'appliquer. Confirmer l'annulation de ${orderType} #${orderId} ?`
+      : `Confirmer l'annulation de ${orderType} #${orderId} ?`;
 
-    Alert.alert(
-      'Confirmer l\'annulation',
-      hasPenalty
-        ? 'Une pénalité de 0.500 TND peut s\'appliquer car le prestataire est déjà en route.'
-        : mayGetRefund
-        ? 'Le montant sera remboursé sur votre wallet sous 24h.'
-        : 'Cette annulation ne donnera pas lieu à un remboursement.',
-      [
-        { text: 'Retour', style: 'cancel' },
-        {
-          text: 'Annuler la commande',
-          style: 'destructive',
-          onPress: async () => {
-            setCancelling(true);
-            try {
-              const endpoint = SERVICE_ENDPOINTS[serviceType] || '/api/taxi';
-              await api.post(`${endpoint}/${orderId}/cancel`, { reason: finalReason });
-              Alert.alert(
-                'Commande annulée',
-                mayGetRefund ? 'Remboursement en cours…' : 'Annulation confirmée.',
-                [{ text: 'OK', onPress: () => navigation.popToTop() }]
-              );
-            } catch (err) {
-              Alert.alert('Erreur', err?.response?.data?.error || 'Annulation impossible pour le moment.');
-            } finally {
-              setCancelling(false);
-            }
-          },
+    Alert.alert('⚠️ Confirmer l\'annulation', confirmMsg, [
+      { text: 'Non, garder', style: 'cancel' },
+      {
+        text: 'Oui, annuler', style: 'destructive',
+        onPress: async () => {
+          setSubmitting(true);
+          try {
+            await api.post(`/api/orders/${orderId}/cancel`, { reason, details });
+            Alert.alert(
+              'Annulation confirmée',
+              `Votre ${orderType} a été annulé${willChargeFee ? '. Des frais peuvent être prélevés.' : ' sans frais.'}`,
+              [{ text: 'OK', onPress: () => navigation.navigate('Home') }]
+            );
+          } catch {
+            Alert.alert('Erreur', 'Impossible d\'annuler. Contactez le support.');
+          } finally {
+            setSubmitting(false);
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.root}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
 
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backArrow}>‹</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text style={{ color: COLORS.accent, fontSize: 24 }}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Annuler la commande</Text>
-        <View style={{ width: 40 }} />
+        <Text style={styles.title}>❌ Annuler la {orderType}</Text>
+        <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
 
-        {/* Order info */}
-        <View style={styles.orderInfo}>
-          <Text style={styles.orderLabel}>{SERVICE_LABEL[serviceType] || '📦 Commande'}</Text>
-          <Text style={styles.orderId}>#{orderId?.slice(-8) || '--------'}</Text>
-          {price && <Text style={styles.orderPrice}>{Number(price).toFixed(3)} TND</Text>}
-        </View>
-
-        {/* Warning if started */}
-        {isStarted && (
-          <View style={styles.warningBox}>
-            <Text style={styles.warningTitle}>⚠️ Commande en cours</Text>
-            <Text style={styles.warningText}>
-              Le prestataire a déjà accepté votre commande. Une annulation à ce stade peut entraîner des frais d'annulation.
-            </Text>
+        {orderId && (
+          <View style={styles.refBox}>
+            <Text style={styles.refLabel}>Référence</Text>
+            <Text style={styles.refValue}>{orderType} #{orderId}</Text>
           </View>
         )}
 
-        {/* Refund policy */}
-        <View style={styles.policyBox}>
-          <Text style={styles.policyTitle}>📋 Politique d'annulation</Text>
-          <View style={styles.policyRow}>
-            <Text style={styles.policyDot}>✅</Text>
-            <Text style={styles.policyText}>Avant acceptation du prestataire : <Text style={styles.policyGreen}>remboursement intégral</Text></Text>
+        {hasFee && (
+          <View style={styles.feeWarning}>
+            <Text style={styles.feeWarnText}>⚠️ Selon la raison choisie, des frais d'annulation de 2–5 TND peuvent s'appliquer.</Text>
           </View>
-          <View style={styles.policyRow}>
-            <Text style={styles.policyDot}>⚠️</Text>
-            <Text style={styles.policyText}>Après acceptation (raison valide) : <Text style={styles.policyGreen}>remboursement intégral</Text></Text>
-          </View>
-          <View style={styles.policyRow}>
-            <Text style={styles.policyDot}>❌</Text>
-            <Text style={styles.policyText}>Changement d'avis : <Text style={styles.policyError}>sans remboursement</Text></Text>
-          </View>
-        </View>
+        )}
 
-        {/* Reason selection */}
-        <Text style={styles.sectionLabel}>RAISON DE L'ANNULATION</Text>
+        <Text style={styles.sectionLabel}>Raison de l'annulation</Text>
         {CANCEL_REASONS.map(r => (
           <TouchableOpacity
             key={r.key}
-            style={[styles.reasonCard, reason === r.key && styles.reasonCardSelected]}
+            style={[styles.reasonRow, reason === r.key && styles.reasonRowActive]}
             onPress={() => setReason(r.key)}
-            activeOpacity={0.8}
           >
-            <View style={[styles.radio, reason === r.key && styles.radioSelected]}>
+            <View style={[styles.radio, reason === r.key && styles.radioActive]}>
               {reason === r.key && <View style={styles.radioDot} />}
             </View>
-            <View style={styles.reasonInfo}>
-              <Text style={[styles.reasonLabel, reason === r.key && { color: COLORS.text }]}>{r.label}</Text>
-              <Text style={[styles.reasonRefund, { color: r.refund ? COLORS.green : COLORS.muted }]}>
-                {r.refund ? '✅ Remboursement éligible' : '— Pas de remboursement'}
-              </Text>
-            </View>
+            <Text style={[styles.reasonText, reason === r.key && { color: COLORS.white }]}>{r.label}</Text>
+            {r.fee && hasFee && (
+              <View style={styles.feeBadge}>
+                <Text style={styles.feeBadgeText}>Frais</Text>
+              </View>
+            )}
           </TouchableOpacity>
         ))}
 
-        {reason === 'OTHER' && (
-          <TextInput
-            style={styles.customInput}
-            placeholder="Précisez votre raison…"
-            placeholderTextColor={COLORS.muted}
-            value={customReason}
-            onChangeText={setCustomReason}
-            multiline
-            numberOfLines={2}
-            textAlignVertical="top"
-          />
-        )}
+        <Text style={[styles.sectionLabel, { marginTop: 16 }]}>Détails supplémentaires (optionnel)</Text>
+        <TextInput
+          style={styles.textArea}
+          value={details}
+          onChangeText={setDetails}
+          placeholder="Précisez si nécessaire..."
+          placeholderTextColor={COLORS.muted}
+          multiline maxLength={300}
+          textAlignVertical="top"
+        />
 
-        {/* Preview */}
-        {reason && (
-          <View style={[styles.previewBox, { borderColor: mayGetRefund ? COLORS.green : COLORS.error }]}>
-            <Text style={[styles.previewTitle, { color: mayGetRefund ? COLORS.green : COLORS.error }]}>
-              {mayGetRefund ? '💚 Remboursement prévu' : '🔴 Aucun remboursement'}
-            </Text>
-            {mayGetRefund && price && (
-              <Text style={styles.previewAmount}>+{Number(price).toFixed(3)} TND → votre wallet</Text>
-            )}
-            {hasPenalty && (
-              <Text style={styles.penaltyNote}>Frais d'annulation : −0.500 TND</Text>
-            )}
+        {willChargeFee && (
+          <View style={styles.feeConfirm}>
+            <Text style={styles.feeConfirmText}>💳 Des frais d'annulation seront déduits de votre portefeuille.</Text>
           </View>
         )}
 
-        <View style={{ height: 100 }} />
-      </ScrollView>
-
-      <View style={styles.bottomBar}>
         <TouchableOpacity
-          style={[styles.cancelBtn, (!reason || cancelling) && { opacity: 0.5 }]}
+          style={[styles.cancelBtn, !reason && { opacity: 0.4 }]}
           onPress={handleCancel}
-          disabled={!reason || cancelling}
-          activeOpacity={0.85}
+          disabled={!reason || submitting}
         >
-          {cancelling ? (
-            <ActivityIndicator color="#FFF" />
-          ) : (
-            <Text style={styles.cancelBtnText}>Confirmer l'annulation</Text>
-          )}
+          {submitting
+            ? <ActivityIndicator color={COLORS.white} size="small" />
+            : <Text style={styles.cancelBtnText}>Confirmer l'annulation</Text>}
         </TouchableOpacity>
-      </View>
+
+        <TouchableOpacity style={styles.keepBtn} onPress={() => navigation.goBack()}>
+          <Text style={styles.keepBtnText}>← Garder ma {orderType}</Text>
+        </TouchableOpacity>
+
+        <View style={{ height: 24 }} />
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: COLORS.border,
-  },
-  backBtn: { width: 40 },
-  backArrow: { color: COLORS.text, fontSize: 30, fontWeight: '300' },
-  headerTitle: { color: COLORS.text, fontSize: 17, fontWeight: '700' },
+  root: { flex: 1, backgroundColor: COLORS.bg },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  title: { color: COLORS.white, fontSize: 15, fontWeight: '700' },
   scroll: { padding: 16 },
-  orderInfo: {
-    backgroundColor: COLORS.surface, borderRadius: 14, padding: 16,
-    marginBottom: 14, borderWidth: 1, borderColor: COLORS.border,
-    alignItems: 'center',
-  },
-  orderLabel: { color: COLORS.muted, fontSize: 13, marginBottom: 4 },
-  orderId: { color: COLORS.text, fontSize: 18, fontWeight: '800', fontFamily: 'monospace', marginBottom: 4 },
-  orderPrice: { color: COLORS.green, fontSize: 20, fontWeight: '900' },
-  warningBox: {
-    backgroundColor: '#1A1000', borderRadius: 12, padding: 14,
-    marginBottom: 14, borderWidth: 1, borderColor: COLORS.amber,
-  },
-  warningTitle: { color: COLORS.amber, fontSize: 13, fontWeight: '700', marginBottom: 4 },
-  warningText: { color: '#C8A045', fontSize: 13, lineHeight: 18 },
-  policyBox: {
-    backgroundColor: COLORS.surface, borderRadius: 14, padding: 16,
-    marginBottom: 20, borderWidth: 1, borderColor: COLORS.border, gap: 8,
-  },
-  policyTitle: { color: COLORS.text, fontSize: 13, fontWeight: '700', marginBottom: 4 },
-  policyRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
-  policyDot: { fontSize: 13 },
-  policyText: { color: COLORS.muted, fontSize: 12, flex: 1, lineHeight: 18 },
-  policyGreen: { color: COLORS.green, fontWeight: '600' },
-  policyError: { color: COLORS.error, fontWeight: '600' },
-  sectionLabel: {
-    color: COLORS.muted, fontSize: 10, fontWeight: '700', letterSpacing: 1.4,
-    textTransform: 'uppercase', marginBottom: 10,
-  },
-  reasonCard: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: COLORS.surface, borderRadius: 12, padding: 14,
-    marginBottom: 8, borderWidth: 1.5, borderColor: COLORS.border,
-  },
-  reasonCardSelected: { borderColor: COLORS.error, backgroundColor: '#1A0808' },
-  radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center' },
-  radioSelected: { borderColor: COLORS.error },
-  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.error },
-  reasonInfo: { flex: 1 },
-  reasonLabel: { color: COLORS.muted, fontSize: 14, fontWeight: '600', marginBottom: 2 },
-  reasonRefund: { fontSize: 11 },
-  customInput: {
-    backgroundColor: COLORS.surface, borderRadius: 12, borderWidth: 1.5, borderColor: COLORS.border,
-    color: COLORS.text, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, marginBottom: 14,
-  },
-  previewBox: {
-    borderRadius: 12, padding: 14, borderWidth: 1.5, marginTop: 8,
-    backgroundColor: COLORS.surface,
-  },
-  previewTitle: { fontSize: 14, fontWeight: '800', marginBottom: 4 },
-  previewAmount: { color: COLORS.green, fontSize: 16, fontWeight: '700' },
-  penaltyNote: { color: COLORS.error, fontSize: 12, marginTop: 4 },
-  bottomBar: {
-    position: 'absolute', bottom: 0, left: 0, right: 0,
-    backgroundColor: COLORS.bg, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 28,
-    borderTopWidth: 1, borderTopColor: COLORS.border,
-  },
-  cancelBtn: { backgroundColor: COLORS.error, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
-  cancelBtnText: { color: '#FFF', fontWeight: '900', fontSize: 16 },
+  refBox: { backgroundColor: COLORS.surface, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, padding: 14, marginBottom: 14 },
+  refLabel: { color: COLORS.muted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
+  refValue: { color: COLORS.accent, fontSize: 15, fontWeight: '700', marginTop: 4 },
+  feeWarning: { backgroundColor: '#1A0A00', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: COLORS.orange, marginBottom: 14 },
+  feeWarnText: { color: COLORS.orange, fontSize: 13, lineHeight: 18 },
+  sectionLabel: { color: COLORS.muted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 },
+  reasonRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: COLORS.surface, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, padding: 14, marginBottom: 8 },
+  reasonRowActive: { borderColor: COLORS.red, backgroundColor: '#1A0000' },
+  radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: COLORS.muted, alignItems: 'center', justifyContent: 'center' },
+  radioActive: { borderColor: COLORS.red },
+  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.red },
+  reasonText: { flex: 1, color: COLORS.muted, fontSize: 14 },
+  feeBadge: { backgroundColor: COLORS.orange + '22', borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3 },
+  feeBadgeText: { color: COLORS.orange, fontSize: 11, fontWeight: '700' },
+  textArea: { backgroundColor: COLORS.surface, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, color: COLORS.white, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, minHeight: 80, marginBottom: 14 },
+  feeConfirm: { backgroundColor: '#1A0A00', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: COLORS.orange + '66', marginBottom: 14 },
+  feeConfirmText: { color: COLORS.orange, fontSize: 12, lineHeight: 18 },
+  cancelBtn: { backgroundColor: COLORS.red, borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginBottom: 10 },
+  cancelBtnText: { color: COLORS.white, fontWeight: '800', fontSize: 15 },
+  keepBtn: { backgroundColor: COLORS.green, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
+  keepBtnText: { color: COLORS.white, fontWeight: '700', fontSize: 14 },
 });

@@ -1,195 +1,160 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  ActivityIndicator,
-  StatusBar,
-  TextInput,
-  Alert,
-  Clipboard,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  StatusBar, TextInput, Alert, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
 
 const COLORS = {
-  bg: '#0A0A0F',
-  surface: '#1C1C28',
-  surfaceAlt: '#16161F',
-  border: '#2A2A3A',
-  text: '#FFFFFF',
-  muted: '#8A8A9A',
-  orange: '#F57C00',
-  green: '#27AE60',
-  accent: '#D32F2F',
-  gold: '#FFD700',
+  bg: '#0A0A0F', surface: '#1C1C28',
+  accent: '#F5A623', white: '#FFFFFF', muted: '#8A8A9A',
+  border: '#2A2A3A', green: '#27AE60', red: '#D32F2F', purple: '#8E44AD',
 };
 
-const MOCK_PROMOS = [
-  { id: 'p1', code: 'BIENVENUE20', description: '20% de réduction sur votre première course', discount: '20%', minOrder: 10, expiresAt: '2026-12-31', isNew: true },
-  { id: 'p2', code: 'WEEKEND10', description: '10% de réduction le week-end', discount: '10%', minOrder: 15, expiresAt: '2026-09-30', isNew: false },
-  { id: 'p3', code: 'FIDELITE5', description: '5 TND offerts sur votre prochaine course', discount: '5 TND', minOrder: 20, expiresAt: '2026-06-30', isNew: false },
+const ACTIVE_PROMOS = [
+  { id: 'P1', code: 'FLASH30', desc: '-30% sur EasyTaxy', discount: 30, type: 'percent', expiresAt: 'Ce soir 23h59', usesLeft: 1 },
+  { id: 'P2', code: 'BIENVENUE', desc: 'Bienvenue − 5 TND', discount: 5, type: 'fixed', expiresAt: '31/01/2025', usesLeft: 1 },
+];
+
+const SUGGESTIONS = [
+  { code: 'EASY10', desc: '-10% code ami', emoji: '🎁' },
+  { code: 'WEEKEND', desc: '-15% week-end', emoji: '🎉' },
+  { code: 'PASS50', desc: 'Pass Premium -50%', emoji: '⭐' },
 ];
 
 export default function TaxiPromoScreen({ navigation }) {
-  const [promos, setPromos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [code, setCode] = useState('');
+  const [input, setInput] = useState('');
   const [applying, setApplying] = useState(false);
-  const [applied, setApplied] = useState(null);
+  const [appliedPromos, setAppliedPromos] = useState(ACTIVE_PROMOS);
 
-  const load = useCallback(async () => {
-    try {
-      const res = await api.get('/api/taxi/promos');
-      setPromos(res.data.promos || MOCK_PROMOS);
-    } catch {
-      setPromos(MOCK_PROMOS);
-    } finally {
-      setLoading(false);
+  const handleApply = async (code) => {
+    const trimmed = (code || input).trim().toUpperCase();
+    if (!trimmed || trimmed.length < 3) { Alert.alert('Erreur', 'Code invalide'); return; }
+    if (appliedPromos.find(p => p.code === trimmed)) {
+      Alert.alert('Info', 'Ce code est déjà appliqué !'); return;
     }
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
-
-  const applyCode = async () => {
-    if (!code.trim()) return;
     setApplying(true);
     try {
-      const res = await api.post('/api/promo/validate', { code: code.trim().toUpperCase(), serviceType: 'TAXI' });
-      setApplied(res.data.promo);
-      Alert.alert('✅ Code appliqué !', `Réduction de ${res.data.promo?.discount || code} appliquée à votre prochaine course.`);
-    } catch (e) {
-      Alert.alert('Code invalide', e?.response?.data?.error || 'Ce code promo n\'est pas valide ou a expiré.');
+      const res = await api.post('/api/promo/apply', { code: trimmed, service: 'TAXI' });
+      const promo = res.data?.promo || {
+        id: `P${Date.now()}`, code: trimmed,
+        desc: `Code ${trimmed} appliqué`, discount: 10, type: 'percent',
+        expiresAt: 'Bientôt', usesLeft: 1,
+      };
+      setAppliedPromos(prev => [promo, ...prev]);
+      setInput('');
+      Alert.alert('✅ Code appliqué !', promo.desc);
+    } catch {
+      Alert.alert('Erreur', 'Code invalide ou expiré.');
     } finally {
       setApplying(false);
     }
   };
 
-  const copyCode = (c) => {
-    Clipboard.setString(c);
-    setCode(c);
-    Alert.alert('Copié !', `Code "${c}" copié et prêt à utiliser.`);
+  const handleRemove = (id) => {
+    setAppliedPromos(prev => prev.filter(p => p.id !== id));
   };
 
-  if (loading) return <View style={s.centered}><ActivityIndicator color={COLORS.orange} size="large" /></View>;
-
   return (
-    <SafeAreaView style={s.root}>
+    <SafeAreaView style={styles.root}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
-
-      <View style={s.header}>
+      <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={s.back}>‹</Text>
+          <Text style={{ color: COLORS.accent, fontSize: 24 }}>‹</Text>
         </TouchableOpacity>
-        <Text style={s.title}>🎫 Codes promo taxi</Text>
+        <Text style={styles.title}>🎟️ Codes Promo</Text>
+        <View style={{ width: 24 }} />
       </View>
 
-      {/* Code input */}
-      <View style={s.inputCard}>
-        <Text style={s.inputLabel}>Entrer un code promo</Text>
-        <View style={s.inputRow}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+
+        {/* Input */}
+        <View style={styles.inputRow}>
           <TextInput
-            style={s.input}
-            value={code}
-            onChangeText={(v) => setCode(v.toUpperCase())}
-            placeholder="EX: BIENVENUE20"
+            style={styles.input}
+            value={input}
+            onChangeText={setInput}
+            placeholder="Entrez un code promo"
             placeholderTextColor={COLORS.muted}
             autoCapitalize="characters"
-            maxLength={20}
+            maxLength={16}
           />
           <TouchableOpacity
-            style={[s.applyBtn, (!code.trim() || applying) && { opacity: 0.5 }]}
-            onPress={applyCode}
-            disabled={!code.trim() || applying}
+            style={[styles.applyBtn, (!input.trim() || applying) && { opacity: 0.5 }]}
+            onPress={() => handleApply()}
+            disabled={!input.trim() || applying}
           >
-            {applying
-              ? <ActivityIndicator color="#FFF" size="small" />
-              : <Text style={s.applyBtnTxt}>Appliquer</Text>
-            }
+            {applying ? <ActivityIndicator color="#000" size="small" /> : <Text style={styles.applyBtnText}>Valider</Text>}
           </TouchableOpacity>
         </View>
-        {applied && (
-          <View style={s.appliedBadge}>
-            <Text style={s.appliedTxt}>✅ Code "{applied.code}" appliqué — {applied.discount} de réduction</Text>
-          </View>
-        )}
-      </View>
 
-      <Text style={s.sectionTitle}>Offres disponibles</Text>
-
-      <FlatList
-        data={promos}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={s.promoCard}>
-            {item.isNew && (
-              <View style={s.newBadge}><Text style={s.newBadgeTxt}>NOUVEAU</Text></View>
-            )}
-            <View style={s.promoTop}>
-              <View style={s.discountBubble}>
-                <Text style={s.discountTxt}>{item.discount}</Text>
+        {/* Active promos */}
+        {appliedPromos.length > 0 && (
+          <>
+            <Text style={styles.sectionLabel}>Codes actifs</Text>
+            {appliedPromos.map(p => (
+              <View key={p.id} style={styles.promoCard}>
+                <View style={styles.promoLeft}>
+                  <Text style={styles.promoCode}>{p.code}</Text>
+                  <Text style={styles.promoDesc}>{p.desc}</Text>
+                  <Text style={styles.promoExpiry}>Expire : {p.expiresAt} · {p.usesLeft} utilisation(s)</Text>
+                </View>
+                <View style={styles.promoRight}>
+                  <Text style={styles.promoDiscount}>
+                    {p.type === 'percent' ? `-${p.discount}%` : `-${p.discount} TND`}
+                  </Text>
+                  <TouchableOpacity onPress={() => handleRemove(p.id)}>
+                    <Text style={{ color: COLORS.red, fontSize: 18 }}>✕</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={s.promoDesc}>{item.description}</Text>
-                <Text style={s.promoMin}>Commande min. {item.minOrder} TND</Text>
-                <Text style={s.promoExpiry}>Expire le {new Date(item.expiresAt).toLocaleDateString('fr-TN')}</Text>
-              </View>
-            </View>
-            <View style={s.promoBottom}>
-              <View style={s.codePill}>
-                <Text style={s.codePillTxt}>{item.code}</Text>
-              </View>
-              <TouchableOpacity style={s.copyBtn} onPress={() => copyCode(item.code)}>
-                <Text style={s.copyBtnTxt}>📋 Copier & utiliser</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+            ))}
+          </>
         )}
-        ListEmptyComponent={
-          <View style={s.empty}>
-            <Text style={{ fontSize: 48, marginBottom: 12 }}>🎫</Text>
-            <Text style={s.emptyTitle}>Aucune offre disponible</Text>
-            <Text style={s.emptySub}>Revenez bientôt pour de nouvelles promotions.</Text>
-          </View>
-        }
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
-      />
+
+        {/* Suggestions */}
+        <Text style={styles.sectionLabel}>Codes populaires</Text>
+        {SUGGESTIONS.map(s => (
+          <TouchableOpacity key={s.code} style={styles.suggRow} onPress={() => handleApply(s.code)}>
+            <Text style={{ fontSize: 24 }}>{s.emoji}</Text>
+            <View style={{ flex: 1, marginLeft: 12 }}>
+              <Text style={styles.suggCode}>{s.code}</Text>
+              <Text style={styles.suggDesc}>{s.desc}</Text>
+            </View>
+            <Text style={{ color: COLORS.accent, fontSize: 13, fontWeight: '700' }}>Appliquer</Text>
+          </TouchableOpacity>
+        ))}
+
+        <View style={styles.infoBox}>
+          <Text style={styles.infoText}>💡 Les codes promo sont appliqués automatiquement lors de votre prochaine course EasyTaxy.</Text>
+        </View>
+        <View style={{ height: 24 }} />
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
-const s = StyleSheet.create({
+const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.bg },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.bg },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: COLORS.border, gap: 12 },
-  back: { color: COLORS.text, fontSize: 28, fontWeight: '300' },
-  title: { color: COLORS.text, fontSize: 18, fontWeight: '700', flex: 1 },
-  inputCard: { backgroundColor: COLORS.surface, margin: 16, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: COLORS.border },
-  inputLabel: { color: COLORS.muted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 },
-  inputRow: { flexDirection: 'row', gap: 8 },
-  input: { flex: 1, backgroundColor: COLORS.surfaceAlt, borderRadius: 10, padding: 12, color: COLORS.text, fontSize: 14, fontWeight: '700', borderWidth: 1, borderColor: COLORS.border, letterSpacing: 1 },
-  applyBtn: { backgroundColor: COLORS.orange, borderRadius: 10, paddingHorizontal: 16, justifyContent: 'center' },
-  applyBtnTxt: { color: '#FFF', fontSize: 13, fontWeight: '700' },
-  appliedBadge: { backgroundColor: COLORS.green + '22', borderRadius: 8, padding: 10, marginTop: 10, borderWidth: 1, borderColor: COLORS.green },
-  appliedTxt: { color: COLORS.green, fontSize: 12, fontWeight: '600' },
-  sectionTitle: { color: COLORS.muted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.6, marginHorizontal: 16, marginBottom: 10 },
-  promoCard: { backgroundColor: COLORS.surface, borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: COLORS.border },
-  newBadge: { backgroundColor: COLORS.gold, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2, alignSelf: 'flex-start', marginBottom: 8 },
-  newBadgeTxt: { color: COLORS.bg, fontSize: 9, fontWeight: '800', letterSpacing: 1 },
-  promoTop: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  discountBubble: { width: 60, height: 60, borderRadius: 30, backgroundColor: COLORS.orange + '22', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: COLORS.orange },
-  discountTxt: { color: COLORS.orange, fontSize: 14, fontWeight: '800' },
-  promoDesc: { color: COLORS.text, fontSize: 13, fontWeight: '600', marginBottom: 3 },
-  promoMin: { color: COLORS.muted, fontSize: 11 },
-  promoExpiry: { color: COLORS.muted, fontSize: 10, marginTop: 2 },
-  promoBottom: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: COLORS.border, paddingTop: 10 },
-  codePill: { backgroundColor: COLORS.bg, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: COLORS.orange },
-  codePillTxt: { color: COLORS.orange, fontSize: 13, fontWeight: '800', letterSpacing: 1 },
-  copyBtn: { backgroundColor: COLORS.orange + '22', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: COLORS.orange },
-  copyBtnTxt: { color: COLORS.orange, fontSize: 12, fontWeight: '700' },
-  empty: { alignItems: 'center', paddingTop: 40 },
-  emptyTitle: { color: COLORS.text, fontSize: 17, fontWeight: '700', marginBottom: 6 },
-  emptySub: { color: COLORS.muted, fontSize: 13, textAlign: 'center' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  title: { color: COLORS.white, fontSize: 17, fontWeight: '700' },
+  scroll: { padding: 16 },
+  inputRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
+  input: { flex: 1, backgroundColor: COLORS.surface, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, color: COLORS.white, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, fontWeight: '700', letterSpacing: 2 },
+  applyBtn: { backgroundColor: COLORS.accent, borderRadius: 12, paddingHorizontal: 18, paddingVertical: 12, justifyContent: 'center' },
+  applyBtnText: { color: '#000', fontWeight: '800', fontSize: 14 },
+  sectionLabel: { color: COLORS.muted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 },
+  promoCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#0A1A0A', borderRadius: 14, borderWidth: 1.5, borderColor: COLORS.green, padding: 14, marginBottom: 10 },
+  promoLeft: { flex: 1 },
+  promoCode: { color: COLORS.green, fontSize: 18, fontWeight: '900', letterSpacing: 2 },
+  promoDesc: { color: COLORS.white, fontSize: 13, marginTop: 3 },
+  promoExpiry: { color: COLORS.muted, fontSize: 11, marginTop: 3 },
+  promoRight: { alignItems: 'center', gap: 8 },
+  promoDiscount: { color: COLORS.green, fontSize: 20, fontWeight: '900' },
+  suggRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.surface, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, padding: 14, marginBottom: 8 },
+  suggCode: { color: COLORS.white, fontWeight: '700', fontSize: 14 },
+  suggDesc: { color: COLORS.muted, fontSize: 12, marginTop: 2 },
+  infoBox: { backgroundColor: '#1A1200', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: COLORS.accent + '44', marginTop: 8 },
+  infoText: { color: COLORS.muted, fontSize: 12, lineHeight: 18 },
 });
