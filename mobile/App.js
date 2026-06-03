@@ -407,6 +407,9 @@ import DriverStatusScreen from './screens/driver/DriverStatusScreen';
 import DepanneurStatusScreen from './screens/sos/DepanneurStatusScreen';
 import AdminLiveMapScreen from './screens/admin/AdminLiveMapScreen';
 
+// Batch 68
+import LivreurHistoryScreen from './screens/delivery/LivreurHistoryScreen';
+
 // Batch 61
 import TaxiSearchScreen from './screens/taxi/TaxiSearchScreen';
 import DepanneurProfileScreen from './screens/sos/DepanneurProfileScreen';
@@ -750,6 +753,7 @@ function MainStack() {
       <Stack.Screen name="DriverStatus" component={DriverStatusScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DepanneurStatus" component={DepanneurStatusScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminLiveMap" component={AdminLiveMapScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="LivreurHistory" component={LivreurHistoryScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
