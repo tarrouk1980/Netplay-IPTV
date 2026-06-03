@@ -254,6 +254,18 @@ export default function LoginScreen({ navigation }) {
               </TouchableOpacity>
             </View>
 
+            <TouchableOpacity
+              style={{ alignSelf: 'center', marginTop: 8, marginBottom: 4 }}
+              onPress={async () => {
+                await AsyncStorage.removeItem('onboardingDone');
+                navigation.reset({ index: 0, routes: [{ name: 'Onboarding' }] });
+              }}
+            >
+              <Text style={{ color: '#8E8E9A', fontSize: 12, textDecorationLine: 'underline' }}>
+                Revoir l'introduction
+              </Text>
+            </TouchableOpacity>
+
             {/* Footer SNS + copyright */}
             <View style={styles.footer}>
               <View style={styles.socialsRow}>

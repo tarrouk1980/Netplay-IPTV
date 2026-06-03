@@ -48,11 +48,11 @@ export default function TaxiRequestScreen({ route, navigation }) {
   const { requestTaxi, isSearching, nearbyDrivers } = useTaxiStore();
 
   const [origin, setOrigin] = useState(null);
-  const [originAddress, setOriginAddress] = useState('Localisation en cours…');
+  const [originAddress, setOriginAddress] = useState('Saisir ou utiliser ma position');
   const [destination, setDestination] = useState('');
   const [mode, setMode] = useState('A'); // 'A' = Taximètre EASYWAY, 'B' = Mise en relation
   const [fareEstimate, setFareEstimate] = useState(null);
-  const [loadingLocation, setLoadingLocation] = useState(true);
+  const [loadingLocation, setLoadingLocation] = useState(false);
   const [loadingEstimate, setLoadingEstimate] = useState(false);
   const [demandZones, setDemandZones] = useState([]);
   const [showPriceEstimate, setShowPriceEstimate] = useState(false);
@@ -82,55 +82,50 @@ export default function TaxiRequestScreen({ route, navigation }) {
     setWaypoints(waypoints.filter((_, i) => i !== index));
   };
 
-  // Detect origin via expo-location
-  useEffect(() => {
-    (async () => {
+  // Detect origin via expo-location (user-triggered, not auto)
+  const detectLocation = async () => {
+    setLoadingLocation(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setOriginAddress('Permission de localisation refusée');
+        return;
+      }
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const lat = loc.coords.latitude;
+      const lng = loc.coords.longitude;
+      setOrigin({ lat, lng });
+
       try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') {
-          setOriginAddress('Permission de localisation refusée');
-          setLoadingLocation(false);
+        const geo = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng });
+        if (geo && geo.length > 0) {
+          const g = geo[0];
+          const parts = [g.street, g.district, g.city].filter(Boolean);
+          if (parts.length > 0) { setOriginAddress(parts.join(', ')); return; }
+        }
+      } catch {}
+
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=fr`,
+          { headers: { 'User-Agent': 'EASYWAY-App/1.0' } }
+        );
+        const data = await res.json();
+        if (data?.display_name) {
+          const addr = data.address || {};
+          const parts = [addr.road, addr.suburb, addr.city || addr.town || addr.village].filter(Boolean);
+          setOriginAddress(parts.join(', ') || data.display_name.split(',').slice(0, 2).join(','));
           return;
         }
-        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-        const lat = loc.coords.latitude;
-        const lng = loc.coords.longitude;
-        setOrigin({ lat, lng });
+      } catch {}
 
-        // Essai 1 : expo reverse geocode (natif)
-        try {
-          const geo = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng });
-          if (geo && geo.length > 0) {
-            const g = geo[0];
-            const parts = [g.street, g.district, g.city].filter(Boolean);
-            if (parts.length > 0) { setOriginAddress(parts.join(', ')); return; }
-          }
-        } catch {}
-
-        // Essai 2 : Nominatim OpenStreetMap (gratuit, sans token)
-        try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=fr`,
-            { headers: { 'User-Agent': 'EASYWAY-App/1.0' } }
-          );
-          const data = await res.json();
-          if (data?.display_name) {
-            const addr = data.address || {};
-            const parts = [addr.road, addr.suburb, addr.city || addr.town || addr.village].filter(Boolean);
-            setOriginAddress(parts.join(', ') || data.display_name.split(',').slice(0, 2).join(','));
-            return;
-          }
-        } catch {}
-
-        // Fallback : coordonnées brutes
-        setOriginAddress(`${lat.toFixed(5)}° N, ${lng.toFixed(5)}° E`);
-      } catch (err) {
-        setOriginAddress('Activez la localisation et réessayez');
-      } finally {
-        setLoadingLocation(false);
-      }
-    })();
-  }, []);
+      setOriginAddress(`${lat.toFixed(5)}° N, ${lng.toFixed(5)}° E`);
+    } catch {
+      setOriginAddress('Activez la localisation et réessayez');
+    } finally {
+      setLoadingLocation(false);
+    }
+  };
 
   // Heatmap pulse animation
   useEffect(() => {
@@ -279,7 +274,10 @@ export default function TaxiRequestScreen({ route, navigation }) {
           <View style={styles.inputRow}>
             {loadingLocation
               ? <ActivityIndicator size="small" color={COLORS.header} />
-              : <Text style={styles.originText}>{originAddress}</Text>}
+              : <Text style={[styles.originText, { flex: 1 }]}>{originAddress === 'Localisation en cours…' ? 'Saisir ou utiliser ma position' : originAddress}</Text>}
+            <TouchableOpacity onPress={detectLocation} style={{ paddingLeft: 8 }}>
+              <Text style={{ fontSize: 20 }}>📍</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
