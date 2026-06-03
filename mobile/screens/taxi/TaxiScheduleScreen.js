@@ -1,454 +1,241 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-  Alert,
-  StyleSheet,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  StatusBar, TextInput, Alert, Platform,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COLORS = {
-  background: "#0A0A0F",
-  surface: "#1C1C28",
-  primary: "#F5A623",
-  text: "#FFFFFF",
-  muted: "#8E8E9A",
-  border: "#2C2C3A",
+  bg: '#0A0A0F', surface: '#1C1C28',
+  accent: '#F5A623', white: '#FFFFFF', muted: '#8A8A9A',
+  border: '#2A2A3A', green: '#27AE60', red: '#D32F2F',
 };
 
-const VEHICLE_TYPES = [
-  { id: "eco", label: "Économique", icon: "🚗", price: 8.5, desc: "Confort basique" },
-  { id: "comfort", label: "Confort", icon: "🚙", price: 12.0, desc: "Plus spacieux" },
-  { id: "premium", label: "Premium", icon: "🚘", price: 18.0, desc: "Berline haut de gamme" },
+const TAXI_TYPES = [
+  { key: 'NORMAL', label: '🚕 EasyTaxy', color: COLORS.accent },
+  { key: 'EASYLADY', label: '👩‍✈️ Easy For Lady', color: '#E91E8C' },
+  { key: 'EASYACCESS', label: '♿ EasyAccess', color: '#2196F3' },
 ];
 
-const TIME_SLOTS = [];
-for (let h = 6; h <= 23; h++) {
-  TIME_SLOTS.push(`${String(h).padStart(2, "0")}:00`);
-  if (h < 23) TIME_SLOTS.push(`${String(h).padStart(2, "0")}:30`);
-}
-TIME_SLOTS.push("23:30");
+const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+const MINUTES = ['00', '15', '30', '45'];
 
-function getDays() {
-  const days = [];
-  const dayNames = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
-  const monthNames = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Aoû", "Sep", "Oct", "Nov", "Déc"];
-  const today = new Date();
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() + i);
-    days.push({
-      label: i === 0 ? "Auj." : dayNames[d.getDay()],
-      date: d.getDate(),
-      month: monthNames[d.getMonth()],
-      full: `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`,
-    });
-  }
-  return days;
-}
-
-const DAYS = getDays();
+const TODAY = new Date();
+const DAYS = Array.from({ length: 7 }, (_, i) => {
+  const d = new Date(TODAY);
+  d.setDate(TODAY.getDate() + i);
+  return {
+    label: i === 0 ? "Aujourd'hui" : i === 1 ? 'Demain'
+      : d.toLocaleDateString('fr-TN', { weekday: 'short', day: 'numeric', month: 'short' }),
+    date: d.toISOString().slice(0, 10),
+  };
+});
 
 export default function TaxiScheduleScreen({ navigation }) {
-  const [selectedDay, setSelectedDay] = useState(0);
-  const [selectedTime, setSelectedTime] = useState("08:00");
-  const [selectedVehicle, setSelectedVehicle] = useState("eco");
-  const [depart, setDepart] = useState("12 Rue de Carthage, Tunis");
-  const [destination, setDestination] = useState("Aéroport Tunis-Carthage, Terminal 1");
+  const [taxiType, setTaxiType] = useState('NORMAL');
+  const [selectedDay, setSelectedDay] = useState(DAYS[0].date);
+  const [hour, setHour] = useState('08');
+  const [minute, setMinute] = useState('00');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [notes, setNotes] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const vehicle = VEHICLE_TYPES.find((v) => v.id === selectedVehicle);
-
-  const handleConfirm = () => {
-    Alert.alert(
-      "Réservation confirmée",
-      `Course réservée pour ${DAYS[selectedDay].full} à ${selectedTime} !`,
-      [{ text: "OK", onPress: () => navigation && navigation.goBack() }]
-    );
+  const handleSchedule = async () => {
+    if (!from.trim() || !to.trim()) {
+      Alert.alert('Erreur', 'Renseignez les adresses de départ et destination');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await api.post('/api/taxi/schedule', {
+        taxiType, date: selectedDay, time: `${hour}:${minute}`,
+        from: from.trim(), to: to.trim(), notes: notes.trim(),
+      });
+      Alert.alert(
+        '✅ Réservation programmée !',
+        `Votre taxi est réservé pour le ${DAYS.find((d) => d.date === selectedDay)?.label} à ${hour}h${minute}.\nVous serez notifié 15 min avant.`,
+        [{ text: 'OK', onPress: () => navigation.goBack() }]
+      );
+    } catch {
+      Alert.alert('Erreur', 'Impossible de programmer la réservation. Réessayez.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
+    <SafeAreaView style={styles.root}>
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
+
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation && navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backArrow}>←</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text style={{ color: COLORS.accent, fontSize: 24 }}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{"Réserver à l'avance"}</Text>
-        <View style={{ width: 40 }} />
+        <Text style={styles.title}>📅 Taxi Programmé</Text>
+        <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
-        {/* Date Picker */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Choisir la date</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dayScroll}>
-            {DAYS.map((day, idx) => (
-              <TouchableOpacity
-                key={idx}
-                style={[styles.dayCard, selectedDay === idx && styles.dayCardActive]}
-                onPress={() => setSelectedDay(idx)}
-              >
-                <Text style={[styles.dayName, selectedDay === idx && styles.dayTextActive]}>{day.label}</Text>
-                <Text style={[styles.dayNum, selectedDay === idx && styles.dayTextActive]}>{day.date}</Text>
-                <Text style={[styles.dayMonth, selectedDay === idx && styles.dayTextActive]}>{day.month}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
 
-        {/* Time Picker */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Choisir l'heure</Text>
-          <View style={styles.timeGrid}>
-            {TIME_SLOTS.map((slot) => (
-              <TouchableOpacity
-                key={slot}
-                style={[styles.timeChip, selectedTime === slot && styles.timeChipActive]}
-                onPress={() => setSelectedTime(slot)}
-              >
-                <Text style={[styles.timeChipText, selectedTime === slot && styles.timeChipTextActive]}>
-                  {slot}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Addresses */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Trajet</Text>
-          <View style={styles.card}>
-            <View style={styles.addressRow}>
-              <Text style={styles.addressDot}>🟢</Text>
-              <View style={styles.addressInputWrap}>
-                <Text style={styles.addressLabel}>Départ</Text>
-                <TextInput
-                  style={styles.addressInput}
-                  value={depart}
-                  onChangeText={setDepart}
-                  placeholderTextColor={COLORS.muted}
-                />
-              </View>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.addressRow}>
-              <Text style={styles.addressDot}>🔴</Text>
-              <View style={styles.addressInputWrap}>
-                <Text style={styles.addressLabel}>Destination</Text>
-                <TextInput
-                  style={styles.addressInput}
-                  value={destination}
-                  onChangeText={setDestination}
-                  placeholderTextColor={COLORS.muted}
-                />
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* Vehicle Type */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Type de véhicule</Text>
-          {VEHICLE_TYPES.map((v) => (
+        {/* Type */}
+        <Text style={styles.sectionLabel}>Type de taxi</Text>
+        <View style={styles.typeRow}>
+          {TAXI_TYPES.map((t) => (
             <TouchableOpacity
-              key={v.id}
-              style={[styles.vehicleCard, selectedVehicle === v.id && styles.vehicleCardActive]}
-              onPress={() => setSelectedVehicle(v.id)}
+              key={t.key}
+              style={[styles.typeBtn, taxiType === t.key && { borderColor: t.color, backgroundColor: t.color + '22' }]}
+              onPress={() => setTaxiType(t.key)}
             >
-              <Text style={styles.vehicleIcon}>{v.icon}</Text>
-              <View style={styles.vehicleInfo}>
-                <Text style={styles.vehicleLabel}>{v.label}</Text>
-                <Text style={styles.vehicleDesc}>{v.desc}</Text>
-              </View>
-              <Text style={styles.vehiclePrice}>{v.price.toFixed(2)} TND</Text>
-              {selectedVehicle === v.id && <Text style={styles.checkmark}>✓</Text>}
+              <Text style={[styles.typeBtnText, taxiType === t.key && { color: t.color }]}>{t.label}</Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* Summary */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Récapitulatif</Text>
-          <View style={styles.summaryCard}>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryKey}>📅 Date</Text>
-              <Text style={styles.summaryVal}>{DAYS[selectedDay].full}</Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryKey}>🕐 Heure</Text>
-              <Text style={styles.summaryVal}>{selectedTime}</Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryKey}>📍 Trajet</Text>
-              <Text style={styles.summaryValSmall} numberOfLines={1}>{depart}</Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryKey}>   → Vers</Text>
-              <Text style={styles.summaryValSmall} numberOfLines={1}>{destination}</Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryKey}>🚗 Véhicule</Text>
-              <Text style={styles.summaryVal}>{vehicle ? vehicle.label : ""}</Text>
-            </View>
-            <View style={[styles.summaryRow, styles.summaryTotal]}>
-              <Text style={styles.summaryTotalKey}>💰 Prix estimé</Text>
-              <Text style={styles.summaryTotalVal}>{vehicle ? vehicle.price.toFixed(2) : "0.00"} TND</Text>
-            </View>
+        {/* Day */}
+        <Text style={styles.sectionLabel}>Jour</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
+          <View style={{ flexDirection: 'row', gap: 8, paddingVertical: 4 }}>
+            {DAYS.map((d) => (
+              <TouchableOpacity
+                key={d.date}
+                style={[styles.dayBtn, selectedDay === d.date && styles.dayBtnActive]}
+                onPress={() => setSelectedDay(d.date)}
+              >
+                <Text style={[styles.dayBtnText, selectedDay === d.date && { color: '#000' }]}>{d.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
+
+        {/* Time */}
+        <Text style={styles.sectionLabel}>Heure</Text>
+        <View style={styles.timeRow}>
+          <View style={styles.timeBox}>
+            <Text style={styles.timeBoxLabel}>Heure</Text>
+            <ScrollView style={styles.pickerScroll} showsVerticalScrollIndicator={false}>
+              {HOURS.map((h) => (
+                <TouchableOpacity key={h} style={[styles.pickerItem, hour === h && styles.pickerItemActive]} onPress={() => setHour(h)}>
+                  <Text style={[styles.pickerText, hour === h && { color: '#000' }]}>{h}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+          <Text style={styles.timeSep}>:</Text>
+          <View style={styles.timeBox}>
+            <Text style={styles.timeBoxLabel}>Min</Text>
+            <ScrollView style={styles.pickerScroll} showsVerticalScrollIndicator={false}>
+              {MINUTES.map((m) => (
+                <TouchableOpacity key={m} style={[styles.pickerItem, minute === m && styles.pickerItemActive]} onPress={() => setMinute(m)}>
+                  <Text style={[styles.pickerText, minute === m && { color: '#000' }]}>{m}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+          <View style={styles.timePreview}>
+            <Text style={styles.timePreviewValue}>{hour}:{minute}</Text>
+            <Text style={styles.timePreviewLabel}>Départ prévu</Text>
           </View>
         </View>
-      </ScrollView>
 
-      {/* Confirm Button */}
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirm}>
-          <Text style={styles.confirmBtnText}>Confirmer la réservation</Text>
+        {/* Addresses */}
+        <Text style={styles.sectionLabel}>Adresses</Text>
+        <TextInput
+          style={styles.input}
+          value={from}
+          onChangeText={setFrom}
+          placeholder="📍 Adresse de départ"
+          placeholderTextColor={COLORS.muted}
+        />
+        <TextInput
+          style={[styles.input, { marginTop: 8 }]}
+          value={to}
+          onChangeText={setTo}
+          placeholder="🏁 Destination"
+          placeholderTextColor={COLORS.muted}
+        />
+
+        {/* Notes */}
+        <Text style={[styles.sectionLabel, { marginTop: 16 }]}>Notes (optionnel)</Text>
+        <TextInput
+          style={[styles.input, { minHeight: 70 }]}
+          value={notes}
+          onChangeText={setNotes}
+          placeholder="Instructions spéciales pour le chauffeur..."
+          placeholderTextColor={COLORS.muted}
+          multiline
+          maxLength={200}
+        />
+
+        <View style={styles.reminderNote}>
+          <Text style={styles.reminderText}>🔔 Vous recevrez une notification 15 min avant l'heure programmée.</Text>
+        </View>
+
+        <TouchableOpacity
+          style={[styles.scheduleBtn, submitting && { opacity: 0.5 }]}
+          onPress={handleSchedule}
+          disabled={submitting}
+        >
+          <Text style={styles.scheduleBtnText}>📅 Confirmer la réservation</Text>
         </TouchableOpacity>
-      </View>
+
+        <View style={{ height: 32 }} />
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
+  root: { flex: 1, backgroundColor: COLORS.bg },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 20, paddingVertical: 14,
+    borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
-  backBtn: {
-    width: 40,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
+  title: { color: COLORS.white, fontSize: 17, fontWeight: '700' },
+  scroll: { padding: 16 },
+  sectionLabel: {
+    color: COLORS.muted, fontSize: 11, fontWeight: '700',
+    textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10,
   },
-  backArrow: {
-    fontSize: 22,
-    color: COLORS.text,
+  typeRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
+  typeBtn: {
+    flex: 1, paddingVertical: 10, borderRadius: 10,
+    backgroundColor: COLORS.surface, borderWidth: 1.5, borderColor: COLORS.border, alignItems: 'center',
   },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: COLORS.text,
+  typeBtnText: { color: COLORS.white, fontSize: 11, fontWeight: '600' },
+  dayBtn: {
+    paddingHorizontal: 14, paddingVertical: 9, borderRadius: 10,
+    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
   },
-  section: {
-    paddingHorizontal: 16,
-    paddingTop: 20,
+  dayBtnActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
+  dayBtnText: { color: COLORS.white, fontSize: 13, fontWeight: '600' },
+  timeRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },
+  timeBox: { width: 72 },
+  timeBoxLabel: { color: COLORS.muted, fontSize: 10, textAlign: 'center', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 },
+  pickerScroll: { height: 120, backgroundColor: COLORS.surface, borderRadius: 10, borderWidth: 1, borderColor: COLORS.border },
+  pickerItem: { paddingVertical: 8, alignItems: 'center' },
+  pickerItemActive: { backgroundColor: COLORS.accent, margin: 2, borderRadius: 6 },
+  pickerText: { color: COLORS.white, fontSize: 16, fontWeight: '700' },
+  timeSep: { color: COLORS.accent, fontSize: 28, fontWeight: '900', marginBottom: 24 },
+  timePreview: { flex: 1, alignItems: 'center' },
+  timePreviewValue: { color: COLORS.accent, fontSize: 36, fontWeight: '900' },
+  timePreviewLabel: { color: COLORS.muted, fontSize: 11, marginTop: 4 },
+  input: {
+    backgroundColor: COLORS.surface, borderRadius: 12,
+    borderWidth: 1, borderColor: COLORS.border,
+    color: COLORS.white, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14,
+    textAlignVertical: 'top',
   },
-  sectionTitle: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: COLORS.text,
-    marginBottom: 12,
+  reminderNote: {
+    backgroundColor: '#1A1200', borderRadius: 10, padding: 12,
+    borderWidth: 1, borderColor: COLORS.accent + '44', marginVertical: 16,
   },
-  dayScroll: {
-    flexDirection: "row",
+  reminderText: { color: COLORS.muted, fontSize: 12, lineHeight: 18 },
+  scheduleBtn: {
+    backgroundColor: COLORS.accent, borderRadius: 12,
+    paddingVertical: 14, alignItems: 'center',
   },
-  dayCard: {
-    width: 64,
-    paddingVertical: 12,
-    borderRadius: 12,
-    backgroundColor: COLORS.surface,
-    alignItems: "center",
-    marginRight: 10,
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
-  },
-  dayCardActive: {
-    borderColor: COLORS.primary,
-    backgroundColor: "#2A1F0A",
-  },
-  dayName: {
-    fontSize: 11,
-    color: COLORS.muted,
-    marginBottom: 4,
-  },
-  dayNum: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: COLORS.text,
-  },
-  dayMonth: {
-    fontSize: 11,
-    color: COLORS.muted,
-    marginTop: 2,
-  },
-  dayTextActive: {
-    color: COLORS.primary,
-  },
-  timeGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  timeChip: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  timeChipActive: {
-    borderColor: COLORS.primary,
-    backgroundColor: "#2A1F0A",
-  },
-  timeChipText: {
-    fontSize: 13,
-    color: COLORS.muted,
-  },
-  timeChipTextActive: {
-    color: COLORS.primary,
-    fontWeight: "600",
-  },
-  card: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  addressRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 6,
-  },
-  addressDot: {
-    fontSize: 14,
-    marginRight: 10,
-  },
-  addressInputWrap: {
-    flex: 1,
-  },
-  addressLabel: {
-    fontSize: 11,
-    color: COLORS.muted,
-    marginBottom: 2,
-  },
-  addressInput: {
-    fontSize: 14,
-    color: COLORS.text,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    paddingBottom: 4,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: COLORS.border,
-    marginVertical: 8,
-    marginLeft: 24,
-  },
-  vehicleCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: COLORS.surface,
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 10,
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
-  },
-  vehicleCardActive: {
-    borderColor: COLORS.primary,
-    backgroundColor: "#1A1508",
-  },
-  vehicleIcon: {
-    fontSize: 28,
-    marginRight: 12,
-  },
-  vehicleInfo: {
-    flex: 1,
-  },
-  vehicleLabel: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: COLORS.text,
-  },
-  vehicleDesc: {
-    fontSize: 12,
-    color: COLORS.muted,
-    marginTop: 2,
-  },
-  vehiclePrice: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: COLORS.primary,
-    marginRight: 8,
-  },
-  checkmark: {
-    fontSize: 16,
-    color: COLORS.primary,
-    fontWeight: "700",
-  },
-  summaryCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  summaryRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 7,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  summaryTotal: {
-    borderBottomWidth: 0,
-    marginTop: 4,
-  },
-  summaryKey: {
-    fontSize: 13,
-    color: COLORS.muted,
-  },
-  summaryVal: {
-    fontSize: 13,
-    color: COLORS.text,
-    fontWeight: "600",
-  },
-  summaryValSmall: {
-    fontSize: 12,
-    color: COLORS.text,
-    maxWidth: 180,
-  },
-  summaryTotalKey: {
-    fontSize: 15,
-    color: COLORS.text,
-    fontWeight: "600",
-  },
-  summaryTotalVal: {
-    fontSize: 17,
-    color: COLORS.primary,
-    fontWeight: "700",
-  },
-  footer: {
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    backgroundColor: COLORS.background,
-  },
-  confirmBtn: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 14,
-    paddingVertical: 16,
-    alignItems: "center",
-  },
-  confirmBtnText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#0A0A0F",
-  },
+  scheduleBtnText: { color: '#000', fontWeight: '800', fontSize: 15 },
 });
