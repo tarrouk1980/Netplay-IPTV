@@ -7,7 +7,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import MapboxMap from '../../components/MapboxMap';
+import MapboxWebView from '../../components/MapboxWebView';
 
 const COLORS = {
   background: '#0A0A0F',
@@ -38,7 +38,7 @@ export default function TaxiMapScreen({ navigation }) {
   return (
     <View style={styles.container}>
       {/* Map area */}
-      <MapboxMap
+      <MapboxWebView
         style={{ flex: 1 }}
         centerCoordinate={[10.1815, 36.8065]}
         zoom={13}

@@ -36,12 +36,7 @@ module.exports = {
     runtimeVersion: {
       policy: 'sdkVersion',
     },
-    plugins: [
-      'expo-notifications',
-      'expo-location',
-      'expo-av',
-      ['@rnmapbox/maps', { RNMapboxMapsVersion: '10.16.4', RNMapboxMapsDownloadToken: 'sk.eyJ1IjoiZWFzeXdheXRhcmVrIiwiYSI6ImNtcHhoY2Q5dTA4ejgycnIyZ25oMmU1ZTQifQ.AhHhtw_JNEhjY46ditVsSg' }],
-    ],
+    plugins: ['expo-notifications', 'expo-location', 'expo-av'],
     extra: {
       mapboxToken: process.env.MAPBOX_TOKEN || 'pk.eyJ1IjoiZWFzeXdheXRhcmVrIiwiYSI6ImNtcHNuaGJ1ODBoc2Qyc3FxenU0aGFvd3QifQ.K-z5zbFtY8v5lyMUn7TryQ',
       eas: {
