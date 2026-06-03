@@ -47,7 +47,11 @@ const TAXI_TYPES = [
 
 export default function TaxiHomeScreen({ navigation }) {
   const handleTaxiTypePress = (taxiType) => {
-    navigation.navigate('TaxiRequest', { taxiType });
+    if (taxiType === 'EASYLADY') {
+      navigation.navigate('EasyLady');
+    } else {
+      navigation.navigate('TaxiRequest', { taxiType });
+    }
   };
 
   return (

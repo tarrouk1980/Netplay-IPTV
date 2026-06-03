@@ -166,6 +166,11 @@ import PaymentMethodsScreen from './screens/payment/PaymentMethodsScreen';
 // Chat
 import ChatScreen from './screens/chat/ChatScreen';
 
+// Batch 70
+import EasyLadyScreen from './screens/taxi/EasyLadyScreen';
+import DriverNavigationScreen from './screens/taxi/DriverNavigationScreen';
+import GroceryStoreMapScreen from './screens/grocery/GroceryStoreMapScreen';
+
 // Rating
 import RatingScreen from './screens/taxi/RatingScreen';
 
@@ -605,6 +610,9 @@ function MainStack() {
       {/* Business */}
       <Stack.Screen name="EasyBusiness" component={EasyBusinessScreen} options={{ headerShown: false }} />
       <Stack.Screen name="EasyCar" component={EasyCarScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="EasyLady" component={EasyLadyScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="DriverNavigation" component={DriverNavigationScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="GroceryStoreMap" component={GroceryStoreMapScreen} options={{ headerShown: false }} />
       <Stack.Screen name="EasyPackage" component={EasyPackageScreen} options={{ headerShown: false }} />
       <Stack.Screen name="PaymentMethods" component={PaymentMethodsScreen} options={{ headerShown: false }} />
 

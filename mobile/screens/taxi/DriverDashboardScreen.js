@@ -431,6 +431,13 @@ export default function DriverDashboardScreen({ navigation }) {
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.earningsLinkBtn, { marginTop: 8 }]}
+          onPress={() => navigation.navigate('DriverNavigation', { clientName: 'Client', destinationAddress: 'Votre prochaine course' })}
+          activeOpacity={0.75}
+        >
+          <Text style={styles.earningsLinkText}>🧭 Navigation GPS →</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.earningsLinkBtn, { marginTop: 8 }]}
           onPress={() => navigation.navigate('EarningsGoal')}
           activeOpacity={0.75}
         >

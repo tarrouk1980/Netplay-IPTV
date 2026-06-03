@@ -159,9 +159,17 @@ export default function GroceryHomeScreen({ navigation }) {
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
 
         {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>🛒 EasyCourses</Text>
-          <Text style={styles.headerSub}>Courses livrées chez vous en moins de 45 min</Text>
+        <View style={[styles.header, { justifyContent: 'space-between' }]}>
+          <View>
+            <Text style={styles.headerTitle}>🛒 EasyCourses</Text>
+            <Text style={styles.headerSub}>Courses livrées chez vous en moins de 45 min</Text>
+          </View>
+          <TouchableOpacity
+            style={{ backgroundColor: '#1C1C28', borderRadius: 10, padding: 10, borderWidth: 1, borderColor: '#2A2A3A' }}
+            onPress={() => navigation.navigate('GroceryStoreMap')}
+          >
+            <Text style={{ fontSize: 22 }}>🗺️</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Search */}
