@@ -81,6 +81,7 @@ import NearbyProvidersScreen from './screens/home/NearbyProvidersScreen';
 
 // Schedule Ride
 import TaxiScheduleRideScreen from './screens/taxi/TaxiScheduleRideScreen';
+import TaxiScheduleScreen from './screens/taxi/TaxiScheduleScreen';
 
 // Quick Taxi
 import QuickTaxiScreen from './screens/taxi/QuickTaxiScreen';
@@ -537,6 +538,7 @@ function MainStack() {
       {/* Nearby & Schedule */}
       <Stack.Screen name="NearbyProviders" component={NearbyProvidersScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiScheduleRide" component={TaxiScheduleRideScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="TaxiSchedule" component={TaxiScheduleScreen} options={{ headerShown: false }} />
       <Stack.Screen name="QuickTaxi" component={QuickTaxiScreen} options={{ headerShown: false }} />
       <Stack.Screen name="WalletTransactions" component={WalletTransactionsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="LiveOrderMap" component={LiveOrderMapScreen} options={{ headerShown: false }} />
