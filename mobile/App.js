@@ -406,6 +406,7 @@ import TaxiSearchScreen from './screens/taxi/TaxiSearchScreen';
 import DepanneurProfileScreen from './screens/sos/DepanneurProfileScreen';
 import MerchantOrdersScreen from './screens/merchant/MerchantOrdersScreen';
 import SecurityScreen from './screens/profile/SecurityScreen';
+import HelpCenterScreen from './screens/profile/HelpCenterScreen';
 import AdminSOSScreen from './screens/admin/AdminSOSScreen';
 
 const Stack = createNativeStackNavigator();
@@ -734,6 +735,7 @@ function MainStack() {
       <Stack.Screen name="DepanneurProfile" component={DepanneurProfileScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MerchantOrders" component={MerchantOrdersScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Security" component={SecurityScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="HelpCenter" component={HelpCenterScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminSOS" component={AdminSOSScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminRevenue" component={AdminRevenueScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
