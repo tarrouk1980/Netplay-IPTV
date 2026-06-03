@@ -464,6 +464,7 @@ function MainStack() {
       <Stack.Screen name="TaxiTracking" component={TaxiTrackingScreen} options={{ title: 'Suivi course', headerShown: false }} />
       <Stack.Screen name="DriverDashboard" component={DriverDashboardScreen} options={{ title: 'Tableau de bord', headerShown: false }} />
       <Stack.Screen name="DriverRequest" component={DriverRequestScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="TaxiMap" component={TaxiMapScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ProviderDashboard" component={ProviderDashboardScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ProviderEarnings" component={ProviderEarningsScreen} options={{ headerShown: false }} />
 
