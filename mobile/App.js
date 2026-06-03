@@ -402,6 +402,11 @@ import TaxiHistoryScreen from './screens/taxi/TaxiHistoryScreen';
 import DeliveryOrderHistoryScreen from './screens/delivery/DeliveryOrderHistoryScreen';
 import NotificationPreferencesScreen from './screens/profile/NotificationPreferencesScreen';
 
+// Batch 67
+import DriverStatusScreen from './screens/driver/DriverStatusScreen';
+import DepanneurStatusScreen from './screens/sos/DepanneurStatusScreen';
+import AdminLiveMapScreen from './screens/admin/AdminLiveMapScreen';
+
 // Batch 61
 import TaxiSearchScreen from './screens/taxi/TaxiSearchScreen';
 import DepanneurProfileScreen from './screens/sos/DepanneurProfileScreen';
@@ -742,6 +747,9 @@ function MainStack() {
       <Stack.Screen name="AdminSOS" component={AdminSOSScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminRevenue" component={AdminRevenueScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiLiveTracking" component={TaxiLiveTrackingScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="DriverStatus" component={DriverStatusScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="DepanneurStatus" component={DepanneurStatusScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminLiveMap" component={AdminLiveMapScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
