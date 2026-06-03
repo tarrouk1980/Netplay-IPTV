@@ -488,6 +488,11 @@ import LivreurNavigationScreen from './screens/delivery/LivreurNavigationScreen'
 import TwoFactorAuthScreen from './screens/profile/TwoFactorAuthScreen';
 import AdminPushCampaignScreen from './screens/admin/AdminPushCampaignScreen';
 
+// Batch 90
+import ChatListScreen from './screens/chat/ChatListScreen';
+import ProviderHomeScreen from './screens/provider/ProviderHomeScreen';
+import AdminFinancialDashboardScreen from './screens/admin/AdminFinancialDashboardScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -727,6 +732,9 @@ function MainStack() {
       <Stack.Screen name="LivreurNavigation" component={LivreurNavigationScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TwoFactorAuth" component={TwoFactorAuthScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminPushCampaign" component={AdminPushCampaignScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ChatList" component={ChatListScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ProviderHome" component={ProviderHomeScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminFinancialDashboard" component={AdminFinancialDashboardScreen} options={{ headerShown: false }} />
 
       {/* Chat */}
       <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
