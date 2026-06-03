@@ -244,6 +244,7 @@ import ClientSOSHistoryScreen from './screens/sos/ClientSOSHistoryScreen';
 import ProviderDocumentStatusScreen from './screens/provider/ProviderDocumentStatusScreen';
 import AdminRevenueDetailScreen from './screens/admin/AdminRevenueDetailScreen';
 import GroceryOrderHistoryScreen from './screens/grocery/GroceryOrderHistoryScreen';
+import AdminRevenueScreen from './screens/admin/AdminRevenueScreen';
 
 // Batch 27
 import TaxiRideScheduleListScreen from './screens/taxi/TaxiRideScheduleListScreen';
@@ -734,6 +735,7 @@ function MainStack() {
       <Stack.Screen name="MerchantOrders" component={MerchantOrdersScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Security" component={SecurityScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminSOS" component={AdminSOSScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminRevenue" component={AdminRevenueScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
