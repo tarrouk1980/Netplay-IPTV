@@ -389,6 +389,10 @@ import DriverAcceptRideScreen from './screens/taxi/DriverAcceptRideScreen';
 import LivreurAcceptOrderScreen from './screens/delivery/LivreurAcceptOrderScreen';
 import AdminDriversScreen from './screens/admin/AdminDriversScreen';
 
+// Batch 58
+import PaymentSuccessScreen from './screens/payment/PaymentSuccessScreen';
+import EditProfileScreen from './screens/profile/EditProfileScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -704,6 +708,8 @@ function MainStack() {
       <Stack.Screen name="DriverAcceptRide" component={DriverAcceptRideScreen} options={{ headerShown: false }} />
       <Stack.Screen name="LivreurAcceptOrder" component={LivreurAcceptOrderScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminDrivers" component={AdminDriversScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="PaymentSuccess" component={PaymentSuccessScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
