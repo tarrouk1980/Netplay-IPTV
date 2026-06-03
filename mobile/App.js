@@ -467,6 +467,9 @@ import AdminPromoCreateScreen from './screens/admin/AdminPromoCreateScreen';
 import TaxiReceiptScreen from './screens/taxi/TaxiReceiptScreen';
 import GroceryOrderSuccessScreen from './screens/grocery/GroceryOrderSuccessScreen';
 import DriverWithdrawScreen from './screens/driver/DriverWithdrawScreen';
+import MerchantPayoutsScreen from './screens/merchant/MerchantPayoutsScreen';
+import EmergencyContactScreen from './screens/shared/EmergencyContactScreen';
+import AdminLiveStatsScreen from './screens/admin/AdminLiveStatsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -687,6 +690,9 @@ function MainStack() {
       <Stack.Screen name="TaxiReceipt" component={TaxiReceiptScreen} options={{ headerShown: false }} />
       <Stack.Screen name="GroceryOrderSuccess" component={GroceryOrderSuccessScreen} options={{ headerShown: false, gestureEnabled: false }} />
       <Stack.Screen name="DriverWithdraw" component={DriverWithdrawScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="MerchantPayouts" component={MerchantPayoutsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="EmergencyContact" component={EmergencyContactScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminLiveStats" component={AdminLiveStatsScreen} options={{ headerShown: false }} />
 
       {/* Chat */}
       <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
