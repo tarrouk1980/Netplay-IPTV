@@ -102,6 +102,13 @@ export default function ReferralScreen({ navigation }) {
           <TouchableOpacity style={styles.shareBtn} onPress={handleShare} activeOpacity={0.85} disabled={!code}>
             <Text style={styles.shareBtnText}>📤 Partager mon code</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.shareBtn, { backgroundColor: 'transparent', borderWidth: 1, borderColor: '#F5A623', marginTop: 8 }]}
+            onPress={() => navigation.navigate('ReferralLeaderboard')}
+            activeOpacity={0.85}
+          >
+            <Text style={[styles.shareBtnText, { color: '#F5A623' }]}>🏆 Voir le classement</Text>
+          </TouchableOpacity>
           <Text style={styles.shareHint}>Partagez EASYWAY et faites découvrir l'app à vos proches !</Text>
         </View>
 

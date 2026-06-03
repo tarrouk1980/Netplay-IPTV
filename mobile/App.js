@@ -171,6 +171,11 @@ import EasyLadyScreen from './screens/taxi/EasyLadyScreen';
 import DriverNavigationScreen from './screens/taxi/DriverNavigationScreen';
 import GroceryStoreMapScreen from './screens/grocery/GroceryStoreMapScreen';
 
+// Batch 71
+import EasyAccessScreen from './screens/taxi/EasyAccessScreen';
+import SOSPrePaymentScreen from './screens/sos/SOSPrePaymentScreen';
+import ReferralLeaderboardScreen from './screens/shared/ReferralLeaderboardScreen';
+
 // Rating
 import RatingScreen from './screens/taxi/RatingScreen';
 
@@ -613,6 +618,9 @@ function MainStack() {
       <Stack.Screen name="EasyLady" component={EasyLadyScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DriverNavigation" component={DriverNavigationScreen} options={{ headerShown: false }} />
       <Stack.Screen name="GroceryStoreMap" component={GroceryStoreMapScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="EasyAccess" component={EasyAccessScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="SOSPrePayment" component={SOSPrePaymentScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ReferralLeaderboard" component={ReferralLeaderboardScreen} options={{ headerShown: false }} />
       <Stack.Screen name="EasyPackage" component={EasyPackageScreen} options={{ headerShown: false }} />
       <Stack.Screen name="PaymentMethods" component={PaymentMethodsScreen} options={{ headerShown: false }} />
 
