@@ -478,6 +478,9 @@ import WalletTransferScreen from './screens/wallet/WalletTransferScreen';
 import DriverNavigationLiveScreen from './screens/driver/DriverNavigationLiveScreen';
 import SOSDepanneurMapScreen from './screens/sos/SOSDepanneurMapScreen';
 import AdminDriverDetailScreen from './screens/admin/AdminDriverDetailScreen';
+import MerchantSettingsScreen from './screens/merchant/MerchantSettingsScreen';
+import GroceryWishlistScreen from './screens/grocery/GroceryWishlistScreen';
+import AdminRefundDetailScreen from './screens/admin/AdminRefundDetailScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -709,6 +712,9 @@ function MainStack() {
       <Stack.Screen name="DriverNavigationLive" component={DriverNavigationLiveScreen} options={{ headerShown: false }} />
       <Stack.Screen name="SOSDepanneurMap" component={SOSDepanneurMapScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminDriverDetail" component={AdminDriverDetailScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="MerchantSettings" component={MerchantSettingsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="GroceryWishlist" component={GroceryWishlistScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminRefundDetail" component={AdminRefundDetailScreen} options={{ headerShown: false }} />
 
       {/* Chat */}
       <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
