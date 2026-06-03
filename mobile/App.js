@@ -275,6 +275,9 @@ import ClientOrdersAllScreen from './screens/profile/ClientOrdersAllScreen';
 import AdminCouponListScreen from './screens/admin/AdminCouponListScreen';
 import DeliveryRatingScreen from './screens/delivery/DeliveryRatingScreen';
 
+// Batch 55
+import TaxiMapScreen from './screens/taxi/TaxiMapScreen';
+
 // Batch 54
 import ProfileSettingsScreen from './screens/profile/ProfileSettingsScreen';
 
