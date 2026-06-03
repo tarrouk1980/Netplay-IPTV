@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,223 +6,356 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  ActivityIndicator,
   Alert,
-  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import api from '../../services/api';
 
 const COLORS = {
-  bg: '#0A0A0F',
+  background: '#0A0A0F',
   surface: '#1C1C28',
-  surfaceAlt: '#16161F',
-  border: '#2A2A3A',
+  primary: '#F5A623',
   text: '#FFFFFF',
-  muted: '#8A8A9A',
-  green: '#27AE60',
-  accent: '#D32F2F',
-  orange: '#F57C00',
-  blue: '#1565C0',
+  muted: '#8E8E9A',
+  border: '#2C2C3A',
 };
 
-const AMOUNTS = [5, 10, 20, 50, 100];
+const MOCK_BALANCE = 127.50;
 
-const METHODS = [
-  { key: 'KONNECT', label: 'Konnect', icon: '💳', color: '#1565C0', sublabel: 'Carte bancaire' },
-  { key: 'FLOUCI', label: 'Flouci', icon: '📱', color: '#9C27B0', sublabel: 'Paiement mobile' },
-  { key: 'D17', label: 'D17', icon: '🏦', color: '#00838F', sublabel: 'Compte D17' },
-  { key: 'CASH', label: 'Agence', icon: '🏪', color: COLORS.orange, sublabel: 'Dépôt en espèces' },
+const QUICK_AMOUNTS = [10, 20, 50, 100, 200, 500];
+
+const PAYMENT_METHODS = [
+  { id: 'card', emoji: '💳', label: 'Carte bancaire', subtitle: '' },
+  { id: 'mobile', emoji: '📱', label: 'Paiement mobile', subtitle: 'D17, Paymee' },
+  { id: 'bank', emoji: '🏦', label: 'Virement bancaire', subtitle: '' },
 ];
 
 export default function WalletTopUpScreen({ navigation }) {
-  const [balance, setBalance] = useState(null);
-  const [amount, setAmount] = useState('');
-  const [method, setMethod] = useState('KONNECT');
-  const [loading, setLoading] = useState(true);
-  const [processing, setProcessing] = useState(false);
+  const [selectedAmount, setSelectedAmount] = useState(null);
+  const [customAmount, setCustomAmount] = useState('');
+  const [selectedMethod, setSelectedMethod] = useState('card');
 
-  useEffect(() => {
-    api.get('/api/wallet/balance').then((res) => {
-      setBalance(res.data.balance ?? 0);
-    }).catch(() => setBalance(0)).finally(() => setLoading(false));
-  }, []);
-
-  const handleTopUp = async () => {
-    const num = parseFloat(amount);
-    if (isNaN(num) || num < 1) { Alert.alert('Montant invalide', 'Le montant minimum est 1 TND.'); return; }
-    if (num > 500) { Alert.alert('Montant trop élevé', 'Maximum 500 TND par rechargement.'); return; }
-
-    setProcessing(true);
-    try {
-      if (method === 'KONNECT' || method === 'FLOUCI') {
-        const res = await api.post(`/api/payments/${method.toLowerCase()}/initiate`, { amount: num, type: 'WALLET_TOPUP' });
-        navigation.navigate('KonnectPayment', {
-          paymentUrl: res.data.payUrl || res.data.redirectUrl,
-          amount: num,
-          onSuccess: () => navigation.replace('Wallet'),
-        });
-      } else {
-        const res = await api.post('/api/wallet/topup', { amount: num, method });
-        if (method === 'CASH') {
-          Alert.alert('Demande enregistrée ✅', `Votre demande de ${num} TND a été soumise. Rendez-vous en agence avec le code : ${res.data.code || 'TOPUP-XXXX'}`);
-        } else {
-          Alert.alert('Succès ✅', `${num} TND ajoutés à votre wallet.`);
-          navigation.goBack();
-        }
-      }
-    } catch (e) {
-      Alert.alert('Erreur', e?.response?.data?.error || 'Impossible d\'effectuer le rechargement.');
-    } finally {
-      setProcessing(false);
+  const getAmount = () => {
+    if (customAmount !== '') {
+      const parsed = parseFloat(customAmount);
+      return isNaN(parsed) ? 0 : parsed;
     }
+    return selectedAmount || 0;
   };
 
-  if (loading) return <View style={s.centered}><ActivityIndicator color={COLORS.green} size="large" /></View>;
+  const amount = getAmount();
+  const fees = 0.00;
+  const total = amount + fees;
 
-  const selectedMethod = METHODS.find((m) => m.key === method);
+  const handleRecharge = () => {
+    if (total <= 0) {
+      Alert.alert("Erreur", "Veuillez sélectionner ou saisir un montant.");
+      return;
+    }
+    Alert.alert("Succès", `Recharge de ${total.toFixed(2)} TND initiée avec succès !`);
+  };
 
   return (
-    <SafeAreaView style={s.root}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
-
-      <View style={s.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={s.back}>‹</Text>
+    <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
-        <Text style={s.title}>💰 Recharger le wallet</Text>
+        <Text style={styles.headerTitle}>Recharger mon portefeuille</Text>
+        <View style={{ width: 36 }} />
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 60, paddingHorizontal: 16 }}>
-
-        {/* Balance card */}
-        <View style={s.balanceCard}>
-          <Text style={s.balanceLabel}>Solde actuel</Text>
-          <Text style={s.balanceValue}>{parseFloat(balance).toFixed(3)} TND</Text>
-          {amount && parseFloat(amount) > 0 && !isNaN(parseFloat(amount)) && (
-            <Text style={s.newBalance}>→ Après rechargement : {(parseFloat(balance) + parseFloat(amount)).toFixed(3)} TND</Text>
-          )}
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Balance */}
+        <View style={styles.balanceBox}>
+          <Text style={styles.balanceEmoji}>👛</Text>
+          <Text style={styles.balanceLabel}>Solde actuel</Text>
+          <Text style={styles.balanceAmount}>{MOCK_BALANCE.toFixed(2)} TND</Text>
         </View>
 
-        {/* Quick amounts */}
-        <Text style={s.sectionLabel}>Montant rapide</Text>
-        <View style={s.amountsRow}>
-          {AMOUNTS.map((a) => (
+        {/* Quick Amounts */}
+        <Text style={styles.sectionTitle}>Montant rapide</Text>
+        <View style={styles.amountsGrid}>
+          {QUICK_AMOUNTS.map(amt => (
             <TouchableOpacity
-              key={a}
-              style={[s.amountBtn, amount === a.toString() && s.amountBtnActive]}
-              onPress={() => setAmount(a.toString())}
+              key={amt}
+              style={[
+                styles.amountBtn,
+                selectedAmount === amt && customAmount === '' && styles.amountBtnActive,
+              ]}
+              onPress={() => {
+                setSelectedAmount(amt);
+                setCustomAmount('');
+              }}
             >
-              <Text style={[s.amountTxt, amount === a.toString() && s.amountTxtActive]}>{a} TND</Text>
+              <Text style={[
+                styles.amountBtnText,
+                selectedAmount === amt && customAmount === '' && styles.amountBtnTextActive,
+              ]}>
+                {amt} TND
+              </Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* Custom amount */}
-        <Text style={s.sectionLabel}>Montant personnalisé</Text>
-        <View style={s.inputRow}>
+        {/* Custom Amount */}
+        <Text style={styles.sectionTitle}>Montant personnalisé</Text>
+        <View style={styles.inputContainer}>
           <TextInput
-            style={s.amountInput}
-            value={amount}
-            onChangeText={setAmount}
-            keyboardType="decimal-pad"
-            placeholder="0.000"
+            style={styles.input}
+            placeholder="Entrer un montant..."
             placeholderTextColor={COLORS.muted}
+            value={customAmount}
+            onChangeText={(val) => {
+              setCustomAmount(val);
+              setSelectedAmount(null);
+            }}
+            keyboardType="numeric"
           />
-          <Text style={s.tndLabel}>TND</Text>
+          <Text style={styles.inputSuffix}>TND</Text>
         </View>
 
-        {/* Payment method */}
-        <Text style={s.sectionLabel}>Mode de paiement</Text>
-        <View style={s.methodsGrid}>
-          {METHODS.map((m) => (
-            <TouchableOpacity
-              key={m.key}
-              style={[s.methodCard, method === m.key && { borderColor: m.color, backgroundColor: m.color + '11' }]}
-              onPress={() => setMethod(m.key)}
-            >
-              <Text style={{ fontSize: 26, marginBottom: 6 }}>{m.icon}</Text>
-              <Text style={[s.methodLabel, method === m.key && { color: m.color }]}>{m.label}</Text>
-              <Text style={s.methodSub}>{m.sublabel}</Text>
-              {method === m.key && (
-                <View style={[s.methodCheck, { backgroundColor: m.color }]}>
-                  <Text style={{ color: '#FFF', fontSize: 10 }}>✓</Text>
-                </View>
+        {/* Payment Method */}
+        <Text style={styles.sectionTitle}>Mode de paiement</Text>
+        {PAYMENT_METHODS.map(method => (
+          <TouchableOpacity
+            key={method.id}
+            style={[
+              styles.methodCard,
+              selectedMethod === method.id && styles.methodCardActive,
+            ]}
+            onPress={() => setSelectedMethod(method.id)}
+          >
+            <Text style={styles.methodEmoji}>{method.emoji}</Text>
+            <View style={styles.methodInfo}>
+              <Text style={styles.methodLabel}>{method.label}</Text>
+              {method.subtitle !== '' && (
+                <Text style={styles.methodSubtitle}>{method.subtitle}</Text>
               )}
-            </TouchableOpacity>
-          ))}
+            </View>
+            {selectedMethod === method.id && (
+              <Text style={styles.checkmark}>✓</Text>
+            )}
+          </TouchableOpacity>
+        ))}
+
+        {/* Summary */}
+        <View style={styles.summaryBox}>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Montant</Text>
+            <Text style={styles.summaryValue}>{amount.toFixed(2)} TND</Text>
+          </View>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Frais</Text>
+            <Text style={styles.summaryValue}>{fees.toFixed(2)} TND</Text>
+          </View>
+          <View style={[styles.summaryRow, styles.summaryTotal]}>
+            <Text style={styles.summaryTotalLabel}>Total</Text>
+            <Text style={styles.summaryTotalValue}>{total.toFixed(2)} TND</Text>
+          </View>
         </View>
 
-        {/* Info box */}
-        <View style={s.infoBox}>
-          <Text style={s.infoTxt}>
-            {method === 'CASH'
-              ? '🏪 Rendez-vous dans une agence EasyWay partenaire avec le code généré.'
-              : method === 'D17'
-              ? '🏦 Le montant sera débité de votre compte D17. Assurez-vous d\'avoir un solde suffisant.'
-              : '🔒 Paiement sécurisé. Vos données bancaires ne sont jamais stockées.'}
-          </Text>
-        </View>
-
-      </ScrollView>
-
-      {/* CTA */}
-      <View style={s.ctaContainer}>
-        <TouchableOpacity
-          style={[s.ctaBtn, { backgroundColor: selectedMethod?.color || COLORS.green }, (!amount || parseFloat(amount) < 1 || processing) && s.ctaDisabled]}
-          onPress={handleTopUp}
-          disabled={!amount || parseFloat(amount) < 1 || processing || isNaN(parseFloat(amount))}
-        >
-          {processing ? (
-            <ActivityIndicator color="#FFF" size="small" />
-          ) : (
-            <Text style={s.ctaTxt}>
-              {method === 'CASH' ? '📋 Générer le code' : `${selectedMethod?.icon || ''} Recharger ${amount ? parseFloat(amount).toFixed(3) : '0.000'} TND`}
-            </Text>
-          )}
+        {/* Recharge Button */}
+        <TouchableOpacity style={styles.rechargeBtn} onPress={handleRecharge}>
+          <Text style={styles.rechargeBtnText}>Recharger</Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
-const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.bg },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.bg },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: COLORS.border, gap: 12 },
-  back: { color: COLORS.text, fontSize: 28, fontWeight: '300' },
-  title: { color: COLORS.text, fontSize: 18, fontWeight: '700' },
-  balanceCard: { backgroundColor: COLORS.surface, borderRadius: 16, padding: 20, marginTop: 20, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', marginBottom: 20 },
-  balanceLabel: { color: COLORS.muted, fontSize: 13, marginBottom: 4 },
-  balanceValue: { color: COLORS.green, fontSize: 32, fontWeight: '900' },
-  newBalance: { color: COLORS.muted, fontSize: 13, marginTop: 8 },
-  sectionLabel: { color: COLORS.muted, fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 },
-  amountsRow: { flexDirection: 'row', gap: 8, marginBottom: 20, flexWrap: 'wrap' },
-  amountBtn: { flex: 1, minWidth: '17%', backgroundColor: COLORS.surface, borderRadius: 10, paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
-  amountBtnActive: { borderColor: COLORS.green, backgroundColor: COLORS.green + '22' },
-  amountTxt: { color: COLORS.muted, fontSize: 13, fontWeight: '600' },
-  amountTxtActive: { color: COLORS.green },
-  inputRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.surface, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, paddingHorizontal: 16, marginBottom: 20 },
-  amountInput: { flex: 1, color: COLORS.text, fontSize: 22, fontWeight: '700', paddingVertical: 14 },
-  tndLabel: { color: COLORS.muted, fontSize: 16, fontWeight: '600' },
-  methodsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 16 },
-  methodCard: {
-    width: '47%',
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  backBtn: {
+    padding: 4,
+    width: 36,
+  },
+  backIcon: {
+    color: COLORS.text,
+    fontSize: 22,
+  },
+  headerTitle: {
+    flex: 1,
+    color: COLORS.text,
+    fontSize: 17,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  content: {
+    padding: 16,
+    paddingBottom: 40,
+  },
+  balanceBox: {
     backgroundColor: COLORS.surface,
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1.5,
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  balanceEmoji: {
+    fontSize: 40,
+    marginBottom: 8,
+  },
+  balanceLabel: {
+    color: COLORS.muted,
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  balanceAmount: {
+    color: COLORS.primary,
+    fontSize: 32,
+    fontWeight: '800',
+  },
+  sectionTitle: {
+    color: COLORS.text,
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 12,
+    marginTop: 4,
+  },
+  amountsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 24,
+  },
+  amountBtn: {
+    width: '30%',
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
     borderColor: COLORS.border,
     alignItems: 'center',
-    position: 'relative',
   },
-  methodLabel: { color: COLORS.text, fontSize: 14, fontWeight: '700' },
-  methodSub: { color: COLORS.muted, fontSize: 10, marginTop: 2 },
-  methodCheck: { position: 'absolute', top: 8, right: 8, width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
-  infoBox: { backgroundColor: COLORS.surfaceAlt, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: COLORS.border },
-  infoTxt: { color: COLORS.muted, fontSize: 12, lineHeight: 18 },
-  ctaContainer: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 16, backgroundColor: COLORS.bg, borderTopWidth: 1, borderTopColor: COLORS.border },
-  ctaBtn: { borderRadius: 14, padding: 16, alignItems: 'center' },
-  ctaDisabled: { opacity: 0.4 },
-  ctaTxt: { color: '#FFF', fontSize: 16, fontWeight: '700' },
+  amountBtnActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: '#2A1F00',
+  },
+  amountBtnText: {
+    color: COLORS.muted,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  amountBtnTextActive: {
+    color: COLORS.primary,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingHorizontal: 14,
+    marginBottom: 24,
+  },
+  input: {
+    flex: 1,
+    color: COLORS.text,
+    fontSize: 16,
+    paddingVertical: 14,
+  },
+  inputSuffix: {
+    color: COLORS.muted,
+    fontSize: 14,
+    marginLeft: 8,
+  },
+  methodCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  methodCardActive: {
+    borderColor: COLORS.primary,
+  },
+  methodEmoji: {
+    fontSize: 28,
+    marginRight: 14,
+  },
+  methodInfo: {
+    flex: 1,
+  },
+  methodLabel: {
+    color: COLORS.text,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  methodSubtitle: {
+    color: COLORS.muted,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  checkmark: {
+    color: COLORS.primary,
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  summaryBox: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 8,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  summaryLabel: {
+    color: COLORS.muted,
+    fontSize: 14,
+  },
+  summaryValue: {
+    color: COLORS.text,
+    fontSize: 14,
+  },
+  summaryTotal: {
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    paddingTop: 10,
+    marginBottom: 0,
+  },
+  summaryTotalLabel: {
+    color: COLORS.text,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  summaryTotalValue: {
+    color: COLORS.primary,
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  rechargeBtn: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+  },
+  rechargeBtnText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: '700',
+  },
 });
