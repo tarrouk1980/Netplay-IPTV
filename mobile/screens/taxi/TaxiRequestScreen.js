@@ -17,7 +17,7 @@ import * as Location from 'expo-location';
 import useTaxiStore from '../../store/taxiStore';
 import FareEstimateCard from '../../components/FareEstimateCard';
 import PriceEstimate from '../../components/PriceEstimate';
-import StaticMap from '../../components/StaticMap';
+import MapboxWebView from '../../components/MapboxWebView';
 import PromoCodeWidget from '../payment/PromoCodeWidget';
 import ServiceIcon from '../../components/ServiceIcon';
 import api from '../../services/api';
@@ -263,9 +263,24 @@ export default function TaxiRequestScreen({ route, navigation }) {
       </View>
 
       <ScrollView style={styles.scroll} keyboardShouldPersistTaps="handled">
-        {/* Static map */}
-        <View style={styles.mapContainer}>
-          <StaticMap lat={origin?.lat} lng={origin?.lng} width={340} height={180} />
+        {/* Interactive map */}
+        <View
+          style={styles.mapContainer}
+          onStartShouldSetResponder={() => true}
+          onMoveShouldSetResponder={() => true}
+        >
+          <MapboxWebView
+            style={{ height: 220 }}
+            centerCoordinate={origin ? [origin.lng, origin.lat] : [10.1815, 36.8065]}
+            zoom={13}
+            markers={origin ? [{ coordinates: [origin.lng, origin.lat], color: '#F5A623', label: '📍' }] : []}
+            heatmapZones={demandZones.map((z, i) => ({
+              lat: origin ? origin.lat + (i - 1) * 0.025 : 36.8065 + (i - 1) * 0.025,
+              lng: origin ? origin.lng + (i - 1) * 0.03 : 10.1815 + (i - 1) * 0.03,
+              color: z.color,
+              label: z.label,
+            }))}
+          />
         </View>
 
         {/* Origin */}

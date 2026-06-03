@@ -155,6 +155,13 @@ import SilentSOSScreen from './screens/emergency/SilentSOSScreen';
 
 // Business
 import EasyBusinessScreen from './screens/business/EasyBusinessScreen';
+import EasyCarScreen from './screens/business/EasyCarScreen';
+
+// Package
+import EasyPackageScreen from './screens/delivery/EasyPackageScreen';
+
+// Payment Methods
+import PaymentMethodsScreen from './screens/payment/PaymentMethodsScreen';
 
 // Chat
 import ChatScreen from './screens/chat/ChatScreen';
@@ -579,6 +586,7 @@ function MainStack() {
 
       {/* Subscriptions */}
       <Stack.Screen name="BuyPass" component={BuyPassScreen} options={{ title: 'Passer Premium' }} />
+      <Stack.Screen name="PassScreen" component={EasyPassScreen} options={{ headerShown: false }} />
 
       {/* Back Home Ride & Payment & Wallet */}
       <Stack.Screen name="BackHomeRide" component={BackHomeRideScreen} options={{ headerShown: false }} />
@@ -596,6 +604,9 @@ function MainStack() {
 
       {/* Business */}
       <Stack.Screen name="EasyBusiness" component={EasyBusinessScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="EasyCar" component={EasyCarScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="EasyPackage" component={EasyPackageScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="PaymentMethods" component={PaymentMethodsScreen} options={{ headerShown: false }} />
 
       {/* Chat */}
       <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />

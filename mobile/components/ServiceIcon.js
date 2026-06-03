@@ -652,6 +652,40 @@ case 'DELIV_APIED':
     </Svg>
   );
 
+    case 'EASYCAR':
+      return (
+        <Svg width={s} height={s} viewBox="0 0 60 60">
+          <Rect x="4" y="4" width="52" height="52" rx="14" fill="#0D1F3C" />
+          <Path d="M10 36 L15 24 Q16 22 18 22 L42 22 Q44 22 45 24 L50 36 L50 40 Q50 42 48 42 L12 42 Q10 42 10 40 Z" fill="#1565C0" />
+          <Path d="M15 25 L18 22 L42 22 L45 25 L44 30 L16 30 Z" fill="#1976D2" />
+          <Circle cx="19" cy="42" r="5" fill="#2A2A3A" stroke="#1565C0" strokeWidth="2" />
+          <Circle cx="41" cy="42" r="5" fill="#2A2A3A" stroke="#1565C0" strokeWidth="2" />
+          <Rect x="22" y="38" width="16" height="4" rx="2" fill="#0D1F3C" />
+        </Svg>
+      );
+
+    case 'EASYPACKAGE':
+      return (
+        <Svg width={s} height={s} viewBox="0 0 60 60">
+          <Rect x="4" y="4" width="52" height="52" rx="14" fill="#2D1B0E" />
+          <Rect x="14" y="20" width="32" height="28" rx="4" fill="#6D4C41" />
+          <Rect x="14" y="20" width="32" height="10" rx="4" fill="#8D6E63" />
+          <Path d="M30 20 L30 48" stroke="#F5A623" strokeWidth="2.5" />
+          <Path d="M14 30 L46 30" stroke="#F5A623" strokeWidth="1.5" />
+          <Path d="M22 17 L30 20 L38 17 L30 14 Z" fill="#F5A623" />
+        </Svg>
+      );
+
+    case 'BACKHOME':
+      return (
+        <Svg width={s} height={s} viewBox="0 0 60 60">
+          <Rect x="4" y="4" width="52" height="52" rx="14" fill="#1A1A0F" />
+          <Path d="M30 12 L50 28 L50 48 L36 48 L36 38 L24 38 L24 48 L10 48 L10 28 Z" fill="#F5A623" />
+          <Rect x="24" y="38" width="12" height="10" rx="2" fill="#E69520" />
+          <Path d="M14 28 L30 16 L46 28" stroke="#F5A623" strokeWidth="3" fill="none" strokeLinecap="round" />
+        </Svg>
+      );
+
     default:
       return (
         <Svg width={s} height={s} viewBox="0 0 60 60">
