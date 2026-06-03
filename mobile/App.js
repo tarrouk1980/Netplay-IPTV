@@ -475,6 +475,9 @@ import ReferralDashboardScreen from './screens/loyalty/ReferralDashboardScreen';
 import AdminSupportTicketsDetailScreen from './screens/admin/AdminSupportTicketsDetailScreen';
 import NotificationCenterV2Screen from './screens/notifications/NotificationCenterV2Screen';
 import WalletTransferScreen from './screens/wallet/WalletTransferScreen';
+import DriverNavigationLiveScreen from './screens/driver/DriverNavigationLiveScreen';
+import SOSDepanneurMapScreen from './screens/sos/SOSDepanneurMapScreen';
+import AdminDriverDetailScreen from './screens/admin/AdminDriverDetailScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -703,6 +706,9 @@ function MainStack() {
       <Stack.Screen name="AdminSupportTicketsDetail" component={AdminSupportTicketsDetailScreen} options={{ headerShown: false }} />
       <Stack.Screen name="NotificationCenterV2" component={NotificationCenterV2Screen} options={{ headerShown: false }} />
       <Stack.Screen name="WalletTransfer" component={WalletTransferScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="DriverNavigationLive" component={DriverNavigationLiveScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="SOSDepanneurMap" component={SOSDepanneurMapScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminDriverDetail" component={AdminDriverDetailScreen} options={{ headerShown: false }} />
 
       {/* Chat */}
       <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
