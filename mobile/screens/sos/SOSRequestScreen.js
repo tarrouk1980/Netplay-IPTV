@@ -1,826 +1,199 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  TextInput,
-  ScrollView,
-  ActivityIndicator,
-  Alert,
-  StatusBar,
-  Modal,
-  Switch,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  StatusBar, TextInput, ActivityIndicator, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
-import useSosStore from '../../store/sosStore';
-import StaticMap from '../../components/StaticMap';
+import api from '../../services/api';
 
 const COLORS = {
-  background: '#0A0A0F',
-  surface: '#1C1C28',
-  accent: '#D32F2F',
-  text: '#FFFFFF',
-  textMuted: '#8E8E9A',
-  border: '#2C2C3E',
-  green: '#27AE60',
+  bg: '#0A0A0F', surface: '#1C1C28',
+  accent: '#F5A623', white: '#FFFFFF', muted: '#8A8A9A',
+  border: '#2A2A3A', green: '#27AE60', red: '#D32F2F', orange: '#E67E22',
 };
 
-const STEPS = ['État du véhicule', 'Infos véhicule', 'Confirmation'];
-
-const VEHICLE_CHECKS = [
-  { key: 'starts', label: 'Le véhicule démarre', icon: '🔑' },
-  { key: 'accident', label: 'Accident survenu', icon: '💥' },
-  { key: 'battery', label: 'Batterie à plat', icon: '🔋' },
-  { key: 'fuel', label: 'Manque de carburant', icon: '⛽' },
-  { key: 'flatTire', label: 'Pneu crevé', icon: '🔴' },
-  { key: 'keysLocked', label: 'Clés enfermées', icon: '🔒' },
+const SOS_TYPES = [
+  { key: 'flat_tire',    label: 'Crevaison',        emoji: '🔧', price: 30 },
+  { key: 'battery',      label: 'Batterie déchargée', emoji: '🔋', price: 25 },
+  { key: 'engine',       label: 'Panne moteur',      emoji: '⚙️', price: 60 },
+  { key: 'fuel',         label: 'Panne de carburant', emoji: '⛽', price: 20 },
+  { key: 'towing',       label: 'Remorquage',        emoji: '🚛', price: 90 },
+  { key: 'lockout',      label: 'Clés enfermées',    emoji: '🔑', price: 35 },
+  { key: 'accident',     label: 'Accident léger',    emoji: '🚨', price: 50 },
+  { key: 'other',        label: 'Autre panne',       emoji: '❓', price: 40 },
 ];
 
-const BRANDS_MODELS = {
-  'Volkswagen': ['Golf','Polo','Passat','Tiguan','T-Roc','Touareg','Caddy','Transporter','Autre'],
-  'Renault': ['Clio','Megane','Scenic','Kadjar','Captur','Duster','Symbol','Logan','Sandero','Kangoo','Autre'],
-  'Peugeot': ['208','308','508','2008','3008','5008','Partner','Expert','Autre'],
-  'Citroën': ['C3','C4','C5','Berlingo','Jumpy','Jumper','C-Elysée','Autre'],
-  'Ford': ['Fiesta','Focus','Mondeo','Puma','Kuga','Explorer','Transit','Ranger','Autre'],
-  'Toyota': ['Yaris','Corolla','Camry','RAV4','Hilux','Land Cruiser','Fortuner','Innova','Prius','Autre'],
-  'Hyundai': ['i10','i20','i30','Tucson','Santa Fe','Elantra','Accent','Creta','Autre'],
-  'Kia': ['Picanto','Rio','Sportage','Sorento','Stinger','Seltos','Carnival','Autre'],
-  'Seat': ['Ibiza','Leon','Arona','Ateca','Tarraco','Alhambra','Autre'],
-  'Skoda': ['Fabia','Octavia','Superb','Karoq','Kodiaq','Autre'],
-  'BMW': ['Série 1','Série 3','Série 5','Série 7','X1','X3','X5','X7','Autre'],
-  'Mercedes': ['Classe A','Classe C','Classe E','Classe S','GLA','GLC','GLE','Sprinter','Autre'],
-  'Audi': ['A1','A3','A4','A6','Q2','Q3','Q5','Q7','Autre'],
-  'Fiat': ['500','Punto','Tipo','Panda','Bravo','Doblo','Ducato','Autre'],
-  'Dacia': ['Sandero','Logan','Duster','Spring','Lodgy','Dokker','Autre'],
-  'Autre': ['Autre'],
-};
-
-const BRANDS = Object.keys(BRANDS_MODELS);
-const YEARS = Array.from({ length: 26 }, (_, i) => String(2025 - i));
-const CAR_COLORS = ['Blanc','Noir','Gris','Argent','Rouge','Bleu','Vert','Beige','Marron','Jaune','Orange','Autre'];
-
-function PickerModal({ visible, title, options, onSelect, onClose }) {
-  return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <TouchableOpacity style={modalStyles.overlay} activeOpacity={1} onPress={onClose}>
-        <View style={modalStyles.sheet}>
-          <View style={modalStyles.handle} />
-          <Text style={modalStyles.title}>{title}</Text>
-          <ScrollView showsVerticalScrollIndicator={false} style={modalStyles.scroll}>
-            {options.map((opt) => (
-              <TouchableOpacity key={opt} style={modalStyles.option} onPress={() => { onSelect(opt); onClose(); }}>
-                <Text style={modalStyles.optionText}>{opt}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      </TouchableOpacity>
-    </Modal>
-  );
-}
-
-const modalStyles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
-  sheet: { backgroundColor: '#1C1C28', borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: 32, maxHeight: '70%' },
-  handle: { width: 40, height: 4, backgroundColor: '#444', borderRadius: 2, alignSelf: 'center', marginTop: 12, marginBottom: 8 },
-  title: { fontSize: 14, color: '#8E8E9A', textTransform: 'uppercase', letterSpacing: 1, fontWeight: '700', paddingHorizontal: 20, paddingBottom: 8 },
-  scroll: { paddingHorizontal: 20 },
-  option: { paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#2C2C3E' },
-  optionText: { fontSize: 16, color: '#FFFFFF', fontWeight: '500' },
-});
-
-export default function SOSRequestScreen({ route, navigation }) {
-  const { mode, contract, breakdownType: preBreakdownType } = route.params || {};
-  const { requestSOS, isSearching } = useSosStore();
-
-  // Si on vient du pré-diagnostic, sauter l'étape "état du véhicule"
-  const [step, setStep] = useState(preBreakdownType ? 1 : 0);
-  const [vehicleState, setVehicleState] = useState({
-    starts: false,
-    accident: false,
-    battery: false,
-    fuel: false,
-    flatTire: false,
-    keysLocked: false,
-  });
-  const [vehicleInfo, setVehicleInfo] = useState({
-    brand: '',
-    model: '',
-    year: '',
-    licensePlate: '',
-    color: '',
-  });
-  const [location, setLocation] = useState(null);
-  const [locating, setLocating] = useState(false);
-  const [pickerModal, setPickerModal] = useState({ visible: false, field: '', title: '', options: [] });
-  const [scheduleModal, setScheduleModal] = useState(false);
-  const [calMonth, setCalMonth] = useState(new Date());
-  const [selectedDay, setSelectedDay] = useState(null);
-  const [selectedHour, setSelectedHour] = useState(new Date().getHours() + 2 > 23 ? 9 : new Date().getHours() + 2);
-  const [selectedMin, setSelectedMin] = useState(0);
+export default function SOSRequestScreen({ navigation }) {
+  const [sosType, setSosType] = useState('');
+  const [address, setAddress] = useState('');
+  const [notes, setNotes] = useState('');
+  const [locating, setLocating] = useState(true);
+  const [coords, setCoords] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (step === 2) {
-      fetchLocation();
-    }
-  }, [step]);
-
-  const fetchLocation = async () => {
-    setLocating(true);
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission refusée', 'La localisation est requise pour le SOS.');
-        return;
-      }
-      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-      setLocation({ lat: loc.coords.latitude, lng: loc.coords.longitude });
-    } catch (err) {
-      Alert.alert('Erreur GPS', 'Impossible d\'obtenir la position.');
-    } finally {
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+          const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+          setCoords({ lat: loc.coords.latitude, lng: loc.coords.longitude });
+          const [geo] = await Location.reverseGeocodeAsync({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
+          if (geo) setAddress(`${geo.street || ''} ${geo.name || ''}, ${geo.city || ''}`.trim());
+        }
+      } catch {}
       setLocating(false);
-    }
-  };
+    })();
+  }, []);
 
-  const toggleCheck = (key) => {
-    setVehicleState((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
+  const selectedType = SOS_TYPES.find((t) => t.key === sosType);
 
-  const openPicker = (field, title, options) => {
-    setPickerModal({ visible: true, field, title, options });
-  };
-
-  const closePicker = () => {
-    setPickerModal((p) => ({ ...p, visible: false }));
-  };
-
-  const handlePickerSelect = (value) => {
-    const field = pickerModal.field;
-    setVehicleInfo((prev) => {
-      const next = { ...prev, [field]: value };
-      if (field === 'brand') next.model = '';
-      return next;
-    });
-  };
-
-  const handleNext = () => {
-    if (step === 1) {
-      if (!vehicleInfo.brand.trim() || !vehicleInfo.licensePlate.trim()) {
-        Alert.alert('Champs requis', 'Veuillez renseigner la marque et la plaque d\'immatriculation.');
-        return;
-      }
-    }
-    setStep((s) => s + 1);
-  };
-
-  const handleBack = () => {
-    if (step === 0) navigation.goBack();
-    else setStep((s) => s - 1);
-  };
-
-  const handleSubmit = async (submitMode) => {
-    if (!location) {
-      Alert.alert('Position requise', 'Impossible d\'envoyer le SOS sans position GPS.');
-      return;
-    }
-
-    if (submitMode === 'SCHEDULED') {
-      const now = new Date();
-      setCalMonth(new Date(now.getFullYear(), now.getMonth(), 1));
-      setSelectedDay(now);
-      setSelectedHour(now.getHours() + 2 > 23 ? 9 : now.getHours() + 2);
-      setSelectedMin(0);
-      setScheduleModal(true);
-      return;
-    }
-
-    await sendSOS(submitMode);
-  };
-
-  const sendSOS = async (submitMode, slot) => {
+  const handleSubmit = async () => {
+    if (!sosType) { Alert.alert('Erreur', 'Choisissez le type de panne'); return; }
+    if (!address.trim()) { Alert.alert('Erreur', 'Renseignez votre position'); return; }
+    setSubmitting(true);
     try {
-      const data = {
-        lat: location.lat,
-        lng: location.lng,
-        vehicleState,
-        vehicleInfo: {
-          ...vehicleInfo,
-          year: vehicleInfo.year ? parseInt(vehicleInfo.year) : null,
-        },
-        mode,
-        submitMode,
-        slot: slot || null,
-        insuranceContractId: contract?.id || undefined,
-      };
-      const result = await requestSOS(data);
-      navigation.replace('SOSTracking', { orderId: result.order.id });
-    } catch (err) {
-      Alert.alert('Erreur', err?.response?.data?.error || 'Impossible d\'envoyer le SOS.');
+      const res = await api.post('/api/sos/request', {
+        type: sosType, address: address.trim(), notes, coords,
+        estimatedPrice: selectedType?.price,
+      });
+      navigation.replace('SOSTracking', { requestId: res.data?.requestId || `SOS-${Date.now()}`, sosType, address });
+    } catch {
+      Alert.alert('Erreur', 'Impossible d\'envoyer la demande. Réessayez.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
+    <SafeAreaView style={styles.root}>
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
 
-      <PickerModal
-        visible={pickerModal.visible}
-        title={pickerModal.title}
-        options={pickerModal.options}
-        onSelect={handlePickerSelect}
-        onClose={closePicker}
-      />
-
-      {/* Modal agenda — calendrier réservation dépanneur */}
-      <Modal visible={scheduleModal} transparent animationType="slide" onRequestClose={() => setScheduleModal(false)}>
-        <TouchableOpacity style={modalStyles.overlay} activeOpacity={1} onPress={() => setScheduleModal(false)}>
-          <TouchableOpacity style={[modalStyles.sheet, { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 0 }]} activeOpacity={1}>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 36 }}>
-            <View style={modalStyles.handle} />
-            <Text style={{ fontSize: 17, fontWeight: '800', color: '#FFF', marginBottom: 2 }}>📅 Choisir un créneau</Text>
-            <Text style={{ fontSize: 12, color: '#8E8E9A', marginBottom: 14 }}>Le dépanneur confirmera le rendez-vous.</Text>
-
-            {/* Raccourcis */}
-            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }}>
-              {['+1h', '+2h', '+3h', 'Demain 9h'].map((label) => (
-                <TouchableOpacity key={label} style={scheduleStyles.quickBtn} onPress={() => {
-                  const base = new Date();
-                  if (label === 'Demain 9h') { base.setDate(base.getDate() + 1); base.setHours(9, 0, 0); }
-                  else { const h = parseInt(label); base.setHours(base.getHours() + h, 0, 0); }
-                  setSelectedDay(new Date(base));
-                  setCalMonth(new Date(base.getFullYear(), base.getMonth(), 1));
-                  setSelectedHour(base.getHours());
-                  setSelectedMin(0);
-                }}>
-                  <Text style={scheduleStyles.quickBtnText}>{label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Navigation mois */}
-            {(() => {
-              const year = calMonth.getFullYear();
-              const month = calMonth.getMonth();
-              const monthName = calMonth.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
-              const firstDay = new Date(year, month, 1).getDay(); // 0=dim
-              const daysInMonth = new Date(year, month + 1, 0).getDate();
-              const today = new Date(); today.setHours(0,0,0,0);
-              const blanks = (firstDay + 6) % 7; // lundi = 0
-              const cells = [...Array(blanks).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
-              return (
-                <View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                    <TouchableOpacity onPress={() => setCalMonth(new Date(year, month - 1, 1))} style={{ padding: 8 }}>
-                      <Text style={{ color: COLORS.accent, fontSize: 20, fontWeight: '700' }}>‹</Text>
-                    </TouchableOpacity>
-                    <Text style={{ color: '#FFF', fontWeight: '700', fontSize: 14, textTransform: 'capitalize' }}>{monthName}</Text>
-                    <TouchableOpacity onPress={() => setCalMonth(new Date(year, month + 1, 1))} style={{ padding: 8 }}>
-                      <Text style={{ color: COLORS.accent, fontSize: 20, fontWeight: '700' }}>›</Text>
-                    </TouchableOpacity>
-                  </View>
-                  {/* Jours de la semaine */}
-                  <View style={{ flexDirection: 'row', marginBottom: 4 }}>
-                    {['L','M','M','J','V','S','D'].map((d, i) => (
-                      <Text key={i} style={{ flex: 1, textAlign: 'center', color: '#8E8E9A', fontSize: 11, fontWeight: '700' }}>{d}</Text>
-                    ))}
-                  </View>
-                  {/* Grille des jours */}
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-                    {cells.map((day, i) => {
-                      if (!day) return <View key={`b${i}`} style={{ width: '14.28%', aspectRatio: 1 }} />;
-                      const thisDate = new Date(year, month, day); thisDate.setHours(0,0,0,0);
-                      const isPast = thisDate < today;
-                      const isSelected = selectedDay && thisDate.toDateString() === new Date(selectedDay).toDateString();
-                      return (
-                        <TouchableOpacity key={day} disabled={isPast}
-                          style={{ width: '14.28%', aspectRatio: 1, alignItems: 'center', justifyContent: 'center' }}
-                          onPress={() => setSelectedDay(new Date(year, month, day))}
-                        >
-                          <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: isSelected ? COLORS.accent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-                            <Text style={{ color: isPast ? '#444' : isSelected ? '#FFF' : '#FFF', fontSize: 13, fontWeight: isSelected ? '800' : '400' }}>{day}</Text>
-                          </View>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-                </View>
-              );
-            })()}
-
-            {/* Sélection heure */}
-            <Text style={{ color: '#8E8E9A', fontSize: 12, fontWeight: '700', marginTop: 14, marginBottom: 8 }}>HEURE</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-              <TouchableOpacity onPress={() => setSelectedHour((h) => h === 0 ? 23 : h - 1)} style={scheduleStyles.timeBtn}>
-                <Text style={scheduleStyles.timeBtnText}>−</Text>
-              </TouchableOpacity>
-              <Text style={{ color: '#FFF', fontSize: 28, fontWeight: '800', width: 52, textAlign: 'center' }}>
-                {String(selectedHour).padStart(2,'0')}
-              </Text>
-              <TouchableOpacity onPress={() => setSelectedHour((h) => h === 23 ? 0 : h + 1)} style={scheduleStyles.timeBtn}>
-                <Text style={scheduleStyles.timeBtnText}>+</Text>
-              </TouchableOpacity>
-              <Text style={{ color: '#8E8E9A', fontSize: 24, fontWeight: '300', marginHorizontal: 4 }}>:</Text>
-              <TouchableOpacity onPress={() => setSelectedMin((m) => m === 0 ? 45 : m - 15)} style={scheduleStyles.timeBtn}>
-                <Text style={scheduleStyles.timeBtnText}>−</Text>
-              </TouchableOpacity>
-              <Text style={{ color: '#FFF', fontSize: 28, fontWeight: '800', width: 52, textAlign: 'center' }}>
-                {String(selectedMin).padStart(2,'0')}
-              </Text>
-              <TouchableOpacity onPress={() => setSelectedMin((m) => m === 45 ? 0 : m + 15)} style={scheduleStyles.timeBtn}>
-                <Text style={scheduleStyles.timeBtnText}>+</Text>
-              </TouchableOpacity>
-            </View>
-
-            {selectedDay && (
-              <Text style={{ color: '#8E8E9A', fontSize: 12, textAlign: 'center', marginTop: 10 }}>
-                {new Date(selectedDay).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} à {String(selectedHour).padStart(2,'0')}:{String(selectedMin).padStart(2,'0')}
-              </Text>
-            )}
-
-            <TouchableOpacity
-              style={[scheduleStyles.confirmBtn, { backgroundColor: selectedDay ? COLORS.accent : '#444', marginTop: 14 }]}
-              disabled={!selectedDay}
-              onPress={() => {
-                if (!selectedDay) return;
-                const d = new Date(selectedDay);
-                d.setHours(selectedHour, selectedMin, 0, 0);
-                setScheduleModal(false);
-                sendSOS('SCHEDULED', d.toISOString());
-              }}
-            >
-              <Text style={scheduleStyles.confirmBtnText}>✅ Confirmer le rendez-vous</Text>
-            </TouchableOpacity>
-          </ScrollView>
-          </TouchableOpacity>
-        </TouchableOpacity>
-      </Modal>
-
-      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <Text style={styles.backArrow}>‹</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text style={{ color: COLORS.accent, fontSize: 24 }}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>SOS Remorquage</Text>
-        <View style={styles.headerSpacer} />
+        <Text style={styles.title}>🛻 Demande SOS</Text>
+        <View style={{ width: 24 }} />
       </View>
 
-      {/* Stepper */}
-      <View style={styles.stepper}>
-        {STEPS.map((label, i) => (
-          <React.Fragment key={label}>
-            <View style={styles.stepItem}>
-              <View style={[styles.stepDot, i <= step && styles.stepDotActive]}>
-                <Text style={[styles.stepDotText, i <= step && styles.stepDotTextActive]}>
-                  {i < step ? '✓' : i + 1}
-                </Text>
-              </View>
-              <Text style={[styles.stepLabel, i === step && styles.stepLabelActive]}>{label}</Text>
-            </View>
-            {i < STEPS.length - 1 && (
-              <View style={[styles.stepLine, i < step && styles.stepLineActive]} />
-            )}
-          </React.Fragment>
-        ))}
-      </View>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
 
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        {/* Step 0: vehicle state */}
-        {step === 0 && (
-          <View>
-            <Text style={styles.sectionTitle}>Décrivez l'état de votre véhicule</Text>
-            {VEHICLE_CHECKS.map(({ key, label, icon }) => (
-              <TouchableOpacity
-                key={key}
-                style={[styles.checkRow, vehicleState[key] && styles.checkRowActive]}
-                onPress={() => toggleCheck(key)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.checkIcon}>{icon}</Text>
-                <Text style={[styles.checkLabel, vehicleState[key] && styles.checkLabelActive]}>{label}</Text>
-                <View style={[styles.checkbox, vehicleState[key] && styles.checkboxChecked]}>
-                  {vehicleState[key] && <Text style={styles.checkmark}>✓</Text>}
-                </View>
-              </TouchableOpacity>
-            ))}
+        {/* Position */}
+        <View style={styles.locationCard}>
+          <Text style={styles.locLabel}>📍 Votre position</Text>
+          {locating ? (
+            <View style={styles.locRow}>
+              <ActivityIndicator color={COLORS.accent} size="small" />
+              <Text style={styles.locText}>Localisation en cours…</Text>
+            </View>
+          ) : (
+            <TextInput
+              style={styles.locInput}
+              value={address}
+              onChangeText={setAddress}
+              placeholder="Entrez votre adresse manuellement"
+              placeholderTextColor={COLORS.muted}
+            />
+          )}
+        </View>
+
+        {/* Type */}
+        <Text style={styles.sectionLabel}>Type de panne</Text>
+        <View style={styles.typeGrid}>
+          {SOS_TYPES.map((t) => (
+            <TouchableOpacity
+              key={t.key}
+              style={[styles.typeCard, sosType === t.key && styles.typeCardActive]}
+              onPress={() => setSosType(t.key)}
+            >
+              <Text style={{ fontSize: 28 }}>{t.emoji}</Text>
+              <Text style={[styles.typeLabel, sosType === t.key && { color: COLORS.red }]}>{t.label}</Text>
+              <Text style={styles.typePrice}>≈ {t.price} TND</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Notes */}
+        <Text style={styles.sectionLabel}>Détails supplémentaires (optionnel)</Text>
+        <TextInput
+          style={[styles.input, { minHeight: 80 }]}
+          value={notes} onChangeText={setNotes}
+          placeholder="Ex : véhicule gris, immatriculation 123 TU..."
+          placeholderTextColor={COLORS.muted}
+          multiline maxLength={200} textAlignVertical="top"
+        />
+
+        {selectedType && (
+          <View style={styles.estimateBox}>
+            <Text style={styles.estimateLabel}>Estimation tarifaire</Text>
+            <Text style={styles.estimateValue}>≈ {selectedType.price} TND</Text>
+            <Text style={styles.estimateNote}>Le prix final peut varier selon la distance et la complexité de l'intervention.</Text>
           </View>
         )}
 
-        {/* Step 1: vehicle info */}
-        {step === 1 && (
-          <View>
-            <Text style={styles.sectionTitle}>Informations sur votre véhicule</Text>
+        <TouchableOpacity
+          style={[styles.submitBtn, (!sosType || !address.trim() || submitting) && { opacity: 0.4 }]}
+          onPress={handleSubmit}
+          disabled={!sosType || !address.trim() || submitting}
+        >
+          {submitting
+            ? <ActivityIndicator color="#fff" size="small" />
+            : <Text style={styles.submitBtnText}>🚨 Appeler un dépanneur</Text>}
+        </TouchableOpacity>
 
-            {/* Marque */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Marque *</Text>
-              <TouchableOpacity
-                style={styles.pickerButton}
-                onPress={() => openPicker('brand', 'Marque', BRANDS)}
-              >
-                <Text style={[styles.pickerButtonText, !vehicleInfo.brand && styles.pickerPlaceholder]}>
-                  {vehicleInfo.brand || 'Sélectionner la marque'}
-                </Text>
-                <Text style={styles.pickerChevron}>›</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Modèle */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Modèle</Text>
-              {vehicleInfo.brand === 'Autre' ? (
-                <TextInput
-                  style={styles.input}
-                  value={vehicleInfo.model}
-                  onChangeText={(v) => setVehicleInfo((prev) => ({ ...prev, model: v }))}
-                  placeholder="Ex: Golf"
-                  placeholderTextColor={COLORS.textMuted}
-                  autoCapitalize="words"
-                />
-              ) : (
-                <TouchableOpacity
-                  style={[styles.pickerButton, !vehicleInfo.brand && { opacity: 0.45 }]}
-                  onPress={() => {
-                    if (!vehicleInfo.brand) {
-                      Alert.alert('Marque requise', 'Veuillez d\'abord sélectionner la marque du véhicule.');
-                      return;
-                    }
-                    openPicker('model', 'Modèle', BRANDS_MODELS[vehicleInfo.brand] || ['Autre']);
-                  }}
-                >
-                  <Text style={[styles.pickerButtonText, !vehicleInfo.model && styles.pickerPlaceholder]}>
-                    {vehicleInfo.model || 'Sélectionner le modèle'}
-                  </Text>
-                  <Text style={styles.pickerChevron}>›</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-
-            {/* Année */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Année</Text>
-              <TouchableOpacity
-                style={styles.pickerButton}
-                onPress={() => openPicker('year', 'Année', YEARS)}
-              >
-                <Text style={[styles.pickerButtonText, !vehicleInfo.year && styles.pickerPlaceholder]}>
-                  {vehicleInfo.year || "Sélectionner l'année"}
-                </Text>
-                <Text style={styles.pickerChevron}>›</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Plaque d'immatriculation */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Plaque d'immatriculation *</Text>
-              <View style={styles.plateRow}>
-                <TextInput
-                  style={[styles.input, { flex: 1 }]}
-                  value={vehicleInfo.licensePlate}
-                  onChangeText={(v) => setVehicleInfo((prev) => ({ ...prev, licensePlate: v }))}
-                  placeholder="Ex: 123 TUN 4567"
-                  placeholderTextColor={COLORS.textMuted}
-                  autoCapitalize="characters"
-                />
-              </View>
-            </View>
-
-            {/* Couleur */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Couleur</Text>
-              <TouchableOpacity
-                style={styles.pickerButton}
-                onPress={() => openPicker('color', 'Couleur', CAR_COLORS)}
-              >
-                <Text style={[styles.pickerButtonText, !vehicleInfo.color && styles.pickerPlaceholder]}>
-                  {vehicleInfo.color || 'Sélectionner la couleur'}
-                </Text>
-                <Text style={styles.pickerChevron}>›</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Boîte automatique */}
-            <View style={[styles.inputGroup, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}>
-              <Text style={styles.inputLabel}>Boîte automatique ⚙️</Text>
-              <Switch
-                value={vehicleState.automatic || false}
-                onValueChange={(v) => setVehicleState((prev) => ({ ...prev, automatic: v }))}
-                trackColor={{ false: '#2C2C3A', true: '#F5A623' }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
-          </View>
-        )}
-
-        {/* Step 2: confirmation */}
-        {step === 2 && (
-          <View>
-            <Text style={styles.sectionTitle}>Confirmation</Text>
-
-            {/* GPS + Map */}
-            <View style={styles.infoCard}>
-              <Text style={styles.infoCardTitle}>📍 Votre position</Text>
-              {locating ? (
-                <ActivityIndicator color={COLORS.accent} style={{ marginTop: 8 }} />
-              ) : location ? (
-                <>
-                  <StaticMap
-                    lat={location.lat}
-                    lng={location.lng}
-                    height={180}
-                    zoom={15}
-                    style={{ marginTop: 10, marginBottom: 8 }}
-                  />
-                  <Text style={styles.infoCardValue}>
-                    {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
-                  </Text>
-                </>
-              ) : (
-                <TouchableOpacity onPress={fetchLocation} style={styles.retryGps}>
-                  <Text style={styles.retryGpsText}>Réessayer la géolocalisation</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-
-            {/* Vehicle summary */}
-            <View style={styles.infoCard}>
-              <Text style={styles.infoCardTitle}>🚗 Véhicule</Text>
-              <Text style={styles.infoCardValue}>
-                {vehicleInfo.brand} {vehicleInfo.model} {vehicleInfo.year ? `(${vehicleInfo.year})` : ''}
-              </Text>
-              <Text style={styles.infoCardSub}>{vehicleInfo.licensePlate} — {vehicleInfo.color}</Text>
-            </View>
-
-            {/* Insurance coverage */}
-            {mode === 'INSURANCE' && contract && (
-              <View style={[styles.infoCard, { borderColor: COLORS.green }]}>
-                <Text style={[styles.infoCardTitle, { color: COLORS.green }]}>🛡️ Couverture assurance</Text>
-                <Text style={styles.infoCardValue}>Contrat N° {contract.contractNumber}</Text>
-                <View style={styles.coverageTags}>
-                  {contract.coverageTypes.map((c) => (
-                    <View key={c} style={styles.coverageTag}>
-                      <Text style={styles.coverageTagText}>{c}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            )}
-          </View>
-        )}
+        <Text style={styles.footer}>Les dépanneurs EASYWAY arrivent en moyenne en 18 minutes.</Text>
+        <View style={{ height: 24 }} />
       </ScrollView>
-
-      {/* Bottom action */}
-      <View style={styles.bottomBar}>
-        {step < 2 ? (
-          <TouchableOpacity style={styles.nextButton} onPress={handleNext} activeOpacity={0.85}>
-            <Text style={styles.nextButtonText}>Suivant →</Text>
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.submitButtons}>
-            <TouchableOpacity
-              style={[styles.urgentButton, (!location || isSearching) && styles.buttonDisabled]}
-              onPress={() => handleSubmit('URGENT')}
-              activeOpacity={0.85}
-              disabled={!location || isSearching}
-            >
-              {isSearching ? (
-                <ActivityIndicator color="#000" />
-              ) : (
-                <>
-                  <Text style={styles.urgentButtonIcon}>🚨</Text>
-                  <Text style={styles.urgentButtonText}>Dépanneur urgent</Text>
-                </>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.scheduledButton, (!location || isSearching) && styles.buttonDisabled]}
-              onPress={() => handleSubmit('SCHEDULED')}
-              activeOpacity={0.85}
-              disabled={!location || isSearching}
-            >
-              <Text style={styles.scheduledButtonIcon}>📅</Text>
-              <Text style={styles.scheduledButtonText}>Réserver un dépanneur</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
+  root: { flex: 1, backgroundColor: COLORS.bg },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 20, paddingVertical: 14,
+    borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
-  backButton: { padding: 4 },
-  backArrow: { fontSize: 32, color: COLORS.accent, lineHeight: 32, marginTop: -4 },
-  headerTitle: { flex: 1, textAlign: 'center', fontSize: 18, fontWeight: '800', color: COLORS.accent },
-  headerSpacer: { width: 32 },
-  stepper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    paddingHorizontal: 20,
+  title: { color: COLORS.white, fontSize: 17, fontWeight: '700' },
+  scroll: { padding: 16 },
+  locationCard: {
+    backgroundColor: COLORS.surface, borderRadius: 14,
+    borderWidth: 1, borderColor: COLORS.border, padding: 14, marginBottom: 16,
   },
-  stepItem: { alignItems: 'center' },
-  stepDot: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: COLORS.surface,
-    borderWidth: 2,
-    borderColor: COLORS.border,
-    alignItems: 'center',
-    justifyContent: 'center',
+  locLabel: { color: COLORS.muted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 },
+  locRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  locText: { color: COLORS.muted, fontSize: 14 },
+  locInput: { color: COLORS.white, fontSize: 14, paddingVertical: 4 },
+  sectionLabel: { color: COLORS.muted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 },
+  typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 16 },
+  typeCard: {
+    width: '47%', backgroundColor: COLORS.surface, borderRadius: 14,
+    borderWidth: 1.5, borderColor: COLORS.border,
+    padding: 14, alignItems: 'center', gap: 6,
   },
-  stepDotActive: { borderColor: COLORS.accent, backgroundColor: COLORS.accent },
-  stepDotText: { fontSize: 11, fontWeight: '700', color: COLORS.textMuted },
-  stepDotTextActive: { color: '#000' },
-  stepLabel: { fontSize: 9, color: COLORS.textMuted, marginTop: 4, textAlign: 'center', maxWidth: 60 },
-  stepLabelActive: { color: COLORS.accent },
-  stepLine: { flex: 1, height: 2, backgroundColor: COLORS.border, marginBottom: 16 },
-  stepLineActive: { backgroundColor: COLORS.accent },
-  scroll: { flex: 1 },
-  scrollContent: { padding: 20, paddingBottom: 40 },
-  sectionTitle: {
-    fontSize: 13,
-    color: COLORS.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    fontWeight: '600',
-    marginBottom: 16,
-  },
-  checkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    gap: 12,
-  },
-  checkRowActive: { borderColor: COLORS.accent },
-  checkIcon: { fontSize: 22, width: 30, textAlign: 'center' },
-  checkLabel: { flex: 1, fontSize: 14, color: COLORS.text },
-  checkLabelActive: { color: COLORS.accent, fontWeight: '600' },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: COLORS.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkboxChecked: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
-  checkmark: { color: '#000', fontWeight: '800', fontSize: 13 },
-  inputGroup: { marginBottom: 14 },
-  inputLabel: { fontSize: 12, color: COLORS.textMuted, marginBottom: 6, fontWeight: '600' },
+  typeCardActive: { borderColor: COLORS.red, backgroundColor: '#1A0000' },
+  typeLabel: { color: COLORS.white, fontSize: 12, fontWeight: '700', textAlign: 'center' },
+  typePrice: { color: COLORS.muted, fontSize: 11 },
   input: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 13,
-    fontSize: 14,
-    color: COLORS.text,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface, borderRadius: 12,
+    borderWidth: 1, borderColor: COLORS.border,
+    color: COLORS.white, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14,
   },
-  pickerButton: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 13,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  estimateBox: {
+    backgroundColor: '#1A0A00', borderRadius: 12,
+    borderWidth: 1, borderColor: COLORS.orange,
+    padding: 14, alignItems: 'center', marginVertical: 14,
   },
-  pickerButtonText: { fontSize: 14, color: COLORS.text, flex: 1 },
-  pickerPlaceholder: { color: COLORS.textMuted },
-  pickerChevron: { fontSize: 22, color: COLORS.textMuted, marginLeft: 8 },
-  plateRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
-  photoButton: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 13,
-    borderWidth: 1,
-    borderColor: COLORS.accent,
+  estimateLabel: { color: COLORS.muted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
+  estimateValue: { color: COLORS.orange, fontSize: 32, fontWeight: '900', marginVertical: 6 },
+  estimateNote: { color: COLORS.muted, fontSize: 11, textAlign: 'center', lineHeight: 16 },
+  submitBtn: {
+    backgroundColor: COLORS.red, borderRadius: 12,
+    paddingVertical: 16, alignItems: 'center',
   },
-  photoButtonText: { fontSize: 13, color: COLORS.accent, fontWeight: '600' },
-  infoCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  infoCardTitle: { fontSize: 12, color: COLORS.textMuted, fontWeight: '700', marginBottom: 8, textTransform: 'uppercase' },
-  infoCardValue: { fontSize: 15, color: COLORS.text, fontWeight: '600' },
-  infoCardSub: { fontSize: 12, color: COLORS.textMuted, marginTop: 4 },
-  coverageTags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
-  coverageTag: {
-    backgroundColor: COLORS.green + '22',
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  coverageTagText: { fontSize: 10, color: COLORS.green, fontWeight: '700' },
-  retryGps: {
-    marginTop: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    backgroundColor: COLORS.accent + '22',
-    borderRadius: 8,
-    alignSelf: 'flex-start',
-  },
-  retryGpsText: { color: COLORS.accent, fontWeight: '600', fontSize: 13 },
-  bottomBar: {
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-  },
-  nextButton: {
-    backgroundColor: COLORS.accent,
-    borderRadius: 14,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  nextButtonText: { color: '#000', fontSize: 16, fontWeight: '700' },
-  submitButtons: { gap: 12 },
-  urgentButton: {
-    backgroundColor: COLORS.accent,
-    borderRadius: 14,
-    paddingVertical: 16,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 10,
-    shadowColor: COLORS.accent,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 6,
-  },
-  urgentButtonIcon: { fontSize: 20 },
-  urgentButtonText: { color: '#000', fontSize: 16, fontWeight: '900', letterSpacing: 0.5 },
-  scheduledButton: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 14,
-    paddingVertical: 16,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 10,
-    borderWidth: 1.5,
-    borderColor: COLORS.accent,
-  },
-  scheduledButtonIcon: { fontSize: 20 },
-  scheduledButtonText: { color: COLORS.accent, fontSize: 16, fontWeight: '700' },
-  buttonDisabled: { opacity: 0.5 },
-});
-
-const scheduleStyles = StyleSheet.create({
-  label: { color: '#8E8E9A', fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 6, marginTop: 12 },
-  input: {
-    backgroundColor: '#0A0A0F',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#2C2C3E',
-    color: '#FFF',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-    letterSpacing: 1,
-  },
-  quickBtn: {
-    flex: 1,
-    backgroundColor: '#2C2C3E',
-    borderRadius: 8,
-    paddingVertical: 8,
-    alignItems: 'center',
-  },
-  quickBtnText: { color: '#FFF', fontSize: 12, fontWeight: '600' },
-  confirmBtn: {
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  confirmBtnText: { color: '#FFF', fontWeight: '900', fontSize: 16 },
-  timeBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#2C2C3E', alignItems: 'center', justifyContent: 'center' },
-  timeBtnText: { color: '#FFF', fontSize: 20, fontWeight: '700', lineHeight: 24 },
+  submitBtnText: { color: COLORS.white, fontWeight: '900', fontSize: 16 },
+  footer: { color: COLORS.muted, fontSize: 12, textAlign: 'center', marginTop: 14, lineHeight: 18 },
 });
