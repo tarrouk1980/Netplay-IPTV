@@ -48,11 +48,11 @@ export default function TaxiRequestScreen({ route, navigation }) {
   const { requestTaxi, isSearching, nearbyDrivers } = useTaxiStore();
 
   const [origin, setOrigin] = useState(null);
-  const [originAddress, setOriginAddress] = useState('Saisir ou utiliser ma position');
+  const [originAddress, setOriginAddress] = useState('Localisation en cours…');
   const [destination, setDestination] = useState('');
   const [mode, setMode] = useState('A'); // 'A' = Taximètre EASYWAY, 'B' = Mise en relation
   const [fareEstimate, setFareEstimate] = useState(null);
-  const [loadingLocation, setLoadingLocation] = useState(false);
+  const [loadingLocation, setLoadingLocation] = useState(true);
   const [loadingEstimate, setLoadingEstimate] = useState(false);
   const [demandZones, setDemandZones] = useState([]);
   const [showPriceEstimate, setShowPriceEstimate] = useState(false);
@@ -82,13 +82,16 @@ export default function TaxiRequestScreen({ route, navigation }) {
     setWaypoints(waypoints.filter((_, i) => i !== index));
   };
 
-  // Detect origin via expo-location (user-triggered, not auto)
+  // Detect origin automatically on mount (like Uber/Careem)
+  useEffect(() => { detectLocation(); }, []);
+
   const detectLocation = async () => {
     setLoadingLocation(true);
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        setOriginAddress('Permission de localisation refusée');
+        setOriginAddress('Activez la localisation');
+        setLoadingLocation(false);
         return;
       }
       const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
@@ -288,11 +291,13 @@ export default function TaxiRequestScreen({ route, navigation }) {
           <Text style={styles.label}>📍 Point de départ</Text>
           <View style={styles.inputRow}>
             {loadingLocation
-              ? <ActivityIndicator size="small" color={COLORS.header} />
-              : <Text style={[styles.originText, { flex: 1 }]}>{originAddress === 'Localisation en cours…' ? 'Saisir ou utiliser ma position' : originAddress}</Text>}
-            <TouchableOpacity onPress={detectLocation} style={{ paddingLeft: 8 }}>
-              <Text style={{ fontSize: 20 }}>📍</Text>
-            </TouchableOpacity>
+              ? <ActivityIndicator size="small" color={COLORS.header} style={{ flex: 1 }} />
+              : <Text style={[styles.originText, { flex: 1 }]}>{originAddress}</Text>}
+            {!loadingLocation && (
+              <TouchableOpacity onPress={detectLocation} style={{ paddingLeft: 8 }}>
+                <Text style={{ fontSize: 20 }}>📍</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
