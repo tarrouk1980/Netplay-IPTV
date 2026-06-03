@@ -481,6 +481,9 @@ import AdminDriverDetailScreen from './screens/admin/AdminDriverDetailScreen';
 import MerchantSettingsScreen from './screens/merchant/MerchantSettingsScreen';
 import GroceryWishlistScreen from './screens/grocery/GroceryWishlistScreen';
 import AdminRefundDetailScreen from './screens/admin/AdminRefundDetailScreen';
+import BiometricSetupScreen from './screens/profile/BiometricSetupScreen';
+import TaxiSplitFareScreen from './screens/taxi/TaxiSplitFareScreen';
+import AdminGeoZonesScreen from './screens/admin/AdminGeoZonesScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -715,6 +718,9 @@ function MainStack() {
       <Stack.Screen name="MerchantSettings" component={MerchantSettingsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="GroceryWishlist" component={GroceryWishlistScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminRefundDetail" component={AdminRefundDetailScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="BiometricSetup" component={BiometricSetupScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="TaxiSplitFare" component={TaxiSplitFareScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminGeoZones" component={AdminGeoZonesScreen} options={{ headerShown: false }} />
 
       {/* Chat */}
       <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
