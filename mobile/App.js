@@ -462,6 +462,8 @@ import MerchantAnalyticsScreen from './screens/merchant/MerchantAnalyticsScreen'
 import TaxiPromoScreen from './screens/taxi/TaxiPromoScreen';
 import ProviderAvailabilityScreen from './screens/provider/ProviderAvailabilityScreen';
 import OrderCancelScreen from './screens/shared/OrderCancelScreen';
+import SOSTrackingScreen from './screens/sos/SOSTrackingScreen';
+import AdminPromoCreateScreen from './screens/admin/AdminPromoCreateScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -677,6 +679,8 @@ function MainStack() {
       <Stack.Screen name="TaxiPromo" component={TaxiPromoScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ProviderAvailability" component={ProviderAvailabilityScreen} options={{ headerShown: false }} />
       <Stack.Screen name="OrderCancel" component={OrderCancelScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="SOSTracking" component={SOSTrackingScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminPromoCreate" component={AdminPromoCreateScreen} options={{ headerShown: false }} />
 
       {/* Chat */}
       <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
