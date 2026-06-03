@@ -392,6 +392,9 @@ import AdminDriversScreen from './screens/admin/AdminDriversScreen';
 // Batch 58
 import PaymentSuccessScreen from './screens/payment/PaymentSuccessScreen';
 import EditProfileScreen from './screens/profile/EditProfileScreen';
+// Batch 59
+import SOSContractScreen from './screens/sos/SOSContractScreen';
+import AdminSettingsScreen from './screens/admin/AdminSettingsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -710,6 +713,8 @@ function MainStack() {
       <Stack.Screen name="AdminDrivers" component={AdminDriversScreen} options={{ headerShown: false }} />
       <Stack.Screen name="PaymentSuccess" component={PaymentSuccessScreen} options={{ headerShown: false }} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="SOSContract" component={SOSContractScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminSettings" component={AdminSettingsScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
