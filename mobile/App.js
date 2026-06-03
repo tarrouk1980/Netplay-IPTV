@@ -473,6 +473,8 @@ import AdminLiveStatsScreen from './screens/admin/AdminLiveStatsScreen';
 import TaxiActiveRideV2Screen from './screens/taxi/TaxiActiveRideV2Screen';
 import ReferralDashboardScreen from './screens/loyalty/ReferralDashboardScreen';
 import AdminSupportTicketsDetailScreen from './screens/admin/AdminSupportTicketsDetailScreen';
+import NotificationCenterV2Screen from './screens/notifications/NotificationCenterV2Screen';
+import WalletTransferScreen from './screens/wallet/WalletTransferScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -699,6 +701,8 @@ function MainStack() {
       <Stack.Screen name="TaxiActiveRideV2" component={TaxiActiveRideV2Screen} options={{ headerShown: false }} />
       <Stack.Screen name="ReferralDashboard" component={ReferralDashboardScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminSupportTicketsDetail" component={AdminSupportTicketsDetailScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="NotificationCenterV2" component={NotificationCenterV2Screen} options={{ headerShown: false }} />
+      <Stack.Screen name="WalletTransfer" component={WalletTransferScreen} options={{ headerShown: false }} />
 
       {/* Chat */}
       <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
