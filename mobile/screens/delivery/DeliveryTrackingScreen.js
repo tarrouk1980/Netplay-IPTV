@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import MapboxMap from '../../components/MapboxMap';
 
 const COLORS = {
   background: '#0A0A0F',
@@ -44,11 +45,16 @@ export default function DeliveryTrackingScreen({ navigation }) {
   return (
     <View style={styles.container}>
       {/* Map area */}
-      <View style={styles.mapArea}>
-        <Text style={styles.mapIcon}>🗺️</Text>
-        <Text style={styles.mapTitle}>Carte interactive</Text>
-        <Text style={styles.mapSubtitle}>Disponible dans la version complète</Text>
-      </View>
+      <MapboxMap
+        style={{ flex: 1 }}
+        centerCoordinate={[10.1815, 36.8065]}
+        zoom={14}
+        markers={[
+          { id: 'livreur', coordinates: [10.1815, 36.8065], color: '#2ECC71', label: '🛵' },
+          { id: 'client', coordinates: [10.1950, 36.8200], color: '#E74C3C', label: '🏠' },
+        ]}
+        route={[[10.1815, 36.8065], [10.1880, 36.8120], [10.1950, 36.8200]]}
+      />
 
       {/* Header overlay */}
       <SafeAreaView style={styles.headerOverlay} edges={['top']}>

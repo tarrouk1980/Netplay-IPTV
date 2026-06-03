@@ -7,6 +7,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import MapboxMap from '../../components/MapboxMap';
 
 const COLORS = {
   background: '#0A0A0F',
@@ -37,11 +38,16 @@ export default function TaxiMapScreen({ navigation }) {
   return (
     <View style={styles.container}>
       {/* Map area */}
-      <View style={styles.mapArea}>
-        <Text style={styles.mapIcon}>🗺️</Text>
-        <Text style={styles.mapTitle}>Carte interactive</Text>
-        <Text style={styles.mapSubtitle}>Disponible dans la version complète</Text>
-      </View>
+      <MapboxMap
+        style={{ flex: 1 }}
+        centerCoordinate={[10.1815, 36.8065]}
+        zoom={13}
+        markers={[
+          { id: 'driver', coordinates: [10.1815, 36.8065], color: '#F5A623', label: '🚕' },
+          { id: 'destination', coordinates: [10.2301, 36.8519], color: '#E74C3C', label: '🔴' },
+        ]}
+        route={[[10.1815, 36.8065], [10.1950, 36.8200], [10.2100, 36.8380], [10.2301, 36.8519]]}
+      />
 
       {/* Header overlay */}
       <SafeAreaView style={styles.headerOverlay} edges={['top']}>
