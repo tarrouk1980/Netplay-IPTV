@@ -400,6 +400,11 @@ import TaxiHistoryScreen from './screens/taxi/TaxiHistoryScreen';
 import DeliveryOrderHistoryScreen from './screens/delivery/DeliveryOrderHistoryScreen';
 import NotificationPreferencesScreen from './screens/profile/NotificationPreferencesScreen';
 
+// Batch 61
+import TaxiSearchScreen from './screens/taxi/TaxiSearchScreen';
+import DepanneurProfileScreen from './screens/sos/DepanneurProfileScreen';
+import MerchantOrdersScreen from './screens/merchant/MerchantOrdersScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -722,6 +727,9 @@ function MainStack() {
       <Stack.Screen name="TaxiHistory" component={TaxiHistoryScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DeliveryOrderHistory" component={DeliveryOrderHistoryScreen} options={{ headerShown: false }} />
       <Stack.Screen name="NotificationPreferences" component={NotificationPreferencesScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="TaxiSearch" component={TaxiSearchScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="DepanneurProfile" component={DepanneurProfileScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="MerchantOrders" component={MerchantOrdersScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
