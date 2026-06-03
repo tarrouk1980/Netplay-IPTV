@@ -1,173 +1,217 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  StatusBar, FlatList, Alert,
+  StatusBar, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const COLORS = {
-  bg: '#0A0A0F', surface: '#1C1C28', border: '#2A2A3A',
-  text: '#FFFFFF', muted: '#8A8A9A', orange: '#F57C00',
-  green: '#27AE60', teal: '#00838F', gold: '#FFD700', accent: '#D32F2F',
+  bg: '#0A0A0F', surface: '#1C1C28',
+  accent: '#F5A623', white: '#FFFFFF', muted: '#8A8A9A',
+  border: '#2A2A3A', green: '#27AE60', red: '#D32F2F',
 };
 
-const MOCK_PRODUCT = {
-  id: 'p1', emoji: '🥛', name: 'Lait Vache Noire entier', brand: 'Vache Noire',
-  category: 'Produits laitiers', description: 'Lait entier pasteurisé de haute qualité, riche en calcium et en protéines. Idéal pour toute la famille.',
-  price: 1.850, oldPrice: 2.100, unit: '1L', inStock: true,
-  ratings: { avg: 4.6, total: 248, distribution: [3, 5, 18, 62, 160] },
+const MOCK = {
+  id: 'PRD001',
+  name: 'Huile d\'olive extra vierge 750ml',
+  emoji: '🫒',
+  price: 12.500,
+  oldPrice: 15.000,
+  rating: 4.7,
+  reviews: 143,
+  store: 'Carrefour Berges du Lac',
+  category: 'Épicerie',
+  description: 'Huile d\'olive extra vierge de première pression à froid. Produit tunisien 100% naturel, idéal pour la cuisine et les salades.',
+  tags: ['Bio', 'Tunisien', '1ère pression', 'Sans additifs'],
+  details: [
+    { label: 'Marque', value: 'Zaytoun' },
+    { label: 'Contenance', value: '750 ml' },
+    { label: 'Origine', value: 'Sfax, Tunisie' },
+    { label: 'Conservation', value: 'À l\'abri de la lumière' },
+    { label: 'DLC', value: '12/2026' },
+  ],
+  related: [
+    { id: 'R1', name: 'Vinaigre balsamique 500ml', emoji: '🍾', price: 8.5 },
+    { id: 'R2', name: 'Sel de mer fin 1kg', emoji: '🧂', price: 2.1 },
+    { id: 'R3', name: 'Citrons filet 1kg', emoji: '🍋', price: 3.4 },
+  ],
 };
-
-const MOCK_SIMILAR = [
-  { id: 's1', emoji: '🥛', name: 'Lait Délice 1L', price: 1.750 },
-  { id: 's2', emoji: '🥛', name: 'Lait Candia 1L', price: 1.900 },
-  { id: 's3', emoji: '🧀', name: 'Yaourt nature', price: 0.850 },
-  { id: 's4', emoji: '🧈', name: 'Beurre 250g', price: 3.200 },
-];
-
-function Stars({ rating, size = 14 }) {
-  return (
-    <View style={{ flexDirection: 'row', gap: 2 }}>
-      {[1,2,3,4,5].map((i) => (
-        <Text key={i} style={{ fontSize: size, color: i <= Math.round(rating) ? COLORS.gold : COLORS.border }}>★</Text>
-      ))}
-    </View>
-  );
-}
 
 export default function GroceryProductDetailScreen({ navigation, route }) {
-  const product = route?.params?.product || MOCK_PRODUCT;
+  const product = route?.params?.product || MOCK;
   const [qty, setQty] = useState(1);
+  const [inCart, setInCart] = useState(false);
 
-  const totalRatings = product.ratings.distribution.reduce((a, b) => a + b, 0) || 1;
+  const discount = product.oldPrice
+    ? Math.round((1 - product.price / product.oldPrice) * 100)
+    : 0;
 
   const handleAddToCart = () => {
-    Alert.alert('✅ Ajouté !', `${qty}× ${product.name} ajouté au panier.`);
+    setInCart(true);
+    Alert.alert('🛒 Ajouté !', `${qty}× ${product.name} ajouté au panier.`);
   };
 
   return (
-    <SafeAreaView style={s.root}>
+    <SafeAreaView style={styles.root}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
 
-      <View style={s.header}>
+      <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={s.back}>‹</Text>
+          <Text style={{ color: COLORS.accent, fontSize: 24 }}>‹</Text>
         </TouchableOpacity>
-        <Text style={s.headerTitle} numberOfLines={1}>{product.name}</Text>
+        <Text style={styles.headerTitle} numberOfLines={1}>{product.name}</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('GroceryCart')}>
+          <Text style={{ fontSize: 22 }}>🛒</Text>
+        </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
-        <View style={s.imagePlaceholder}>
-          <Text style={{ fontSize: 80 }}>{product.emoji}</Text>
-          {product.oldPrice && (
-            <View style={s.promoBadge}>
-              <Text style={s.promoBadgeTxt}>PROMO</Text>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+
+        {/* Hero */}
+        <View style={styles.hero}>
+          <Text style={{ fontSize: 90 }}>{product.emoji}</Text>
+          {discount > 0 && (
+            <View style={styles.discountBadge}>
+              <Text style={styles.discountText}>-{discount}%</Text>
             </View>
           )}
         </View>
 
-        <View style={s.infoSection}>
-          <Text style={s.brand}>{product.brand} · {product.category}</Text>
-          <Text style={s.productName}>{product.name}</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 10, marginTop: 6 }}>
-            <Text style={s.price}>{product.price.toFixed(3)} TND</Text>
-            {product.oldPrice && <Text style={s.oldPrice}>{product.oldPrice.toFixed(3)} TND</Text>}
-            <Text style={s.unit}>/ {product.unit}</Text>
+        {/* Title & price */}
+        <View style={styles.titleRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.productName}>{product.name}</Text>
+            <Text style={styles.storeName}>🏪 {product.store}</Text>
           </View>
-          <Text style={s.description}>{product.description}</Text>
         </View>
 
-        <View style={s.ratingSection}>
-          <Text style={s.sectionTitle}>Avis clients</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 16 }}>
-            <View style={{ alignItems: 'center' }}>
-              <Text style={s.ratingAvg}>{product.ratings.avg.toFixed(1)}</Text>
-              <Stars rating={product.ratings.avg} size={16} />
-              <Text style={s.ratingCount}>{product.ratings.total} avis</Text>
+        <View style={styles.priceRow}>
+          <Text style={styles.price}>{product.price.toFixed(3)} TND</Text>
+          {product.oldPrice && (
+            <Text style={styles.oldPrice}>{product.oldPrice.toFixed(3)}</Text>
+          )}
+          <View style={styles.ratingBadge}>
+            <Text style={{ color: COLORS.accent, fontSize: 13 }}>⭐ {product.rating}</Text>
+            <Text style={{ color: COLORS.muted, fontSize: 11 }}> ({product.reviews})</Text>
+          </View>
+        </View>
+
+        {/* Tags */}
+        <View style={styles.tagRow}>
+          {product.tags.map((t) => (
+            <View key={t} style={styles.tag}>
+              <Text style={styles.tagText}>{t}</Text>
             </View>
-            <View style={{ flex: 1 }}>
-              {[5,4,3,2,1].map((star) => {
-                const count = product.ratings.distribution[star - 1] || 0;
-                const pct = Math.round((count / totalRatings) * 100);
-                return (
-                  <View key={star} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                    <Text style={{ color: COLORS.muted, fontSize: 11, width: 14 }}>{star}★</Text>
-                    <View style={{ flex: 1, height: 4, backgroundColor: COLORS.border, borderRadius: 2, overflow: 'hidden' }}>
-                      <View style={{ width: `${pct}%`, height: '100%', backgroundColor: COLORS.gold, borderRadius: 2 }} />
-                    </View>
-                    <Text style={{ color: COLORS.muted, fontSize: 10, width: 28, textAlign: 'right' }}>{pct}%</Text>
+          ))}
+        </View>
+
+        {/* Description */}
+        <Text style={styles.sectionLabel}>Description</Text>
+        <Text style={styles.description}>{product.description}</Text>
+
+        {/* Details */}
+        <Text style={styles.sectionLabel}>Détails du produit</Text>
+        <View style={styles.detailsCard}>
+          {product.details.map((d, i) => (
+            <View key={d.label} style={[styles.detailRow, i === product.details.length - 1 && { borderBottomWidth: 0 }]}>
+              <Text style={styles.detailLabel}>{d.label}</Text>
+              <Text style={styles.detailValue}>{d.value}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Related */}
+        {product.related?.length > 0 && (
+          <>
+            <Text style={styles.sectionLabel}>Produits associés</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View style={{ flexDirection: 'row', gap: 10, paddingBottom: 4 }}>
+                {product.related.map((r) => (
+                  <View key={r.id} style={styles.relatedCard}>
+                    <Text style={{ fontSize: 36 }}>{r.emoji}</Text>
+                    <Text style={styles.relatedName} numberOfLines={2}>{r.name}</Text>
+                    <Text style={styles.relatedPrice}>{r.price.toFixed(3)} TND</Text>
                   </View>
-                );
-              })}
-            </View>
-          </View>
-        </View>
+                ))}
+              </View>
+            </ScrollView>
+          </>
+        )}
 
-        <View style={s.similarSection}>
-          <Text style={s.sectionTitle}>Produits similaires</Text>
-          <FlatList
-            horizontal
-            data={MOCK_SIMILAR}
-            keyExtractor={(item) => item.id}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 16, gap: 10 }}
-            renderItem={({ item }) => (
-              <TouchableOpacity style={s.similarCard}>
-                <Text style={{ fontSize: 32, textAlign: 'center', marginBottom: 4 }}>{item.emoji}</Text>
-                <Text style={s.similarName} numberOfLines={2}>{item.name}</Text>
-                <Text style={s.similarPrice}>{item.price.toFixed(3)} TND</Text>
-              </TouchableOpacity>
-            )}
-          />
-        </View>
+        <View style={{ height: 100 }} />
       </ScrollView>
 
-      <View style={s.footer}>
-        <View style={s.qtyRow}>
-          <TouchableOpacity style={s.qtyBtn} onPress={() => setQty(Math.max(1, qty - 1))}>
-            <Text style={s.qtyBtnTxt}>−</Text>
+      {/* Bottom bar */}
+      <View style={styles.bottomBar}>
+        <View style={styles.qtyRow}>
+          <TouchableOpacity style={styles.qtyBtn} onPress={() => setQty((q) => Math.max(1, q - 1))}>
+            <Text style={styles.qtyBtnText}>−</Text>
           </TouchableOpacity>
-          <Text style={s.qtyVal}>{qty}</Text>
-          <TouchableOpacity style={s.qtyBtn} onPress={() => setQty(qty + 1)}>
-            <Text style={s.qtyBtnTxt}>+</Text>
+          <Text style={styles.qtyValue}>{qty}</Text>
+          <TouchableOpacity style={styles.qtyBtn} onPress={() => setQty((q) => q + 1)}>
+            <Text style={styles.qtyBtnText}>+</Text>
           </TouchableOpacity>
         </View>
-        <TouchableOpacity style={s.addBtn} onPress={handleAddToCart}>
-          <Text style={s.addBtnTxt}>🛒 Ajouter — {(product.price * qty).toFixed(3)} TND</Text>
+        <TouchableOpacity
+          style={[styles.addBtn, inCart && { backgroundColor: COLORS.green }]}
+          onPress={handleAddToCart}
+        >
+          <Text style={styles.addBtnText}>
+            {inCart ? '✓ Dans le panier' : `🛒 Ajouter — ${(product.price * qty).toFixed(3)} TND`}
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 }
 
-const s = StyleSheet.create({
+const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.bg },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: COLORS.border, gap: 12 },
-  back: { color: COLORS.text, fontSize: 28, fontWeight: '300' },
-  headerTitle: { color: COLORS.text, fontSize: 15, fontWeight: '700', flex: 1 },
-  imagePlaceholder: { backgroundColor: COLORS.surface, height: 200, alignItems: 'center', justifyContent: 'center', position: 'relative' },
-  promoBadge: { position: 'absolute', top: 12, right: 12, backgroundColor: COLORS.accent, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
-  promoBadgeTxt: { color: '#FFF', fontSize: 10, fontWeight: '800', letterSpacing: 1 },
-  infoSection: { padding: 16, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  brand: { color: COLORS.muted, fontSize: 12, marginBottom: 4 },
-  productName: { color: COLORS.text, fontSize: 20, fontWeight: '800' },
-  price: { color: COLORS.teal, fontSize: 24, fontWeight: '900' },
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 20, paddingVertical: 14,
+    borderBottomWidth: 1, borderBottomColor: COLORS.border,
+  },
+  headerTitle: { flex: 1, color: COLORS.white, fontSize: 15, fontWeight: '700', marginHorizontal: 12 },
+  scroll: { padding: 16 },
+  hero: {
+    alignItems: 'center', backgroundColor: COLORS.surface,
+    borderRadius: 20, paddingVertical: 30, marginBottom: 16, position: 'relative',
+  },
+  discountBadge: {
+    position: 'absolute', top: 12, right: 12,
+    backgroundColor: COLORS.red, borderRadius: 10,
+    paddingHorizontal: 10, paddingVertical: 4,
+  },
+  discountText: { color: COLORS.white, fontSize: 13, fontWeight: '900' },
+  titleRow: { flexDirection: 'row', marginBottom: 10 },
+  productName: { color: COLORS.white, fontSize: 18, fontWeight: '800', marginBottom: 4 },
+  storeName: { color: COLORS.muted, fontSize: 12 },
+  priceRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
+  price: { color: COLORS.accent, fontSize: 24, fontWeight: '900' },
   oldPrice: { color: COLORS.muted, fontSize: 16, textDecorationLine: 'line-through' },
-  unit: { color: COLORS.muted, fontSize: 12 },
-  description: { color: COLORS.muted, fontSize: 13, marginTop: 10, lineHeight: 20 },
-  ratingSection: { padding: 16, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  sectionTitle: { color: COLORS.text, fontSize: 15, fontWeight: '700', marginBottom: 12 },
-  ratingAvg: { color: COLORS.gold, fontSize: 36, fontWeight: '900' },
-  ratingCount: { color: COLORS.muted, fontSize: 11, marginTop: 4 },
-  similarSection: { paddingTop: 16 },
-  similarCard: { backgroundColor: COLORS.surface, borderRadius: 12, padding: 12, width: 110, borderWidth: 1, borderColor: COLORS.border },
-  similarName: { color: COLORS.text, fontSize: 11, fontWeight: '600', marginBottom: 4, textAlign: 'center' },
-  similarPrice: { color: COLORS.teal, fontSize: 12, fontWeight: '700', textAlign: 'center' },
-  footer: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: COLORS.bg, borderTopWidth: 1, borderTopColor: COLORS.border, padding: 16, flexDirection: 'row', gap: 12 },
-  qtyRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.surface, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border },
-  qtyBtn: { width: 40, height: 48, alignItems: 'center', justifyContent: 'center' },
-  qtyBtnTxt: { color: COLORS.text, fontSize: 20, fontWeight: '700' },
-  qtyVal: { color: COLORS.text, fontSize: 16, fontWeight: '800', paddingHorizontal: 12 },
-  addBtn: { flex: 1, backgroundColor: COLORS.teal, borderRadius: 12, padding: 14, alignItems: 'center', justifyContent: 'center' },
-  addBtnTxt: { color: '#FFF', fontSize: 15, fontWeight: '800' },
+  ratingBadge: { flexDirection: 'row', alignItems: 'center', marginLeft: 'auto' },
+  tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
+  tag: { backgroundColor: COLORS.accent + '22', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
+  tagText: { color: COLORS.accent, fontSize: 11, fontWeight: '600' },
+  sectionLabel: { color: COLORS.muted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 },
+  description: { color: COLORS.white, fontSize: 14, lineHeight: 21, marginBottom: 16 },
+  detailsCard: { backgroundColor: COLORS.surface, borderRadius: 14, borderWidth: 1, borderColor: COLORS.border, marginBottom: 16, overflow: 'hidden' },
+  detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  detailLabel: { color: COLORS.muted, fontSize: 13 },
+  detailValue: { color: COLORS.white, fontSize: 13, fontWeight: '600' },
+  relatedCard: { width: 120, backgroundColor: COLORS.surface, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, padding: 12, alignItems: 'center' },
+  relatedName: { color: COLORS.white, fontSize: 11, textAlign: 'center', marginTop: 6 },
+  relatedPrice: { color: COLORS.accent, fontSize: 12, fontWeight: '700', marginTop: 4 },
+  bottomBar: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    backgroundColor: COLORS.bg, borderTopWidth: 1, borderTopColor: COLORS.border,
+    flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12,
+  },
+  qtyRow: { flexDirection: 'row', alignItems: 'center', gap: 0, backgroundColor: COLORS.surface, borderRadius: 10, overflow: 'hidden' },
+  qtyBtn: { paddingHorizontal: 14, paddingVertical: 12 },
+  qtyBtnText: { color: COLORS.accent, fontSize: 20, fontWeight: '700' },
+  qtyValue: { color: COLORS.white, fontSize: 16, fontWeight: '800', minWidth: 28, textAlign: 'center' },
+  addBtn: { flex: 1, backgroundColor: COLORS.accent, borderRadius: 10, paddingVertical: 13, alignItems: 'center' },
+  addBtnText: { color: '#000', fontWeight: '800', fontSize: 14 },
 });

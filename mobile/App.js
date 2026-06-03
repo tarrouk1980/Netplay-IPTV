@@ -450,6 +450,9 @@ import MerchantAddProductScreen from './screens/merchant/MerchantAddProductScree
 import SOSRequestScreen from './screens/sos/SOSRequestScreen';
 import PackageTrackingScreen from './screens/delivery/PackageTrackingScreen';
 import DeleteAccountScreen from './screens/profile/DeleteAccountScreen';
+import GroceryProductDetailScreen from './screens/grocery/GroceryProductDetailScreen';
+import DriverIncidentScreen from './screens/driver/DriverIncidentScreen';
+import PassBenefitsScreen from './screens/subscriptions/PassBenefitsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -653,6 +656,9 @@ function MainStack() {
       <Stack.Screen name="SOSRequest" component={SOSRequestScreen} options={{ headerShown: false }} />
       <Stack.Screen name="PackageTracking" component={PackageTrackingScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="GroceryProductDetail" component={GroceryProductDetailScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="DriverIncident" component={DriverIncidentScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="PassBenefits" component={PassBenefitsScreen} options={{ headerShown: false }} />
 
       {/* Chat */}
       <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
