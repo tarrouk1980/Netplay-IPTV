@@ -456,6 +456,9 @@ import PassBenefitsScreen from './screens/subscriptions/PassBenefitsScreen';
 import EasyPointsHistoryScreen from './screens/loyalty/EasyPointsHistoryScreen';
 import TaxiRatingScreen from './screens/taxi/TaxiRatingScreen';
 import AdminUserDetailScreen from './screens/admin/AdminUserDetailScreen';
+import DeliveryScheduleScreen from './screens/delivery/DeliveryScheduleScreen';
+import AddressBookScreen from './screens/profile/AddressBookScreen';
+import MerchantAnalyticsScreen from './screens/merchant/MerchantAnalyticsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -665,6 +668,9 @@ function MainStack() {
       <Stack.Screen name="EasyPointsHistory" component={EasyPointsHistoryScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiRating" component={TaxiRatingScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminUserDetail" component={AdminUserDetailScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="DeliverySchedule" component={DeliveryScheduleScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AddressBook" component={AddressBookScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="MerchantAnalytics" component={MerchantAnalyticsScreen} options={{ headerShown: false }} />
 
       {/* Chat */}
       <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
