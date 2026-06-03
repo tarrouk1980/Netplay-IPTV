@@ -470,6 +470,9 @@ import DriverWithdrawScreen from './screens/driver/DriverWithdrawScreen';
 import MerchantPayoutsScreen from './screens/merchant/MerchantPayoutsScreen';
 import EmergencyContactScreen from './screens/shared/EmergencyContactScreen';
 import AdminLiveStatsScreen from './screens/admin/AdminLiveStatsScreen';
+import TaxiActiveRideV2Screen from './screens/taxi/TaxiActiveRideV2Screen';
+import ReferralDashboardScreen from './screens/loyalty/ReferralDashboardScreen';
+import AdminSupportTicketsDetailScreen from './screens/admin/AdminSupportTicketsDetailScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -693,6 +696,9 @@ function MainStack() {
       <Stack.Screen name="MerchantPayouts" component={MerchantPayoutsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="EmergencyContact" component={EmergencyContactScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminLiveStats" component={AdminLiveStatsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="TaxiActiveRideV2" component={TaxiActiveRideV2Screen} options={{ headerShown: false }} />
+      <Stack.Screen name="ReferralDashboard" component={ReferralDashboardScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminSupportTicketsDetail" component={AdminSupportTicketsDetailScreen} options={{ headerShown: false }} />
 
       {/* Chat */}
       <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
