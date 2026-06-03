@@ -65,7 +65,7 @@ export default function TaxiReceiptScreen({ navigation, route }) {
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
 
         <View style={s.brandCard}>
-          <Text style={s.brandName}>Easy<Text style={{ color: COLORS.orange }}>Way</Text></Text>
+          <Text style={s.brandName}>EASY<Text style={{ color: '#D32F2F' }}>WAY</Text></Text>
           <Text style={s.brandSub}>Reçu de course taxi</Text>
           <Text style={s.rideId}>{receipt.id}</Text>
           <Text style={s.rideDate}>{dateStr} à {timeStr}</Text>

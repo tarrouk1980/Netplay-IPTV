@@ -71,8 +71,8 @@ function buildInvoiceHtml(order, user, svcCfg) {
 <style>
   body { font-family: Arial, sans-serif; margin: 40px; color: #1A1A2E; }
   .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
-  .logo { font-size: 28px; font-weight: 900; color: #F5A623; }
-  .logo span { color: #1A1A2E; }
+  .logo { font-size: 28px; font-weight: 900; color: #FFFFFF; }
+  .logo span { color: #D32F2F; }
   .inv-num { font-size: 14px; color: #666; margin-top: 4px; }
   .badge { display: inline-block; background: ${svcCfg.color}22; color: ${svcCfg.color}; border: 1px solid ${svcCfg.color}; border-radius: 20px; padding: 4px 14px; font-size: 13px; font-weight: 700; }
   .section { margin: 20px 0; }
@@ -210,7 +210,7 @@ export default function InvoiceScreen({ route, navigation }) {
         <View style={styles.invCard}>
           <View style={styles.invCardTop}>
             <View>
-              <Text style={styles.logoText}><Text style={{ color: COLORS.accent }}>EASY</Text>WAY</Text>
+              <Text style={styles.logoText}>EASY<Text style={{ color: '#D32F2F' }}>WAY</Text></Text>
               <Text style={styles.invNum}>{invNum}</Text>
             </View>
             <View style={styles.paidStamp}>

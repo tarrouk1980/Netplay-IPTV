@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: COLORS.border,
   },
   previewHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-  previewApp: { color: COLORS.accent, fontSize: 11, fontWeight: '700' },
+  previewApp: { color: COLORS.white, fontSize: 11, fontWeight: '700' },
   previewTime: { color: COLORS.muted, fontSize: 11 },
   previewTitle: { color: COLORS.white, fontSize: 14, fontWeight: '700', marginBottom: 4 },
   previewBody: { color: COLORS.muted, fontSize: 13, lineHeight: 18 },

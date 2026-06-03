@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import useReferralStore from '../../store/referralStore';
+import EasywayLogo from '../../components/EasywayLogo';
 
 const COLORS = {
   background: '#0A0A0F',
@@ -52,10 +53,8 @@ export default function ShareAppScreen({ navigation }) {
 
         {/* Logo placeholder */}
         <View style={styles.logoContainer}>
-          <View style={styles.logo}>
-            <Text style={styles.logoText}>E</Text>
-          </View>
-          <Text style={styles.appName}>EASYWAY</Text>
+          <EasywayLogo size={90} showTagline={false} />
+          <Text style={styles.appName}>EASY<Text style={{ color: '#D32F2F' }}>WAY</Text></Text>
           <Text style={styles.tagline}>L'app tunisienne tout-en-un</Text>
           <Text style={styles.taglineSub}>Taxi • Livraison • SOS • Courses</Text>
         </View>
