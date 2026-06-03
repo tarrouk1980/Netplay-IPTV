@@ -484,6 +484,9 @@ import AdminRefundDetailScreen from './screens/admin/AdminRefundDetailScreen';
 import BiometricSetupScreen from './screens/profile/BiometricSetupScreen';
 import TaxiSplitFareScreen from './screens/taxi/TaxiSplitFareScreen';
 import AdminGeoZonesScreen from './screens/admin/AdminGeoZonesScreen';
+import LivreurNavigationScreen from './screens/delivery/LivreurNavigationScreen';
+import TwoFactorAuthScreen from './screens/profile/TwoFactorAuthScreen';
+import AdminPushCampaignScreen from './screens/admin/AdminPushCampaignScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -721,6 +724,9 @@ function MainStack() {
       <Stack.Screen name="BiometricSetup" component={BiometricSetupScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiSplitFare" component={TaxiSplitFareScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminGeoZones" component={AdminGeoZonesScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="LivreurNavigation" component={LivreurNavigationScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="TwoFactorAuth" component={TwoFactorAuthScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminPushCampaign" component={AdminPushCampaignScreen} options={{ headerShown: false }} />
 
       {/* Chat */}
       <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
