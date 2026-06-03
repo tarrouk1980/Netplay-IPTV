@@ -441,6 +441,9 @@ import EasyCommunityScreen from './screens/community/EasyCommunityScreen';
 import EarningsDashboardScreen from './screens/driver/EarningsDashboardScreen';
 import SOSHistoryScreen from './screens/sos/SOSHistoryScreen';
 import ReviewsScreen from './screens/shared/ReviewsScreen';
+import DriverChecklistScreen from './screens/taxi/DriverChecklistScreen';
+import GroceryReorderScreen from './screens/grocery/GroceryReorderScreen';
+import DisputeScreen from './screens/shared/DisputeScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -635,6 +638,9 @@ function MainStack() {
       <Stack.Screen name="EarningsDashboard" component={EarningsDashboardScreen} options={{ headerShown: false }} />
       <Stack.Screen name="SOSHistory" component={SOSHistoryScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Reviews" component={ReviewsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="DriverChecklist" component={DriverChecklistScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="GroceryReorder" component={GroceryReorderScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Dispute" component={DisputeScreen} options={{ headerShown: false }} />
 
       {/* Chat */}
       <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
