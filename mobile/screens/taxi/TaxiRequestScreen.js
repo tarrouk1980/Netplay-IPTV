@@ -37,7 +37,7 @@ const COLORS = {
 
 const TAXI_LABELS = {
   NORMAL: { svgKey: 'EASYTAXY', label: 'EasyTaxy', color: '#F5A623' },
-  EASYLADY: { svgKey: 'EASYLADY', label: 'EasyLady', color: '#E91E8C' },
+  EASYLADY: { svgKey: 'EASYLADY', label: 'Easy For Lady', color: '#E91E8C' },
   EASYACCESS: { svgKey: 'EASYACCESS', label: 'EasyAccess', color: '#2196F3' },
 };
 

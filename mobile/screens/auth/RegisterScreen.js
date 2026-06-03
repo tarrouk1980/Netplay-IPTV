@@ -981,7 +981,7 @@ export default function RegisterScreen({ navigation }) {
                   {isEasyLady && <View style={styles.radioDot} />}
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.radioLabel}>👩 Rejoindre le programme EasyLady</Text>
+                  <Text style={styles.radioLabel}>👩 Rejoindre le programme Easy For Lady</Text>
                   <Text style={{ color: COLORS.textMuted, fontSize: 11, marginTop: 2 }}>
                     Vous serez visible pour les clientes qui préfèrent une conductrice. Vous restez libre d'accepter tous les passagers.
                   </Text>
@@ -990,7 +990,7 @@ export default function RegisterScreen({ navigation }) {
             )}
             {isEasyLady && (
               <View style={styles.easyLadyBadge}>
-                <Text style={styles.easyLadyText}>✅ Programme EasyLady activé — les clientes qui préfèrent une conductrice pourront vous trouver.</Text>
+                <Text style={styles.easyLadyText}>✅ Programme Easy For Lady activé — les clientes qui préfèrent une conductrice pourront vous trouver.</Text>
               </View>
             )}
           </View>

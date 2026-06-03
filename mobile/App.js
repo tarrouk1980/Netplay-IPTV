@@ -438,6 +438,9 @@ import TaxiLiveTrackingScreen from './screens/taxi/TaxiLiveTrackingScreen';
 import FlashSaleScreen from './screens/promo/FlashSaleScreen';
 import LiveTrafficScreen from './screens/traffic/LiveTrafficScreen';
 import EasyCommunityScreen from './screens/community/EasyCommunityScreen';
+import EarningsDashboardScreen from './screens/driver/EarningsDashboardScreen';
+import SOSHistoryScreen from './screens/sos/SOSHistoryScreen';
+import ReviewsScreen from './screens/shared/ReviewsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -629,6 +632,9 @@ function MainStack() {
       <Stack.Screen name="FlashSale" component={FlashSaleScreen} options={{ headerShown: false }} />
       <Stack.Screen name="LiveTraffic" component={LiveTrafficScreen} options={{ headerShown: false }} />
       <Stack.Screen name="EasyCommunity" component={EasyCommunityScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="EarningsDashboard" component={EarningsDashboardScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="SOSHistory" component={SOSHistoryScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Reviews" component={ReviewsScreen} options={{ headerShown: false }} />
 
       {/* Chat */}
       <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />

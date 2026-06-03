@@ -32,7 +32,7 @@ const TAXI_TYPES = [
   {
     key: 'EASYLADY',
     iconService: 'EASYLADY',
-    title: 'EasyLady',
+    title: 'Easy For Lady',
     subtitle: 'Conduit par une femme',
     color: COLORS.taxiLady,
   },

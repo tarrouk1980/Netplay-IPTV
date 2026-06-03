@@ -14,7 +14,7 @@ const COLORS = {
 };
 
 const FEATURES = [
-  { emoji: '👩‍✈️', title: 'Conductrices certifiées', desc: 'Toutes nos conductrices EasyLady sont vérifiées, formées et notées par nos clientes.' },
+  { emoji: '👩‍✈️', title: 'Conductrices certifiées', desc: 'Toutes nos conductrices Easy For Lady sont vérifiées, formées et notées par nos clientes.' },
   { emoji: '🔒', title: 'Trajet 100% sécurisé', desc: 'Partage de trajet en temps réel avec un proche. Bouton SOS intégré.' },
   { emoji: '📱', title: 'Sans contact masculin', desc: 'De la commande à la destination — chauffeure, service client, tout au féminin.' },
   { emoji: '⭐', title: 'Noté 4.9/5', desc: 'Le service le mieux noté de la plateforme EASYWAY.' },
@@ -31,7 +31,7 @@ const TARIFS = [
   { label: 'Course standard', price: '3.50 TND', detail: '+ 1.50 TND/km' },
   { label: 'Course nuit (22h–6h)', price: '5.00 TND', detail: '+ 2.00 TND/km' },
   { label: 'Aéroport', price: 'Forfait 35 TND', detail: 'Tunis-Carthage inclus' },
-  { label: 'EasyLady VIP', price: '8.00 TND', detail: 'Climatisation + eau offerte' },
+  { label: 'Easy For Lady VIP', price: '8.00 TND', detail: 'Climatisation + eau offerte' },
 ];
 
 export default function EasyLadyScreen({ navigation }) {
@@ -47,7 +47,7 @@ export default function EasyLadyScreen({ navigation }) {
           <Text style={{ color: COLORS.accent, fontSize: 24 }}>‹</Text>
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>👩‍✈️ EasyLady</Text>
+          <Text style={styles.headerTitle}>👩‍✈️ Easy For Lady</Text>
           <Text style={styles.headerSub}>Service taxi exclusivement féminin</Text>
         </View>
         <View style={{ width: 24 }} />
@@ -146,7 +146,7 @@ export default function EasyLadyScreen({ navigation }) {
             ))}
             <View style={styles.promoBox}>
               <Text style={styles.promoText}>🎁 Code promo premier trajet : <Text style={{ color: COLORS.pink, fontWeight: '700' }}>LADY10</Text></Text>
-              <Text style={styles.promoSub}>-10% sur votre première course EasyLady</Text>
+              <Text style={styles.promoSub}>-10% sur votre première course Easy For Lady</Text>
             </View>
           </View>
         )}
@@ -158,7 +158,7 @@ export default function EasyLadyScreen({ navigation }) {
           style={styles.bookBtn}
           onPress={() => navigation.navigate('TaxiRequest', { taxiType: 'EASYLADY' })}
         >
-          <Text style={styles.bookBtnText}>👩‍✈️ Réserver EasyLady</Text>
+          <Text style={styles.bookBtnText}>👩‍✈️ Réserver Easy For Lady</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

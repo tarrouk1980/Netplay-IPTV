@@ -48,7 +48,7 @@ const DEFAULT_PROMOS = [
   { id: 'p1', label: '🔥 -20% sur EasyTaxy', sub: 'Ce week-end seulement', color: '#F5A623', imageUrl: null, ctaUrl: null },
   { id: 'p2', label: '🚀 Livraison gratuite', sub: 'Commandes > 30 TND', color: '#27AE60', imageUrl: null, ctaUrl: null },
   { id: 'p3', label: '💎 Pass VIP -50%', sub: 'Offre limitée', color: '#D32F2F', imageUrl: null, ctaUrl: null },
-  { id: 'p4', label: '🛵 EasyLady disponible', sub: 'Conductrices certifiées', color: '#E91E8C', imageUrl: null, ctaUrl: null },
+  { id: 'p4', label: '🛵 Easy For Lady disponible', sub: 'Conductrices certifiées', color: '#E91E8C', imageUrl: null, ctaUrl: null },
   { id: 'p5', label: '🚑 SOS 24h/24', sub: 'Dépannage rapide en Tunisie', color: '#E74C3C', imageUrl: null, ctaUrl: null },
 ];
 

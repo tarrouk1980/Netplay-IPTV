@@ -1,427 +1,182 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  StatusBar, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COLORS = {
-  bg: '#0A0A0F',
-  surface: '#1C1C28',
-  primary: '#F5A623',
-  text: '#FFFFFF',
-  muted: '#8E8E9A',
-  border: '#2C2C3A',
-  green: '#22C55E',
-  red: '#EF4444',
-  blue: '#3B82F6',
+  bg: '#0A0A0F', surface: '#1C1C28',
+  accent: '#F5A623', white: '#FFFFFF', muted: '#8A8A9A',
+  border: '#2A2A3A', green: '#27AE60', red: '#D32F2F', orange: '#E67E22',
 };
 
-const MOCK_INTERVENTIONS = [
-  {
-    id: 'INT001',
-    date: '02/06/2026',
-    heure: '09:10',
-    typeEmoji: '🔋',
-    typeLabel: 'Batterie',
-    client: "M. ****",
-    adresse: "Avenue Habib Bourguiba, Tunis",
-    montant: 45.00,
-    duree: '30 min',
-    statut: 'Terminée',
-  },
-  {
-    id: 'INT002',
-    date: '01/06/2026',
-    heure: '14:45',
-    typeEmoji: '🛞',
-    typeLabel: 'Pneu crevé',
-    client: "M. ****",
-    adresse: "Route de La Marsa, Carthage",
-    montant: 35.00,
-    duree: '25 min',
-    statut: 'Terminée',
-  },
-  {
-    id: 'INT003',
-    date: '01/06/2026',
-    heure: '18:30',
-    typeEmoji: '⚙️',
-    typeLabel: 'Panne moteur',
-    client: "M. ****",
-    adresse: "Autoroute A1, Km 24",
-    montant: 80.00,
-    duree: '55 min',
-    statut: 'En cours',
-  },
-  {
-    id: 'INT004',
-    date: '31/05/2026',
-    heure: '11:00',
-    typeEmoji: '🚨',
-    typeLabel: 'Accident',
-    client: "M. ****",
-    adresse: "Carrefour Bardo, Tunis",
-    montant: 0,
-    duree: '0 min',
-    statut: 'Annulée',
-  },
-  {
-    id: 'INT005',
-    date: '30/05/2026',
-    heure: '07:20',
-    typeEmoji: '⛽',
-    typeLabel: 'Carburant',
-    client: "M. ****",
-    adresse: "Route Nationale 1, Mégrine",
-    montant: 20.00,
-    duree: '15 min',
-    statut: 'Terminée',
-  },
-  {
-    id: 'INT006',
-    date: '29/05/2026',
-    heure: '16:55',
-    typeEmoji: '🔋',
-    typeLabel: 'Batterie',
-    client: "M. ****",
-    adresse: "Cité El Khadra, Tunis",
-    montant: 45.00,
-    duree: '28 min',
-    statut: 'Terminée',
-  },
-  {
-    id: 'INT007',
-    date: '28/05/2026',
-    heure: '10:30',
-    typeEmoji: '🛞',
-    typeLabel: 'Pneu crevé',
-    client: "M. ****",
-    adresse: "Avenue de la Liberté, Sfax",
-    montant: 35.00,
-    duree: '20 min',
-    statut: 'Terminée',
-  },
-  {
-    id: 'INT008',
-    date: '27/05/2026',
-    heure: '20:15',
-    typeEmoji: '⚙️',
-    typeLabel: 'Panne moteur',
-    client: "M. ****",
-    adresse: "Route de Bizerte, Ariana",
-    montant: 0,
-    duree: '0 min',
-    statut: 'Annulée',
-  },
-  {
-    id: 'INT009',
-    date: '26/05/2026',
-    heure: '13:40',
-    typeEmoji: '🚨',
-    typeLabel: 'Accident',
-    client: "M. ****",
-    adresse: "Boulevard 7 novembre, Sousse",
-    montant: 95.00,
-    duree: '70 min',
-    statut: 'Terminée',
-  },
-  {
-    id: 'INT010',
-    date: '25/05/2026',
-    heure: '08:05',
-    typeEmoji: '⛽',
-    typeLabel: 'Carburant',
-    client: "M. ****",
-    adresse: "Route de Hammamet, Nabeul",
-    montant: 20.00,
-    duree: '12 min',
-    statut: 'Terminée',
-  },
+const STATUS_CONFIG = {
+  done:       { label: 'Terminé',   color: COLORS.green,  icon: '✅' },
+  cancelled:  { label: 'Annulé',    color: COLORS.red,    icon: '❌' },
+  in_progress:{ label: 'En cours',  color: COLORS.orange, icon: '🔧' },
+};
+
+const MOCK_HISTORY = [
+  { id: 'SOS001', type: 'Crevaison', address: 'Autoroute A1, km 32', depanneur: 'Slim D.', amount: 55.0, date: '15/01/2025 09:12', status: 'done', duration: '18 min', rating: 5 },
+  { id: 'SOS002', type: 'Panne moteur', address: 'Av. Mohamed V, Tunis', depanneur: 'Hassen B.', amount: 80.0, date: '10/01/2025 14:35', status: 'done', duration: '25 min', rating: 4 },
+  { id: 'SOS003', type: 'Batterie déchargée', address: 'Menzah 9', depanneur: 'Walid T.', amount: 35.0, date: '28/12/2024 08:02', status: 'done', duration: '12 min', rating: 5 },
+  { id: 'SOS004', type: 'Accident léger', address: 'Bd du 9 Avril', depanneur: '', amount: 0, date: '15/12/2024 18:22', status: 'cancelled', duration: '—', rating: 0 },
+  { id: 'SOS005', type: 'Remorquage', address: 'Ariana Superville', depanneur: 'Nabil K.', amount: 120.0, date: '02/12/2024 11:45', status: 'done', duration: '40 min', rating: 4 },
 ];
 
-const FILTERS = ['Tout', 'En cours', 'Terminées', 'Annulées'];
-
-function getStatusColor(statut) {
-  if (statut === 'En cours') return COLORS.blue;
-  if (statut === 'Terminée') return COLORS.green;
-  if (statut === 'Annulée') return COLORS.red;
-  return COLORS.muted;
+function StarRating({ value }) {
+  return (
+    <View style={{ flexDirection: 'row', gap: 2 }}>
+      {[1, 2, 3, 4, 5].map((s) => (
+        <Text key={s} style={{ fontSize: 12, color: s <= value ? COLORS.accent : COLORS.border }}>★</Text>
+      ))}
+    </View>
+  );
 }
 
 export default function SOSHistoryScreen({ navigation }) {
-  const [activeFilter, setActiveFilter] = useState('Tout');
+  const [history, setHistory] = useState(MOCK_HISTORY);
+  const [loading, setLoading] = useState(false);
+  const [filter, setFilter] = useState('all');
 
-  const filtered = MOCK_INTERVENTIONS.filter((item) => {
-    if (activeFilter === 'Tout') return true;
-    if (activeFilter === 'En cours') return item.statut === 'En cours';
-    if (activeFilter === 'Terminées') return item.statut === 'Terminée';
-    if (activeFilter === 'Annulées') return item.statut === 'Annulée';
-    return true;
-  });
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await api.get('/api/sos/history');
+        if (res.data?.history?.length) setHistory(res.data.history);
+      } catch {} finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
-  const totalEarned = MOCK_INTERVENTIONS.filter((i) => i.statut === 'Terminée').reduce((sum, i) => sum + i.montant, 0);
-
-  const renderItem = ({ item }) => {
-    const color = getStatusColor(item.statut);
-    return (
-      <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <View style={styles.cardLeft}>
-            <Text style={styles.typeEmoji}>{item.typeEmoji}</Text>
-            <View>
-              <Text style={styles.typeLabel}>{item.typeLabel}</Text>
-              <Text style={styles.cardDate}>{item.date} — {item.heure}</Text>
-            </View>
-          </View>
-          <View style={[styles.badge, { backgroundColor: color + '22' }]}>
-            <Text style={[styles.badgeText, { color }]}>{item.statut}</Text>
-          </View>
-        </View>
-        <View style={styles.divider} />
-        <Text style={styles.adresse} numberOfLines={1}>📍 {item.adresse}</Text>
-        <Text style={styles.clientName}>👤 {item.client}</Text>
-        <View style={styles.cardFooter}>
-          <Text style={styles.metaText}>⏱ {item.duree}</Text>
-          <Text style={styles.montant}>{item.montant.toFixed(2)} TND</Text>
-        </View>
-      </View>
-    );
-  };
+  const filtered = filter === 'all' ? history : history.filter((h) => h.status === filter);
+  const totalSpent = history.filter((h) => h.status === 'done').reduce((s, h) => s + h.amount, 0);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={styles.root}>
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
+
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backIcon}>‹</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text style={{ color: COLORS.accent, fontSize: 24 }}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Historique interventions</Text>
-        <View style={styles.backBtn} />
+        <Text style={styles.title}>🛻 Historique SOS</Text>
+        <View style={{ width: 24 }} />
       </View>
 
-      {/* Summary bar */}
-      <View style={styles.summaryBar}>
-        <View style={styles.summaryItem}>
-          <Text style={styles.summaryValue}>{MOCK_INTERVENTIONS.length}</Text>
+      {/* Summary */}
+      <View style={styles.summaryRow}>
+        <View style={styles.summaryBox}>
+          <Text style={styles.summaryValue}>{history.filter((h) => h.status === 'done').length}</Text>
           <Text style={styles.summaryLabel}>Interventions</Text>
         </View>
-        <View style={styles.summaryDivider} />
-        <View style={styles.summaryItem}>
-          <Text style={[styles.summaryValue, { color: COLORS.primary }]}>{totalEarned.toFixed(2)} TND</Text>
-          <Text style={styles.summaryLabel}>Total gagné</Text>
+        <View style={[styles.summaryBox, { borderColor: COLORS.accent }]}>
+          <Text style={[styles.summaryValue, { color: COLORS.accent }]}>{totalSpent.toFixed(3)} TND</Text>
+          <Text style={styles.summaryLabel}>Total dépensé</Text>
         </View>
-        <View style={styles.summaryDivider} />
-        <View style={styles.summaryItem}>
-          <Text style={styles.summaryLabel}>Dépanneur</Text>
-          <Text style={styles.depanneurEmoji}>🛻</Text>
+        <View style={styles.summaryBox}>
+          <Text style={styles.summaryValue}>4.7 ★</Text>
+          <Text style={styles.summaryLabel}>Note moyenne</Text>
         </View>
       </View>
 
-      {/* Filter tabs */}
-      <View style={styles.tabs}>
-        {FILTERS.map((f) => (
+      {/* Filters */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={styles.filterList}>
+        {[{ key: 'all', label: '🔍 Tout' }, { key: 'done', label: '✅ Terminés' }, { key: 'cancelled', label: '❌ Annulés' }].map((f) => (
           <TouchableOpacity
-            key={f}
-            style={[styles.tab, activeFilter === f && styles.tabActive]}
-            onPress={() => setActiveFilter(f)}
+            key={f.key}
+            style={[styles.filterBtn, filter === f.key && styles.filterBtnActive]}
+            onPress={() => setFilter(f.key)}
           >
-            <Text style={[styles.tabText, activeFilter === f && styles.tabTextActive]}>{f}</Text>
+            <Text style={[styles.filterText, filter === f.key && { color: '#000' }]}>{f.label}</Text>
           </TouchableOpacity>
         ))}
-      </View>
+      </ScrollView>
 
-      <FlatList
-        data={filtered}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={styles.list}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <Text style={styles.emptyText}>Aucune intervention trouvée</Text>
-          </View>
-        }
-      />
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list}>
+        {loading && <ActivityIndicator color={COLORS.accent} style={{ marginTop: 20 }} />}
+        {filtered.map((item) => {
+          const cfg = STATUS_CONFIG[item.status] || STATUS_CONFIG.done;
+          return (
+            <View key={item.id} style={[styles.card, { borderLeftColor: cfg.color }]}>
+              <View style={styles.cardTop}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.cardType}>{cfg.icon} {item.type}</Text>
+                  <Text style={styles.cardAddress}>{item.address}</Text>
+                </View>
+                <View style={[styles.statusBadge, { backgroundColor: cfg.color + '22' }]}>
+                  <Text style={[styles.statusText, { color: cfg.color }]}>{cfg.label}</Text>
+                </View>
+              </View>
+
+              <View style={styles.cardMeta}>
+                {item.depanneur ? (
+                  <Text style={styles.metaText}>🔧 {item.depanneur}</Text>
+                ) : null}
+                <Text style={styles.metaText}>⏱ {item.duration}</Text>
+                <Text style={styles.metaText}>📅 {item.date}</Text>
+              </View>
+
+              <View style={styles.cardBottom}>
+                {item.rating > 0 && <StarRating value={item.rating} />}
+                {item.amount > 0 && (
+                  <Text style={styles.cardAmount}>{item.amount.toFixed(3)} TND</Text>
+                )}
+              </View>
+            </View>
+          );
+        })}
+        {filtered.length === 0 && !loading && (
+          <Text style={{ color: COLORS.muted, textAlign: 'center', marginTop: 40 }}>
+            Aucune intervention dans cette catégorie.
+          </Text>
+        )}
+        <View style={{ height: 24 }} />
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.bg,
-  },
+  root: { flex: 1, backgroundColor: COLORS.bg },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 20, paddingVertical: 14,
+    borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
-  backBtn: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
+  title: { color: COLORS.white, fontSize: 17, fontWeight: '700' },
+  summaryRow: { flexDirection: 'row', padding: 12, gap: 10 },
+  summaryBox: {
+    flex: 1, backgroundColor: COLORS.surface, borderRadius: 12,
+    padding: 14, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border,
   },
-  backIcon: {
-    color: COLORS.text,
-    fontSize: 28,
-    lineHeight: 32,
+  summaryValue: { color: COLORS.white, fontSize: 20, fontWeight: '900' },
+  summaryLabel: { color: COLORS.muted, fontSize: 10, marginTop: 4, textAlign: 'center' },
+  filterScroll: { maxHeight: 46 },
+  filterList: { paddingHorizontal: 12, gap: 8, paddingVertical: 6 },
+  filterBtn: {
+    paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20,
+    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
   },
-  title: {
-    color: COLORS.text,
-    fontSize: 17,
-    fontWeight: '700',
-  },
-  summaryBar: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.surface,
-    marginHorizontal: 16,
-    marginTop: 12,
-    borderRadius: 12,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    alignItems: 'center',
-    justifyContent: 'space-around',
-  },
-  summaryItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  summaryValue: {
-    color: COLORS.text,
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  summaryLabel: {
-    color: COLORS.muted,
-    fontSize: 11,
-    marginTop: 2,
-  },
-  summaryDivider: {
-    width: 1,
-    height: 32,
-    backgroundColor: COLORS.border,
-  },
-  depanneurEmoji: {
-    fontSize: 22,
-    marginTop: 2,
-  },
-  tabs: {
-    flexDirection: 'row',
-    marginHorizontal: 16,
-    marginVertical: 10,
-    backgroundColor: COLORS.surface,
-    borderRadius: 10,
-    padding: 4,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 7,
-    alignItems: 'center',
-    borderRadius: 8,
-  },
-  tabActive: {
-    backgroundColor: COLORS.primary,
-  },
-  tabText: {
-    color: COLORS.muted,
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  tabTextActive: {
-    color: '#000',
-  },
-  list: {
-    paddingHorizontal: 16,
-    paddingBottom: 24,
-  },
+  filterBtnActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
+  filterText: { color: COLORS.white, fontSize: 12, fontWeight: '600' },
+  list: { paddingHorizontal: 12, paddingTop: 8 },
   card: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface, borderRadius: 14,
+    borderWidth: 1, borderColor: COLORS.border,
+    borderLeftWidth: 4, padding: 14, marginBottom: 10,
   },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  cardLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  typeEmoji: {
-    fontSize: 26,
-  },
-  typeLabel: {
-    color: COLORS.text,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  cardDate: {
-    color: COLORS.muted,
-    fontSize: 11,
-    marginTop: 2,
-  },
-  badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: COLORS.border,
-    marginBottom: 10,
-  },
-  adresse: {
-    color: COLORS.muted,
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  clientName: {
-    color: COLORS.muted,
-    fontSize: 12,
-    marginBottom: 8,
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-  },
-  metaText: {
-    color: COLORS.muted,
-    fontSize: 12,
-  },
-  montant: {
-    color: COLORS.primary,
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  empty: {
-    alignItems: 'center',
-    paddingVertical: 48,
-  },
-  emptyText: {
-    color: COLORS.muted,
-    fontSize: 15,
-  },
+  cardTop: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 },
+  cardType: { color: COLORS.white, fontSize: 15, fontWeight: '700' },
+  cardAddress: { color: COLORS.muted, fontSize: 12, marginTop: 2 },
+  statusBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
+  statusText: { fontSize: 11, fontWeight: '700' },
+  cardMeta: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 8 },
+  metaText: { color: COLORS.muted, fontSize: 12 },
+  cardBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  cardAmount: { color: COLORS.accent, fontSize: 16, fontWeight: '800' },
 });
