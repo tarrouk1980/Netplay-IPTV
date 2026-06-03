@@ -72,8 +72,8 @@ router.post(
 
       const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
 
-      // Tous les prestataires passent par la validation KYC
-      const kycStatus = ['CHAUFFEUR', 'LIVREUR', 'DEPANNEUR', 'MARCHAND'].includes(role) ? 'PENDING' : 'NOT_REQUIRED';
+      // En phase de test: auto-approuver les prestataires (KYC manuel activé en production)
+      const kycStatus = ['CHAUFFEUR', 'LIVREUR', 'DEPANNEUR', 'MARCHAND'].includes(role) ? 'APPROVED' : 'NOT_REQUIRED';
 
       // Generate unique referral code at registration
       const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
