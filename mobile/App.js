@@ -518,6 +518,11 @@ import GroceryBrowseScreen from './screens/grocery/GroceryBrowseScreen';
 import ProviderEarningsDashboard from './screens/provider/ProviderEarningsDashboard';
 import AdminMerchantDetailScreen from './screens/admin/AdminMerchantDetailScreen';
 
+// Batch 96
+import PaymentHistoryScreen from './screens/payment/PaymentHistoryScreen';
+import SOSDepanneurProfileScreen from './screens/sos/SOSDepanneurProfileScreen';
+import AdminDeliveryStatsScreen from './screens/admin/AdminDeliveryStatsScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -775,6 +780,9 @@ function MainStack() {
       <Stack.Screen name="GroceryBrowse" component={GroceryBrowseScreen} options={{ headerShown: false }} />
       <Stack.Screen name="EarningsDashboard" component={ProviderEarningsDashboard} options={{ headerShown: false }} />
       <Stack.Screen name="AdminMerchantDetail" component={AdminMerchantDetailScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="PaymentHistory" component={PaymentHistoryScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="SOSDepanneurProfile" component={SOSDepanneurProfileScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminDeliveryStats" component={AdminDeliveryStatsScreen} options={{ headerShown: false }} />
 
       {/* Chat */}
       <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
