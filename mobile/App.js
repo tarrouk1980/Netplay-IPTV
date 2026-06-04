@@ -464,7 +464,6 @@ import AdminSupportTicketsDetailScreen from './screens/admin/AdminSupportTickets
 import NotificationCenterV2Screen from './screens/notifications/NotificationCenterV2Screen';
 import WalletTransferScreen from './screens/wallet/WalletTransferScreen';
 import DriverNavigationLiveScreen from './screens/driver/DriverNavigationLiveScreen';
-import SOSDepanneurMapScreen from './screens/sos/SOSDepanneurMapScreen';
 import AdminDriverDetailScreen from './screens/admin/AdminDriverDetailScreen';
 import MerchantSettingsScreen from './screens/merchant/MerchantSettingsScreen';
 import GroceryWishlistScreen from './screens/grocery/GroceryWishlistScreen';
@@ -520,6 +519,11 @@ import AdminTaxiStatsScreen from './screens/admin/AdminTaxiStatsScreen';
 import PanicButtonScreen from './screens/emergency/PanicButtonScreen';
 import AdminSOSStatsScreen from './screens/admin/AdminSOSStatsScreen';
 import MerchantReviewsScreen from './screens/merchant/MerchantReviewsScreen';
+
+// Batch 99
+import SOSDepanneurMapScreen from './screens/sos/SOSDepanneurMapScreen';
+import MerchantMenuEditorScreen from './screens/merchant/MerchantMenuEditorScreen';
+import AdminPushNotifScreen from './screens/admin/AdminPushNotifScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -749,7 +753,6 @@ function MainStack() {
       <Stack.Screen name="NotificationCenterV2" component={NotificationCenterV2Screen} options={{ headerShown: false }} />
       <Stack.Screen name="WalletTransfer" component={WalletTransferScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DriverNavigationLive" component={DriverNavigationLiveScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="SOSDepanneurMap" component={SOSDepanneurMapScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminDriverDetail" component={AdminDriverDetailScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MerchantSettings" component={MerchantSettingsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="GroceryWishlist" component={GroceryWishlistScreen} options={{ headerShown: false }} />
@@ -786,6 +789,9 @@ function MainStack() {
       <Stack.Screen name="PanicButton" component={PanicButtonScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminSOSStats" component={AdminSOSStatsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MerchantReviews" component={MerchantReviewsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="SOSDepanneurMap" component={SOSDepanneurMapScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="MerchantMenuEditor" component={MerchantMenuEditorScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminPushNotif" component={AdminPushNotifScreen} options={{ headerShown: false }} />
 
       {/* Chat */}
       <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
