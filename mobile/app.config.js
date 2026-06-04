@@ -17,6 +17,9 @@ module.exports = {
       },
       package: 'com.easyway.app',
       scheme: 'easyway',
+      compileSdkVersion: 34,
+      targetSdkVersion: 34,
+      minSdkVersion: 24,
       permissions: [
         'ACCESS_FINE_LOCATION',
         'ACCESS_COARSE_LOCATION',
