@@ -4,7 +4,7 @@ import {
   TextInput, ScrollView, ActivityIndicator, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as Location from 'expo-location';
+import { getCurrentLocationWithAddress } from '../../utils/locationUtils';
 import api from '../../services/api';
 
 const COLORS = {
@@ -37,16 +37,13 @@ export default function ClientAddressMapScreen({ navigation }) {
 
   const detectLocation = async () => {
     setDetecting(true);
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') { setDetecting(false); return; }
-      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      const [geo] = await Location.reverseGeocodeAsync({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
-      const addr = geo ? `${geo.street || ''} ${geo.city || ''}`.trim() : `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
-      setForm(f => ({ ...f, address: addr, lat: pos.coords.latitude, lng: pos.coords.longitude }));
-    } catch {
+    const result = await getCurrentLocationWithAddress();
+    if (result) {
+      setForm(f => ({ ...f, address: result.address, lat: result.coords.lat, lng: result.coords.lng }));
+    } else {
       Alert.alert('Erreur', 'Impossible de détecter la position.');
-    } finally { setDetecting(false); }
+    }
+    setDetecting(false);
   };
 
   const handleSave = async () => {

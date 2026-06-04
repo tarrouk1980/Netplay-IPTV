@@ -4,8 +4,8 @@ import {
   StatusBar, ActivityIndicator, Alert, TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as Location from 'expo-location';
 import api from '../../services/api';
+import { getCurrentLocationWithAddress } from '../../utils/locationUtils';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', border: '#2C2C3E',
@@ -37,14 +37,12 @@ export default function SOSRequestScreen({ navigation }) {
 
   const getLocation = async () => {
     setLocating(true);
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') { setLocating(false); return; }
-      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-      setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-      const [geo] = await Location.reverseGeocodeAsync({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
-      if (geo) setAddress(`${geo.street || ''} ${geo.city || ''}`.trim());
-    } catch {} finally { setLocating(false); }
+    const result = await getCurrentLocationWithAddress();
+    if (result) {
+      setLocation(result.coords);
+      setAddress(result.address);
+    }
+    setLocating(false);
   };
 
   const handleSubmit = async () => {

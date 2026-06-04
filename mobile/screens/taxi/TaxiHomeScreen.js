@@ -4,7 +4,7 @@ import {
   TextInput, ScrollView, ActivityIndicator, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as Location from 'expo-location';
+import { getCurrentLocationWithAddress } from '../../utils/locationUtils';
 // useTaxiStore no longer needed here — ordering flow handled by TaxiRequestScreen
 
 const COLORS = {
@@ -45,14 +45,12 @@ export default function TaxiHomeScreen({ navigation }) {
 
   const detectLocation = async () => {
     setLocating(true);
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') { setLocating(false); return; }
-      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      setOrigin({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-      const [geo] = await Location.reverseGeocodeAsync({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
-      if (geo) setOriginText(`${geo.street || ''} ${geo.city || ''}`.trim());
-    } catch {} finally { setLocating(false); }
+    const result = await getCurrentLocationWithAddress();
+    if (result) {
+      setOrigin(result.coords);
+      setOriginText(result.address);
+    }
+    setLocating(false);
   };
 
   const estimatedFare = (multiplier) => {

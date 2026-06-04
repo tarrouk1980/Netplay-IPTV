@@ -13,7 +13,7 @@ import {
   Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as Location from 'expo-location';
+import { getCurrentLocationWithAddress, geocodeAutocomplete } from '../../utils/locationUtils';
 import useTaxiStore from '../../store/taxiStore';
 import FareEstimateCard from '../../components/FareEstimateCard';
 import PriceEstimate from '../../components/PriceEstimate';
@@ -88,47 +88,14 @@ export default function TaxiRequestScreen({ route, navigation }) {
 
   const detectLocation = async () => {
     setLoadingLocation(true);
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setOriginAddress('Activez la localisation');
-        setLoadingLocation(false);
-        return;
-      }
-      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      const lat = loc.coords.latitude;
-      const lng = loc.coords.longitude;
-      setOrigin({ lat, lng });
-
-      try {
-        const geo = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng });
-        if (geo && geo.length > 0) {
-          const g = geo[0];
-          const parts = [g.street, g.district, g.city].filter(Boolean);
-          if (parts.length > 0) { setOriginAddress(parts.join(', ')); return; }
-        }
-      } catch {}
-
-      try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=fr`,
-          { headers: { 'User-Agent': 'EASYWAY-App/1.0' } }
-        );
-        const data = await res.json();
-        if (data?.display_name) {
-          const addr = data.address || {};
-          const parts = [addr.road, addr.suburb, addr.city || addr.town || addr.village].filter(Boolean);
-          setOriginAddress(parts.join(', ') || data.display_name.split(',').slice(0, 2).join(','));
-          return;
-        }
-      } catch {}
-
-      setOriginAddress(`${lat.toFixed(5)}° N, ${lng.toFixed(5)}° E`);
-    } catch {
+    const result = await getCurrentLocationWithAddress();
+    if (result) {
+      setOrigin(result.coords);
+      setOriginAddress(result.address);
+    } else {
       setOriginAddress('Activez la localisation et réessayez');
-    } finally {
-      setLoadingLocation(false);
     }
+    setLoadingLocation(false);
   };
 
   // Heatmap pulse animation
@@ -189,32 +156,18 @@ export default function TaxiRequestScreen({ route, navigation }) {
     }
   }, [origin]);
 
-  const MAPBOX_TOKEN = 'pk.eyJ1IjoiZWFzeXdheXRhcmVrIiwiYSI6ImNtcHNuaGJ1ODBoc2Qyc3FxenU0aGFvd3QifQ.K-z5zbFtY8v5lyMUn7TryQ';
-
   const handleDestinationChange = (text) => {
     setDestination(text);
     setSuggestions([]);
     setShowSuggestions(false);
     if (suggestTimeout.current) clearTimeout(suggestTimeout.current);
-    if (text.length < 3) return;
+    if (text.length < 2) return;
     suggestTimeout.current = setTimeout(async () => {
       setLoadingSuggestions(true);
-      try {
-        const proximity = origin ? `&proximity=${origin.lng},${origin.lat}` : '';
-        const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(text)}.json?country=TN&language=fr&limit=5&access_token=${MAPBOX_TOKEN}${proximity}`;
-        const res = await fetch(url);
-        const data = await res.json();
-        if (data.features && data.features.length > 0) {
-          setSuggestions(data.features.map(f => ({
-            id: f.id,
-            name: f.text,
-            fullName: f.place_name,
-            coords: { lng: f.center[0], lat: f.center[1] },
-          })));
-          setShowSuggestions(true);
-        }
-      } catch {}
-      finally { setLoadingSuggestions(false); }
+      const results = await geocodeAutocomplete(text, origin);
+      setSuggestions(results);
+      setShowSuggestions(results.length > 0);
+      setLoadingSuggestions(false);
     }, 400);
   };
 

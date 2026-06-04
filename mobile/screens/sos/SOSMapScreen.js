@@ -4,8 +4,8 @@ import {
   ActivityIndicator, Alert, Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as Location from 'expo-location';
 import api from '../../services/api';
+import { getCurrentLocationWithAddress } from '../../utils/locationUtils';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', border: '#2C2C3E',
@@ -55,20 +55,13 @@ export default function SOSMapScreen({ navigation, route }) {
 
   const handleLocate = async () => {
     setStep('locating');
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission refusée', 'Activez la géolocalisation pour continuer.');
-        setStep('type');
-        return;
-      }
-      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-      setStep('searching');
-    } catch {
+    const result = await getCurrentLocationWithAddress();
+    if (result) {
+      setLocation(result.coords);
+    } else {
       setLocation({ lat: 36.8065, lng: 10.1815 });
-      setStep('searching');
     }
+    setStep('searching');
   };
 
   const handleRequest = async (depanneur) => {
