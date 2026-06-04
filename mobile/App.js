@@ -341,6 +341,9 @@ import ClientSupportScreen from './screens/client/ClientSupportScreen';
 import ClientWalletDetailScreen from './screens/client/ClientWalletScreen';
 import MerchantPromotionsScreen from './screens/merchant/MerchantPromotionsScreen';
 import LivreurBonusScreen from './screens/delivery/LivreurBonusScreen';
+import TaxiScheduleBookingScreen from './screens/taxi/TaxiScheduleBookingScreen';
+import GroceryStoreProfileScreen from './screens/grocery/GroceryStoreProfileScreen';
+import ProviderGoalsScreen from './screens/provider/ProviderGoalsScreen';
 
 // Batch 32
 import ClientOrdersAllScreen from './screens/profile/ClientOrdersAllScreen';
@@ -984,6 +987,9 @@ function MainStack() {
       <Stack.Screen name="ClientWalletDetail" component={ClientWalletDetailScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MerchantPromotions" component={MerchantPromotionsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="LivreurBonus" component={LivreurBonusScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="TaxiScheduleBooking" component={TaxiScheduleBookingScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="GroceryStoreProfile" component={GroceryStoreProfileScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ProviderGoals" component={ProviderGoalsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientOrdersAll" component={ClientOrdersAllScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminCouponList" component={AdminCouponListScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DeliveryRating" component={DeliveryRatingScreen} options={{ headerShown: false, gestureEnabled: false }} />
