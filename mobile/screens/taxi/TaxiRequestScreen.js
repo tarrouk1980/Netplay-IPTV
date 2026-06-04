@@ -58,6 +58,7 @@ export default function TaxiRequestScreen({ route, navigation }) {
   const [showPriceEstimate, setShowPriceEstimate] = useState(false);
   const [estimatedDistanceKm, setEstimatedDistanceKm] = useState(5);
   const [waypoints, setWaypoints] = useState([]);
+  const [destinationCoords, setDestinationCoords] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
@@ -219,6 +220,7 @@ export default function TaxiRequestScreen({ route, navigation }) {
 
   const handleSelectSuggestion = (suggestion) => {
     setDestination(suggestion.fullName);
+    setDestinationCoords(suggestion.coords);
     setSuggestions([]);
     setShowSuggestions(false);
   };
@@ -274,9 +276,16 @@ export default function TaxiRequestScreen({ route, navigation }) {
         >
           <MapboxWebView
             style={{ height: 220 }}
-            centerCoordinate={origin ? [origin.lng, origin.lat] : [10.1815, 36.8065]}
-            zoom={13}
-            markers={origin ? [{ coordinates: [origin.lng, origin.lat], color: '#F5A623', label: '📍' }] : []}
+            centerCoordinate={
+              destinationCoords && origin
+                ? [(origin.lng + destinationCoords.lng) / 2, (origin.lat + destinationCoords.lat) / 2]
+                : origin ? [origin.lng, origin.lat] : [10.1815, 36.8065]
+            }
+            zoom={destinationCoords ? 11 : 13}
+            markers={[
+              ...(origin ? [{ coordinates: [origin.lng, origin.lat], color: '#F5A623', label: '📍' }] : []),
+              ...(destinationCoords ? [{ coordinates: [destinationCoords.lng, destinationCoords.lat], color: '#E74C3C', label: '🏁' }] : []),
+            ]}
             heatmapZones={demandZones.map((z, i) => ({
               lat: origin ? origin.lat + (i - 1) * 0.025 : 36.8065 + (i - 1) * 0.025,
               lng: origin ? origin.lng + (i - 1) * 0.03 : 10.1815 + (i - 1) * 0.03,

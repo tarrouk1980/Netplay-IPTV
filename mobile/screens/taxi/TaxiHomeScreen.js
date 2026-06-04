@@ -181,6 +181,29 @@ export default function TaxiHomeScreen({ navigation }) {
           ))}
         </View>
 
+        {/* Services spéciaux */}
+        <Text style={styles.sectionTitle}>SERVICES SPÉCIAUX</Text>
+        <View style={styles.specialRow}>
+          <TouchableOpacity
+            style={[styles.specialCard, { borderColor: '#E91E8C40' }]}
+            onPress={() => navigation.navigate('EasyLady')}
+            activeOpacity={0.85}
+          >
+            <Text style={{ fontSize: 28 }}>👩</Text>
+            <Text style={[styles.specialLabel, { color: '#E91E8C' }]}>Easy For Lady</Text>
+            <Text style={styles.specialDesc}>Chauffeures femmes uniquement</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.specialCard, { borderColor: '#2196F340' }]}
+            onPress={() => navigation.navigate('EasyAccess')}
+            activeOpacity={0.85}
+          >
+            <Text style={{ fontSize: 28 }}>♿</Text>
+            <Text style={[styles.specialLabel, { color: '#2196F3' }]}>EasyAccess</Text>
+            <Text style={styles.specialDesc}>Véhicules adaptés PMR</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Estimate */}
         {selectedType && (
           <View style={styles.estimateCard}>
@@ -281,4 +304,11 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.accent, borderRadius: 16, paddingVertical: 16, alignItems: 'center',
   },
   requestBtnText: { color: '#000', fontSize: 16, fontWeight: '900' },
+  specialRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
+  specialCard: {
+    flex: 1, backgroundColor: COLORS.surface, borderRadius: 16, padding: 14,
+    alignItems: 'center', gap: 6, borderWidth: 1,
+  },
+  specialLabel: { fontSize: 13, fontWeight: '900' },
+  specialDesc: { color: COLORS.muted, fontSize: 10, textAlign: 'center' },
 });
