@@ -8,7 +8,7 @@ import {
   Switch,
   Alert,
   ActivityIndicator,
-  StatusBar,,
+  StatusBar,
   BackHandler,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
