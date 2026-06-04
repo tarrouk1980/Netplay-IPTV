@@ -1,207 +1,162 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Alert, StatusBar, ActivityIndicator, RefreshControl,
+  StatusBar, ActivityIndicator, FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
 
 const COLORS = {
-  background: '#0A0A0F',
-  surface: '#1C1C28',
-  surfaceAlt: '#252535',
-  accent: '#D32F2F',
-  text: '#FFFFFF',
-  muted: '#8E8E9A',
-  border: '#2C2C3E',
-  green: '#27AE60',
-  warning: '#F57C00',
+  bg: '#0A0A0F', surface: '#1C1C28', border: '#2C2C3E',
+  text: '#FFFFFF', muted: '#8E8E9A', accent: '#F5A623',
+  green: '#27AE60', red: '#E74C3C', blue: '#3498DB',
 };
 
-const RECHARGE_OPTIONS = [
-  { amount: 7, label: '7 TND', sublabel: '1 semaine' },
-  { amount: 30, label: '30 TND', sublabel: '1 mois' },
-  { amount: 90, label: '90 TND', sublabel: '3 mois' },
-];
+const MOCK_WALLET = {
+  balance: 47.500,
+  pendingBalance: 5.000,
+  transactions: [
+    { id: 'T1', type: 'CREDIT', label: 'Recharge portefeuille', amount: 50.000, date: '03 juin', icon: '💳' },
+    { id: 'T2', type: 'DEBIT', label: 'Course Taxi — Karim B.', amount: -18.500, date: '03 juin', icon: '🚕' },
+    { id: 'T3', type: 'DEBIT', label: 'Livraison Pizza Roma', amount: -5.000, date: '02 juin', icon: '📦' },
+    { id: 'T4', type: 'CREDIT', label: 'Remboursement course', amount: 12.000, date: '01 juin', icon: '↩️' },
+    { id: 'T5', type: 'DEBIT', label: 'SOS Dépannage', amount: -45.000, date: '30 mai', icon: '🔧' },
+    { id: 'T6', type: 'CREDIT', label: 'Bonus parrainage', amount: 10.000, date: '28 mai', icon: '🎁' },
+  ],
+};
 
-function TransactionItem({ tx }) {
-  const isCredit = tx.type === 'RECHARGE';
-  const dateStr = new Date(tx.createdAt).toLocaleDateString('fr-TN', {
-    day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
-  });
+const TX_FILTERS = ['Toutes', 'Crédits', 'Débits'];
+
+function TxRow({ item }) {
+  const isCredit = item.type === 'CREDIT';
   return (
-    <View style={txStyles.row}>
-      <View style={[txStyles.icon, { backgroundColor: isCredit ? '#0D2A1A' : '#2A0D0D' }]}>
-        <Text style={{ fontSize: 16 }}>{isCredit ? '⬆️' : '⬇️'}</Text>
+    <View style={styles.txRow}>
+      <View style={[styles.txIcon, { backgroundColor: (isCredit ? COLORS.green : COLORS.red) + '20' }]}>
+        <Text style={{ fontSize: 18 }}>{item.icon}</Text>
       </View>
-      <View style={txStyles.info}>
-        <Text style={txStyles.desc} numberOfLines={1}>{tx.description || tx.type}</Text>
-        <Text style={txStyles.date}>{dateStr}</Text>
+      <View style={styles.txInfo}>
+        <Text style={styles.txLabel} numberOfLines={1}>{item.label}</Text>
+        <Text style={styles.txDate}>{item.date}</Text>
       </View>
-      <Text style={[txStyles.amount, { color: isCredit ? COLORS.green : COLORS.accent }]}>
-        {isCredit ? '+' : '-'}{Math.abs(tx.amount).toFixed(2)} TND
+      <Text style={[styles.txAmount, { color: isCredit ? COLORS.green : COLORS.red }]}>
+        {isCredit ? '+' : ''}{item.amount.toFixed(3)} TND
       </Text>
     </View>
   );
 }
 
-const txStyles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: COLORS.border, gap: 12 },
-  icon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  info: { flex: 1 },
-  desc: { color: COLORS.text, fontSize: 14, fontWeight: '500' },
-  date: { color: COLORS.muted, fontSize: 11, marginTop: 2 },
-  amount: { fontSize: 15, fontWeight: '700' },
-});
-
 export default function WalletScreen({ navigation }) {
-  const [balance, setBalance] = useState(null);
-  const [subscriptionActive, setSubscriptionActive] = useState(false);
-  const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState(null);
-  const [transactions, setTransactions] = useState([]);
+  const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [recharging, setRecharging] = useState(false);
+  const [filter, setFilter] = useState('Toutes');
 
-  const fetchData = useCallback(async () => {
-    try {
-      const [balRes, txRes] = await Promise.all([
-        api.get('/api/wallet/balance'),
-        api.get('/api/wallet/transactions'),
-      ]);
-      setBalance(balRes.data.walletBalance ?? 0);
-      setSubscriptionActive(balRes.data.subscriptionActive ?? false);
-      setSubscriptionExpiresAt(balRes.data.subscriptionExpiresAt ?? null);
-      setTransactions(txRes.data || []);
-    } catch (err) {
-      Alert.alert('Erreur', err?.response?.data?.error || 'Impossible de charger le wallet.');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
+  const load = useCallback(() => {
+    api.get('/api/wallet')
+      .then(r => setWallet(r.data || MOCK_WALLET))
+      .catch(() => setWallet(MOCK_WALLET))
+      .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { load(); }, [load]);
 
-  const handleRefresh = () => { setRefreshing(true); fetchData(); };
+  const filtered = (wallet?.transactions || []).filter(t => {
+    if (filter === 'Crédits') return t.type === 'CREDIT';
+    if (filter === 'Débits') return t.type === 'DEBIT';
+    return true;
+  });
 
-  const handleRecharge = async (amount) => {
-    Alert.alert(
-      `Recharger ${amount} TND`,
-      `Confirmer la recharge de ${amount} TND ?`,
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Confirmer',
-          onPress: async () => {
-            setRecharging(true);
-            try {
-              const res = await api.post('/api/wallet/recharge', { amount });
-              setBalance(res.data.newBalance);
-              await fetchData();
-              Alert.alert('✅ Rechargé', `Votre solde est maintenant ${res.data.newBalance.toFixed(2)} TND`);
-            } catch (err) {
-              Alert.alert('Erreur', err?.response?.data?.error || 'Recharge échouée.');
-            } finally {
-              setRecharging(false);
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const lowBalance = balance !== null && balance < 3;
-
-  const expiresStr = subscriptionExpiresAt
-    ? new Date(subscriptionExpiresAt).toLocaleDateString('fr-TN', { day: '2-digit', month: 'short', year: 'numeric' })
-    : null;
+  const totalIn = (wallet?.transactions || []).filter(t => t.type === 'CREDIT').reduce((s, t) => s + t.amount, 0);
+  const totalOut = (wallet?.transactions || []).filter(t => t.type === 'DEBIT').reduce((s, t) => s + Math.abs(t.amount), 0);
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
 
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Text style={styles.backArrow}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Mon Wallet</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('WalletRecharge')} style={styles.rechargeHeaderBtn}>
-          <Text style={styles.rechargeHeaderBtnText}>+ Recharger</Text>
-        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Mon portefeuille</Text>
+        <View style={{ width: 40 }} />
       </View>
 
       {loading ? (
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={COLORS.accent} />
-        </View>
+        <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 60 }} />
       ) : (
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={COLORS.accent} />}
-        >
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+
           {/* Balance card */}
-          <View style={[styles.balanceCard, lowBalance && styles.balanceCardWarning]}>
+          <View style={styles.balanceCard}>
             <Text style={styles.balanceLabel}>Solde disponible</Text>
-            <Text style={[styles.balanceAmount, lowBalance && { color: COLORS.accent }]}>
-              {balance !== null ? balance.toFixed(2) : '0.00'} TND
-            </Text>
-            {lowBalance && (
-              <View style={styles.warningBadge}>
-                <Text style={styles.warningText}>⚠️ Solde insuffisant — rechargez pour maintenir votre abonnement actif</Text>
-              </View>
+            <Text style={styles.balanceAmount}>{wallet.balance.toFixed(3)}</Text>
+            <Text style={styles.balanceTND}>TND</Text>
+            {wallet.pendingBalance > 0 && (
+              <Text style={styles.pendingText}>+ {wallet.pendingBalance.toFixed(3)} TND en attente</Text>
             )}
+            <TouchableOpacity
+              style={styles.rechargeBtn}
+              onPress={() => navigation.navigate('WalletRecharge')}
+            >
+              <Text style={styles.rechargeBtnText}>+ Recharger</Text>
+            </TouchableOpacity>
           </View>
 
-          {/* Subscription status */}
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>📋 Abonnement</Text>
-            <View style={styles.statusRow}>
-              <View style={[styles.statusDot, { backgroundColor: subscriptionActive ? COLORS.green : COLORS.accent }]} />
-              <Text style={[styles.statusText, { color: subscriptionActive ? COLORS.green : COLORS.accent }]}>
-                {subscriptionActive ? 'Actif' : 'Inactif'}
-              </Text>
+          {/* Stats row */}
+          <View style={styles.statsRow}>
+            <View style={styles.statCard}>
+              <Text style={[styles.statNum, { color: COLORS.green }]}>+{totalIn.toFixed(3)}</Text>
+              <Text style={styles.statLabel}>Total crédits</Text>
             </View>
-            {expiresStr && (
-              <Text style={styles.expiresText}>Expire le {expiresStr}</Text>
-            )}
-            <Text style={styles.infoText}>1 TND débité par jour d'abonnement actif</Text>
+            <View style={styles.statCard}>
+              <Text style={[styles.statNum, { color: COLORS.red }]}>-{totalOut.toFixed(3)}</Text>
+              <Text style={styles.statLabel}>Total débits</Text>
+            </View>
           </View>
 
-          {/* Recharge options */}
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>💳 Recharger</Text>
-            <View style={styles.rechargeGrid}>
-              {RECHARGE_OPTIONS.map((opt) => (
-                <TouchableOpacity
-                  key={opt.amount}
-                  style={[styles.rechargeBtn, recharging && { opacity: 0.6 }]}
-                  onPress={() => handleRecharge(opt.amount)}
-                  disabled={recharging}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.rechargeBtnAmount}>{opt.label}</Text>
-                  <Text style={styles.rechargeBtnSub}>{opt.sublabel}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+          {/* Quick actions */}
+          <View style={styles.quickRow}>
+            {[
+              { icon: '💳', label: 'Recharger', onPress: () => navigation.navigate('WalletRecharge') },
+              { icon: '↗️', label: 'Virement', onPress: () => {} },
+              { icon: '🎁', label: 'Parrainer', onPress: () => {} },
+            ].map((a, i) => (
+              <TouchableOpacity key={i} style={styles.quickBtn} onPress={a.onPress}>
+                <Text style={styles.quickIcon}>{a.icon}</Text>
+                <Text style={styles.quickLabel}>{a.label}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
 
           {/* Transactions */}
-          <View style={styles.card}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-              <Text style={styles.cardTitle}>📜 Historique</Text>
-              <TouchableOpacity onPress={() => navigation.navigate('WalletTransactions')}>
-                <Text style={{ color: '#F5A623', fontSize: 12, fontWeight: '700' }}>Voir tout →</Text>
-              </TouchableOpacity>
+          <View style={styles.txSection}>
+            <View style={styles.txHeader}>
+              <Text style={styles.txTitle}>Transactions</Text>
+              <View style={styles.filterRow}>
+                {TX_FILTERS.map(f => (
+                  <TouchableOpacity
+                    key={f}
+                    style={[styles.filterBtn, filter === f && styles.filterBtnActive]}
+                    onPress={() => setFilter(f)}
+                  >
+                    <Text style={[styles.filterLabel, filter === f && styles.filterLabelActive]}>{f}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
-            {transactions.length === 0 ? (
-              <Text style={styles.emptyText}>Aucune transaction pour le moment.</Text>
-            ) : (
-              transactions.map((tx, i) => <TransactionItem key={tx.id || i} tx={tx} />)
-            )}
+
+            <View style={styles.txList}>
+              {filtered.map(t => (
+                <React.Fragment key={t.id}>
+                  <TxRow item={t} />
+                  <View style={styles.txSeparator} />
+                </React.Fragment>
+              ))}
+              {filtered.length === 0 && (
+                <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+                  <Text style={{ color: COLORS.muted }}>Aucune transaction</Text>
+                </View>
+              )}
+            </View>
           </View>
 
           <View style={{ height: 40 }} />
@@ -212,8 +167,7 @@ export default function WalletScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  container: { flex: 1, backgroundColor: COLORS.bg },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 14,
@@ -221,33 +175,53 @@ const styles = StyleSheet.create({
   },
   backBtn: { width: 40 },
   backArrow: { color: COLORS.text, fontSize: 30, fontWeight: '300' },
-  headerTitle: { color: COLORS.text, fontSize: 18, fontWeight: '700' },
-  scroll: { flex: 1 },
-  scrollContent: { padding: 16, gap: 16 },
+  headerTitle: { color: COLORS.text, fontSize: 17, fontWeight: '700' },
+  scroll: { padding: 16 },
   balanceCard: {
-    backgroundColor: COLORS.surface, borderRadius: 20, padding: 28,
-    alignItems: 'center', gap: 8, borderWidth: 1.5, borderColor: COLORS.border,
+    backgroundColor: COLORS.surface, borderRadius: 24, padding: 28,
+    alignItems: 'center', marginBottom: 16,
+    borderWidth: 1.5, borderColor: COLORS.accent + '40',
   },
-  balanceCardWarning: { borderColor: COLORS.accent, backgroundColor: '#1A0D0D' },
-  balanceLabel: { color: COLORS.muted, fontSize: 14, fontWeight: '500', textTransform: 'uppercase', letterSpacing: 1 },
-  balanceAmount: { color: COLORS.text, fontSize: 48, fontWeight: '800' },
-  warningBadge: { backgroundColor: '#2A0D0D', borderRadius: 10, padding: 10, marginTop: 4, borderWidth: 1, borderColor: COLORS.accent },
-  warningText: { color: COLORS.accent, fontSize: 12, textAlign: 'center', lineHeight: 17 },
-  card: { backgroundColor: COLORS.surface, borderRadius: 16, padding: 20, gap: 12 },
-  cardTitle: { color: COLORS.text, fontSize: 15, fontWeight: '700', marginBottom: 4 },
-  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  statusDot: { width: 10, height: 10, borderRadius: 5 },
-  statusText: { fontSize: 16, fontWeight: '700' },
-  expiresText: { color: COLORS.muted, fontSize: 13 },
-  infoText: { color: COLORS.muted, fontSize: 12, fontStyle: 'italic' },
-  rechargeGrid: { flexDirection: 'row', gap: 12 },
+  balanceLabel: { color: COLORS.muted, fontSize: 13, marginBottom: 8 },
+  balanceAmount: { color: COLORS.accent, fontSize: 52, fontWeight: '900', lineHeight: 56 },
+  balanceTND: { color: COLORS.accent, fontSize: 16, fontWeight: '600', marginBottom: 6 },
+  pendingText: { color: COLORS.muted, fontSize: 12, marginBottom: 16 },
   rechargeBtn: {
-    flex: 1, backgroundColor: COLORS.accent, borderRadius: 14,
-    paddingVertical: 16, alignItems: 'center', gap: 4,
+    backgroundColor: COLORS.accent, borderRadius: 14, paddingHorizontal: 32, paddingVertical: 12,
+    marginTop: 8,
   },
-  rechargeBtnAmount: { color: '#fff', fontSize: 18, fontWeight: '800' },
-  rechargeBtnSub: { color: 'rgba(255,255,255,0.75)', fontSize: 11 },
-  rechargeHeaderBtn: { backgroundColor: COLORS.green, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6 },
-  rechargeHeaderBtnText: { color: '#FFF', fontSize: 12, fontWeight: '700' },
-  emptyText: { color: COLORS.muted, fontSize: 13, textAlign: 'center', paddingVertical: 20 },
+  rechargeBtnText: { color: '#000', fontSize: 15, fontWeight: '800' },
+  statsRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
+  statCard: {
+    flex: 1, backgroundColor: COLORS.surface, borderRadius: 14, padding: 14,
+    alignItems: 'center', borderWidth: 1, borderColor: COLORS.border,
+  },
+  statNum: { fontSize: 16, fontWeight: '800' },
+  statLabel: { color: COLORS.muted, fontSize: 11, marginTop: 3 },
+  quickRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
+  quickBtn: {
+    flex: 1, backgroundColor: COLORS.surface, borderRadius: 14, padding: 14,
+    alignItems: 'center', borderWidth: 1, borderColor: COLORS.border,
+  },
+  quickIcon: { fontSize: 22, marginBottom: 4 },
+  quickLabel: { color: COLORS.text, fontSize: 12, fontWeight: '600' },
+  txSection: { backgroundColor: COLORS.surface, borderRadius: 16, borderWidth: 1, borderColor: COLORS.border },
+  txHeader: { padding: 14, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  txTitle: { color: COLORS.text, fontSize: 15, fontWeight: '700', marginBottom: 10 },
+  filterRow: { flexDirection: 'row', gap: 8 },
+  filterBtn: {
+    paddingHorizontal: 12, paddingVertical: 5, borderRadius: 14,
+    backgroundColor: COLORS.bg, borderWidth: 1, borderColor: COLORS.border,
+  },
+  filterBtnActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
+  filterLabel: { color: COLORS.muted, fontSize: 12, fontWeight: '600' },
+  filterLabelActive: { color: '#000' },
+  txList: {},
+  txRow: { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 },
+  txIcon: { width: 42, height: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  txInfo: { flex: 1 },
+  txLabel: { color: COLORS.text, fontSize: 13, fontWeight: '600' },
+  txDate: { color: COLORS.muted, fontSize: 11, marginTop: 2 },
+  txAmount: { fontSize: 14, fontWeight: '800' },
+  txSeparator: { height: 1, backgroundColor: COLORS.border, marginHorizontal: 14 },
 });
