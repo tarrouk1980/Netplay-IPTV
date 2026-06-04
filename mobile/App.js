@@ -523,6 +523,11 @@ import PaymentHistoryScreen from './screens/payment/PaymentHistoryScreen';
 import SOSDepanneurProfileScreen from './screens/sos/SOSDepanneurProfileScreen';
 import AdminDeliveryStatsScreen from './screens/admin/AdminDeliveryStatsScreen';
 
+// Batch 97
+import VehicleRegistrationScreen from './screens/profile/VehicleRegistrationScreen';
+import DeliveryZoneScreen from './screens/delivery/DeliveryZoneScreen';
+import AdminTaxiStatsScreen from './screens/admin/AdminTaxiStatsScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -783,6 +788,9 @@ function MainStack() {
       <Stack.Screen name="PaymentHistory" component={PaymentHistoryScreen} options={{ headerShown: false }} />
       <Stack.Screen name="SOSDepanneurProfile" component={SOSDepanneurProfileScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminDeliveryStats" component={AdminDeliveryStatsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="VehicleRegistration" component={VehicleRegistrationScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="DeliveryZone" component={DeliveryZoneScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminTaxiStats" component={AdminTaxiStatsScreen} options={{ headerShown: false }} />
 
       {/* Chat */}
       <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
