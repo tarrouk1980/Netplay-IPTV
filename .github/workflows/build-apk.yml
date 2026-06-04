@@ -46,15 +46,20 @@ jobs:
         working-directory: mobile/android
         run: chmod +x gradlew
 
-      - name: Build APK
+      - name: Build Debug APK
         working-directory: mobile/android
         env:
           GRADLE_OPTS: "-Xmx4096m -XX:MaxMetaspaceSize=512m"
-        run: ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tail -100
+        run: ./gradlew assembleDebug --no-daemon 2>&1 | tail -60
+
+      - name: Locate APK
+        run: |
+          echo "=== APKs trouvés ==="
+          find mobile/android/app/build/outputs/apk -name "*.apk" 2>/dev/null || echo "Aucun APK trouvé"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: easyway-release.apk
-          path: mobile/android/app/build/outputs/apk/release/app-release.apk
+          name: easyway-debug.apk
+          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
