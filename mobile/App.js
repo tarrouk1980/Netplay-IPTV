@@ -320,6 +320,9 @@ import ClientEmergencyScreen from './screens/client/ClientEmergencyScreen';
 import MerchantStaffScreen from './screens/merchant/MerchantStaffScreen';
 import ProviderInsuranceScreen from './screens/provider/ProviderInsuranceScreen';
 import TaxiDispatchScreen from './screens/taxi/TaxiDispatchScreen';
+import ClientReferralScreen from './screens/client/ClientReferralScreen';
+import TaxiRatingsScreen from './screens/taxi/TaxiRatingsScreen';
+import GroceryOrdersScreen from './screens/grocery/GroceryOrdersScreen';
 
 // Batch 32
 import ClientOrdersAllScreen from './screens/profile/ClientOrdersAllScreen';
@@ -953,6 +956,9 @@ function MainStack() {
       <Stack.Screen name="MerchantStaff" component={MerchantStaffScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ProviderInsurance" component={ProviderInsuranceScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiDispatch" component={TaxiDispatchScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ClientReferral" component={ClientReferralScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="TaxiRatings" component={TaxiRatingsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="GroceryOrders" component={GroceryOrdersScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientOrdersAll" component={ClientOrdersAllScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminCouponList" component={AdminCouponListScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DeliveryRating" component={DeliveryRatingScreen} options={{ headerShown: false, gestureEnabled: false }} />
