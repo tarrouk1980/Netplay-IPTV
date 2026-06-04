@@ -65,7 +65,9 @@ jobs:
         env:
           GRADLE_OPTS: "-Xmx4096m -XX:MaxMetaspaceSize=512m"
           SKIP_BUNDLING: "true"
-        run: ./gradlew assembleDebug --no-daemon 2>&1 | tail -60
+        run: |
+          set -o pipefail
+          ./gradlew assembleDebug --no-daemon 2>&1 | tail -60
 
       - name: Locate APK
         run: |
