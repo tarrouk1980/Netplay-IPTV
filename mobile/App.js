@@ -326,6 +326,9 @@ import GroceryOrdersScreen from './screens/grocery/GroceryOrdersScreen';
 import DepanneurQuoteScreen from './screens/sos/DepanneurQuoteScreen';
 import LivreurTaskScreen from './screens/delivery/LivreurTaskScreen';
 import TaxiEarningsScreen from './screens/taxi/TaxiEarningsScreen';
+import ClientChatScreen from './screens/client/ClientChatScreen';
+import LivreurHomeScreen from './screens/delivery/LivreurHomeScreen';
+import MerchantMenuScreen from './screens/merchant/MerchantMenuScreen';
 
 // Batch 32
 import ClientOrdersAllScreen from './screens/profile/ClientOrdersAllScreen';
@@ -344,7 +347,7 @@ import DriverEarningsScreen from './screens/driver/DriverEarningsScreen';
 // Batch 52
 import ProfileSOSHistoryScreen from './screens/profile/ProfileSOSHistoryScreen';
 import AdminPromoCodesV2Screen from './screens/admin/AdminPromoCodesV2Screen';
-import MerchantMenuScreen from './screens/delivery/MerchantMenuScreen';
+
 
 // Batch 51
 import TaxiScheduledRidesScreen from './screens/taxi/TaxiScheduledRidesScreen';
@@ -965,6 +968,9 @@ function MainStack() {
       <Stack.Screen name="DepanneurQuote" component={DepanneurQuoteScreen} options={{ headerShown: false }} />
       <Stack.Screen name="LivreurTask" component={LivreurTaskScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiEarnings" component={TaxiEarningsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ClientChat" component={ClientChatScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="LivreurHome" component={LivreurHomeScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="MerchantMenu" component={MerchantMenuScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientOrdersAll" component={ClientOrdersAllScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminCouponList" component={AdminCouponListScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DeliveryRating" component={DeliveryRatingScreen} options={{ headerShown: false, gestureEnabled: false }} />
