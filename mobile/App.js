@@ -753,7 +753,6 @@ function MainStack() {
       <Stack.Screen name="DriverIncident" component={DriverIncidentScreen} options={{ headerShown: false }} />
       <Stack.Screen name="PassBenefits" component={PassBenefitsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="EasyPointsHistory" component={EasyPointsHistoryScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="TaxiRating" component={TaxiRatingScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminUserDetail" component={AdminUserDetailScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DeliverySchedule" component={DeliveryScheduleScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AddressBook" component={AddressBookScreen} options={{ headerShown: false }} />

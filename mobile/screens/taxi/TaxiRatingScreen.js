@@ -1,123 +1,104 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  StatusBar, TextInput, ActivityIndicator,
+  View, Text, StyleSheet, TouchableOpacity, TextInput,
+  StatusBar, Alert, ActivityIndicator, ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
 
 const COLORS = {
-  bg: '#0A0A0F', surface: '#1C1C28',
-  accent: '#F5A623', white: '#FFFFFF', muted: '#8A8A9A',
-  border: '#2A2A3A', green: '#27AE60', red: '#D32F2F',
+  bg: '#0A0A0F', surface: '#1C1C28', border: '#2C2C3E',
+  text: '#FFFFFF', muted: '#8E8E9A', accent: '#F5A623',
+  green: '#27AE60', red: '#E74C3C',
 };
 
-const QUICK_TAGS_GOOD  = ['Ponctuel', 'Véhicule propre', 'Conduite douce', 'Sympa', 'Bonne musique'];
-const QUICK_TAGS_BAD   = ['En retard', 'Conduite brusque', 'Pas d\'AC', 'Peu aimable', 'Itinéraire mauvais'];
+const TIPS = [0, 1, 2, 5];
+const QUICK_COMMENTS = [
+  'Chauffeur ponctuel', 'Très propre', 'Conduite agréable',
+  'Sympa et professionnel', 'Musique agréable', 'Route optimale',
+];
 
-const TIP_OPTIONS = [0, 1, 2, 5];
+const STAR_LABELS = ['', 'Mauvais', 'Passable', 'Bien', 'Très bien', 'Excellent !'];
 
 export default function TaxiRatingScreen({ navigation, route }) {
-  const { rideId, driverName = 'Votre chauffeur', tripSummary } = route?.params || {};
-
-  const [stars, setStars] = useState(0);
-  const [hoveredStar, setHoveredStar] = useState(0);
-  const [tags, setTags] = useState([]);
-  const [comment, setComment] = useState('');
+  const { orderId } = route?.params || {};
+  const [rating, setRating] = useState(0);
+  const [hovered, setHovered] = useState(0);
   const [tip, setTip] = useState(0);
+  const [comment, setComment] = useState('');
+  const [selectedTags, setSelectedTags] = useState([]);
   const [submitting, setSubmitting] = useState(false);
-  const [done, setDone] = useState(false);
 
-  const toggleTag = (t) => setTags((prev) => prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]);
-  const displayStars = hoveredStar || stars;
-  const quickTags = stars >= 4 ? QUICK_TAGS_GOOD : QUICK_TAGS_BAD;
-
-  const handleSubmit = async () => {
-    if (stars === 0) return;
-    setSubmitting(true);
-    try {
-      await api.post('/api/taxi/rate', { rideId, stars, tags, comment, tip });
-    } catch {}
-    setSubmitting(false);
-    setDone(true);
+  const toggleTag = (tag) => {
+    setSelectedTags(prev =>
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    );
   };
 
-  if (done) {
-    return (
-      <SafeAreaView style={styles.root}>
-        <View style={styles.doneContainer}>
-          <Text style={{ fontSize: 72, marginBottom: 12 }}>🙏</Text>
-          <Text style={styles.doneTitle}>Merci pour votre avis !</Text>
-          <Text style={styles.doneSub}>Votre évaluation aide à améliorer le service pour tous.</Text>
-          {tip > 0 && (
-            <View style={styles.tipConfirm}>
-              <Text style={styles.tipConfirmText}>Pourboire de {tip} TND envoyé à {driverName} ❤️</Text>
-            </View>
-          )}
-          <TouchableOpacity style={styles.doneBtn} onPress={() => navigation.navigate('Home')}>
-            <Text style={styles.doneBtnText}>Retour à l'accueil</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  const handleSubmit = async () => {
+    if (rating === 0) { Alert.alert('Note requise', 'Donnez au moins 1 étoile.'); return; }
+    setSubmitting(true);
+    try {
+      await api.post(`/api/taxi/${orderId}/rate`, {
+        rating,
+        tip,
+        comment: [comment, ...selectedTags].filter(Boolean).join(' · '),
+      });
+      navigation.replace('Home');
+    } catch {
+      Alert.alert('Erreur', 'Impossible d\'envoyer la note.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const displayRating = hovered || rating;
 
   return (
-    <SafeAreaView style={styles.root}>
+    <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
 
-      <View style={styles.header}>
-        <View style={{ width: 24 }} />
-        <Text style={styles.title}>Évaluation de la course</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Home')}>
-          <Text style={{ color: COLORS.muted, fontSize: 14 }}>Passer</Text>
-        </TouchableOpacity>
-      </View>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-
-        {/* Driver */}
-        <View style={styles.driverCard}>
-          <View style={styles.driverAvatar}>
-            <Text style={{ fontSize: 36 }}>🧔</Text>
-          </View>
-          <Text style={styles.driverName}>{driverName}</Text>
-          {tripSummary && <Text style={styles.tripSummary}>{tripSummary}</Text>}
+        {/* Header */}
+        <View style={styles.topSection}>
+          <Text style={styles.emoji}>🏁</Text>
+          <Text style={styles.title}>Course terminée !</Text>
+          <Text style={styles.subtitle}>Comment s'est passée votre course ?</Text>
         </View>
 
         {/* Stars */}
-        <Text style={styles.sectionLabel}>Comment s'est passée votre course ?</Text>
         <View style={styles.starsRow}>
-          {[1, 2, 3, 4, 5].map((s) => (
+          {[1, 2, 3, 4, 5].map(i => (
             <TouchableOpacity
-              key={s}
-              onPress={() => { setStars(s); setHoveredStar(0); }}
-              onPressIn={() => setHoveredStar(s)}
-              onPressOut={() => setHoveredStar(0)}
+              key={i}
+              onPress={() => setRating(i)}
+              onPressIn={() => setHovered(i)}
+              onPressOut={() => setHovered(0)}
               activeOpacity={0.7}
             >
-              <Text style={[styles.star, s <= displayStars && styles.starFilled]}>★</Text>
+              <Text style={[styles.star, i <= displayRating && styles.starActive]}>★</Text>
             </TouchableOpacity>
           ))}
         </View>
-        {stars > 0 && (
-          <Text style={styles.starLabel}>
-            {['', 'Très mauvais', 'Mauvais', 'Correct', 'Bien', 'Excellent'][stars]}
-          </Text>
+        {displayRating > 0 && (
+          <Text style={styles.starLabel}>{STAR_LABELS[displayRating]}</Text>
         )}
 
         {/* Quick tags */}
-        {stars > 0 && (
+        {rating >= 4 && (
           <>
-            <Text style={styles.sectionLabel}>{stars >= 4 ? '👍 Ce qui était bien' : '👎 Ce qui pourrait être amélioré'}</Text>
-            <View style={styles.tagWrap}>
-              {quickTags.map((t) => (
+            <Text style={styles.sectionTitle}>CE QUI ÉTAIT BIEN</Text>
+            <View style={styles.tagsWrap}>
+              {QUICK_COMMENTS.map(tag => (
                 <TouchableOpacity
-                  key={t}
-                  style={[styles.tagBtn, tags.includes(t) && styles.tagBtnActive]}
-                  onPress={() => toggleTag(t)}
+                  key={tag}
+                  style={[styles.tag, selectedTags.includes(tag) && styles.tagActive]}
+                  onPress={() => toggleTag(tag)}
                 >
-                  <Text style={[styles.tagText, tags.includes(t) && { color: '#000' }]}>{t}</Text>
+                  <Text style={[styles.tagText, selectedTags.includes(tag) && styles.tagTextActive]}>
+                    {tag}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -125,100 +106,103 @@ export default function TaxiRatingScreen({ navigation, route }) {
         )}
 
         {/* Comment */}
-        <Text style={styles.sectionLabel}>Commentaire (optionnel)</Text>
+        <Text style={styles.sectionTitle}>COMMENTAIRE (OPTIONNEL)</Text>
         <TextInput
           style={styles.commentInput}
           value={comment}
           onChangeText={setComment}
           placeholder="Partagez votre expérience..."
           placeholderTextColor={COLORS.muted}
-          multiline maxLength={300}
-          textAlignVertical="top"
+          multiline
+          numberOfLines={3}
         />
 
         {/* Tip */}
-        <Text style={styles.sectionLabel}>Laisser un pourboire</Text>
-        <View style={styles.tipRow}>
-          {TIP_OPTIONS.map((t) => (
+        <Text style={styles.sectionTitle}>POURBOIRE</Text>
+        <View style={styles.tipsRow}>
+          {TIPS.map(t => (
             <TouchableOpacity
               key={t}
               style={[styles.tipBtn, tip === t && styles.tipBtnActive]}
               onPress={() => setTip(t)}
             >
-              <Text style={[styles.tipText, tip === t && { color: '#000' }]}>
-                {t === 0 ? 'Non' : `+${t} TND`}
+              <Text style={[styles.tipText, tip === t && styles.tipTextActive]}>
+                {t === 0 ? 'Aucun' : `${t} TND`}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
 
+        {tip > 0 && (
+          <Text style={styles.tipNote}>
+            Le chauffeur recevra {tip.toFixed(3)} TND de pourboire — merci pour lui 🙏
+          </Text>
+        )}
+
+        {/* Submit */}
         <TouchableOpacity
-          style={[styles.submitBtn, stars === 0 && { opacity: 0.4 }]}
+          style={[styles.submitBtn, rating === 0 && { opacity: 0.4 }]}
           onPress={handleSubmit}
-          disabled={stars === 0 || submitting}
+          disabled={rating === 0 || submitting}
         >
           {submitting
-            ? <ActivityIndicator color="#000" size="small" />
-            : <Text style={styles.submitBtnText}>Envoyer l'évaluation</Text>}
+            ? <ActivityIndicator color="#000" />
+            : <Text style={styles.submitText}>Envoyer ma note</Text>
+          }
         </TouchableOpacity>
 
-        <View style={{ height: 24 }} />
+        <TouchableOpacity style={styles.skipBtn} onPress={() => navigation.replace('Home')}>
+          <Text style={styles.skipText}>Passer</Text>
+        </TouchableOpacity>
+
+        <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.bg },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 20, paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: COLORS.border,
+  container: { flex: 1, backgroundColor: COLORS.bg },
+  scroll: { padding: 24, alignItems: 'center' },
+  topSection: { alignItems: 'center', marginBottom: 32, marginTop: 16 },
+  emoji: { fontSize: 56, marginBottom: 12 },
+  title: { color: COLORS.text, fontSize: 24, fontWeight: '900', marginBottom: 6 },
+  subtitle: { color: COLORS.muted, fontSize: 14 },
+  starsRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
+  star: { fontSize: 48, color: COLORS.border },
+  starActive: { color: COLORS.accent },
+  starLabel: { color: COLORS.accent, fontSize: 16, fontWeight: '700', marginBottom: 24 },
+  sectionTitle: {
+    color: COLORS.muted, fontSize: 10, fontWeight: '700', letterSpacing: 1.4,
+    marginBottom: 12, marginTop: 8, alignSelf: 'flex-start',
   },
-  title: { color: COLORS.white, fontSize: 16, fontWeight: '700' },
-  scroll: { padding: 20 },
-  driverCard: { alignItems: 'center', marginBottom: 24 },
-  driverAvatar: {
-    width: 80, height: 80, borderRadius: 40,
-    backgroundColor: COLORS.accent + '22', alignItems: 'center', justifyContent: 'center', marginBottom: 10,
-  },
-  driverName: { color: COLORS.white, fontSize: 20, fontWeight: '800' },
-  tripSummary: { color: COLORS.muted, fontSize: 13, marginTop: 4 },
-  sectionLabel: { color: COLORS.muted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 },
-  starsRow: { flexDirection: 'row', justifyContent: 'center', gap: 10, marginBottom: 8 },
-  star: { fontSize: 44, color: COLORS.border },
-  starFilled: { color: COLORS.accent },
-  starLabel: { color: COLORS.accent, fontSize: 16, fontWeight: '700', textAlign: 'center', marginBottom: 16 },
-  tagWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
-  tagBtn: {
-    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
+  tagsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20, alignSelf: 'stretch' },
+  tag: {
+    paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16,
     backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
   },
-  tagBtnActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
-  tagText: { color: COLORS.white, fontSize: 13 },
+  tagActive: { backgroundColor: COLORS.accent + '20', borderColor: COLORS.accent },
+  tagText: { color: COLORS.muted, fontSize: 12 },
+  tagTextActive: { color: COLORS.accent, fontWeight: '600' },
   commentInput: {
-    backgroundColor: COLORS.surface, borderRadius: 12,
-    borderWidth: 1, borderColor: COLORS.border,
-    color: COLORS.white, paddingHorizontal: 14, paddingVertical: 12,
-    fontSize: 14, minHeight: 90, marginBottom: 16,
+    backgroundColor: COLORS.surface, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12,
+    color: COLORS.text, fontSize: 14, borderWidth: 1, borderColor: COLORS.border,
+    marginBottom: 20, alignSelf: 'stretch', textAlignVertical: 'top', height: 80,
   },
-  tipRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
+  tipsRow: { flexDirection: 'row', gap: 10, marginBottom: 12, alignSelf: 'stretch' },
   tipBtn: {
-    flex: 1, paddingVertical: 11, borderRadius: 10,
-    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center',
+    flex: 1, borderRadius: 10, borderWidth: 1, borderColor: COLORS.border,
+    paddingVertical: 10, alignItems: 'center', backgroundColor: COLORS.surface,
   },
   tipBtnActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
-  tipText: { color: COLORS.white, fontSize: 13, fontWeight: '700' },
-  submitBtn: { backgroundColor: COLORS.accent, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
-  submitBtnText: { color: '#000', fontWeight: '800', fontSize: 15 },
-  doneContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
-  doneTitle: { color: COLORS.white, fontSize: 24, fontWeight: '900', marginBottom: 8 },
-  doneSub: { color: COLORS.muted, fontSize: 14, textAlign: 'center', lineHeight: 20, marginBottom: 20 },
-  tipConfirm: {
-    backgroundColor: COLORS.green + '22', borderRadius: 12,
-    padding: 12, borderWidth: 1, borderColor: COLORS.green, marginBottom: 20,
+  tipText: { color: COLORS.muted, fontSize: 13, fontWeight: '600' },
+  tipTextActive: { color: '#000', fontWeight: '800' },
+  tipNote: { color: COLORS.muted, fontSize: 12, marginBottom: 20, textAlign: 'center' },
+  submitBtn: {
+    backgroundColor: COLORS.accent, borderRadius: 14, paddingVertical: 16,
+    alignItems: 'center', alignSelf: 'stretch',
   },
-  tipConfirmText: { color: COLORS.green, fontSize: 13, fontWeight: '600', textAlign: 'center' },
-  doneBtn: { backgroundColor: COLORS.accent, borderRadius: 12, paddingHorizontal: 32, paddingVertical: 13 },
-  doneBtnText: { color: '#000', fontWeight: '800', fontSize: 14 },
+  submitText: { color: '#000', fontSize: 16, fontWeight: '800' },
+  skipBtn: { marginTop: 12, padding: 8 },
+  skipText: { color: COLORS.muted, fontSize: 14 },
 });

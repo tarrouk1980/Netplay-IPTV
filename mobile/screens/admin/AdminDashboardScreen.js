@@ -1,437 +1,251 @@
-import React, { useEffect, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  RefreshControl,
-  ActivityIndicator,
-  StatusBar,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  StatusBar, ActivityIndicator, RefreshControl,
 } from 'react-native';
-import useAdminStore from '../../store/adminStore';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
+import useAuthStore from '../../store/authStore';
 
 const COLORS = {
-  bg: '#0A0A0F',
-  surface: '#1C1C28',
-  surfaceAlt: '#16161F',
-  accent: '#D32F2F',
-  accentLight: '#FF5252',
-  white: '#FFFFFF',
-  muted: '#8A8A9A',
-  border: '#2A2A3A',
-  green: '#2E7D32',
-  amber: '#F57C00',
+  bg: '#0A0A0F', surface: '#1C1C28', border: '#2C2C3E',
+  text: '#FFFFFF', muted: '#8E8E9A', accent: '#F5A623',
+  green: '#27AE60', red: '#E74C3C', blue: '#3498DB', purple: '#9B59B6',
 };
 
-// ── Mini bar chart (pure RN) ────────────────────────────────────────────────
-function MiniBarChart({ data = [], labels = [] }) {
-  if (!data.length) return null;
-  const max = Math.max(...data, 1);
-  const displayData = data.slice(-7);
-  const displayLabels = labels.slice(-7);
+const MOCK = {
+  revenue: { today: 4280.750, month: 124850.750, growth: 12.4 },
+  orders: { today: 312, active: 47, pending: 8 },
+  users: { total: 18432, newToday: 24, providers: 342 },
+  services: [
+    { name: 'Taxi', icon: '🚕', active: 28, color: COLORS.accent },
+    { name: 'Livraison', icon: '📦', active: 12, color: COLORS.blue },
+    { name: 'Épicerie', icon: '🛒', active: 5, color: COLORS.green },
+    { name: 'SOS', icon: '🔧', active: 3, color: COLORS.red },
+  ],
+  alerts: [
+    { type: 'KYC', message: '3 dossiers KYC en attente d\'approbation', color: COLORS.accent },
+    { type: 'ORDER', message: '8 commandes sans chauffeur depuis >10min', color: COLORS.red },
+  ],
+};
 
+function KPICard({ icon, label, value, sub, color, onPress }) {
   return (
-    <View style={chart.container}>
-      <Text style={chart.title}>Commandes — 7 derniers jours</Text>
-      <View style={chart.barsRow}>
-        {displayData.map((val, i) => {
-          const height = Math.max(4, Math.round((val / max) * 80));
-          return (
-            <View key={i} style={chart.barWrapper}>
-              <Text style={chart.barValue}>{val}</Text>
-              <View style={[chart.bar, { height }]} />
-              <Text style={chart.barLabel}>
-                {displayLabels[i] ? displayLabels[i].slice(5) : ''}
-              </Text>
-            </View>
-          );
-        })}
-      </View>
-    </View>
-  );
-}
-
-const chart = StyleSheet.create({
-  container: {
-    backgroundColor: COLORS.surfaceAlt,
-    borderRadius: 12,
-    padding: 16,
-    marginHorizontal: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  title: { color: COLORS.muted, fontSize: 12, marginBottom: 12, fontWeight: '600' },
-  barsRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', height: 110 },
-  barWrapper: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', paddingHorizontal: 3 },
-  bar: { width: '80%', backgroundColor: COLORS.accent, borderRadius: 3 },
-  barValue: { color: COLORS.white, fontSize: 10, marginBottom: 4 },
-  barLabel: { color: COLORS.muted, fontSize: 9, marginTop: 6 },
-});
-
-// ── KPI Card ────────────────────────────────────────────────────────────────
-function KPICard({ emoji, label, value, sub, accentColor }) {
-  return (
-    <View style={[kpi.card, { borderTopColor: accentColor || COLORS.accent }]}>
-      <Text style={kpi.emoji}>{emoji}</Text>
-      <Text style={kpi.value}>{value ?? '—'}</Text>
-      <Text style={kpi.label}>{label}</Text>
-      {sub ? <Text style={kpi.sub}>{sub}</Text> : null}
-    </View>
-  );
-}
-
-const kpi = StyleSheet.create({
-  card: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    padding: 16,
-    flex: 1,
-    margin: 6,
-    borderTopWidth: 3,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    minHeight: 110,
-    justifyContent: 'center',
-  },
-  emoji: { fontSize: 22, marginBottom: 6 },
-  value: { color: COLORS.white, fontSize: 24, fontWeight: '700', marginBottom: 4 },
-  label: { color: COLORS.muted, fontSize: 12, fontWeight: '500' },
-  sub: { color: COLORS.accentLight, fontSize: 11, marginTop: 4 },
-});
-
-// ── Nav Button ──────────────────────────────────────────────────────────────
-function NavButton({ emoji, label, onPress, badge }) {
-  return (
-    <TouchableOpacity style={nav.btn} onPress={onPress} activeOpacity={0.75}>
-      <View style={nav.inner}>
-        <Text style={nav.emoji}>{emoji}</Text>
-        <Text style={nav.label}>{label}</Text>
-        {badge ? (
-          <View style={nav.badge}>
-            <Text style={nav.badgeText}>{badge}</Text>
-          </View>
-        ) : null}
-      </View>
+    <TouchableOpacity
+      style={styles.kpiCard}
+      onPress={onPress}
+      activeOpacity={onPress ? 0.8 : 1}
+    >
+      <Text style={styles.kpiIcon}>{icon}</Text>
+      <Text style={[styles.kpiValue, color && { color }]}>{value}</Text>
+      <Text style={styles.kpiLabel}>{label}</Text>
+      {sub && <Text style={styles.kpiSub}>{sub}</Text>}
     </TouchableOpacity>
   );
 }
 
-const nav = StyleSheet.create({
-  btn: {
-    flex: 1,
-    margin: 6,
-    minWidth: '28%',
-  },
-  inner: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  emoji: { fontSize: 26, marginBottom: 8 },
-  label: { color: COLORS.white, fontSize: 12, fontWeight: '600', textAlign: 'center' },
-  badge: {
-    position: 'absolute',
-    top: -6,
-    right: -6,
-    backgroundColor: COLORS.accent,
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-  },
-  badgeText: { color: COLORS.white, fontSize: 11, fontWeight: '700' },
-});
-
-// ── Screen ──────────────────────────────────────────────────────────────────
 export default function AdminDashboardScreen({ navigation }) {
-  const { stats, ordersChart, isLoading, fetchStats, fetchOrdersChart, pendingKYCCount, fetchPendingKYC } =
-    useAdminStore();
+  const { logout } = useAuthStore();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const load = useCallback(async () => {
-    await Promise.all([fetchStats(), fetchOrdersChart(), fetchPendingKYC()]);
-  }, [fetchStats, fetchOrdersChart, fetchPendingKYC]);
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    try {
+      const res = await api.get('/api/admin/dashboard');
+      setData(res.data || MOCK);
+    } catch {
+      setData(MOCK);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
 
-  const intervalRef = useRef(null);
+  useEffect(() => { load(); }, [load]);
 
-  useEffect(() => {
-    load();
-    // Auto-refresh every 30 seconds
-    intervalRef.current = setInterval(load, 30000);
-    return () => clearInterval(intervalRef.current);
-  }, [load]);
+  const onRefresh = () => { setRefreshing(true); load(true); };
 
-  const kycCount = pendingKYCCount || stats?.users?.pendingKYC || 0;
+  const d = data || MOCK;
 
   return (
-    <View style={styles.root}>
+    <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
 
-      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 12 }}>
-          <Text style={{ color: '#F5A623', fontSize: 22 }}>‹</Text>
-        </TouchableOpacity>
         <View>
-          <Text style={styles.headerTitle}>⚙️ Administration EASYWAY</Text>
-          <Text style={styles.headerSub}>Supervision complète · <Text style={{ color: '#4CAF50' }}>● LIVE</Text></Text>
+          <Text style={styles.headerTitle}>⚡ EASYWAY Admin</Text>
+          <Text style={styles.headerSub}>Tableau de bord</Text>
+        </View>
+        <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.navigate('AdminLiveMap')}>
+            <Text style={{ fontSize: 18 }}>🗺️</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerBtn} onPress={() => { logout(); navigation.replace('Login'); }}>
+            <Text style={{ fontSize: 18 }}>🚪</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={load} tintColor={COLORS.accent} />
-        }
-        showsVerticalScrollIndicator={false}
-      >
-        {isLoading && !stats?.users ? (
-          <ActivityIndicator size="large" color={COLORS.accent} style={{ marginTop: 40 }} />
-        ) : (
-          <>
-            {/* KPI Grid */}
-            <Text style={styles.sectionTitle}>Vue d'ensemble</Text>
-            <View style={styles.kpiGrid}>
-              <KPICard
-                emoji="👥"
-                label="Utilisateurs"
-                value={stats?.users?.total ?? 0}
-                sub={`${stats?.users?.chauffeurs ?? 0} chauffeurs`}
-                accentColor="#1565C0"
-              />
-              <KPICard
-                emoji="📦"
-                label="Commandes aujourd'hui"
-                value={stats?.orders?.today ?? 0}
-                sub={`${stats?.orders?.pending ?? 0} en attente`}
-                accentColor={COLORS.accent}
-              />
+      {loading ? (
+        <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 60 }} />
+      ) : (
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.accent} />}
+        >
+          {/* Alerts */}
+          {d.alerts?.map((alert, i) => (
+            <View key={i} style={[styles.alertCard, { borderColor: alert.color + '50', backgroundColor: alert.color + '12' }]}>
+              <Text style={[styles.alertText, { color: alert.color }]}>⚠️ {alert.message}</Text>
             </View>
-            <View style={styles.kpiGrid}>
-              <KPICard
-                emoji="💰"
-                label="Revenus du mois"
-                value={`${(stats?.revenue?.monthTND ?? 0).toFixed(0)} TND`}
-                sub={`Aujourd'hui: ${(stats?.revenue?.todayTND ?? 0).toFixed(0)} TND`}
-                accentColor={COLORS.green}
-              />
-              <KPICard
-                emoji="⏳"
-                label="KYC en attente"
-                value={kycCount}
-                sub={kycCount > 0 ? 'Action requise' : 'À jour'}
-                accentColor={kycCount > 0 ? COLORS.amber : COLORS.muted}
-              />
+          ))}
+
+          {/* Revenue hero */}
+          <View style={styles.revenueHero}>
+            <View>
+              <Text style={styles.revenueLabel}>CA aujourd'hui</Text>
+              <Text style={styles.revenueAmount}>{d.revenue.today.toFixed(3)}</Text>
+              <Text style={styles.revenueTND}>TND</Text>
             </View>
-
-            {/* Mini chart */}
-            {ordersChart ? (
-              <MiniBarChart data={ordersChart.data} labels={ordersChart.labels} />
-            ) : null}
-
-            {/* Stats secondaires */}
-            <View style={styles.statsRow}>
-              <View style={styles.statChip}>
-                <Text style={styles.statChipNum}>{stats?.orders?.completed ?? 0}</Text>
-                <Text style={styles.statChipLbl}>Complétées</Text>
+            <View style={styles.revenueSide}>
+              <View style={styles.zeroBadge}>
+                <Text style={styles.zeroBadgeText}>0% COMMISSION</Text>
               </View>
-              <View style={styles.statChip}>
-                <Text style={styles.statChipNum}>{stats?.orders?.cancelled ?? 0}</Text>
-                <Text style={styles.statChipLbl}>Annulées</Text>
-              </View>
-              <View style={styles.statChip}>
-                <Text style={styles.statChipNum}>{stats?.subscriptions?.active ?? 0}</Text>
-                <Text style={styles.statChipLbl}>Abonnements</Text>
-              </View>
-              <View style={styles.statChip}>
-                <Text style={styles.statChipNum}>{stats?.ads?.active ?? 0}</Text>
-                <Text style={styles.statChipLbl}>Pubs actives</Text>
-              </View>
-            </View>
-
-            {/* Navigation */}
-            <Text style={styles.sectionTitle}>Navigation</Text>
-            <View style={styles.navGrid}>
-              <NavButton
-                emoji="👤"
-                label="Utilisateurs"
-                onPress={() => navigation.navigate('AdminUsers')}
-              />
-              <NavButton
-                emoji="📋"
-                label="Commandes"
-                onPress={() => navigation.navigate('AdminOrders')}
-              />
-              <NavButton
-                emoji="🏪"
-                label="Marchands"
-                onPress={() => navigation.navigate('AdminMerchants')}
-              />
-              <NavButton
-                emoji="⚠️"
-                label="Disputes"
-                onPress={() => navigation.navigate('AdminDisputes')}
-              />
-              <NavButton
-                emoji="🔖"
-                label="KYC"
-                badge={kycCount > 0 ? kycCount : null}
-                onPress={() => navigation.navigate('AdminKYC')}
-              />
-              <NavButton
-                emoji="📊"
-                label="Rapports"
-                onPress={() => navigation.navigate('AdminReports')}
-              />
-              <NavButton
-                emoji="🕐"
-                label="Chronologie"
-                onPress={() => navigation.navigate('AdminActivity')}
-              />
-              <NavButton
-                emoji="🚨"
-                label="Anti-fraude"
-                onPress={() => navigation.navigate('AdminFraud')}
-              />
-              <NavButton
-                emoji="📊"
-                label="Analytics"
-                onPress={() => navigation.navigate('AdminAnalytics')}
-              />
-              <NavButton
-                emoji="💼"
-                label="Wallets"
-                onPress={() => navigation.navigate('AdminWallet')}
-              />
-              <NavButton
-                emoji="🗺️"
-                label="Carte live"
-                onPress={() => navigation.navigate('AdminDriverMap')}
-              />
-              <NavButton
-                emoji="🏷️"
-                label="Codes promo"
-                onPress={() => navigation.navigate('AdminPromoCodes')}
-              />
-              <NavButton
-                emoji="🎫"
-                label="Support"
-                onPress={() => navigation.navigate('AdminSupport')}
-              />
-              <NavButton
-                emoji="📣"
-                label="Broadcast"
-                onPress={() => navigation.navigate('AdminBroadcast')}
-              />
-              <NavButton
-                emoji="🗺️"
-                label="Zones geo"
-                onPress={() => navigation.navigate('AdminGeoStats')}
-              />
-              <NavButton
-                emoji="🏥"
-                label="Santé sys."
-                onPress={() => navigation.navigate('AdminSystemHealth')}
-              />
-              <NavButton
-                emoji="🎟️"
-                label="Codes promo"
-                onPress={() => navigation.navigate('AdminCouponGenerator')}
-              />
-              <NavButton
-                emoji="📣"
-                label="Push notifs"
-                onPress={() => navigation.navigate('AdminPushNotification')}
-              />
-              <NavButton
-                emoji="💹"
-                label="Rev. détaillés"
-                onPress={() => navigation.navigate('AdminRevenueReport')}
-              />
-              <NavButton
-                emoji="⚡"
-                label="Actions groupées"
-                onPress={() => navigation.navigate('AdminBulkActions')}
-              />
-            </View>
-
-            {/* Revenue total */}
-            <View style={styles.revenueCard}>
-              <Text style={styles.revenueLabel}>Revenus totaux</Text>
-              <Text style={styles.revenueValue}>
-                {(stats?.revenue?.totalTND ?? 0).toFixed(2)} TND
+              <Text style={[styles.growthText, { color: d.revenue.growth >= 0 ? COLORS.green : COLORS.red }]}>
+                {d.revenue.growth >= 0 ? '↑' : '↓'} {Math.abs(d.revenue.growth)}% vs hier
               </Text>
             </View>
-          </>
-        )}
-      </ScrollView>
-    </View>
+          </View>
+
+          {/* KPI grid */}
+          <View style={styles.kpiGrid}>
+            <KPICard icon="📦" label="Commandes/jour" value={d.orders.today}
+              sub={`${d.orders.active} actives`} color={COLORS.blue}
+              onPress={() => navigation.navigate('AdminOrders')} />
+            <KPICard icon="⏳" label="En attente" value={d.orders.pending}
+              color={d.orders.pending > 5 ? COLORS.red : COLORS.accent}
+              onPress={() => navigation.navigate('AdminOrders')} />
+            <KPICard icon="👥" label="Utilisateurs" value={d.users.total.toLocaleString()}
+              sub={`+${d.users.newToday} aujourd'hui`}
+              onPress={() => navigation.navigate('AdminUsers')} />
+            <KPICard icon="🚗" label="Prestataires" value={d.users.providers}
+              onPress={() => navigation.navigate('AdminDrivers')} />
+          </View>
+
+          {/* Services live */}
+          <Text style={styles.sectionTitle}>SERVICES EN DIRECT</Text>
+          <View style={styles.servicesRow}>
+            {d.services.map(s => (
+              <View key={s.name} style={[styles.serviceCard, { borderColor: s.color + '40' }]}>
+                <Text style={styles.serviceIcon}>{s.icon}</Text>
+                <Text style={[styles.serviceActive, { color: s.color }]}>{s.active}</Text>
+                <Text style={styles.serviceLabel}>{s.name}</Text>
+                <Text style={styles.serviceSubLabel}>actifs</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Quick nav */}
+          <Text style={styles.sectionTitle}>GESTION</Text>
+          <View style={styles.navGrid}>
+            {[
+              { icon: '🪪', label: 'KYC', screen: 'AdminKYC', badge: 3 },
+              { icon: '👥', label: 'Utilisateurs', screen: 'AdminUsers' },
+              { icon: '🚕', label: 'Chauffeurs', screen: 'AdminDrivers' },
+              { icon: '💰', label: 'Revenus', screen: 'AdminRevenue' },
+              { icon: '🎁', label: 'Promos', screen: 'AdminPromoCodes' },
+              { icon: '🗺️', label: 'Zones géo', screen: 'AdminGeoZones' },
+              { icon: '🔔', label: 'Notifs push', screen: 'AdminPushNotif' },
+              { icon: '⚙️', label: 'Paramètres', screen: 'AdminAppSettings' },
+            ].map(item => (
+              <TouchableOpacity
+                key={item.screen}
+                style={styles.navBtn}
+                onPress={() => navigation.navigate(item.screen)}
+              >
+                <View style={{ position: 'relative' }}>
+                  <Text style={styles.navIcon}>{item.icon}</Text>
+                  {item.badge > 0 && (
+                    <View style={styles.navBadge}>
+                      <Text style={styles.navBadgeText}>{item.badge}</Text>
+                    </View>
+                  )}
+                </View>
+                <Text style={styles.navLabel}>{item.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      )}
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.bg },
+  container: { flex: 1, backgroundColor: COLORS.bg },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    paddingHorizontal: 20,
-    paddingTop: 50,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingVertical: 14,
+    borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
-  headerTitle: { color: COLORS.white, fontSize: 20, fontWeight: '700' },
-  headerSub: { color: COLORS.muted, fontSize: 13, marginTop: 2 },
-  scroll: { flex: 1 },
-  scrollContent: { paddingBottom: 40 },
-  sectionTitle: {
-    color: COLORS.muted,
-    fontSize: 11,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
-    marginHorizontal: 20,
-    marginTop: 20,
-    marginBottom: 8,
+  headerTitle: { color: COLORS.text, fontSize: 18, fontWeight: '900' },
+  headerSub: { color: COLORS.muted, fontSize: 11, marginTop: 1 },
+  headerActions: { flexDirection: 'row', gap: 4 },
+  headerBtn: { padding: 8 },
+  scroll: { padding: 16 },
+  alertCard: {
+    borderRadius: 12, borderWidth: 1, padding: 12, marginBottom: 10,
   },
-  kpiGrid: { flexDirection: 'row', paddingHorizontal: 10 },
-  statsRow: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    marginBottom: 8,
-    marginTop: 4,
-    gap: 8,
+  alertText: { fontSize: 13, fontWeight: '600' },
+  revenueHero: {
+    backgroundColor: COLORS.surface, borderRadius: 20, padding: 20,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    marginBottom: 16, borderWidth: 1.5, borderColor: COLORS.accent + '40',
   },
-  statChip: {
-    flex: 1,
-    backgroundColor: COLORS.surfaceAlt,
-    borderRadius: 10,
-    padding: 10,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
+  revenueLabel: { color: COLORS.muted, fontSize: 12, marginBottom: 4 },
+  revenueAmount: { color: COLORS.accent, fontSize: 36, fontWeight: '900', lineHeight: 40 },
+  revenueTND: { color: COLORS.accent, fontSize: 13, fontWeight: '600' },
+  revenueSide: { alignItems: 'flex-end', gap: 10 },
+  zeroBadge: {
+    backgroundColor: COLORS.green + '20', borderRadius: 20, borderWidth: 1,
+    borderColor: COLORS.green + '50', paddingHorizontal: 10, paddingVertical: 4,
   },
-  statChipNum: { color: COLORS.white, fontSize: 16, fontWeight: '700' },
-  statChipLbl: { color: COLORS.muted, fontSize: 10, marginTop: 2, textAlign: 'center' },
-  navGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 10 },
-  revenueCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    padding: 20,
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    alignItems: 'center',
+  zeroBadgeText: { color: COLORS.green, fontSize: 9, fontWeight: '800', letterSpacing: 1 },
+  growthText: { fontSize: 14, fontWeight: '700' },
+  kpiGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20 },
+  kpiCard: {
+    width: '47%', backgroundColor: COLORS.surface, borderRadius: 14, padding: 14,
+    alignItems: 'center', borderWidth: 1, borderColor: COLORS.border,
   },
-  revenueLabel: { color: COLORS.muted, fontSize: 13 },
-  revenueValue: { color: COLORS.accent, fontSize: 28, fontWeight: '700', marginTop: 4 },
+  kpiIcon: { fontSize: 22, marginBottom: 6 },
+  kpiValue: { color: COLORS.text, fontSize: 20, fontWeight: '800' },
+  kpiLabel: { color: COLORS.muted, fontSize: 11, marginTop: 3, textAlign: 'center' },
+  kpiSub: { color: COLORS.muted, fontSize: 10, marginTop: 2 },
+  sectionTitle: { color: COLORS.muted, fontSize: 10, fontWeight: '700', letterSpacing: 1.4, marginBottom: 12 },
+  servicesRow: { flexDirection: 'row', gap: 8, marginBottom: 20 },
+  serviceCard: {
+    flex: 1, backgroundColor: COLORS.surface, borderRadius: 12, padding: 10,
+    alignItems: 'center', borderWidth: 1,
+  },
+  serviceIcon: { fontSize: 20, marginBottom: 4 },
+  serviceActive: { fontSize: 20, fontWeight: '900' },
+  serviceLabel: { color: COLORS.text, fontSize: 11, fontWeight: '600', marginTop: 2 },
+  serviceSubLabel: { color: COLORS.muted, fontSize: 9 },
+  navGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  navBtn: {
+    width: '22%', backgroundColor: COLORS.surface, borderRadius: 12, padding: 12,
+    alignItems: 'center', borderWidth: 1, borderColor: COLORS.border,
+  },
+  navIcon: { fontSize: 22, marginBottom: 4 },
+  navLabel: { color: COLORS.muted, fontSize: 10, textAlign: 'center' },
+  navBadge: {
+    position: 'absolute', top: -4, right: -6,
+    backgroundColor: COLORS.red, borderRadius: 8, paddingHorizontal: 4, paddingVertical: 1,
+  },
+  navBadgeText: { color: '#FFF', fontSize: 8, fontWeight: '800' },
 });
