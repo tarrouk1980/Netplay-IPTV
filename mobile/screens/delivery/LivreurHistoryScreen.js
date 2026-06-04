@@ -1,514 +1,170 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  FlatList,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+  View, Text, StyleSheet, FlatList, TouchableOpacity,
+  ActivityIndicator, StatusBar,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COLORS = {
-  background: "#0A0A0F",
-  surface: "#1C1C28",
-  primary: "#F5A623",
-  text: "#FFFFFF",
-  muted: "#8E8E9A",
-  border: "#2C2C3A",
-  success: "#4CAF50",
-  error: "#F44336",
+  bg: '#0A0A0F', surface: '#1C1C28', border: '#2C2C3E',
+  text: '#FFFFFF', muted: '#8E8E9A', accent: '#F5A623',
+  green: '#27AE60', red: '#E74C3C', blue: '#3498DB',
 };
 
-const MOCK_DELIVERIES = [
-  {
-    id: "1",
-    date: "2024-01-15",
-    heure: "14:32",
-    marchand: "Pizza Palace",
-    clientAdresse: "12 Rue de la République, Tunis",
-    distance: "3.2 km",
-    duree: "18 min",
-    montant: "8.500",
-    bonus: "1.000",
-    status: "COMPLETEE",
-  },
-  {
-    id: "2",
-    date: "2024-01-15",
-    heure: "12:10",
-    marchand: "Burger House",
-    clientAdresse: "45 Avenue Habib Bourguiba, Tunis",
-    distance: "5.7 km",
-    duree: "27 min",
-    montant: "10.000",
-    bonus: null,
-    status: "COMPLETEE",
-  },
-  {
-    id: "3",
-    date: "2024-01-14",
-    heure: "19:45",
-    marchand: "Sushi Bar",
-    clientAdresse: "8 Rue Ibn Khaldoun, Ariana",
-    distance: "4.1 km",
-    duree: "22 min",
-    montant: "9.000",
-    bonus: "2.000",
-    status: "COMPLETEE",
-  },
-  {
-    id: "4",
-    date: "2024-01-14",
-    heure: "17:20",
-    marchand: "Fast Food Central",
-    clientAdresse: "3 Boulevard du 7 Novembre, La Marsa",
-    distance: "6.3 km",
-    duree: "31 min",
-    montant: "0.000",
-    bonus: null,
-    status: "ANNULEE",
-  },
-  {
-    id: "5",
-    date: "2024-01-13",
-    heure: "20:15",
-    marchand: "Le Gourmet",
-    clientAdresse: "22 Rue Alain Savary, Tunis",
-    distance: "2.8 km",
-    duree: "15 min",
-    montant: "7.500",
-    bonus: null,
-    status: "COMPLETEE",
-  },
-  {
-    id: "6",
-    date: "2024-01-13",
-    heure: "13:05",
-    marchand: "Snack Express",
-    clientAdresse: "67 Rue de Marseille, Tunis",
-    distance: "1.9 km",
-    duree: "11 min",
-    montant: "6.000",
-    bonus: "0.500",
-    status: "COMPLETEE",
-  },
-  {
-    id: "7",
-    date: "2024-01-12",
-    heure: "21:30",
-    marchand: "Pizza Palace",
-    clientAdresse: "100 Avenue de Carthage, Tunis",
-    distance: "4.5 km",
-    duree: "24 min",
-    montant: "0.000",
-    bonus: null,
-    status: "ANNULEE",
-  },
-  {
-    id: "8",
-    date: "2024-01-12",
-    heure: "11:45",
-    marchand: "Café du Coin",
-    clientAdresse: "15 Rue des Orangers, Manouba",
-    distance: "7.2 km",
-    duree: "35 min",
-    montant: "11.000",
-    bonus: "1.500",
-    status: "COMPLETEE",
-  },
-  {
-    id: "9",
-    date: "2024-01-11",
-    heure: "18:00",
-    marchand: "Tacos World",
-    clientAdresse: "29 Avenue de la Liberté, Tunis",
-    distance: "3.6 km",
-    duree: "20 min",
-    montant: "8.000",
-    bonus: null,
-    status: "COMPLETEE",
-  },
-  {
-    id: "10",
-    date: "2024-01-10",
-    heure: "15:55",
-    marchand: "Sushi Bar",
-    clientAdresse: "54 Rue Farhat Hached, Tunis",
-    distance: "5.0 km",
-    duree: "26 min",
-    montant: "9.500",
-    bonus: "1.000",
-    status: "COMPLETEE",
-  },
+const MOCK = [
+  { id: 'D001', clientName: 'Nadia K.', pickup: 'Pizza Roma, Lac 1', dropoff: 'Berges du Lac 2', distance: 2.3, amount: 5.000, status: 'DELIVERED', date: '03/06/2026 14:52', rating: 5 },
+  { id: 'D002', clientName: 'Ahmed B.', pickup: 'Carrefour Market', dropoff: 'Sidi Bou Said', distance: 4.1, amount: 7.500, status: 'DELIVERED', date: '03/06/2026 13:10', rating: 4 },
+  { id: 'D003', clientName: 'Lina M.', pickup: 'Monoprix Menzah', dropoff: 'Ariana Centre', distance: 3.8, amount: 6.500, status: 'CANCELLED', date: '03/06/2026 11:30', rating: null },
+  { id: 'D004', clientName: 'Youssef T.', pickup: 'KFC Tunis City', dropoff: 'Lafayette', distance: 1.5, amount: 4.000, status: 'DELIVERED', date: '02/06/2026 19:45', rating: 5 },
+  { id: 'D005', clientName: 'Rim S.', pickup: 'Géant Casino', dropoff: 'El Manar', distance: 5.2, amount: 8.500, status: 'DELIVERED', date: '02/06/2026 17:22', rating: 4 },
 ];
 
-const FILTERS = ["Toutes", "Complétées", "Annulées"];
+const STATUS_LABELS = { DELIVERED: 'Livré', CANCELLED: 'Annulé', IN_PROGRESS: 'En cours' };
+const STATUS_COLORS = { DELIVERED: COLORS.green, CANCELLED: COLORS.red, IN_PROGRESS: COLORS.blue };
 
-export default function LivreurHistoryScreen({ navigation }) {
-  const [activeFilter, setActiveFilter] = useState("Toutes");
-
-  const filteredDeliveries = MOCK_DELIVERIES.filter((d) => {
-    if (activeFilter === "Toutes") return true;
-    if (activeFilter === "Complétées") return d.status === "COMPLETEE";
-    if (activeFilter === "Annulées") return d.status === "ANNULEE";
-    return true;
-  });
-
-  const totalLivraisons = MOCK_DELIVERIES.filter(
-    (d) => d.status === "COMPLETEE"
-  ).length;
-  const totalGagne = MOCK_DELIVERIES.filter(
-    (d) => d.status === "COMPLETEE"
-  ).reduce((sum, d) => {
-    const montant = parseFloat(d.montant) || 0;
-    const bonus = d.bonus ? parseFloat(d.bonus) : 0;
-    return sum + montant + bonus;
-  }, 0);
-  const noteMoyenne = 4.7;
-
-  const getStatusStyle = (status) => {
-    if (status === "COMPLETEE") return styles.badgeSuccess;
-    if (status === "ANNULEE") return styles.badgeError;
-    return styles.badgeMuted;
-  };
-
-  const getStatusLabel = (status) => {
-    if (status === "COMPLETEE") return "Complétée";
-    if (status === "ANNULEE") return "Annulée";
-    return status;
-  };
-
-  const renderDelivery = ({ item }) => (
+function DeliveryCard({ item }) {
+  return (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
-        <Text style={styles.cardDate}>
-          {item.date} à {item.heure}
-        </Text>
-        <View style={[styles.badge, getStatusStyle(item.status)]}>
-          <Text style={styles.badgeText}>{getStatusLabel(item.status)}</Text>
+        <Text style={styles.cardId}>#{item.id}</Text>
+        <View style={[styles.statusBadge, { backgroundColor: STATUS_COLORS[item.status] + '20', borderColor: STATUS_COLORS[item.status] + '50' }]}>
+          <Text style={[styles.statusText, { color: STATUS_COLORS[item.status] }]}>{STATUS_LABELS[item.status]}</Text>
         </View>
       </View>
 
-      <View style={styles.routeRow}>
-        <View style={styles.routeInfo}>
-          <Text style={styles.marchandLabel}>Marchand</Text>
-          <Text style={styles.marchandName} numberOfLines={1}>
-            {item.marchand}
-          </Text>
+      <View style={styles.routeSection}>
+        <View style={styles.routeRow}>
+          <View style={[styles.dot, { backgroundColor: COLORS.green }]} />
+          <Text style={styles.routeText} numberOfLines={1}>{item.pickup}</Text>
         </View>
-        <Text style={styles.routeArrow}>→</Text>
-        <View style={styles.routeInfo}>
-          <Text style={styles.clientLabel}>Client</Text>
-          <Text style={styles.clientAdresse} numberOfLines={1}>
-            {item.clientAdresse}
-          </Text>
+        <View style={styles.routeLine} />
+        <View style={styles.routeRow}>
+          <View style={[styles.dot, { backgroundColor: COLORS.accent }]} />
+          <Text style={styles.routeText} numberOfLines={1}>{item.dropoff}</Text>
         </View>
       </View>
 
       <View style={styles.cardFooter}>
-        <View style={styles.metaRow}>
-          <Text style={styles.metaText}>📍 {item.distance}</Text>
-          <Text style={styles.metaDot}>·</Text>
-          <Text style={styles.metaText}>⏱ {item.duree}</Text>
-        </View>
-        <View style={styles.amountRow}>
-          {item.status === "COMPLETEE" && (
-            <>
-              <Text style={styles.montant}>{item.montant} TND</Text>
-              {item.bonus && (
-                <View style={styles.bonusBadge}>
-                  <Text style={styles.bonusText}>+{item.bonus} bonus</Text>
-                </View>
-              )}
-            </>
-          )}
-          {item.status === "ANNULEE" && (
-            <Text style={styles.annuleeText}>—</Text>
-          )}
-        </View>
+        <Text style={styles.footerDate}>{item.date}</Text>
+        <Text style={styles.footerDist}>📍 {item.distance} km</Text>
+        <View style={{ flex: 1 }} />
+        <Text style={styles.footerAmount}>{item.amount.toFixed(3)} TND</Text>
+        {item.rating && <Text style={styles.footerRating}>{'★'.repeat(item.rating)}</Text>}
       </View>
     </View>
   );
+}
+
+export default function LivreurHistoryScreen({ navigation }) {
+  const [deliveries, setDeliveries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({ total: 0, earnings: 0, avgRating: 0 });
+
+  const load = useCallback(() => {
+    api.get('/api/livreur/deliveries/history')
+      .then(r => {
+        const data = r.data.deliveries || MOCK;
+        setDeliveries(data);
+        const delivered = data.filter(d => d.status === 'DELIVERED');
+        const earnings = delivered.reduce((s, d) => s + d.amount, 0);
+        const ratings = delivered.filter(d => d.rating).map(d => d.rating);
+        const avgRating = ratings.length ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1) : '—';
+        setStats({ total: delivered.length, earnings, avgRating });
+      })
+      .catch(() => {
+        setDeliveries(MOCK);
+        setStats({ total: 4, earnings: 25.000, avgRating: '4.7' });
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backBtn}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.backArrow}>←</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Historique livraisons</Text>
-        <View style={styles.headerRight} />
+        <Text style={styles.headerTitle}>📋 Historique livraisons</Text>
+        <View style={{ width: 36 }} />
       </View>
 
-      <View style={styles.summaryCard}>
-        <View style={styles.summaryItem}>
-          <Text style={styles.summaryValue}>{totalLivraisons}</Text>
-          <Text style={styles.summaryLabel}>Livraisons</Text>
-        </View>
-        <View style={styles.summaryDivider} />
-        <View style={styles.summaryItem}>
-          <Text style={styles.summaryValue}>{totalGagne.toFixed(3)}</Text>
-          <Text style={styles.summaryLabel}>TND gagné</Text>
-        </View>
-        <View style={styles.summaryDivider} />
-        <View style={styles.summaryItem}>
-          <Text style={styles.summaryValue}>⭐ {noteMoyenne}</Text>
-          <Text style={styles.summaryLabel}>Note moy.</Text>
-        </View>
-      </View>
+      {loading ? (
+        <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 60 }} />
+      ) : (
+        <>
+          <View style={styles.statsRow}>
+            <View style={styles.statCard}>
+              <Text style={[styles.statNum, { color: COLORS.accent }]}>{stats.earnings.toFixed(3)}</Text>
+              <Text style={styles.statLabel}>TND gagnés</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statNum}>{stats.total}</Text>
+              <Text style={styles.statLabel}>Livraisons</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={[styles.statNum, { color: COLORS.accent }]}>★ {stats.avgRating}</Text>
+              <Text style={styles.statLabel}>Note moy.</Text>
+            </View>
+          </View>
 
-      <View style={styles.filtersRow}>
-        {FILTERS.map((f) => (
-          <TouchableOpacity
-            key={f}
-            style={[
-              styles.filterTab,
-              activeFilter === f && styles.filterTabActive,
-            ]}
-            onPress={() => setActiveFilter(f)}
-          >
-            <Text
-              style={[
-                styles.filterText,
-                activeFilter === f && styles.filterTextActive,
-              ]}
-            >
-              {f}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <FlatList
-        data={filteredDeliveries}
-        keyExtractor={(item) => item.id}
-        renderItem={renderDelivery}
-        contentContainerStyle={styles.listContent}
-        ListEmptyComponent={
-          <Text style={styles.emptyText}>Aucune livraison trouvée.</Text>
-        }
-      />
+          <FlatList
+            data={deliveries}
+            keyExtractor={item => item.id}
+            renderItem={({ item }) => <DeliveryCard item={item} />}
+            contentContainerStyle={styles.list}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <View style={styles.empty}>
+                <Text style={{ fontSize: 40 }}>📭</Text>
+                <Text style={{ color: COLORS.muted, marginTop: 12 }}>Aucune livraison</Text>
+              </View>
+            }
+          />
+        </>
+      )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
+  container: { flex: 1, backgroundColor: COLORS.bg },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingVertical: 14,
+    borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
-  backBtn: {
-    width: 36,
-    height: 36,
-    justifyContent: "center",
-    alignItems: "center",
+  backBtn: { padding: 4 },
+  backText: { color: COLORS.accent, fontSize: 22 },
+  headerTitle: { color: COLORS.text, fontSize: 17, fontWeight: '900' },
+  statsRow: { flexDirection: 'row', gap: 8, padding: 16, paddingBottom: 8 },
+  statCard: {
+    flex: 1, backgroundColor: COLORS.surface, borderRadius: 12, padding: 12,
+    alignItems: 'center', borderWidth: 1, borderColor: COLORS.border,
   },
-  backArrow: {
-    color: COLORS.text,
-    fontSize: 22,
-  },
-  headerTitle: {
-    flex: 1,
-    color: COLORS.text,
-    fontSize: 18,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-  headerRight: {
-    width: 36,
-  },
-  summaryCard: {
-    flexDirection: "row",
-    backgroundColor: COLORS.surface,
-    margin: 16,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    alignItems: "center",
-  },
-  summaryItem: {
-    flex: 1,
-    alignItems: "center",
-  },
-  summaryValue: {
-    color: COLORS.primary,
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  summaryLabel: {
-    color: COLORS.muted,
-    fontSize: 11,
-    marginTop: 4,
-  },
-  summaryDivider: {
-    width: 1,
-    height: 36,
-    backgroundColor: COLORS.border,
-  },
-  filtersRow: {
-    flexDirection: "row",
-    paddingHorizontal: 16,
-    marginBottom: 12,
-    gap: 8,
-  },
-  filterTab: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
-  },
-  filterTabActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-  },
-  filterText: {
-    color: COLORS.muted,
-    fontSize: 13,
-    fontWeight: "500",
-  },
-  filterTextActive: {
-    color: COLORS.background,
-    fontWeight: "700",
-  },
-  listContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 24,
-  },
+  statNum: { color: COLORS.text, fontSize: 14, fontWeight: '800' },
+  statLabel: { color: COLORS.muted, fontSize: 10, marginTop: 3, textAlign: 'center' },
+  list: { padding: 16 },
   card: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface, borderRadius: 14, padding: 14,
+    marginBottom: 12, borderWidth: 1, borderColor: COLORS.border,
   },
-  cardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  cardDate: {
-    color: COLORS.muted,
-    fontSize: 12,
-  },
-  badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 10,
-  },
-  badgeSuccess: {
-    backgroundColor: "rgba(76,175,80,0.15)",
-  },
-  badgeError: {
-    backgroundColor: "rgba(244,67,54,0.15)",
-  },
-  badgeMuted: {
-    backgroundColor: COLORS.border,
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: COLORS.text,
-  },
-  routeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 10,
-    gap: 8,
-  },
-  routeInfo: {
-    flex: 1,
-  },
-  marchandLabel: {
-    color: COLORS.muted,
-    fontSize: 10,
-    marginBottom: 2,
-  },
-  marchandName: {
-    color: COLORS.text,
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  clientLabel: {
-    color: COLORS.muted,
-    fontSize: 10,
-    marginBottom: 2,
-  },
-  clientAdresse: {
-    color: COLORS.text,
-    fontSize: 13,
-  },
-  routeArrow: {
-    color: COLORS.muted,
-    fontSize: 16,
-  },
-  cardFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    paddingTop: 10,
-    marginTop: 2,
-  },
-  metaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  metaText: {
-    color: COLORS.muted,
-    fontSize: 12,
-  },
-  metaDot: {
-    color: COLORS.muted,
-    fontSize: 12,
-  },
-  amountRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  montant: {
-    color: COLORS.primary,
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  bonusBadge: {
-    backgroundColor: "rgba(245,166,35,0.15)",
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  bonusText: {
-    color: COLORS.primary,
-    fontSize: 11,
-    fontWeight: "600",
-  },
-  annuleeText: {
-    color: COLORS.muted,
-    fontSize: 14,
-  },
-  emptyText: {
-    color: COLORS.muted,
-    fontSize: 14,
-    textAlign: "center",
-    marginTop: 40,
-  },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  cardId: { color: COLORS.muted, fontSize: 12, fontWeight: '600' },
+  statusBadge: { borderRadius: 8, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 3 },
+  statusText: { fontSize: 11, fontWeight: '700' },
+  routeSection: { marginBottom: 10 },
+  routeRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  dot: { width: 8, height: 8, borderRadius: 4 },
+  routeLine: { width: 1, height: 10, backgroundColor: COLORS.border, marginLeft: 3.5, marginVertical: 2 },
+  routeText: { flex: 1, color: COLORS.text, fontSize: 13 },
+  cardFooter: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  footerDate: { color: COLORS.muted, fontSize: 11 },
+  footerDist: { color: COLORS.muted, fontSize: 11 },
+  footerAmount: { color: COLORS.accent, fontSize: 14, fontWeight: '800' },
+  footerRating: { color: COLORS.accent, fontSize: 12 },
+  empty: { alignItems: 'center', paddingVertical: 60 },
 });

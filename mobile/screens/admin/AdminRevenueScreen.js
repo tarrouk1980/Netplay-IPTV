@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   ActivityIndicator, StatusBar,
@@ -12,137 +12,138 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB', purple: '#9B59B6',
 };
 
-const PERIODS = [
-  { label: '7j', days: 7 },
-  { label: '30j', days: 30 },
-  { label: '3m', days: 90 },
-  { label: '12m', days: 365 },
-];
+const PERIODS = ['Aujourd\'hui', '7 jours', 'Ce mois', 'Cette année'];
 
 const MOCK = {
-  totalRevenue: 124850.750,
-  ordersCount: 18432,
-  avgTicket: 6.774,
-  growth: 12.4,
+  total: 124850.750,
   byService: [
-    { service: 'TAXI', label: 'Taxi EasyWay', count: 12840, revenue: 89230.500, color: '#F5A623' },
-    { service: 'DELIVERY', label: 'Livraison', count: 3210, revenue: 19870.250, color: '#3498DB' },
-    { service: 'GROCERY', label: 'Épicerie', count: 1620, revenue: 9840.000, color: '#27AE60' },
-    { service: 'SOS', label: 'SOS Dépannage', count: 762, revenue: 5910.000, color: '#9B59B6' },
+    { name: 'Taxi', icon: '🚕', amount: 68420.500, pct: 54.8, color: COLORS.accent },
+    { name: 'Livraison', icon: '📦', amount: 32180.250, pct: 25.8, color: COLORS.blue },
+    { name: 'Épicerie', icon: '🛒', amount: 15640.000, pct: 12.5, color: COLORS.green },
+    { name: 'SOS', icon: '🔧', amount: 8610.000, pct: 6.9, color: COLORS.red },
   ],
-  daily: [42.5, 68.2, 55.1, 90.3, 120.8, 145.2, 98.6, 77.4, 110.0, 132.5,
-          88.3, 95.0, 140.2, 115.6, 78.9, 102.3, 130.0, 160.5, 88.2, 75.0,
-          92.4, 118.7, 145.0, 98.3, 112.5, 135.8, 77.2, 88.6, 105.0, 92.3],
+  topProviders: [
+    { name: 'Mohamed A.', role: 'Chauffeur', amount: 4280.500, trips: 312 },
+    { name: 'Sami K.', role: 'Livreur', amount: 3840.250, trips: 287 },
+    { name: 'Pizza Roma', role: 'Marchand', amount: 3120.000, trips: 198 },
+    { name: 'Nour B.', role: 'Chauffeur', amount: 2980.750, trips: 241 },
+    { name: 'Karim M.', role: 'Dépanneur', amount: 2640.000, trips: 88 },
+  ],
+  daily: [3200, 4100, 2800, 5100, 4400, 6200, 5800],
+  days: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
+  growth: 12.4,
 };
+
+function Bar({ value, maxValue }) {
+  return (
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end', height: 64 }}>
+      <View style={{
+        width: '75%', borderRadius: 3, backgroundColor: COLORS.accent,
+        height: Math.max(3, (value / maxValue) * 60),
+      }} />
+    </View>
+  );
+}
 
 export default function AdminRevenueScreen({ navigation }) {
   const [period, setPeriod] = useState(1);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     setLoading(true);
-    api.get(`/api/admin/revenue?days=${PERIODS[period].days}`)
+    api.get('/api/admin/revenue?period=' + period)
       .then(r => setData(r.data || MOCK))
       .catch(() => setData(MOCK))
       .finally(() => setLoading(false));
   }, [period]);
 
-  const maxDaily = data ? Math.max(...(data.daily || [1])) : 1;
-  const totalRevForBar = data ? data.byService.reduce((s, x) => s + x.revenue, 0) : 1;
+  useEffect(() => { load(); }, [load]);
+
+  const d = data || MOCK;
+  const maxVal = Math.max(...d.daily, 1);
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
-
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backArrow}>‹</Text>
+          <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Revenus & Analytics</Text>
-        <View style={{ width: 40 }} />
+        <Text style={styles.headerTitle}>💰 Revenus plateforme</Text>
+        <View style={{ width: 36 }} />
       </View>
 
-      <View style={styles.periodRow}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.periodScroll} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
         {PERIODS.map((p, i) => (
-          <TouchableOpacity
-            key={i}
-            style={[styles.periodBtn, period === i && styles.periodBtnActive]}
-            onPress={() => setPeriod(i)}
-          >
-            <Text style={[styles.periodLabel, period === i && styles.periodLabelActive]}>{p.label}</Text>
+          <TouchableOpacity key={i} style={[styles.periodBtn, period === i && styles.periodBtnActive]} onPress={() => setPeriod(i)}>
+            <Text style={[styles.periodText, period === i && styles.periodTextActive]}>{p}</Text>
           </TouchableOpacity>
         ))}
-      </View>
+      </ScrollView>
 
       {loading ? (
-        <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} />
-      ) : data ? (
+        <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 60 }} />
+      ) : (
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
           <View style={styles.heroCard}>
-            <Text style={styles.heroLabel}>Chiffre d'affaires ({PERIODS[period].label})</Text>
-            <Text style={styles.heroAmount}>{data.totalRevenue.toFixed(3)}</Text>
+            <Text style={styles.heroLabel}>Revenus totaux</Text>
+            <Text style={styles.heroAmount}>{d.total.toFixed(3)}</Text>
             <Text style={styles.heroTND}>TND</Text>
-            <View style={styles.zeroBadge}>
-              <Text style={styles.zeroBadgeText}>✦ 0% COMMISSION PRELEVÉE</Text>
-            </View>
-            <View style={styles.kpiRow}>
-              <View style={styles.kpiItem}>
-                <Text style={styles.kpiNum}>{data.ordersCount.toLocaleString()}</Text>
-                <Text style={styles.kpiLabel}>commandes</Text>
-              </View>
-              <View style={styles.kpiItem}>
-                <Text style={styles.kpiNum}>{data.avgTicket.toFixed(3)}</Text>
-                <Text style={styles.kpiLabel}>panier moy.</Text>
-              </View>
-              <View style={styles.kpiItem}>
-                <Text style={[styles.kpiNum, { color: data.growth >= 0 ? COLORS.green : COLORS.red }]}>
-                  {data.growth >= 0 ? '+' : ''}{data.growth}%
-                </Text>
-                <Text style={styles.kpiLabel}>vs période préc.</Text>
-              </View>
+            <View style={[styles.growthBadge, { backgroundColor: d.growth >= 0 ? COLORS.green + '20' : COLORS.red + '20' }]}>
+              <Text style={[styles.growthText, { color: d.growth >= 0 ? COLORS.green : COLORS.red }]}>
+                {d.growth >= 0 ? '↑' : '↓'} {Math.abs(d.growth)}% vs période précédente
+              </Text>
             </View>
           </View>
 
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>ACTIVITÉ QUOTIDIENNE (TND)</Text>
-            <View style={styles.barChart}>
-              {(data.daily || []).slice(-14).map((val, i) => (
-                <View key={i} style={styles.barCol}>
-                  <View style={[styles.bar, { height: Math.max(4, (val / maxDaily) * 100) }]} />
-                </View>
-              ))}
+            <Text style={styles.cardTitle}>ÉVOLUTION 7 JOURS</Text>
+            <View style={styles.chartRow}>
+              {d.daily.map((v, i) => <Bar key={i} value={v} maxValue={maxVal} />)}
             </View>
-            <Text style={styles.chartHint}>14 derniers jours</Text>
+            <View style={styles.chartLabels}>
+              {d.days.map((day, i) => <Text key={i} style={styles.chartLabel}>{day}</Text>)}
+            </View>
           </View>
 
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>PAR SERVICE</Text>
-            {data.byService.map((s, i) => (
-              <View key={i} style={styles.serviceRow}>
+          <Text style={styles.sectionTitle}>PAR SERVICE</Text>
+          {d.byService.map((s, i) => (
+            <View key={i} style={styles.serviceRow}>
+              <Text style={styles.serviceIcon}>{s.icon}</Text>
+              <View style={{ flex: 1 }}>
                 <View style={styles.serviceTop}>
-                  <View style={[styles.serviceDot, { backgroundColor: s.color }]} />
-                  <Text style={styles.serviceLabel}>{s.label}</Text>
-                  <Text style={styles.serviceAmount}>{s.revenue.toFixed(3)} TND</Text>
+                  <Text style={styles.serviceName}>{s.name}</Text>
+                  <Text style={[styles.serviceAmount, { color: s.color }]}>{s.amount.toFixed(3)} TND</Text>
                 </View>
                 <View style={styles.progressBg}>
-                  <View style={[styles.progressFill, {
-                    width: `${Math.round((s.revenue / totalRevForBar) * 100)}%`,
-                    backgroundColor: s.color,
-                  }]} />
+                  <View style={[styles.progressFill, { width: s.pct + '%', backgroundColor: s.color }]} />
                 </View>
-                <View style={styles.serviceStats}>
-                  <Text style={styles.serviceStat}>{s.count.toLocaleString()} commandes</Text>
-                  <Text style={styles.serviceStat}>{Math.round((s.revenue / totalRevForBar) * 100)}%</Text>
+                <Text style={styles.servicePct}>{s.pct}%</Text>
+              </View>
+            </View>
+          ))}
+
+          <Text style={[styles.sectionTitle, { marginTop: 16 }]}>TOP PRESTATAIRES</Text>
+          <View style={styles.card}>
+            {d.topProviders.map((p, i) => (
+              <View key={i} style={[styles.providerRow, i < d.topProviders.length - 1 && styles.providerRowBorder]}>
+                <View style={[styles.providerRank, i === 0 && { backgroundColor: COLORS.accent }]}>
+                  <Text style={[styles.providerRankText, i === 0 && { color: '#000' }]}>#{i + 1}</Text>
                 </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.providerName}>{p.name}</Text>
+                  <Text style={styles.providerRole}>{p.role} · {p.trips} courses</Text>
+                </View>
+                <Text style={styles.providerAmount}>{p.amount.toFixed(3)} TND</Text>
               </View>
             ))}
           </View>
 
           <View style={{ height: 40 }} />
         </ScrollView>
-      ) : null}
+      )}
     </SafeAreaView>
   );
 }
@@ -154,55 +155,57 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 14,
     borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
-  backBtn: { width: 40 },
-  backArrow: { color: COLORS.text, fontSize: 30, fontWeight: '300' },
-  headerTitle: { color: COLORS.text, fontSize: 17, fontWeight: '700' },
-  periodRow: {
-    flexDirection: 'row', paddingHorizontal: 16, paddingVertical: 12, gap: 8,
-    borderBottomWidth: 1, borderBottomColor: COLORS.border,
-  },
+  backBtn: { padding: 4 },
+  backText: { color: COLORS.accent, fontSize: 22 },
+  headerTitle: { color: COLORS.text, fontSize: 17, fontWeight: '900' },
+  periodScroll: { paddingVertical: 12 },
   periodBtn: {
-    flex: 1, paddingVertical: 8, borderRadius: 10,
-    backgroundColor: COLORS.surface, alignItems: 'center',
-    borderWidth: 1, borderColor: COLORS.border,
+    borderRadius: 10, paddingHorizontal: 14, paddingVertical: 7,
+    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
   },
-  periodBtnActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
-  periodLabel: { color: COLORS.muted, fontSize: 13, fontWeight: '600' },
-  periodLabelActive: { color: '#000' },
+  periodBtnActive: { backgroundColor: COLORS.accent + '20', borderColor: COLORS.accent },
+  periodText: { color: COLORS.muted, fontSize: 13, fontWeight: '600' },
+  periodTextActive: { color: COLORS.accent },
   scroll: { padding: 16 },
   heroCard: {
     backgroundColor: COLORS.surface, borderRadius: 20, padding: 24,
     alignItems: 'center', marginBottom: 16,
-    borderWidth: 1.5, borderColor: '#F5A62350',
+    borderWidth: 1.5, borderColor: COLORS.accent + '40',
   },
-  heroLabel: { color: COLORS.muted, fontSize: 12, marginBottom: 8 },
-  heroAmount: { color: COLORS.accent, fontSize: 48, fontWeight: '900', lineHeight: 54 },
-  heroTND: { color: COLORS.accent, fontSize: 15, fontWeight: '600', marginBottom: 12 },
-  zeroBadge: {
-    backgroundColor: '#27AE6020', borderRadius: 20, borderWidth: 1,
-    borderColor: '#27AE6050', paddingHorizontal: 14, paddingVertical: 5, marginBottom: 16,
-  },
-  zeroBadgeText: { color: COLORS.green, fontSize: 10, fontWeight: '700', letterSpacing: 1.2 },
-  kpiRow: { flexDirection: 'row', gap: 28 },
-  kpiItem: { alignItems: 'center' },
-  kpiNum: { color: COLORS.text, fontSize: 18, fontWeight: '800' },
-  kpiLabel: { color: COLORS.muted, fontSize: 10, marginTop: 2 },
+  heroLabel: { color: COLORS.muted, fontSize: 13, marginBottom: 6 },
+  heroAmount: { color: COLORS.accent, fontSize: 40, fontWeight: '900', lineHeight: 44 },
+  heroTND: { color: COLORS.accent, fontSize: 14, fontWeight: '600', marginBottom: 12 },
+  growthBadge: { borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 },
+  growthText: { fontSize: 13, fontWeight: '700' },
   card: {
     backgroundColor: COLORS.surface, borderRadius: 14, padding: 16,
     marginBottom: 16, borderWidth: 1, borderColor: COLORS.border,
   },
-  cardTitle: { color: COLORS.muted, fontSize: 10, fontWeight: '700', letterSpacing: 1.4, marginBottom: 14 },
-  barChart: { flexDirection: 'row', alignItems: 'flex-end', height: 100, gap: 3 },
-  barCol: { flex: 1, justifyContent: 'flex-end' },
-  bar: { backgroundColor: '#F5A623CC', borderRadius: 2 },
-  chartHint: { color: COLORS.muted, fontSize: 10, marginTop: 8, textAlign: 'center' },
-  serviceRow: { marginBottom: 14 },
-  serviceTop: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
-  serviceDot: { width: 8, height: 8, borderRadius: 4, marginRight: 8 },
-  serviceLabel: { flex: 1, color: COLORS.text, fontSize: 13 },
-  serviceAmount: { color: COLORS.text, fontSize: 13, fontWeight: '700' },
-  progressBg: { height: 4, backgroundColor: COLORS.border, borderRadius: 2, overflow: 'hidden' },
+  cardTitle: { color: COLORS.muted, fontSize: 10, fontWeight: '700', letterSpacing: 1.4, marginBottom: 12 },
+  chartRow: { flexDirection: 'row', height: 64, alignItems: 'flex-end', marginBottom: 4 },
+  chartLabels: { flexDirection: 'row' },
+  chartLabel: { flex: 1, color: COLORS.muted, fontSize: 9, textAlign: 'center' },
+  sectionTitle: { color: COLORS.muted, fontSize: 10, fontWeight: '700', letterSpacing: 1.4, marginBottom: 10 },
+  serviceRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: COLORS.surface, borderRadius: 12, padding: 12,
+    marginBottom: 8, borderWidth: 1, borderColor: COLORS.border,
+  },
+  serviceIcon: { fontSize: 22 },
+  serviceTop: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+  serviceName: { color: COLORS.text, fontSize: 14, fontWeight: '600' },
+  serviceAmount: { fontSize: 13, fontWeight: '700' },
+  progressBg: { height: 4, backgroundColor: COLORS.border, borderRadius: 2, marginBottom: 3 },
   progressFill: { height: 4, borderRadius: 2 },
-  serviceStats: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
-  serviceStat: { color: COLORS.muted, fontSize: 11 },
+  servicePct: { color: COLORS.muted, fontSize: 11 },
+  providerRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10 },
+  providerRowBorder: { borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  providerRank: {
+    width: 26, height: 26, borderRadius: 8, backgroundColor: COLORS.bg,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  providerRankText: { color: COLORS.muted, fontSize: 11, fontWeight: '800' },
+  providerName: { color: COLORS.text, fontSize: 14, fontWeight: '600' },
+  providerRole: { color: COLORS.muted, fontSize: 11, marginTop: 1 },
+  providerAmount: { color: COLORS.accent, fontSize: 13, fontWeight: '700' },
 });
