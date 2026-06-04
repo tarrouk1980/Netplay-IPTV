@@ -80,67 +80,7 @@ export default function ProviderIncomeScreen({ navigation }) {
   };
 
   const handleExportPDF = async () => {
-    setExporting(true);
-    try {
-      const { printToFileAsync } = await import('expo-print');
-      const { shareAsync } = await import('expo-sharing');
-
-      if (!income) return;
-
-      const html = `
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<style>
-  body { font-family: Arial, sans-serif; padding: 40px; color: #111; }
-  h1 { color: #D32F2F; font-size: 24px; margin-bottom: 4px; }
-  .subtitle { color: #666; font-size: 14px; margin-bottom: 32px; }
-  .section { margin-bottom: 24px; }
-  .section-title { font-size: 13px; font-weight: bold; color: #888; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #eee; padding-bottom: 6px; margin-bottom: 12px; }
-  .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
-  .row.total { font-weight: bold; font-size: 18px; color: #27AE60; border-top: 2px solid #eee; }
-  .footer { margin-top: 40px; font-size: 11px; color: #999; }
-</style>
-</head>
-<body>
-  <h1>EASYWAY — Relevé de revenus</h1>
-  <div class="subtitle">${income.providerName} · ${income.role} · ${MONTHS[month]} ${year}</div>
-
-  <div class="section">
-    <div class="section-title">Résumé</div>
-    <div class="row"><span>Commandes effectuées</span><span>${income.ordersCount}</span></div>
-    <div class="row"><span>Jours travaillés</span><span>${income.workDays}</span></div>
-    <div class="row"><span>Moyenne par commande</span><span>${income.avgPerOrder.toFixed(3)} TND</span></div>
-    <div class="row"><span>Meilleure journée</span><span>${income.bestDay.date} — ${income.bestDay.amount.toFixed(3)} TND</span></div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">Revenus</div>
-    <div class="row"><span>Revenus bruts</span><span>${income.totalGross.toFixed(3)} TND</span></div>
-    <div class="row"><span>Commission EASYWAY</span><span>0.000 TND (modèle 0%)</span></div>
-    <div class="row total"><span>Revenus nets</span><span>${income.totalNet.toFixed(3)} TND</span></div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">Ventilation hebdomadaire</div>
-    ${income.byWeek.map(w => `<div class="row"><span>${w.week}</span><span>${w.amount.toFixed(3)} TND</span></div>`).join('')}
-  </div>
-
-  <div class="footer">
-    ${income.taxNote}<br/>
-    Document généré le ${new Date().toLocaleDateString('fr-TN')} via EASYWAY — À conserver pour déclaration fiscale.
-  </div>
-</body>
-</html>`;
-
-      const { uri } = await printToFileAsync({ html, base64: false });
-      await shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: `Relevé ${MONTHS[month]} ${year}` });
-    } catch (err) {
-      Alert.alert('Erreur', 'Impossible de générer le PDF.');
-    } finally {
-      setExporting(false);
-    }
+    Alert.alert('Export', `Relevé ${MONTHS[month]} ${year} — Fonctionnalité disponible prochainement.`);
   };
 
   return (
