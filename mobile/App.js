@@ -352,6 +352,9 @@ import ClientAddressBookScreen from './screens/client/ClientAddressBookScreen';
 import LivreurScheduleScreen from './screens/delivery/LivreurScheduleScreen';
 import AdminRevenueChartScreen from './screens/admin/AdminRevenueChartScreen';
 import LegalMentionsScreen from './screens/legal/LegalMentionsScreen';
+import TaxiScheduledTripsScreen from './screens/taxi/TaxiScheduledTripsScreen';
+import AdminUserDetailScreen from './screens/admin/AdminUserDetailScreen';
+import ClientPromoCodesScreen from './screens/client/ClientPromoCodesScreen';
 import AdminDriverPerformanceScreen from './screens/admin/AdminDriverPerformanceScreen';
 import ClientFeedbackScreen from './screens/client/ClientFeedbackScreen';
 import MerchantStockAlertScreen from './screens/merchant/MerchantStockAlertScreen';
@@ -1010,6 +1013,9 @@ function MainStack() {
       <Stack.Screen name="AdminRevenueChart" component={AdminRevenueChartScreen} options={{ headerShown: false }} />
       <Stack.Screen name="LegalMentions" component={LegalMentionsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminDriverPerformance" component={AdminDriverPerformanceScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="TaxiScheduledTrips" component={TaxiScheduledTripsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminUserDetail" component={AdminUserDetailScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ClientPromoCodes" component={ClientPromoCodesScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientFeedback" component={ClientFeedbackScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MerchantStockAlert" component={MerchantStockAlertScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientOrdersAll" component={ClientOrdersAllScreen} options={{ headerShown: false }} />

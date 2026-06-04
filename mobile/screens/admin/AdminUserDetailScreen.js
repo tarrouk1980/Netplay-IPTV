@@ -1,251 +1,241 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  StatusBar, ActivityIndicator, Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
 
 const COLORS = {
-  bg: '#0A0A0F', surface: '#1C1C28',
-  accent: '#F5A623', white: '#FFFFFF', muted: '#8A8A9A',
-  border: '#2A2A3A', green: '#27AE60', red: '#D32F2F', orange: '#E67E22', blue: '#1565C0',
+  bg: '#0A0A0F', surface: '#1C1C28', border: '#2C2C3E',
+  text: '#FFFFFF', muted: '#8E8E9A', accent: '#F5A623',
+  green: '#27AE60', red: '#E74C3C', blue: '#3498DB', orange: '#E67E22',
 };
 
 const MOCK_USER = {
-  id: 'USR-0042',
-  name: 'Sonia Mansour',
-  email: 'sonia.mansour@email.com',
-  phone: '+216 55 234 567',
-  role: 'CLIENT',
-  status: 'ACTIVE',
-  joinedAt: '12/03/2024',
-  lastSeen: 'il y a 2h',
-  avatar: '👩',
-  stats: { orders: 34, totalSpent: 287.5, disputes: 1, referrals: 5 },
-  wallet: { balance: 18.5, totalCredited: 150.0 },
+  id: 'U001', name: 'Sami Ben Ali', phone: '+21623456789', role: 'CLIENT',
+  status: 'ACTIVE', createdAt: '12 jan. 2025', lastActive: 'Il y a 2h',
+  totalOrders: 47, totalSpent: 342.500, rating: 4.7,
+  email: 'sami.benali@email.com',
+  documents: [{ key: 'cin', label: 'CIN', status: 'VERIFIED' }],
   recentOrders: [
-    { id: 'ORD001', type: 'Taxi', date: '15/01', amount: 8.5, status: 'done' },
-    { id: 'ORD002', type: 'Épicerie', date: '13/01', amount: 42.0, status: 'done' },
-    { id: 'ORD003', type: 'SOS', date: '10/01', amount: 55.0, status: 'done' },
+    { id: 'O1', type: '🚕 Taxi', date: '03 juin', amount: 8.500, status: 'Terminée' },
+    { id: 'O2', type: '🛵 Livraison', date: '01 juin', amount: 4.200, status: 'Terminée' },
+    { id: 'O3', type: '🚕 Taxi', date: '29 mai', amount: 11.000, status: 'Terminée' },
   ],
-  flags: [],
 };
 
-const STATUS_COLORS = { ACTIVE: COLORS.green, SUSPENDED: COLORS.red, PENDING: COLORS.orange, BANNED: '#333' };
-const ROLE_COLORS = { CLIENT: COLORS.blue, CHAUFFEUR: COLORS.accent, LIVREUR: COLORS.purple, ADMIN: COLORS.red };
+const ROLE_COLORS = { CLIENT: COLORS.blue, CHAUFFEUR: COLORS.accent, LIVREUR: COLORS.green, DEPANNEUR: COLORS.orange, ADMIN: COLORS.red };
 
-export default function AdminUserDetailScreen({ navigation, route }) {
-  const userId = route?.params?.userId || MOCK_USER.id;
-  const [user, setUser] = useState(MOCK_USER);
-  const [loading, setLoading] = useState(false);
-  const [tab, setTab] = useState('profil');
+export default function AdminUserDetailScreen({ route, navigation }) {
+  const { userId } = route.params || {};
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [acting, setActing] = useState(false);
 
   useEffect(() => {
-    (async () => {
-      setLoading(true);
-      try {
-        const res = await api.get(`/api/admin/users/${userId}`);
-        if (res.data?.user) setUser(res.data.user);
-      } catch {} finally {
-        setLoading(false);
-      }
-    })();
+    api.get(`/api/admin/users/${userId}`)
+      .then(r => setUser(r.data?.user || MOCK_USER))
+      .catch(() => setUser(MOCK_USER))
+      .finally(() => setLoading(false));
   }, [userId]);
 
-  const handleAction = (action) => {
-    const labels = {
-      suspend: 'Suspendre le compte',
-      ban: 'Bannir définitivement',
-      reset_password: 'Réinitialiser le mot de passe',
-      add_credit: 'Créditer le portefeuille',
-    };
-    Alert.alert(labels[action], `Confirmer : ${labels[action]} pour ${user.name} ?`, [
-      { text: 'Annuler', style: 'cancel' },
-      {
-        text: 'Confirmer', style: action === 'ban' ? 'destructive' : 'default',
-        onPress: async () => {
-          try {
-            await api.post(`/api/admin/users/${userId}/action`, { action });
-            Alert.alert('Fait', `${labels[action]} appliqué.`);
-          } catch {
-            Alert.alert('Erreur', 'Action impossible.');
-          }
+  const handleBan = () => {
+    Alert.alert(
+      user?.status === 'BANNED' ? 'Débloquer l\'utilisateur' : 'Bloquer l\'utilisateur',
+      user?.status === 'BANNED'
+        ? `Rétablir l'accès de ${user?.name} ?`
+        : `Bloquer ${user?.name} ? Il ne pourra plus utiliser l'application.`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: user?.status === 'BANNED' ? 'Débloquer' : 'Bloquer',
+          style: 'destructive',
+          onPress: async () => {
+            setActing(true);
+            const newStatus = user.status === 'BANNED' ? 'ACTIVE' : 'BANNED';
+            try {
+              await api.patch(`/api/admin/users/${userId}/status`, { status: newStatus });
+            } catch {}
+            setUser(u => ({ ...u, status: newStatus }));
+            setActing(false);
+          },
         },
-      },
+      ]
+    );
+  };
+
+  const handleContact = () => {
+    Alert.alert('Contacter', `Envoyer un message à ${user?.name} ?`, [
+      { text: 'Annuler', style: 'cancel' },
+      { text: 'SMS', onPress: () => Alert.alert('SMS envoyé') },
+      { text: 'Notification push', onPress: () => Alert.alert('Notification envoyée') },
     ]);
   };
 
-  if (loading) return <SafeAreaView style={styles.root}><ActivityIndicator color={COLORS.accent} style={{ marginTop: 40 }} /></SafeAreaView>;
+  if (loading) return (
+    <SafeAreaView style={styles.container}>
+      <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 60 }} />
+    </SafeAreaView>
+  );
+
+  const roleColor = ROLE_COLORS[user?.role] || COLORS.muted;
 
   return (
-    <SafeAreaView style={styles.root}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
-
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={{ color: COLORS.accent, fontSize: 24 }}>‹</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Text style={styles.backIcon}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>👤 Détail Utilisateur</Text>
-        <View style={{ width: 24 }} />
+        <Text style={styles.headerTitle}>Détail utilisateur</Text>
+        <View style={{ width: 36 }} />
       </View>
 
-      {/* User card */}
-      <View style={styles.userCard}>
-        <Text style={{ fontSize: 48 }}>{user.avatar}</Text>
-        <View style={{ flex: 1, marginLeft: 14 }}>
-          <Text style={styles.userName}>{user.name}</Text>
-          <Text style={styles.userId}>{user.id}</Text>
-          <View style={styles.badgeRow}>
-            <View style={[styles.badge, { backgroundColor: (STATUS_COLORS[user.status] || COLORS.muted) + '22' }]}>
-              <Text style={[styles.badgeText, { color: STATUS_COLORS[user.status] || COLORS.muted }]}>{user.status}</Text>
-            </View>
-            <View style={[styles.badge, { backgroundColor: (ROLE_COLORS[user.role] || COLORS.muted) + '22' }]}>
-              <Text style={[styles.badgeText, { color: ROLE_COLORS[user.role] || COLORS.muted }]}>{user.role}</Text>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Avatar + infos */}
+        <View style={styles.profileCard}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{user?.name?.charAt(0)?.toUpperCase()}</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.userName}>{user?.name}</Text>
+            <Text style={styles.userPhone}>{user?.phone}</Text>
+            <View style={styles.badgesRow}>
+              <View style={[styles.roleBadge, { backgroundColor: roleColor + '20' }]}>
+                <Text style={[styles.roleBadgeText, { color: roleColor }]}>{user?.role}</Text>
+              </View>
+              <View style={[styles.statusBadge, { backgroundColor: user?.status === 'ACTIVE' ? COLORS.green + '20' : COLORS.red + '20' }]}>
+                <Text style={[styles.statusBadgeText, { color: user?.status === 'ACTIVE' ? COLORS.green : COLORS.red }]}>
+                  {user?.status === 'ACTIVE' ? '✅ Actif' : '🔴 Bloqué'}
+                </Text>
+              </View>
             </View>
           </View>
         </View>
-      </View>
 
-      {/* Tabs */}
-      <View style={styles.tabs}>
-        {[{ key: 'profil', label: 'Profil' }, { key: 'commandes', label: 'Commandes' }, { key: 'actions', label: 'Actions' }].map((t) => (
-          <TouchableOpacity key={t.key} style={[styles.tab, tab === t.key && styles.tabActive]} onPress={() => setTab(t.key)}>
-            <Text style={[styles.tabText, tab === t.key && { color: '#000' }]}>{t.label}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-
-        {tab === 'profil' && (
-          <>
-            {[
-              { label: 'Email', value: user.email },
-              { label: 'Téléphone', value: user.phone },
-              { label: 'Inscrit le', value: user.joinedAt },
-              { label: 'Dernière activité', value: user.lastSeen },
-            ].map((r) => (
-              <View key={r.label} style={styles.infoRow}>
-                <Text style={styles.infoLabel}>{r.label}</Text>
-                <Text style={styles.infoValue}>{r.value}</Text>
-              </View>
-            ))}
-
-            <Text style={styles.sectionLabel}>Statistiques</Text>
-            <View style={styles.statsGrid}>
-              {[
-                { label: 'Commandes', value: user.stats.orders, color: COLORS.blue },
-                { label: 'Dépenses', value: `${user.stats.totalSpent} TND`, color: COLORS.accent },
-                { label: 'Litiges', value: user.stats.disputes, color: COLORS.red },
-                { label: 'Parrainages', value: user.stats.referrals, color: COLORS.green },
-              ].map((s) => (
-                <View key={s.label} style={styles.statBox}>
-                  <Text style={[styles.statVal, { color: s.color }]}>{s.value}</Text>
-                  <Text style={styles.statLbl}>{s.label}</Text>
-                </View>
-              ))}
+        {/* Stats */}
+        <View style={styles.statsRow}>
+          {[
+            { label: 'Commandes', value: user?.totalOrders },
+            { label: 'Total dépensé', value: `${user?.totalSpent?.toFixed(3)} TND` },
+            { label: 'Note', value: `⭐ ${user?.rating}` },
+          ].map(s => (
+            <View key={s.label} style={styles.statBox}>
+              <Text style={styles.statVal}>{s.value}</Text>
+              <Text style={styles.statLabel}>{s.label}</Text>
             </View>
+          ))}
+        </View>
 
-            <Text style={styles.sectionLabel}>Portefeuille</Text>
-            <View style={styles.walletCard}>
-              <Text style={styles.walletBalance}>{user.wallet.balance.toFixed(3)} TND</Text>
-              <Text style={styles.walletSub}>Total crédité : {user.wallet.totalCredited.toFixed(3)} TND</Text>
+        {/* Meta */}
+        <View style={styles.metaCard}>
+          {[
+            { label: 'Email', value: user?.email },
+            { label: 'Inscrit le', value: user?.createdAt },
+            { label: 'Dernière activité', value: user?.lastActive },
+          ].map(m => (
+            <View key={m.label} style={styles.metaRow}>
+              <Text style={styles.metaLabel}>{m.label}</Text>
+              <Text style={styles.metaValue}>{m.value}</Text>
             </View>
-          </>
-        )}
+          ))}
+        </View>
 
-        {tab === 'commandes' && user.recentOrders.map((o) => (
+        {/* Recent orders */}
+        <Text style={styles.sectionTitle}>DERNIÈRES COMMANDES</Text>
+        {user?.recentOrders?.map(o => (
           <View key={o.id} style={styles.orderRow}>
             <Text style={styles.orderType}>{o.type}</Text>
             <Text style={styles.orderDate}>{o.date}</Text>
-            <Text style={[styles.orderAmount, { color: COLORS.accent }]}>{o.amount.toFixed(3)} TND</Text>
-            <View style={[styles.orderStatus, { backgroundColor: COLORS.green + '22' }]}>
-              <Text style={{ color: COLORS.green, fontSize: 11, fontWeight: '700' }}>✓</Text>
-            </View>
+            <Text style={styles.orderAmount}>{o.amount.toFixed(3)} TND</Text>
+            <View style={styles.orderStatus}><Text style={styles.orderStatusText}>{o.status}</Text></View>
           </View>
         ))}
 
-        {tab === 'actions' && (
-          <View style={styles.actionsBox}>
-            {[
-              { action: 'reset_password', label: '🔑 Réinitialiser mot de passe', color: COLORS.blue },
-              { action: 'add_credit',     label: '💳 Créditer le portefeuille',  color: COLORS.green },
-              { action: 'suspend',        label: '⏸ Suspendre le compte',        color: COLORS.orange },
-              { action: 'ban',            label: '🚫 Bannir définitivement',     color: COLORS.red },
-            ].map((a) => (
-              <TouchableOpacity
-                key={a.action}
-                style={[styles.actionBtn, { borderColor: a.color }]}
-                onPress={() => handleAction(a.action)}
-              >
-                <Text style={[styles.actionBtnText, { color: a.color }]}>{a.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
+        {/* Actions */}
+        <View style={styles.actionsRow}>
+          <TouchableOpacity style={styles.contactBtn} onPress={handleContact}>
+            <Text style={styles.contactBtnText}>💬 Contacter</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.banBtn, user?.status === 'BANNED' && styles.unbanBtn, acting && { opacity: 0.5 }]}
+            onPress={handleBan}
+            disabled={acting}
+          >
+            {acting ? <ActivityIndicator color="#fff" size="small" /> : (
+              <Text style={[styles.banBtnText, user?.status === 'BANNED' && { color: COLORS.green }]}>
+                {user?.status === 'BANNED' ? '✅ Débloquer' : '🚫 Bloquer'}
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
 
-        <View style={{ height: 24 }} />
+        <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.bg },
+  container: { flex: 1, backgroundColor: COLORS.bg },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 20, paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
-  title: { color: COLORS.white, fontSize: 17, fontWeight: '700' },
-  userCard: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: COLORS.surface, margin: 16, borderRadius: 14,
-    borderWidth: 1, borderColor: COLORS.border, padding: 16,
+  backBtn: { padding: 4, width: 36 },
+  backIcon: { color: COLORS.text, fontSize: 28, fontWeight: '300' },
+  headerTitle: { color: COLORS.text, fontSize: 17, fontWeight: '700' },
+  content: { padding: 16, paddingBottom: 40 },
+  profileCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    backgroundColor: COLORS.surface, borderRadius: 16, padding: 16,
+    marginBottom: 14, borderWidth: 1, borderColor: COLORS.border,
   },
-  userName: { color: COLORS.white, fontSize: 18, fontWeight: '800' },
-  userId: { color: COLORS.muted, fontSize: 12, marginTop: 2 },
-  badgeRow: { flexDirection: 'row', gap: 8, marginTop: 6 },
-  badge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
-  badgeText: { fontSize: 11, fontWeight: '700' },
-  tabs: { flexDirection: 'row', paddingHorizontal: 16, gap: 8, marginBottom: 4 },
-  tab: {
-    flex: 1, paddingVertical: 8, borderRadius: 10,
-    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center',
+  avatar: {
+    width: 56, height: 56, borderRadius: 28,
+    backgroundColor: COLORS.accent + '30', alignItems: 'center', justifyContent: 'center',
+    borderWidth: 2, borderColor: COLORS.accent + '50',
   },
-  tabActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
-  tabText: { color: COLORS.white, fontSize: 12, fontWeight: '600' },
-  scroll: { paddingHorizontal: 16, paddingTop: 8 },
-  infoRow: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: COLORS.border,
+  avatarText: { color: COLORS.accent, fontSize: 22, fontWeight: '900' },
+  userName: { color: COLORS.text, fontSize: 17, fontWeight: '900' },
+  userPhone: { color: COLORS.muted, fontSize: 13, marginTop: 2 },
+  badgesRow: { flexDirection: 'row', gap: 6, marginTop: 6 },
+  roleBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
+  roleBadgeText: { fontSize: 11, fontWeight: '700' },
+  statusBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
+  statusBadgeText: { fontSize: 11, fontWeight: '700' },
+  statsRow: { flexDirection: 'row', gap: 10, marginBottom: 14 },
+  statBox: {
+    flex: 1, backgroundColor: COLORS.surface, borderRadius: 12, padding: 12,
+    alignItems: 'center', borderWidth: 1, borderColor: COLORS.border,
   },
-  infoLabel: { color: COLORS.muted, fontSize: 13 },
-  infoValue: { color: COLORS.white, fontSize: 13, fontWeight: '600' },
-  sectionLabel: { color: COLORS.muted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginTop: 16, marginBottom: 10 },
-  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  statBox: { width: '47%', backgroundColor: COLORS.surface, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, padding: 14, alignItems: 'center' },
-  statVal: { fontSize: 22, fontWeight: '900' },
-  statLbl: { color: COLORS.muted, fontSize: 11, marginTop: 4 },
-  walletCard: {
-    backgroundColor: '#1A1200', borderRadius: 12, padding: 16,
-    borderWidth: 1, borderColor: COLORS.accent, alignItems: 'center',
+  statVal: { color: COLORS.text, fontSize: 15, fontWeight: '900' },
+  statLabel: { color: COLORS.muted, fontSize: 10, marginTop: 2 },
+  metaCard: {
+    backgroundColor: COLORS.surface, borderRadius: 14, padding: 14,
+    borderWidth: 1, borderColor: COLORS.border, marginBottom: 16,
   },
-  walletBalance: { color: COLORS.accent, fontSize: 28, fontWeight: '900' },
-  walletSub: { color: COLORS.muted, fontSize: 12, marginTop: 4 },
+  metaRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: COLORS.border + '60' },
+  metaLabel: { color: COLORS.muted, fontSize: 13 },
+  metaValue: { color: COLORS.text, fontSize: 13, fontWeight: '600' },
+  sectionTitle: { color: COLORS.muted, fontSize: 10, fontWeight: '700', letterSpacing: 1.4, marginBottom: 10 },
   orderRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: COLORS.surface, borderRadius: 10, padding: 12, marginBottom: 6,
+    borderWidth: 1, borderColor: COLORS.border,
   },
-  orderType: { flex: 1, color: COLORS.white, fontSize: 14, fontWeight: '600' },
-  orderDate: { color: COLORS.muted, fontSize: 12 },
-  orderAmount: { fontSize: 14, fontWeight: '800', minWidth: 70, textAlign: 'right' },
-  orderStatus: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  actionsBox: { gap: 12, paddingTop: 8 },
-  actionBtn: {
-    backgroundColor: COLORS.surface, borderRadius: 12,
-    borderWidth: 1.5, padding: 16, alignItems: 'center',
+  orderType: { color: COLORS.text, fontSize: 13, flex: 1 },
+  orderDate: { color: COLORS.muted, fontSize: 11 },
+  orderAmount: { color: COLORS.accent, fontSize: 13, fontWeight: '700' },
+  orderStatus: { backgroundColor: COLORS.green + '20', borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 },
+  orderStatusText: { color: COLORS.green, fontSize: 10, fontWeight: '600' },
+  actionsRow: { flexDirection: 'row', gap: 10, marginTop: 16 },
+  contactBtn: {
+    flex: 1, backgroundColor: COLORS.blue + '20', borderRadius: 12, paddingVertical: 14,
+    alignItems: 'center', borderWidth: 1, borderColor: COLORS.blue + '40',
   },
-  actionBtnText: { fontSize: 14, fontWeight: '700' },
+  contactBtnText: { color: COLORS.blue, fontSize: 14, fontWeight: '700' },
+  banBtn: {
+    flex: 1, backgroundColor: COLORS.red + '20', borderRadius: 12, paddingVertical: 14,
+    alignItems: 'center', borderWidth: 1, borderColor: COLORS.red + '40',
+  },
+  unbanBtn: { backgroundColor: COLORS.green + '15', borderColor: COLORS.green + '40' },
+  banBtnText: { color: COLORS.red, fontSize: 14, fontWeight: '700' },
 });
