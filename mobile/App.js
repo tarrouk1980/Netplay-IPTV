@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AppState, Linking } from 'react-native';
+import { AppState, Linking, View, Text } from 'react-native';
 import { initI18n } from './i18n';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -1039,7 +1039,21 @@ export default function App() {
     };
   }, []);
 
-  if (onboardingDone === null) return null;
+  if (onboardingDone === null) {
+    return (
+      <NavigationContainer>
+        <StatusBar style="light" />
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="__Loading" component={() => (
+            <View style={{ flex: 1, backgroundColor: '#0A0A0F', alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontSize: 48, marginBottom: 16 }}>⚡</Text>
+              <Text style={{ color: '#F5A623', fontSize: 22, fontWeight: '900', letterSpacing: 3 }}>EASYWAY</Text>
+            </View>
+          )} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    );
+  }
 
   return (
     <NavigationContainer linking={linking}>
