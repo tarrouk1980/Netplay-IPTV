@@ -493,6 +493,11 @@ import ChatListScreen from './screens/chat/ChatListScreen';
 import ProviderHomeScreen from './screens/provider/ProviderHomeScreen';
 import AdminFinancialDashboardScreen from './screens/admin/AdminFinancialDashboardScreen';
 
+// Batch 91
+import DriverChecklistScreen from './screens/driver/DriverChecklistScreen';
+import MerchantLiveOrdersScreen from './screens/merchant/MerchantLiveOrdersScreen';
+import AdminVehicleInspectionScreen from './screens/admin/AdminVehicleInspectionScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -735,6 +740,9 @@ function MainStack() {
       <Stack.Screen name="ChatList" component={ChatListScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ProviderHome" component={ProviderHomeScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminFinancialDashboard" component={AdminFinancialDashboardScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="DriverChecklist" component={DriverChecklistScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="MerchantLiveOrders" component={MerchantLiveOrdersScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminVehicleInspection" component={AdminVehicleInspectionScreen} options={{ headerShown: false }} />
 
       {/* Chat */}
       <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
