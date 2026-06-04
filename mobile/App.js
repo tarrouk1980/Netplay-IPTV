@@ -357,7 +357,6 @@ import GroceryReviewsScreen from './screens/grocery/GroceryReviewsScreen';
 import ProviderTripHistoryScreen from './screens/provider/ProviderTripHistoryScreen';
 import AdminNotificationsScreen from './screens/admin/AdminNotificationsScreen';
 import TaxiScheduledTripsScreen from './screens/taxi/TaxiScheduledTripsScreen';
-import AdminUserDetailScreen from './screens/admin/AdminUserDetailScreen';
 import ClientPromoCodesScreen from './screens/client/ClientPromoCodesScreen';
 import AdminDriverPerformanceScreen from './screens/admin/AdminDriverPerformanceScreen';
 import ClientFeedbackScreen from './screens/client/ClientFeedbackScreen';
@@ -404,15 +403,11 @@ import SOSPaymentScreen from './screens/sos/SOSPaymentScreen';
 
 // Batch 47
 import ProviderStatsScreen from './screens/provider/ProviderStatsScreen';
-import AdminNotificationsScreen from './screens/admin/AdminNotificationsScreen';
 import GroceryCheckoutReviewScreen from './screens/grocery/GroceryCheckoutReviewScreen';
 // Batch 135
-import AdminZonesScreen from './screens/admin/AdminZonesScreen';
 import ClientMapScreen from './screens/client/ClientMapScreen';
 import MerchantAnalyticsScreen from './screens/merchant/MerchantAnalyticsScreen';
 // Batch 136
-import AdminRevenueScreen from './screens/admin/AdminRevenueScreen';
-import ClientSupportScreen from './screens/client/ClientSupportScreen';
 import LivreurHistoryScreen from './screens/delivery/LivreurHistoryScreen';
 // Batch 137
 import TaxiRatingScreen from './screens/taxi/TaxiRatingScreen';
@@ -421,15 +416,12 @@ import GroceryOrderTrackingScreen from './screens/grocery/GroceryOrderTrackingSc
 // Batch 138
 import ClientNotificationsScreen from './screens/client/ClientNotificationsScreen';
 import DepanneurEarningsScreen from './screens/sos/DepanneurEarningsScreen';
-import AdminKYCDetailScreen from './screens/admin/AdminKYCDetailScreen';
 // Batch 139
 import DriverTripHistoryScreen from './screens/taxi/DriverTripHistoryScreen';
 import GroceryStoreScreen from './screens/grocery/GroceryStoreScreen';
-import AdminUsersScreen from './screens/admin/AdminUsersScreen';
 // Batch 140
 import ClientAddressesScreen from './screens/client/ClientAddressesScreen';
 import AdminDriversScreen from './screens/admin/AdminDriversScreen';
-import ProviderProfileScreen from './screens/provider/ProviderProfileScreen';
 
 // Batch 46
 import MerchantProfileScreen from './screens/merchant/MerchantProfileScreen';
@@ -447,7 +439,6 @@ import AdminAuditLogScreen from './screens/admin/AdminAuditLogScreen';
 import LivreurRatingScreen from './screens/delivery/LivreurRatingScreen';
 
 // Batch 43
-import SOSHistoryScreen from './screens/sos/SOSHistoryScreen';
 import AdminDriverVerificationScreen from './screens/admin/AdminDriverVerificationScreen';
 import GroceryOrderDetailScreen from './screens/grocery/GroceryOrderDetailScreen';
 
@@ -457,7 +448,6 @@ import AdminHeatmapScreen from './screens/admin/AdminHeatmapScreen';
 import ProviderFeedbackScreen from './screens/provider/ProviderFeedbackScreen';
 
 // Batch 41
-import TaxiRatingScreen from './screens/taxi/TaxiRatingScreen';
 import AdminChatMonitorScreen from './screens/admin/AdminChatMonitorScreen';
 import ClientWalletScreen from './screens/profile/ClientWalletScreen';
 
@@ -469,7 +459,6 @@ import DeliveryRateScreen from './screens/delivery/DeliveryRateScreen';
 // Batch 39
 import TaxiDriverEarningsScreen from './screens/taxi/TaxiDriverEarningsScreen';
 import AdminPaymentsScreen from './screens/admin/AdminPaymentsScreen';
-import GroceryStoreScreen from './screens/grocery/GroceryStoreScreen';
 
 // Batch 38
 import TaxiHomeV2Screen from './screens/taxi/TaxiHomeV2Screen';
@@ -499,12 +488,10 @@ import TaxiReceiptScreen from './screens/taxi/TaxiReceiptScreen';
 // Batch 33
 import TaxiPromoScreen from './screens/taxi/TaxiPromoScreen';
 import AdminUserSessionsScreen from './screens/admin/AdminUserSessionsScreen';
-import DepanneurEarningsScreen from './screens/provider/DepanneurEarningsScreen';
 
 // Batch 57
 import DriverAcceptRideScreen from './screens/taxi/DriverAcceptRideScreen';
 import LivreurAcceptOrderScreen from './screens/delivery/LivreurAcceptOrderScreen';
-import AdminDriversScreen from './screens/admin/AdminDriversScreen';
 
 // Batch 58
 import PaymentSuccessScreen from './screens/payment/PaymentSuccessScreen';
@@ -523,7 +510,6 @@ import DepanneurStatusScreen from './screens/sos/DepanneurStatusScreen';
 import AdminLiveMapScreen from './screens/admin/AdminLiveMapScreen';
 
 // Batch 68
-import LivreurHistoryScreen from './screens/delivery/LivreurHistoryScreen';
 
 // Batch 61
 import TaxiSearchScreen from './screens/taxi/TaxiSearchScreen';
@@ -548,7 +534,6 @@ import DriverIncidentScreen from './screens/driver/DriverIncidentScreen';
 import PassBenefitsScreen from './screens/subscriptions/PassBenefitsScreen';
 import EasyPointsHistoryScreen from './screens/loyalty/EasyPointsHistoryScreen';
 import DeliveryScheduleScreen from './screens/delivery/DeliveryScheduleScreen';
-import MerchantAnalyticsScreen from './screens/merchant/MerchantAnalyticsScreen';
 import ProviderAvailabilityScreen from './screens/provider/ProviderAvailabilityScreen';
 import AdminPromoCreateScreen from './screens/admin/AdminPromoCreateScreen';
 import GroceryOrderSuccessScreen from './screens/grocery/GroceryOrderSuccessScreen';
@@ -631,7 +616,6 @@ import AdminAppSettingsScreen from './screens/admin/AdminAppSettingsScreen';
 // Batch 101
 
 // Batch 102
-import GroceryOrderTrackingScreen from './screens/grocery/GroceryOrderTrackingScreen';
 import SecuritySettingsScreen from './screens/profile/SecuritySettingsScreen';
 
 // Batch 103
@@ -641,14 +625,12 @@ import ClientRideHistoryScreen from './screens/client/ClientRideHistoryScreen';
 import ClientSavedAddressesScreen from './screens/client/ClientSavedAddressesScreen';
 
 // Batch 105
-import ClientNotificationsScreen from './screens/client/ClientNotificationsScreen';
 
 // Batch 107
 import ClientProfileScreen from './screens/profile/ClientProfileScreen';
 
 // Batch 109
 import AdminStatsScreen from './screens/admin/AdminStatsScreen';
-import ProviderProfileScreen2 from './screens/provider/ProviderProfileScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -1176,7 +1158,7 @@ function MainStack() {
       <Stack.Screen name="ClientNotifications" component={ClientNotificationsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientProfile" component={ClientProfileScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminStats" component={AdminStatsScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="ProviderProfileV2" component={ProviderProfileScreen2} options={{ headerShown: false }} />
+      <Stack.Screen name="ProviderProfileV2" component={ProviderProfileScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
