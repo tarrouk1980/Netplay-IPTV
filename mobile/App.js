@@ -406,6 +406,10 @@ import SOSPaymentScreen from './screens/sos/SOSPaymentScreen';
 import ProviderStatsScreen from './screens/provider/ProviderStatsScreen';
 import AdminNotificationsScreen from './screens/admin/AdminNotificationsScreen';
 import GroceryCheckoutReviewScreen from './screens/grocery/GroceryCheckoutReviewScreen';
+// Batch 135
+import AdminZonesScreen from './screens/admin/AdminZonesScreen';
+import ClientMapScreen from './screens/client/ClientMapScreen';
+import MerchantAnalyticsScreen from './screens/merchant/MerchantAnalyticsScreen';
 
 // Batch 46
 import MerchantProfileScreen from './screens/merchant/MerchantProfileScreen';
@@ -1027,6 +1031,9 @@ function MainStack() {
       <Stack.Screen name="ClientFeedback" component={ClientFeedbackScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MerchantStockAlert" component={MerchantStockAlertScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientOrdersAll" component={ClientOrdersAllScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminZones" component={AdminZonesScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ClientMap" component={ClientMapScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="MerchantAnalytics" component={MerchantAnalyticsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminCouponList" component={AdminCouponListScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DeliveryRating" component={DeliveryRatingScreen} options={{ headerShown: false, gestureEnabled: false }} />
       <Stack.Screen name="TaxiPromo" component={TaxiPromoScreen} options={{ headerShown: false }} />
@@ -1058,6 +1065,9 @@ function MainStack() {
       <Stack.Screen name="AdminNotifications" component={AdminNotificationsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientLoyalty" component={ClientLoyaltyScreen} options={{ headerShown: false }} />
       <Stack.Screen name="GroceryCheckoutReview" component={GroceryCheckoutReviewScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminZones" component={AdminZonesScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ClientMap" component={ClientMapScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="MerchantAnalytics" component={MerchantAnalyticsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MerchantProfile" component={MerchantProfileScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminRefunds" component={AdminRefundsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiConfirmRide" component={TaxiConfirmRideScreen} options={{ headerShown: false }} />
