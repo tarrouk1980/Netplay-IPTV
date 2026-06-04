@@ -27,7 +27,7 @@ export default function WalletRechargeScreen({ navigation }) {
   const [method, setMethod] = useState('CARD');
   const [loading, setLoading] = useState(false);
 
-  const finalAmount = amount ?? parseFloat(customAmount) || 0;
+  const finalAmount = (amount ?? parseFloat(customAmount)) || 0;
 
   const handleRecharge = async () => {
     if (finalAmount < 5) { Alert.alert('Montant minimum', 'Le montant minimum est de 5 TND.'); return; }
