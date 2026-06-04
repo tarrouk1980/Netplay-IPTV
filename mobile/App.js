@@ -525,6 +525,11 @@ import SOSDepanneurMapScreen from './screens/sos/SOSDepanneurMapScreen';
 import MerchantMenuEditorScreen from './screens/merchant/MerchantMenuEditorScreen';
 import AdminPushNotifScreen from './screens/admin/AdminPushNotifScreen';
 
+// Batch 100
+import TaxiScheduleAdvancedScreen from './screens/taxi/TaxiScheduleAdvancedScreen';
+import LivreurLiveMapScreen from './screens/delivery/LivreurLiveMapScreen';
+import AdminAppSettingsScreen from './screens/admin/AdminAppSettingsScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -792,6 +797,9 @@ function MainStack() {
       <Stack.Screen name="SOSDepanneurMap" component={SOSDepanneurMapScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MerchantMenuEditor" component={MerchantMenuEditorScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminPushNotif" component={AdminPushNotifScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="TaxiScheduleAdvanced" component={TaxiScheduleAdvancedScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="LivreurLiveMap" component={LivreurLiveMapScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminAppSettings" component={AdminAppSettingsScreen} options={{ headerShown: false }} />
 
       {/* Chat */}
       <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
