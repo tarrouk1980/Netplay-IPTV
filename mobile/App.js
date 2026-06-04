@@ -530,6 +530,9 @@ import TaxiScheduleAdvancedScreen from './screens/taxi/TaxiScheduleAdvancedScree
 import LivreurLiveMapScreen from './screens/delivery/LivreurLiveMapScreen';
 import AdminAppSettingsScreen from './screens/admin/AdminAppSettingsScreen';
 
+// Batch 101
+
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -800,6 +803,9 @@ function MainStack() {
       <Stack.Screen name="TaxiScheduleAdvanced" component={TaxiScheduleAdvancedScreen} options={{ headerShown: false }} />
       <Stack.Screen name="LivreurLiveMap" component={LivreurLiveMapScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminAppSettings" component={AdminAppSettingsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="WalletRecharge" component={WalletRechargeScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="DriverEarnings" component={DriverEarningsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminGeoZones" component={AdminGeoZonesScreen} options={{ headerShown: false }} />
 
       {/* Chat */}
       <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
