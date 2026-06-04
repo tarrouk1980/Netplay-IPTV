@@ -42,14 +42,14 @@ const TAXI_LABELS = {
 };
 
 export default function TaxiRequestScreen({ route, navigation }) {
-  const { taxiType = 'NORMAL' } = route.params || {};
+  const { taxiType = 'NORMAL', prefilledDest = '', scheduledMode = false } = route.params || {};
   const taxiInfo = TAXI_LABELS[taxiType];
 
   const { requestTaxi, isSearching, nearbyDrivers } = useTaxiStore();
 
   const [origin, setOrigin] = useState(null);
   const [originAddress, setOriginAddress] = useState('Localisation en cours…');
-  const [destination, setDestination] = useState('');
+  const [destination, setDestination] = useState(prefilledDest);
   const [mode, setMode] = useState('A'); // 'A' = Taximètre EASYWAY, 'B' = Mise en relation
   const [fareEstimate, setFareEstimate] = useState(null);
   const [loadingLocation, setLoadingLocation] = useState(true);

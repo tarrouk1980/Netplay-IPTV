@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
-import useTaxiStore from '../../store/taxiStore';
+// useTaxiStore no longer needed here — ordering flow handled by TaxiRequestScreen
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', border: '#2C2C3E',
@@ -33,7 +33,6 @@ const BASE_FARE = 1.2;
 const PER_KM = 0.8;
 
 export default function TaxiHomeScreen({ navigation }) {
-  const { requestTaxi, isSearching } = useTaxiStore();
   const [origin, setOrigin] = useState(null);
   const [originText, setOriginText] = useState('');
   const [destText, setDestText] = useState('');
@@ -61,23 +60,18 @@ export default function TaxiHomeScreen({ navigation }) {
     return ((BASE_FARE + dist * PER_KM) * multiplier).toFixed(3);
   };
 
-  const handleRequest = async () => {
-    if (!origin && !originText) {
-      Alert.alert('Localisation requise', 'Activez la géolocalisation ou saisissez votre adresse.');
-      return;
-    }
-    try {
-      const dest = destText ? { address: destText } : null;
-      const order = await requestTaxi(
-        origin || { lat: 0, lng: 0, address: originText },
-        dest,
-        mode,
-        taxiType,
-      );
-      navigation.navigate('TaxiTracking', { orderId: order.id });
-    } catch {
-      Alert.alert('Erreur', 'Impossible de trouver un chauffeur. Réessayez.');
-    }
+  const handleRequest = () => {
+    // Navigate to TaxiRequestScreen which contains:
+    // - Taximètre EASYWAY vs Mise en relation toggle
+    // - Fare estimate algorithm
+    // - Legal disclaimer
+    // - Destination autocomplete with map
+    const taxiTypeMap = { STANDARD: 'NORMAL', CONFORT: 'NORMAL', VAN: 'NORMAL' };
+    navigation.navigate('TaxiRequest', {
+      taxiType: taxiType === 'STANDARD' ? 'NORMAL' : taxiType,
+      prefilledDest: destText || '',
+      scheduledMode: mode === 'SCHEDULED',
+    });
   };
 
   const selectedType = TAXI_TYPES.find(t => t.key === taxiType);
@@ -217,17 +211,12 @@ export default function TaxiHomeScreen({ navigation }) {
 
         {/* CTA */}
         <TouchableOpacity
-          style={[styles.requestBtn, isSearching && { opacity: 0.6 }]}
+          style={styles.requestBtn}
           onPress={handleRequest}
-          disabled={isSearching}
         >
-          {isSearching ? (
-            <ActivityIndicator color="#000" />
-          ) : (
-            <Text style={styles.requestBtnText}>
-              {mode === 'NOW' ? '🚕 Commander un taxi' : '📅 Programmer la course'}
-            </Text>
-          )}
+          <Text style={styles.requestBtnText}>
+            {mode === 'NOW' ? '🚕 Commander un taxi' : '📅 Programmer la course'}
+          </Text>
         </TouchableOpacity>
 
         <View style={{ height: 40 }} />
