@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  StatusBar, ActivityIndicator, Alert,
+  StatusBar, ActivityIndicator, FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
@@ -9,47 +9,41 @@ import api from '../../services/api';
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', border: '#2C2C3E',
   text: '#FFFFFF', muted: '#8E8E9A', accent: '#F5A623',
-  green: '#27AE60', red: '#E74C3C', blue: '#3498DB', orange: '#E67E22',
+  green: '#27AE60', red: '#E74C3C', blue: '#3498DB',
 };
 
 const MOCK = {
-  balance: 47.500,
-  bonus: 12.000,
-  totalTopUp: 250.000,
-  totalSpent: 202.500,
+  balance: 45.250,
   transactions: [
-    { id: 'T1', type: 'credit', label: 'Recharge portefeuille', amount: 50.000, date: 'Aujourd\'hui 10:22', icon: '➕' },
-    { id: 'T2', type: 'debit', label: 'Course taxi #RID-0091', amount: -14.500, date: 'Hier 18:45', icon: '🚕' },
-    { id: 'T3', type: 'debit', label: 'Commande restaurant #CMD-0042', amount: -32.000, date: 'Hier 13:10', icon: '🍽️' },
-    { id: 'T4', type: 'credit', label: 'Bonus parrainage', amount: 10.000, date: '01/06 09:00', icon: '🎁' },
-    { id: 'T5', type: 'debit', label: 'Livraison express', amount: -8.200, date: '30/05 20:15', icon: '📦' },
-    { id: 'T6', type: 'credit', label: 'Remboursement commande', amount: 14.500, date: '29/05 14:00', icon: '↩️' },
+    { id: 'T1', type: 'CREDIT', label: 'Recharge portefeuille', amount: 50.000, date: '03/06/2026 10:00', icon: '➕' },
+    { id: 'T2', type: 'DEBIT', label: 'Course taxi — Lac 1 → Berges', amount: -8.500, date: '03/06/2026 14:52', icon: '🚕' },
+    { id: 'T3', type: 'DEBIT', label: 'Livraison Pizza Roma', amount: -12.800, date: '02/06/2026 19:30', icon: '📦' },
+    { id: 'T4', type: 'CREDIT', label: 'Remboursement course annulée', amount: 6.000, date: '01/06/2026 11:20', icon: '↩️' },
+    { id: 'T5', type: 'DEBIT', label: 'Épicerie Monoprix', amount: -18.500, date: '31/05/2026 16:10', icon: '🛒' },
+    { id: 'T6', type: 'CREDIT', label: 'Bonus parrainage', amount: 10.000, date: '28/05/2026 09:00', icon: '🎁' },
   ],
 };
 
-const TOPUP_AMOUNTS = [10, 20, 50, 100];
+const RECHARGE_AMOUNTS = [10, 20, 50, 100];
 
 export default function ClientWalletScreen({ navigation }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all');
+  const [tab, setTab] = useState('history');
 
-  useEffect(() => {
+  const load = useCallback(() => {
     api.get('/api/client/wallet')
       .then(r => setData(r.data || MOCK))
       .catch(() => setData(MOCK))
       .finally(() => setLoading(false));
   }, []);
 
-  const filtered = data?.transactions.filter(t =>
-    filter === 'all' ? true : filter === 'credit' ? t.type === 'credit' : t.type === 'debit'
-  ) || [];
+  useEffect(() => { load(); }, [load]);
 
-  const handleTopUp = (amount) => {
-    Alert.alert('Recharger', `Recharger ${amount} TND ?`, [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Confirmer', onPress: () => navigation.navigate('WalletRecharge', { amount }) },
-    ]);
+  const d = data || MOCK;
+
+  const recharge = (amount) => {
+    navigation.navigate('Payment', { amount, purpose: 'WALLET_RECHARGE' });
   };
 
   return (
@@ -57,78 +51,81 @@ export default function ClientWalletScreen({ navigation }) {
       <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backArrow}>‹</Text>
+          <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>💰 Mon Portefeuille</Text>
-        <View style={{ width: 40 }} />
+        <Text style={styles.headerTitle}>💳 Mon portefeuille</Text>
+        <View style={{ width: 36 }} />
       </View>
 
-      {loading ? <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} /> : (
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+      {loading ? (
+        <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 60 }} />
+      ) : (
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
           <View style={styles.balanceCard}>
             <Text style={styles.balanceLabel}>Solde disponible</Text>
-            <Text style={styles.balanceVal}>{data.balance.toFixed(3)} TND</Text>
-            {data.bonus > 0 && (
-              <View style={styles.bonusBadge}>
-                <Text style={styles.bonusText}>🎁 +{data.bonus.toFixed(3)} TND bonus</Text>
-              </View>
-            )}
-            <View style={styles.balanceStats}>
-              <View style={styles.balanceStat}>
-                <Text style={[styles.balanceStatVal, { color: COLORS.green }]}>+{data.totalTopUp.toFixed(0)}</Text>
-                <Text style={styles.balanceStatLabel}>TND rechargés</Text>
-              </View>
-              <View style={styles.balanceDivider} />
-              <View style={styles.balanceStat}>
-                <Text style={[styles.balanceStatVal, { color: COLORS.red }]}>-{data.totalSpent.toFixed(0)}</Text>
-                <Text style={styles.balanceStatLabel}>TND dépensés</Text>
-              </View>
-            </View>
+            <Text style={styles.balanceAmount}>{d.balance.toFixed(3)}</Text>
+            <Text style={styles.balanceTND}>TND</Text>
           </View>
 
           <Text style={styles.sectionTitle}>RECHARGER</Text>
-          <View style={styles.topUpRow}>
-            {TOPUP_AMOUNTS.map(amt => (
-              <TouchableOpacity key={amt} style={styles.topUpBtn} onPress={() => handleTopUp(amt)}>
-                <Text style={styles.topUpVal}>{amt}</Text>
-                <Text style={styles.topUpCur}>TND</Text>
+          <View style={styles.rechargeGrid}>
+            {RECHARGE_AMOUNTS.map(amt => (
+              <TouchableOpacity key={amt} style={styles.rechargeBtn} onPress={() => recharge(amt)}>
+                <Text style={styles.rechargeAmount}>{amt} TND</Text>
               </TouchableOpacity>
             ))}
           </View>
-          <TouchableOpacity style={styles.customTopUp} onPress={() => navigation.navigate('WalletRecharge', {})}>
-            <Text style={styles.customTopUpText}>+ Montant personnalisé</Text>
+          <TouchableOpacity style={styles.customRechargeBtn} onPress={() => recharge(0)}>
+            <Text style={styles.customRechargeBtnText}>+ Montant personnalisé</Text>
           </TouchableOpacity>
 
-          <View style={styles.filterRow}>
-            {['all', 'credit', 'debit'].map(f => (
-              <TouchableOpacity
-                key={f}
-                style={[styles.filterBtn, filter === f && styles.filterBtnActive]}
-                onPress={() => setFilter(f)}
-              >
-                <Text style={[styles.filterBtnText, filter === f && styles.filterBtnTextActive]}>
-                  {f === 'all' ? 'Tout' : f === 'credit' ? '⬆️ Crédits' : '⬇️ Débits'}
-                </Text>
-              </TouchableOpacity>
-            ))}
+          <View style={styles.tabRow}>
+            <TouchableOpacity
+              style={[styles.tabBtn, tab === 'history' && styles.tabBtnActive]}
+              onPress={() => setTab('history')}
+            >
+              <Text style={[styles.tabText, tab === 'history' && styles.tabTextActive]}>Historique</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tabBtn, tab === 'stats' && styles.tabBtnActive]}
+              onPress={() => setTab('stats')}
+            >
+              <Text style={[styles.tabText, tab === 'stats' && styles.tabTextActive]}>Statistiques</Text>
+            </TouchableOpacity>
           </View>
 
-          <Text style={styles.sectionTitle}>HISTORIQUE</Text>
-          {filtered.map(t => (
-            <View key={t.id} style={styles.txRow}>
-              <View style={styles.txIconBox}>
-                <Text style={{ fontSize: 20 }}>{t.icon}</Text>
+          {tab === 'history' ? (
+            d.transactions.map(tx => (
+              <View key={tx.id} style={styles.txRow}>
+                <View style={[styles.txIcon, { backgroundColor: tx.type === 'CREDIT' ? COLORS.green + '20' : COLORS.red + '20' }]}>
+                  <Text style={{ fontSize: 18 }}>{tx.icon}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.txLabel}>{tx.label}</Text>
+                  <Text style={styles.txDate}>{tx.date}</Text>
+                </View>
+                <Text style={[styles.txAmount, { color: tx.type === 'CREDIT' ? COLORS.green : COLORS.red }]}>
+                  {tx.amount > 0 ? '+' : ''}{tx.amount.toFixed(3)} TND
+                </Text>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.txLabel}>{t.label}</Text>
-                <Text style={styles.txDate}>{t.date}</Text>
-              </View>
-              <Text style={[styles.txAmount, { color: t.type === 'credit' ? COLORS.green : COLORS.red }]}>
-                {t.amount > 0 ? '+' : ''}{t.amount.toFixed(3)} TND
-              </Text>
+            ))
+          ) : (
+            <View style={styles.statsCard}>
+              {[
+                { label: 'Total rechargé', value: '+60.000 TND', color: COLORS.green },
+                { label: 'Total dépensé', value: '-39.800 TND', color: COLORS.red },
+                { label: 'Économies coupons', value: '8.500 TND', color: COLORS.accent },
+              ].map((s, i) => (
+                <View key={i} style={[styles.statRow, i > 0 && { borderTopWidth: 1, borderTopColor: COLORS.border }]}>
+                  <Text style={styles.statLabel}>{s.label}</Text>
+                  <Text style={[styles.statValue, { color: s.color }]}>{s.value}</Text>
+                </View>
+              ))}
             </View>
-          ))}
+          )}
+
+          <View style={{ height: 40 }} />
         </ScrollView>
       )}
     </SafeAreaView>
@@ -137,35 +134,57 @@ export default function ClientWalletScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  backBtn: { width: 40 },
-  backArrow: { color: COLORS.text, fontSize: 30, fontWeight: '300' },
-  headerTitle: { color: COLORS.text, fontSize: 17, fontWeight: '700' },
-  balanceCard: { backgroundColor: COLORS.surface, borderRadius: 20, padding: 24, alignItems: 'center', marginBottom: 20, borderWidth: 1, borderColor: COLORS.accent + '30' },
-  balanceLabel: { color: COLORS.muted, fontSize: 12, marginBottom: 8 },
-  balanceVal: { color: COLORS.accent, fontSize: 36, fontWeight: '900', marginBottom: 10 },
-  bonusBadge: { backgroundColor: COLORS.green + '20', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 5, borderWidth: 1, borderColor: COLORS.green + '40', marginBottom: 16 },
-  bonusText: { color: COLORS.green, fontSize: 12, fontWeight: '700' },
-  balanceStats: { flexDirection: 'row', alignItems: 'center', gap: 20 },
-  balanceStat: { alignItems: 'center' },
-  balanceStatVal: { fontSize: 16, fontWeight: '900' },
-  balanceStatLabel: { color: COLORS.muted, fontSize: 10, marginTop: 2 },
-  balanceDivider: { width: 1, height: 30, backgroundColor: COLORS.border },
-  sectionTitle: { color: COLORS.muted, fontSize: 10, fontWeight: '700', letterSpacing: 1.4, marginBottom: 12 },
-  topUpRow: { flexDirection: 'row', gap: 10, marginBottom: 10 },
-  topUpBtn: { flex: 1, backgroundColor: COLORS.surface, borderRadius: 14, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
-  topUpVal: { color: COLORS.accent, fontSize: 18, fontWeight: '900' },
-  topUpCur: { color: COLORS.muted, fontSize: 10 },
-  customTopUp: { backgroundColor: COLORS.surface, borderRadius: 12, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: COLORS.accent + '40', marginBottom: 20 },
-  customTopUpText: { color: COLORS.accent, fontSize: 13, fontWeight: '700' },
-  filterRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
-  filterBtn: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 10, backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border },
-  filterBtnActive: { borderColor: COLORS.accent, backgroundColor: COLORS.accent + '15' },
-  filterBtnText: { color: COLORS.muted, fontSize: 12, fontWeight: '600' },
-  filterBtnTextActive: { color: COLORS.accent },
-  txRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  txIconBox: { width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: COLORS.border },
-  txLabel: { color: COLORS.text, fontSize: 13, fontWeight: '600' },
-  txDate: { color: COLORS.muted, fontSize: 11, marginTop: 2 },
-  txAmount: { fontSize: 14, fontWeight: '900' },
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingVertical: 14,
+    borderBottomWidth: 1, borderBottomColor: COLORS.border,
+  },
+  backBtn: { padding: 4 },
+  backText: { color: COLORS.accent, fontSize: 22 },
+  headerTitle: { color: COLORS.text, fontSize: 17, fontWeight: '900' },
+  scroll: { padding: 16 },
+  balanceCard: {
+    backgroundColor: COLORS.surface, borderRadius: 20, padding: 28,
+    alignItems: 'center', marginBottom: 20,
+    borderWidth: 1.5, borderColor: COLORS.accent + '40',
+  },
+  balanceLabel: { color: COLORS.muted, fontSize: 13, marginBottom: 8 },
+  balanceAmount: { color: COLORS.accent, fontSize: 44, fontWeight: '900', lineHeight: 48 },
+  balanceTND: { color: COLORS.accent, fontSize: 15, fontWeight: '600' },
+  sectionTitle: { color: COLORS.muted, fontSize: 10, fontWeight: '700', letterSpacing: 1.4, marginBottom: 10 },
+  rechargeGrid: { flexDirection: 'row', gap: 10, marginBottom: 10 },
+  rechargeBtn: {
+    flex: 1, backgroundColor: COLORS.surface, borderRadius: 12, paddingVertical: 14,
+    alignItems: 'center', borderWidth: 1, borderColor: COLORS.border,
+  },
+  rechargeAmount: { color: COLORS.text, fontSize: 15, fontWeight: '700' },
+  customRechargeBtn: {
+    backgroundColor: COLORS.accent + '15', borderRadius: 12, paddingVertical: 12,
+    alignItems: 'center', marginBottom: 20, borderWidth: 1, borderColor: COLORS.accent + '40',
+  },
+  customRechargeBtnText: { color: COLORS.accent, fontSize: 14, fontWeight: '600' },
+  tabRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
+  tabBtn: {
+    flex: 1, borderRadius: 10, paddingVertical: 9, alignItems: 'center',
+    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
+  },
+  tabBtnActive: { backgroundColor: COLORS.accent + '20', borderColor: COLORS.accent },
+  tabText: { color: COLORS.muted, fontSize: 13, fontWeight: '600' },
+  tabTextActive: { color: COLORS.accent },
+  txRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: COLORS.surface, borderRadius: 12, padding: 12, marginBottom: 8,
+    borderWidth: 1, borderColor: COLORS.border,
+  },
+  txIcon: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  txLabel: { color: COLORS.text, fontSize: 13, fontWeight: '600', marginBottom: 2 },
+  txDate: { color: COLORS.muted, fontSize: 11 },
+  txAmount: { fontSize: 13, fontWeight: '800' },
+  statsCard: {
+    backgroundColor: COLORS.surface, borderRadius: 14, padding: 16,
+    borderWidth: 1, borderColor: COLORS.border,
+  },
+  statRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12 },
+  statLabel: { color: COLORS.muted, fontSize: 14 },
+  statValue: { fontSize: 14, fontWeight: '700' },
 });
