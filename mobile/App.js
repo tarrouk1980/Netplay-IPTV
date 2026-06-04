@@ -338,6 +338,9 @@ import TaxiDriverHomeScreen from './screens/taxi/TaxiDriverHomeScreen';
 import SOSMapScreen from './screens/sos/SOSMapScreen';
 import MerchantQRCodeScreen from './screens/merchant/MerchantQRCodeScreen';
 import ClientSupportScreen from './screens/client/ClientSupportScreen';
+import ClientWalletDetailScreen from './screens/client/ClientWalletScreen';
+import MerchantPromotionsScreen from './screens/merchant/MerchantPromotionsScreen';
+import LivreurBonusScreen from './screens/delivery/LivreurBonusScreen';
 
 // Batch 32
 import ClientOrdersAllScreen from './screens/profile/ClientOrdersAllScreen';
@@ -978,6 +981,9 @@ function MainStack() {
       <Stack.Screen name="SOSMap" component={SOSMapScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MerchantQRCode" component={MerchantQRCodeScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientSupport" component={ClientSupportScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ClientWalletDetail" component={ClientWalletDetailScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="MerchantPromotions" component={MerchantPromotionsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="LivreurBonus" component={LivreurBonusScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientOrdersAll" component={ClientOrdersAllScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminCouponList" component={AdminCouponListScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DeliveryRating" component={DeliveryRatingScreen} options={{ headerShown: false, gestureEnabled: false }} />
