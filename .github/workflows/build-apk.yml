@@ -53,7 +53,7 @@ jobs:
           npx react-native bundle \
             --platform android \
             --dev false \
-            --entry-file index.js \
+            --entry-file node_modules/expo/AppEntry.js \
             --bundle-output android/app/src/main/assets/index.android.bundle \
             --assets-dest android/app/src/main/res \
             2>&1 | tail -20
