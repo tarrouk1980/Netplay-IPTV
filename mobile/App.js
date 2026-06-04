@@ -287,6 +287,7 @@ import SOSNearbyDepanneursScreen from './screens/sos/SOSNearbyDepanneursScreen';
 // Batch 31
 import TaxiDriverStatsScreen from './screens/taxi/TaxiDriverStatsScreen';
 import AdminMapOverviewScreen from './screens/admin/AdminMapOverviewScreen';
+import AdminMapScreen from './screens/admin/AdminMapScreen';
 import GroceryCheckoutSuccessScreen from './screens/grocery/GroceryCheckoutSuccessScreen';
 
 // Batch 32
@@ -895,6 +896,7 @@ function MainStack() {
       <Stack.Screen name="SOSNearbyDepanneurs" component={SOSNearbyDepanneursScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiDriverStats" component={TaxiDriverStatsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminMapOverview" component={AdminMapOverviewScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminMap" component={AdminMapScreen} options={{ headerShown: false }} />
       <Stack.Screen name="GroceryCheckoutSuccess" component={GroceryCheckoutSuccessScreen} options={{ headerShown: false, gestureEnabled: false }} />
       <Stack.Screen name="ClientOrdersAll" component={ClientOrdersAllScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminCouponList" component={AdminCouponListScreen} options={{ headerShown: false }} />
@@ -1107,5 +1109,4 @@ async function registerForPushNotifications() {
       }
     } catch {}
   } catch {}
-}
 }

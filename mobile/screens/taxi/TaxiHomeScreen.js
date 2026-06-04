@@ -1,216 +1,284 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  StatusBar,
+  View, Text, StyleSheet, TouchableOpacity, StatusBar,
+  TextInput, ScrollView, ActivityIndicator, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import ServiceIcon from '../../components/ServiceIcon';
+import * as Location from 'expo-location';
+import useTaxiStore from '../../store/taxiStore';
 
 const COLORS = {
-  background: '#0A0A0F',
-  surface: '#1C1C28',
-  header: '#F5A623',
-  headerText: '#0A0A0F',
-  text: '#FFFFFF',
-  textMuted: '#8E8E9A',
-  taxiNormal: '#F5A623',
-  taxiLady: '#E91E8C',
-  taxiAccess: '#2196F3',
+  bg: '#0A0A0F', surface: '#1C1C28', border: '#2C2C3E',
+  text: '#FFFFFF', muted: '#8E8E9A', accent: '#F5A623',
+  green: '#27AE60', red: '#E74C3C',
 };
 
 const TAXI_TYPES = [
-  {
-    key: 'NORMAL',
-    iconService: 'EASYTAXY',
-    title: 'EasyTaxy',
-    subtitle: 'Course standard',
-    color: COLORS.taxiNormal,
-  },
-  {
-    key: 'EASYLADY',
-    iconService: 'EASYLADY',
-    title: 'Easy For Lady',
-    subtitle: 'Conduit par une femme',
-    color: COLORS.taxiLady,
-  },
-  {
-    key: 'EASYACCESS',
-    iconService: 'EASYACCESS',
-    title: 'EasyAccess',
-    subtitle: 'Véhicule adapté PMR',
-    color: COLORS.taxiAccess,
-  },
+  { key: 'STANDARD', icon: '🚕', label: 'Standard', desc: 'Berline confortable', multiplier: 1 },
+  { key: 'CONFORT', icon: '🚙', label: 'Confort', desc: 'SUV ou premium', multiplier: 1.4 },
+  { key: 'VAN', icon: '🚐', label: 'Van', desc: 'Jusqu\'à 7 personnes', multiplier: 1.8 },
 ];
 
+const MODES = [
+  { key: 'NOW', label: '⚡ Maintenant' },
+  { key: 'SCHEDULED', label: '📅 Programmer' },
+];
+
+const SAVED_ADDRESSES = [
+  { icon: '🏠', label: 'Maison', address: 'Berges du Lac 2, Tunis' },
+  { icon: '💼', label: 'Bureau', address: 'Centre Urbain Nord, Tunis' },
+];
+
+const BASE_FARE = 1.2;
+const PER_KM = 0.8;
+
 export default function TaxiHomeScreen({ navigation }) {
-  const handleTaxiTypePress = (taxiType) => {
-    if (taxiType === 'EASYLADY') {
-      navigation.navigate('EasyLady');
-    } else if (taxiType === 'EASYACCESS') {
-      navigation.navigate('EasyAccess');
-    } else {
-      navigation.navigate('TaxiRequest', { taxiType });
+  const { requestTaxi, isSearching } = useTaxiStore();
+  const [origin, setOrigin] = useState(null);
+  const [originText, setOriginText] = useState('');
+  const [destText, setDestText] = useState('');
+  const [taxiType, setTaxiType] = useState('STANDARD');
+  const [mode, setMode] = useState('NOW');
+  const [locating, setLocating] = useState(false);
+  const [nearbyCount] = useState(4);
+
+  useEffect(() => { detectLocation(); }, []);
+
+  const detectLocation = async () => {
+    setLocating(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') { setLocating(false); return; }
+      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      setOrigin({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      const [geo] = await Location.reverseGeocodeAsync({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+      if (geo) setOriginText(`${geo.street || ''} ${geo.city || ''}`.trim());
+    } catch {} finally { setLocating(false); }
+  };
+
+  const estimatedFare = (multiplier) => {
+    const dist = 5.2;
+    return ((BASE_FARE + dist * PER_KM) * multiplier).toFixed(3);
+  };
+
+  const handleRequest = async () => {
+    if (!origin && !originText) {
+      Alert.alert('Localisation requise', 'Activez la géolocalisation ou saisissez votre adresse.');
+      return;
+    }
+    try {
+      const dest = destText ? { address: destText } : null;
+      const order = await requestTaxi(
+        origin || { lat: 0, lng: 0, address: originText },
+        dest,
+        mode,
+        taxiType,
+      );
+      navigation.navigate('TaxiTracking', { orderId: order.id });
+    } catch {
+      Alert.alert('Erreur', 'Impossible de trouver un chauffeur. Réessayez.');
     }
   };
 
+  const selectedType = TAXI_TYPES.find(t => t.key === taxiType);
+
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.header} />
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
 
-      {/* Amber header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Text style={styles.backArrow}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Taxi EASYWAY</Text>
-        <View style={styles.headerSpacer} />
+        <Text style={styles.headerTitle}>🚕 Taxi EasyWay</Text>
+        <View style={{ width: 40 }} />
       </View>
 
-      {/* Subtitle */}
-      <View style={styles.subtitleContainer}>
-        <Text style={styles.subtitle}>Choisissez votre type de taxi</Text>
-      </View>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
-      {/* Taxi type tiles */}
-      <View style={styles.tilesContainer}>
-        {TAXI_TYPES.map((type) => (
-          <TouchableOpacity
-            key={type.key}
-            style={[styles.tile, { borderColor: type.color }]}
-            onPress={() => handleTaxiTypePress(type.key)}
-            activeOpacity={0.85}
-          >
-            <View style={[styles.tileIconBg, { backgroundColor: type.color + '22' }]}>
-              <ServiceIcon service={type.iconService} size={32} />
-            </View>
-            <View style={styles.tileContent}>
-              <Text style={[styles.tileTitle, { color: type.color }]}>{type.title}</Text>
-              <Text style={styles.tileSubtitle}>{type.subtitle}</Text>
-            </View>
-            <Text style={[styles.tileChevron, { color: type.color }]}>›</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Quick taxi shortcut */}
-      <TouchableOpacity
-        style={{ marginHorizontal: 20, marginBottom: 10, backgroundColor: '#1C1C28', borderRadius: 12, padding: 14, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#2C2C3E' }}
-        onPress={() => navigation.navigate('QuickTaxi')}
-        activeOpacity={0.8}
-      >
-        <Text style={{ fontSize: 20, marginRight: 10 }}>⚡</Text>
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: '#FFF', fontWeight: '700', fontSize: 14 }}>Taxi rapide</Text>
-          <Text style={{ color: '#8E8E9A', fontSize: 12, marginTop: 2 }}>Depuis vos adresses enregistrées</Text>
+        {/* Nearby indicator */}
+        <View style={styles.nearbyRow}>
+          <View style={styles.nearbyDot} />
+          <Text style={styles.nearbyText}>{nearbyCount} chauffeurs disponibles près de vous</Text>
         </View>
-        <Text style={{ color: '#F5A623', fontSize: 20 }}>›</Text>
-      </TouchableOpacity>
 
-      {/* Legal footer */}
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>
-          Tarifs conformes au décret du Ministère du Transport tunisien 2019.
-        </Text>
-      </View>
+        {/* Mode tabs */}
+        <View style={styles.modeRow}>
+          {MODES.map(m => (
+            <TouchableOpacity
+              key={m.key}
+              style={[styles.modeBtn, mode === m.key && styles.modeBtnActive]}
+              onPress={() => setMode(m.key)}
+            >
+              <Text style={[styles.modeLabel, mode === m.key && styles.modeLabelActive]}>{m.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Address inputs */}
+        <View style={styles.addressCard}>
+          <View style={styles.addressRow}>
+            <View style={[styles.addrDot, { backgroundColor: COLORS.green }]} />
+            <View style={styles.addrInput}>
+              {locating ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <ActivityIndicator size="small" color={COLORS.accent} />
+                  <Text style={styles.addrPlaceholder}>Localisation en cours...</Text>
+                </View>
+              ) : (
+                <TextInput
+                  style={styles.addrText}
+                  value={originText}
+                  onChangeText={setOriginText}
+                  placeholder="Départ — position actuelle"
+                  placeholderTextColor={COLORS.muted}
+                />
+              )}
+            </View>
+            <TouchableOpacity onPress={detectLocation} style={styles.gpsBtn}>
+              <Text style={{ fontSize: 16 }}>📍</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.addrSeparator} />
+          <View style={styles.addressRow}>
+            <View style={[styles.addrDot, { backgroundColor: COLORS.accent }]} />
+            <TextInput
+              style={[styles.addrText, { flex: 1 }]}
+              value={destText}
+              onChangeText={setDestText}
+              placeholder="Destination (optionnel)"
+              placeholderTextColor={COLORS.muted}
+            />
+          </View>
+        </View>
+
+        {/* Saved addresses */}
+        <View style={styles.savedRow}>
+          {SAVED_ADDRESSES.map((a, i) => (
+            <TouchableOpacity key={i} style={styles.savedBtn} onPress={() => setDestText(a.address)}>
+              <Text style={{ fontSize: 14 }}>{a.icon}</Text>
+              <Text style={styles.savedLabel}>{a.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Taxi type */}
+        <Text style={styles.sectionTitle}>TYPE DE VÉHICULE</Text>
+        <View style={styles.typesRow}>
+          {TAXI_TYPES.map(t => (
+            <TouchableOpacity
+              key={t.key}
+              style={[styles.typeCard, taxiType === t.key && styles.typeCardActive]}
+              onPress={() => setTaxiType(t.key)}
+            >
+              <Text style={styles.typeIcon}>{t.icon}</Text>
+              <Text style={[styles.typeLabel, taxiType === t.key && styles.typeLabelActive]}>{t.label}</Text>
+              <Text style={styles.typeDesc}>{t.desc}</Text>
+              <Text style={[styles.typeFare, taxiType === t.key && { color: COLORS.accent }]}>
+                ~{estimatedFare(t.multiplier)} TND
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Estimate */}
+        {selectedType && (
+          <View style={styles.estimateCard}>
+            <View>
+              <Text style={styles.estimateLabel}>Estimation pour {selectedType.label}</Text>
+              <Text style={styles.estimateNote}>Prix indicatif · ~5 km · commission 0%</Text>
+            </View>
+            <Text style={styles.estimateFare}>{estimatedFare(selectedType.multiplier)} TND</Text>
+          </View>
+        )}
+
+        {/* CTA */}
+        <TouchableOpacity
+          style={[styles.requestBtn, isSearching && { opacity: 0.6 }]}
+          onPress={handleRequest}
+          disabled={isSearching}
+        >
+          {isSearching ? (
+            <ActivityIndicator color="#000" />
+          ) : (
+            <Text style={styles.requestBtnText}>
+              {mode === 'NOW' ? '🚕 Commander un taxi' : '📅 Programmer la course'}
+            </Text>
+          )}
+        </TouchableOpacity>
+
+        <View style={{ height: 40 }} />
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
+  container: { flex: 1, backgroundColor: COLORS.bg },
   header: {
-    backgroundColor: COLORS.header,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingVertical: 14,
+    borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
-  backButton: {
-    padding: 4,
+  backBtn: { width: 40 },
+  backArrow: { color: COLORS.text, fontSize: 30, fontWeight: '300' },
+  headerTitle: { color: COLORS.text, fontSize: 18, fontWeight: '900' },
+  scroll: { padding: 16 },
+  nearbyRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16,
+    backgroundColor: COLORS.green + '15', borderRadius: 10, padding: 10,
+    borderWidth: 1, borderColor: COLORS.green + '30',
   },
-  backArrow: {
-    fontSize: 32,
-    color: COLORS.headerText,
-    lineHeight: 32,
-    marginTop: -4,
+  nearbyDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.green },
+  nearbyText: { color: COLORS.green, fontSize: 12, fontWeight: '600' },
+  modeRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
+  modeBtn: {
+    flex: 1, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border,
+    paddingVertical: 10, alignItems: 'center', backgroundColor: COLORS.surface,
   },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.headerText,
+  modeBtnActive: { backgroundColor: COLORS.accent + '20', borderColor: COLORS.accent },
+  modeLabel: { color: COLORS.muted, fontSize: 13, fontWeight: '600' },
+  modeLabelActive: { color: COLORS.accent },
+  addressCard: {
+    backgroundColor: COLORS.surface, borderRadius: 16, padding: 14,
+    marginBottom: 12, borderWidth: 1, borderColor: COLORS.border,
   },
-  headerSpacer: {
-    width: 32,
+  addressRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  addrDot: { width: 10, height: 10, borderRadius: 5 },
+  addrInput: { flex: 1 },
+  addrText: { color: COLORS.text, fontSize: 14, flex: 1 },
+  addrPlaceholder: { color: COLORS.muted, fontSize: 13 },
+  gpsBtn: { padding: 4 },
+  addrSeparator: { height: 1, backgroundColor: COLORS.border, marginVertical: 10, marginLeft: 20 },
+  savedRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
+  savedBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: COLORS.surface, borderRadius: 10, padding: 10,
+    borderWidth: 1, borderColor: COLORS.border,
   },
-  subtitleContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 28,
-    paddingBottom: 12,
+  savedLabel: { color: COLORS.text, fontSize: 12, fontWeight: '600' },
+  sectionTitle: { color: COLORS.muted, fontSize: 10, fontWeight: '700', letterSpacing: 1.4, marginBottom: 12 },
+  typesRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
+  typeCard: {
+    flex: 1, backgroundColor: COLORS.surface, borderRadius: 14, padding: 12,
+    alignItems: 'center', borderWidth: 1.5, borderColor: COLORS.border,
   },
-  subtitle: {
-    fontSize: 14,
-    color: COLORS.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    fontWeight: '600',
+  typeCardActive: { borderColor: COLORS.accent, backgroundColor: COLORS.accent + '10' },
+  typeIcon: { fontSize: 26, marginBottom: 4 },
+  typeLabel: { color: COLORS.text, fontSize: 12, fontWeight: '700' },
+  typeLabelActive: { color: COLORS.accent },
+  typeDesc: { color: COLORS.muted, fontSize: 9, textAlign: 'center', marginTop: 2 },
+  typeFare: { color: COLORS.muted, fontSize: 11, fontWeight: '700', marginTop: 4 },
+  estimateCard: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: COLORS.surface, borderRadius: 14, padding: 14, marginBottom: 16,
+    borderWidth: 1, borderColor: COLORS.green + '40',
   },
-  tilesContainer: {
-    flex: 1,
-    paddingHorizontal: 20,
-    gap: 16,
-    paddingTop: 8,
+  estimateLabel: { color: COLORS.text, fontSize: 13, fontWeight: '700' },
+  estimateNote: { color: COLORS.muted, fontSize: 11, marginTop: 2 },
+  estimateFare: { color: COLORS.accent, fontSize: 20, fontWeight: '900' },
+  requestBtn: {
+    backgroundColor: COLORS.accent, borderRadius: 16, paddingVertical: 16, alignItems: 'center',
   },
-  tile: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 18,
-    gap: 16,
-  },
-  tileIconBg: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tileEmoji: {
-    fontSize: 28,
-  },
-  tileContent: {
-    flex: 1,
-  },
-  tileTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    marginBottom: 3,
-  },
-  tileSubtitle: {
-    fontSize: 13,
-    color: COLORS.textMuted,
-  },
-  tileChevron: {
-    fontSize: 26,
-    fontWeight: '300',
-  },
-  footer: {
-    padding: 20,
-    alignItems: 'center',
-  },
-  footerText: {
-    fontSize: 11,
-    color: COLORS.textMuted,
-    textAlign: 'center',
-    lineHeight: 16,
-  },
+  requestBtnText: { color: '#000', fontSize: 16, fontWeight: '900' },
 });
