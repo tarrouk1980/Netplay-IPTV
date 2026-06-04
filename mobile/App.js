@@ -428,6 +428,10 @@ import TaxiHomeScreen2 from './screens/taxi/TaxiHomeScreen2';
 import MerchantOrdersScreen from './screens/merchant/MerchantOrdersScreen';
 import DepanneurHomeScreen2 from './screens/sos/DepanneurHomeScreen2';
 import AdminLiveMapScreen from './screens/admin/AdminLiveMapScreen';
+// Batch 143
+import ClientOrderHistoryScreen from './screens/client/ClientOrderHistoryScreen';
+import AdminPromotionsScreen from './screens/admin/AdminPromotionsScreen';
+import ProviderIncomeScreen2 from './screens/provider/ProviderIncomeScreen2';
 
 // Batch 46
 import MerchantProfileScreen from './screens/merchant/MerchantProfileScreen';
@@ -1061,6 +1065,9 @@ function MainStack() {
       <Stack.Screen name="MerchantOrders" component={MerchantOrdersScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DepanneurHome2" component={DepanneurHomeScreen2} options={{ headerShown: false }} />
       <Stack.Screen name="AdminLiveMap" component={AdminLiveMapScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ClientOrderHistory" component={ClientOrderHistoryScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminPromotions" component={AdminPromotionsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ProviderIncome2" component={ProviderIncomeScreen2} options={{ headerShown: false }} />
       <Stack.Screen name="AdminCouponList" component={AdminCouponListScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DeliveryRating" component={DeliveryRatingScreen} options={{ headerShown: false, gestureEnabled: false }} />
       <Stack.Screen name="TaxiPromo" component={TaxiPromoScreen} options={{ headerShown: false }} />
@@ -1116,6 +1123,9 @@ function MainStack() {
       <Stack.Screen name="MerchantOrders" component={MerchantOrdersScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DepanneurHome2" component={DepanneurHomeScreen2} options={{ headerShown: false }} />
       <Stack.Screen name="AdminLiveMap" component={AdminLiveMapScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ClientOrderHistory" component={ClientOrderHistoryScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminPromotions" component={AdminPromotionsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ProviderIncome2" component={ProviderIncomeScreen2} options={{ headerShown: false }} />
       <Stack.Screen name="MerchantProfile" component={MerchantProfileScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminRefunds" component={AdminRefundsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiConfirmRide" component={TaxiConfirmRideScreen} options={{ headerShown: false }} />
