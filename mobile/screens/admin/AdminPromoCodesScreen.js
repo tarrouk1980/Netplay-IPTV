@@ -1,171 +1,128 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  TextInput, Alert, ActivityIndicator, StatusBar, Modal,
-  Switch, ScrollView, RefreshControl,
+  ActivityIndicator, StatusBar, Alert, TextInput, Modal, Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
 
 const COLORS = {
-  bg: '#0A0A0F',
-  surface: '#1C1C28',
-  border: '#2A2A3A',
-  text: '#FFFFFF',
-  muted: '#8A8A9A',
-  green: '#27AE60',
-  accent: '#D32F2F',
-  amber: '#F57C00',
-  blue: '#3498DB',
+  bg: '#0A0A0F', surface: '#1C1C28', border: '#2C2C3E',
+  text: '#FFFFFF', muted: '#8E8E9A', accent: '#F5A623',
+  green: '#27AE60', red: '#E74C3C', blue: '#3498DB',
 };
 
-const SERVICE_LABELS = { TAXI: '🚕', SOS: '🚨', DELIVERY: '🛵', GROCERY: '🛒' };
-const ALL_SERVICES = ['TAXI', 'SOS', 'DELIVERY', 'GROCERY'];
-
-const MOCK_CODES = [
-  { code: 'BIENVENUE', type: 'PERCENT', value: 20, maxUses: 1000, usedCount: 47, services: ALL_SERVICES, active: true, label: '20% première commande' },
-  { code: 'TAXI10', type: 'PERCENT', value: 10, maxUses: 500, usedCount: 123, services: ['TAXI'], active: true, label: '10% taxi' },
-  { code: 'SOS5', type: 'FIXED', value: 5, maxUses: 200, usedCount: 8, services: ['SOS'], active: true, label: '5 TND dépannage' },
-  { code: 'ETE2025', type: 'PERCENT', value: 15, maxUses: 300, usedCount: 300, services: ALL_SERVICES, active: false, label: 'Promo été — expiré' },
+const MOCK_PROMOS = [
+  { id: 'P1', code: 'WELCOME20', type: 'PERCENT', value: 20, service: 'ALL', usageCount: 312, maxUsage: 500, active: true, expiresAt: '2025-12-31' },
+  { id: 'P2', code: 'TAXI5TND', type: 'FIXED', value: 5, service: 'TAXI', usageCount: 88, maxUsage: 200, active: true, expiresAt: '2025-07-31' },
+  { id: 'P3', code: 'SOS15', type: 'PERCENT', value: 15, service: 'SOS', usageCount: 45, maxUsage: 100, active: false, expiresAt: '2025-06-30' },
+  { id: 'P4', code: 'LIVRAISON0', type: 'FIXED', value: 3, service: 'DELIVERY', usageCount: 203, maxUsage: 300, active: true, expiresAt: '2025-09-01' },
 ];
 
-function PromoRow({ item, onToggle, onDelete }) {
-  const used = (item.usedCount / item.maxUses) * 100;
-  const exhausted = item.usedCount >= item.maxUses;
+const SERVICES_OPTIONS = ['ALL', 'TAXI', 'DELIVERY', 'GROCERY', 'SOS'];
+
+function PromoCard({ item, onToggle, onDelete }) {
+  const pct = Math.round((item.usageCount / item.maxUsage) * 100);
   return (
-    <View style={[styles.promoCard, !item.active && { opacity: 0.55 }]}>
-      <View style={styles.promoTop}>
-        <View style={styles.promoCodeBox}>
-          <Text style={styles.promoCode}>{item.code}</Text>
-          <View style={[styles.typeBadge, { backgroundColor: item.type === 'PERCENT' ? '#0D2A1A' : '#1A0D2A' }]}>
-            <Text style={[styles.typeBadgeText, { color: item.type === 'PERCENT' ? COLORS.green : '#9B59B6' }]}>
+    <View style={[styles.card, !item.active && styles.cardInactive]}>
+      <View style={styles.cardHeader}>
+        <View style={styles.codeBox}>
+          <Text style={styles.codeText}>{item.code}</Text>
+        </View>
+        <View style={styles.cardHeaderRight}>
+          <View style={[styles.typeBadge, { backgroundColor: item.type === 'PERCENT' ? COLORS.blue + '25' : COLORS.green + '25' }]}>
+            <Text style={[styles.typeText, { color: item.type === 'PERCENT' ? COLORS.blue : COLORS.green }]}>
               {item.type === 'PERCENT' ? `-${item.value}%` : `-${item.value} TND`}
             </Text>
           </View>
+          <Text style={styles.serviceLabel}>{item.service}</Text>
         </View>
-        <View style={styles.promoActions}>
+      </View>
+
+      <View style={styles.usageRow}>
+        <Text style={styles.usageText}>{item.usageCount} / {item.maxUsage} utilisations</Text>
+        <Text style={styles.expiryText}>exp. {item.expiresAt}</Text>
+      </View>
+      <View style={styles.progressBg}>
+        <View style={[styles.progressFill, {
+          width: `${Math.min(100, pct)}%`,
+          backgroundColor: pct >= 90 ? COLORS.red : pct >= 60 ? COLORS.accent : COLORS.green,
+        }]} />
+      </View>
+
+      <View style={styles.cardFooter}>
+        <TouchableOpacity onPress={() => onDelete(item)} style={styles.deleteBtn}>
+          <Text style={styles.deleteBtnText}>🗑️ Supprimer</Text>
+        </TouchableOpacity>
+        <View style={styles.switchRow}>
+          <Text style={[styles.switchLabel, { color: item.active ? COLORS.green : COLORS.muted }]}>
+            {item.active ? 'Actif' : 'Inactif'}
+          </Text>
           <Switch
             value={item.active}
             onValueChange={() => onToggle(item)}
-            trackColor={{ false: COLORS.border, true: COLORS.green + '80' }}
-            thumbColor={item.active ? COLORS.green : COLORS.muted}
+            trackColor={{ false: COLORS.border, true: COLORS.green }}
+            thumbColor={item.active ? '#FFF' : COLORS.muted}
           />
-          <TouchableOpacity onPress={() => onDelete(item)} style={styles.deleteBtn}>
-            <Text style={styles.deleteBtnText}>🗑</Text>
-          </TouchableOpacity>
         </View>
-      </View>
-
-      <Text style={styles.promoLabel}>{item.label}</Text>
-
-      <View style={styles.promoServices}>
-        {item.services.map(s => (
-          <Text key={s} style={styles.serviceIcon}>{SERVICE_LABELS[s] || s}</Text>
-        ))}
-      </View>
-
-      {/* Usage bar */}
-      <View style={styles.usageRow}>
-        <Text style={styles.usageText}>{item.usedCount} / {item.maxUses} utilisations</Text>
-        <Text style={[styles.usageText, exhausted && { color: COLORS.accent }]}>
-          {exhausted ? 'Épuisé' : `${Math.round(used)}%`}
-        </Text>
-      </View>
-      <View style={styles.usageBar}>
-        <View style={[styles.usageFill, {
-          width: `${Math.min(100, used)}%`,
-          backgroundColor: exhausted ? COLORS.accent : used > 80 ? COLORS.amber : COLORS.green,
-        }]} />
       </View>
     </View>
   );
 }
 
 export default function AdminPromoCodesScreen({ navigation }) {
-  const [codes, setCodes] = useState([]);
+  const [promos, setPromos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [modal, setModal] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [form, setForm] = useState({ code: '', type: 'PERCENT', value: '', service: 'ALL', maxUsage: '', expiresAt: '' });
 
-  // New code form
-  const [newCode, setNewCode] = useState('');
-  const [newType, setNewType] = useState('PERCENT');
-  const [newValue, setNewValue] = useState('');
-  const [newMax, setNewMax] = useState('100');
-  const [newLabel, setNewLabel] = useState('');
-  const [newServices, setNewServices] = useState(ALL_SERVICES);
-
-  const load = useCallback(async () => {
-    try {
-      const res = await api.get('/api/promo/admin');
-      setCodes(Array.isArray(res.data) ? res.data : MOCK_CODES);
-    } catch {
-      setCodes(MOCK_CODES);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
+  const load = useCallback(() => {
+    setLoading(true);
+    api.get('/api/admin/promos')
+      .then(r => setPromos(r.data.promos || MOCK_PROMOS))
+      .catch(() => setPromos(MOCK_PROMOS))
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => { load(); }, [load]);
 
-  const toggleService = (s) => {
-    setNewServices(prev =>
-      prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]
-    );
-  };
-
-  const handleCreate = async () => {
-    if (!newCode.trim() || !newValue || !newLabel.trim()) {
-      Alert.alert('Champs requis', 'Code, valeur et libellé sont obligatoires.');
-      return;
-    }
-    if (newServices.length === 0) {
-      Alert.alert('Services requis', 'Sélectionnez au moins un service.');
-      return;
-    }
-    setSaving(true);
+  const handleToggle = async (promo) => {
+    const next = !promo.active;
     try {
-      const payload = {
-        code: newCode.trim().toUpperCase(),
-        type: newType,
-        value: parseFloat(newValue),
-        maxUses: parseInt(newMax, 10) || 100,
-        label: newLabel.trim(),
-        services: newServices,
-      };
-      await api.post('/api/promo/admin/create', payload).catch(() => {});
-      setCodes(prev => [...prev, { ...payload, usedCount: 0, active: true }]);
-      setModal(false);
-      setNewCode(''); setNewType('PERCENT'); setNewValue(''); setNewMax('100');
-      setNewLabel(''); setNewServices(ALL_SERVICES);
-    } finally {
-      setSaving(false);
-    }
+      await api.patch(`/api/admin/promos/${promo.id}`, { active: next });
+      setPromos(prev => prev.map(p => p.id === promo.id ? { ...p, active: next } : p));
+    } catch { Alert.alert('Erreur', 'Impossible de modifier.'); }
   };
 
-  const handleToggle = async (item) => {
-    setCodes(prev => prev.map(c => c.code === item.code ? { ...c, active: !c.active } : c));
-    api.patch(`/api/promo/admin/${item.code}`, { active: !item.active }).catch(() => {});
-  };
-
-  const handleDelete = (item) => {
-    Alert.alert('Supprimer', `Supprimer le code "${item.code}" ?`, [
+  const handleDelete = (promo) => {
+    Alert.alert(`Supprimer ${promo.code} ?`, 'Cette action est irréversible.', [
       { text: 'Annuler', style: 'cancel' },
       {
-        text: 'Supprimer',
-        style: 'destructive',
-        onPress: () => {
-          setCodes(prev => prev.filter(c => c.code !== item.code));
-          api.delete(`/api/promo/admin/${item.code}`).catch(() => {});
+        text: 'Supprimer', style: 'destructive', onPress: async () => {
+          try {
+            await api.delete(`/api/admin/promos/${promo.id}`);
+            setPromos(prev => prev.filter(p => p.id !== promo.id));
+          } catch { Alert.alert('Erreur', 'Impossible de supprimer.'); }
         },
       },
     ]);
   };
 
-  const totalUses = codes.reduce((s, c) => s + (c.usedCount || 0), 0);
-  const activeCodes = codes.filter(c => c.active).length;
+  const handleCreate = async () => {
+    if (!form.code.trim() || !form.value || !form.maxUsage) {
+      Alert.alert('Champs requis', 'Remplissez le code, la valeur et le max d\'utilisations.');
+      return;
+    }
+    try {
+      const body = { ...form, value: parseFloat(form.value), maxUsage: parseInt(form.maxUsage) };
+      const res = await api.post('/api/admin/promos', body).catch(() => ({ data: { promo: { id: Date.now().toString(), ...body, usageCount: 0, active: true } } }));
+      setPromos(prev => [res.data.promo, ...prev]);
+      setModalVisible(false);
+      setForm({ code: '', type: 'PERCENT', value: '', service: 'ALL', maxUsage: '', expiresAt: '' });
+    } catch { Alert.alert('Erreur', 'Impossible de créer.'); }
+  };
+
+  const activeCount = promos.filter(p => p.active).length;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -175,129 +132,140 @@ export default function AdminPromoCodesScreen({ navigation }) {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Text style={styles.backArrow}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>🏷️ Codes promo</Text>
-        <TouchableOpacity style={styles.addBtn} onPress={() => setModal(true)}>
+        <Text style={styles.headerTitle}>Codes promo</Text>
+        <TouchableOpacity style={styles.addBtn} onPress={() => setModalVisible(true)}>
           <Text style={styles.addBtnText}>+ Créer</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Stats */}
-      <View style={styles.statsRow}>
-        <View style={styles.statChip}>
-          <Text style={styles.statNum}>{codes.length}</Text>
-          <Text style={styles.statLbl}>Total</Text>
+      <View style={styles.statsBar}>
+        <View style={styles.statItem}>
+          <Text style={styles.statNum}>{promos.length}</Text>
+          <Text style={styles.statLabel}>total</Text>
         </View>
-        <View style={[styles.statChip, { borderColor: COLORS.green + '50' }]}>
-          <Text style={[styles.statNum, { color: COLORS.green }]}>{activeCodes}</Text>
-          <Text style={styles.statLbl}>Actifs</Text>
+        <View style={styles.statDivider} />
+        <View style={styles.statItem}>
+          <Text style={[styles.statNum, { color: COLORS.green }]}>{activeCount}</Text>
+          <Text style={styles.statLabel}>actifs</Text>
         </View>
-        <View style={styles.statChip}>
-          <Text style={styles.statNum}>{totalUses}</Text>
-          <Text style={styles.statLbl}>Utilisations</Text>
+        <View style={styles.statDivider} />
+        <View style={styles.statItem}>
+          <Text style={styles.statNum}>{promos.reduce((s, p) => s + p.usageCount, 0)}</Text>
+          <Text style={styles.statLabel}>utilisations</Text>
         </View>
       </View>
 
       {loading ? (
-        <ActivityIndicator color={COLORS.green} size="large" style={{ marginTop: 40 }} />
+        <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} />
       ) : (
         <FlatList
-          data={codes}
-          keyExtractor={i => i.code}
-          renderItem={({ item }) => <PromoRow item={item} onToggle={handleToggle} onDelete={handleDelete} />}
-          contentContainerStyle={styles.list}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={COLORS.green} />}
-          ListEmptyComponent={<Text style={styles.emptyText}>Aucun code promo.</Text>}
+          data={promos}
+          keyExtractor={p => p.id}
+          renderItem={({ item }) => (
+            <PromoCard item={item} onToggle={handleToggle} onDelete={handleDelete} />
+          )}
+          contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={{ alignItems: 'center', marginTop: 60 }}>
+              <Text style={{ fontSize: 40 }}>🎁</Text>
+              <Text style={{ color: COLORS.muted, marginTop: 12 }}>Aucun code promo</Text>
+            </View>
+          }
         />
       )}
 
-      {/* Create Modal */}
-      <Modal visible={modal} transparent animationType="slide" onRequestClose={() => setModal(false)}>
+      <Modal visible={modalVisible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
-          <ScrollView style={styles.modalBox} keyboardShouldPersistTaps="handled">
+          <View style={styles.modalBox}>
             <Text style={styles.modalTitle}>Nouveau code promo</Text>
 
-            <Text style={styles.modalLabel}>CODE</Text>
+            <Text style={styles.fieldLabel}>Code</Text>
             <TextInput
-              style={styles.modalInput}
-              placeholder="Ex: ETE2025"
+              style={styles.input}
+              value={form.code}
+              onChangeText={v => setForm(f => ({ ...f, code: v.toUpperCase() }))}
+              placeholder="ex: WELCOME20"
               placeholderTextColor={COLORS.muted}
-              value={newCode}
-              onChangeText={v => setNewCode(v.toUpperCase())}
               autoCapitalize="characters"
-              autoCorrect={false}
             />
 
-            <Text style={styles.modalLabel}>TYPE DE RÉDUCTION</Text>
-            <View style={styles.typeRow}>
-              {['PERCENT', 'FIXED'].map(t => (
-                <TouchableOpacity
-                  key={t}
-                  style={[styles.typeBtn, newType === t && { backgroundColor: COLORS.green, borderColor: COLORS.green }]}
-                  onPress={() => setNewType(t)}
-                >
-                  <Text style={[styles.typeBtnText, newType === t && { color: '#FFF' }]}>
-                    {t === 'PERCENT' ? '% Pourcentage' : 'TND Montant fixe'}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+            <View style={styles.formRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.fieldLabel}>Type</Text>
+                <View style={styles.typeRow}>
+                  {['PERCENT', 'FIXED'].map(t => (
+                    <TouchableOpacity
+                      key={t}
+                      style={[styles.typeBtn, form.type === t && styles.typeBtnActive]}
+                      onPress={() => setForm(f => ({ ...f, type: t }))}
+                    >
+                      <Text style={[styles.typeBtnText, form.type === t && { color: '#000' }]}>
+                        {t === 'PERCENT' ? '% Remise' : 'TND fixe'}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.fieldLabel}>Valeur</Text>
+                <TextInput
+                  style={styles.input}
+                  value={form.value}
+                  onChangeText={v => setForm(f => ({ ...f, value: v }))}
+                  placeholder="20"
+                  placeholderTextColor={COLORS.muted}
+                  keyboardType="numeric"
+                />
+              </View>
             </View>
 
-            <Text style={styles.modalLabel}>VALEUR ({newType === 'PERCENT' ? '%' : 'TND'})</Text>
-            <TextInput
-              style={styles.modalInput}
-              placeholder={newType === 'PERCENT' ? 'Ex: 20' : 'Ex: 5'}
-              placeholderTextColor={COLORS.muted}
-              keyboardType="numeric"
-              value={newValue}
-              onChangeText={setNewValue}
-            />
-
-            <Text style={styles.modalLabel}>UTILISATIONS MAX</Text>
-            <TextInput
-              style={styles.modalInput}
-              placeholder="100"
-              placeholderTextColor={COLORS.muted}
-              keyboardType="numeric"
-              value={newMax}
-              onChangeText={setNewMax}
-            />
-
-            <Text style={styles.modalLabel}>LIBELLÉ</Text>
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Description courte du code"
-              placeholderTextColor={COLORS.muted}
-              value={newLabel}
-              onChangeText={setNewLabel}
-            />
-
-            <Text style={styles.modalLabel}>SERVICES CONCERNÉS</Text>
+            <Text style={styles.fieldLabel}>Service</Text>
             <View style={styles.servicesRow}>
-              {ALL_SERVICES.map(s => (
+              {SERVICES_OPTIONS.map(s => (
                 <TouchableOpacity
                   key={s}
-                  style={[styles.serviceChip, newServices.includes(s) && styles.serviceChipActive]}
-                  onPress={() => toggleService(s)}
+                  style={[styles.svcChip, form.service === s && styles.svcChipActive]}
+                  onPress={() => setForm(f => ({ ...f, service: s }))}
                 >
-                  <Text style={styles.serviceChipText}>{SERVICE_LABELS[s]} {s}</Text>
+                  <Text style={[styles.svcChipText, form.service === s && { color: '#000' }]}>{s}</Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <View style={styles.modalBtns}>
-              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setModal(false)}>
-                <Text style={styles.modalCancelText}>Annuler</Text>
+            <View style={styles.formRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.fieldLabel}>Max utilisations</Text>
+                <TextInput
+                  style={styles.input}
+                  value={form.maxUsage}
+                  onChangeText={v => setForm(f => ({ ...f, maxUsage: v }))}
+                  placeholder="500"
+                  placeholderTextColor={COLORS.muted}
+                  keyboardType="numeric"
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.fieldLabel}>Expiration</Text>
+                <TextInput
+                  style={styles.input}
+                  value={form.expiresAt}
+                  onChangeText={v => setForm(f => ({ ...f, expiresAt: v }))}
+                  placeholder="2025-12-31"
+                  placeholderTextColor={COLORS.muted}
+                />
+              </View>
+            </View>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setModalVisible(false)}>
+                <Text style={styles.cancelBtnText}>Annuler</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalCreateBtn, saving && { opacity: 0.6 }]}
-                onPress={handleCreate}
-                disabled={saving}
-              >
-                {saving ? <ActivityIndicator color="#FFF" size="small" /> : <Text style={styles.modalCreateText}>Créer</Text>}
+              <TouchableOpacity style={styles.createBtn} onPress={handleCreate}>
+                <Text style={styles.createBtnText}>Créer</Text>
               </TouchableOpacity>
             </View>
-            <View style={{ height: 40 }} />
-          </ScrollView>
+          </View>
         </View>
       </Modal>
     </SafeAreaView>
@@ -314,66 +282,70 @@ const styles = StyleSheet.create({
   backBtn: { width: 40 },
   backArrow: { color: COLORS.text, fontSize: 30, fontWeight: '300' },
   headerTitle: { color: COLORS.text, fontSize: 17, fontWeight: '700' },
-  addBtn: { backgroundColor: COLORS.green, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6 },
-  addBtnText: { color: '#FFF', fontSize: 13, fontWeight: '700' },
-  statsRow: { flexDirection: 'row', padding: 12, gap: 10 },
-  statChip: {
-    flex: 1, backgroundColor: COLORS.surface, borderRadius: 12, padding: 10,
-    alignItems: 'center', borderWidth: 1, borderColor: COLORS.border,
-  },
+  addBtn: { backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6 },
+  addBtnText: { color: '#000', fontSize: 13, fontWeight: '700' },
+  statsBar: { flexDirection: 'row', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  statItem: { flex: 1, alignItems: 'center' },
   statNum: { color: COLORS.text, fontSize: 20, fontWeight: '800' },
-  statLbl: { color: COLORS.muted, fontSize: 11, marginTop: 2 },
-  list: { padding: 12, paddingBottom: 40 },
-  promoCard: {
+  statLabel: { color: COLORS.muted, fontSize: 10, marginTop: 2 },
+  statDivider: { width: 1, backgroundColor: COLORS.border },
+  card: {
     backgroundColor: COLORS.surface, borderRadius: 14, padding: 14,
-    marginBottom: 10, borderWidth: 1, borderColor: COLORS.border,
+    marginBottom: 12, borderWidth: 1, borderColor: COLORS.border,
   },
-  promoTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
-  promoCodeBox: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  promoCode: { color: COLORS.text, fontSize: 16, fontWeight: '900', letterSpacing: 1 },
-  typeBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
-  typeBadgeText: { fontSize: 13, fontWeight: '800' },
-  promoActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  cardInactive: { opacity: 0.55 },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  codeBox: {
+    backgroundColor: COLORS.bg, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5,
+    borderWidth: 1, borderColor: COLORS.border, borderStyle: 'dashed',
+  },
+  codeText: { color: COLORS.accent, fontSize: 14, fontWeight: '900', letterSpacing: 1.5 },
+  cardHeaderRight: { alignItems: 'flex-end', gap: 4 },
+  typeBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
+  typeText: { fontSize: 13, fontWeight: '800' },
+  serviceLabel: { color: COLORS.muted, fontSize: 11 },
+  usageRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+  usageText: { color: COLORS.muted, fontSize: 12 },
+  expiryText: { color: COLORS.muted, fontSize: 12 },
+  progressBg: { height: 4, backgroundColor: COLORS.border, borderRadius: 2, overflow: 'hidden', marginBottom: 12 },
+  progressFill: { height: 4, borderRadius: 2 },
+  cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   deleteBtn: { padding: 4 },
-  deleteBtnText: { fontSize: 18 },
-  promoLabel: { color: COLORS.muted, fontSize: 12, marginBottom: 8 },
-  promoServices: { flexDirection: 'row', gap: 6, marginBottom: 10 },
-  serviceIcon: { fontSize: 18 },
-  usageRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-  usageText: { color: COLORS.muted, fontSize: 11 },
-  usageBar: { height: 4, backgroundColor: COLORS.border, borderRadius: 2, overflow: 'hidden' },
-  usageFill: { height: 4, borderRadius: 2 },
-  emptyText: { color: COLORS.muted, textAlign: 'center', marginTop: 40 },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
+  deleteBtnText: { color: COLORS.red, fontSize: 12 },
+  switchRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  switchLabel: { fontSize: 12, fontWeight: '600' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'flex-end' },
   modalBox: {
     backgroundColor: COLORS.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    padding: 24, borderTopWidth: 1, borderTopColor: COLORS.border, maxHeight: '90%',
+    padding: 24, borderWidth: 1, borderColor: COLORS.border,
   },
-  modalTitle: { color: COLORS.text, fontSize: 18, fontWeight: '800', marginBottom: 16 },
-  modalLabel: { color: COLORS.muted, fontSize: 10, fontWeight: '700', letterSpacing: 1.4, marginBottom: 8, marginTop: 4 },
-  modalInput: {
-    backgroundColor: COLORS.bg, borderRadius: 12, borderWidth: 1.5, borderColor: COLORS.border,
-    color: COLORS.text, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, marginBottom: 12,
+  modalTitle: { color: COLORS.text, fontSize: 17, fontWeight: '800', marginBottom: 16 },
+  fieldLabel: { color: COLORS.muted, fontSize: 11, fontWeight: '700', marginBottom: 6, letterSpacing: 0.8 },
+  input: {
+    backgroundColor: COLORS.bg, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9,
+    color: COLORS.text, fontSize: 14, borderWidth: 1, borderColor: COLORS.border, marginBottom: 12,
   },
-  typeRow: { flexDirection: 'row', gap: 10, marginBottom: 12 },
+  formRow: { flexDirection: 'row', gap: 10 },
+  typeRow: { flexDirection: 'row', gap: 6, marginBottom: 12 },
   typeBtn: {
-    flex: 1, borderRadius: 10, paddingVertical: 12, alignItems: 'center',
-    borderWidth: 1.5, borderColor: COLORS.border,
+    flex: 1, borderRadius: 8, borderWidth: 1, borderColor: COLORS.border,
+    paddingVertical: 7, alignItems: 'center', backgroundColor: COLORS.bg,
   },
-  typeBtnText: { color: COLORS.muted, fontWeight: '700', fontSize: 13 },
-  servicesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
-  serviceChip: {
-    borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8,
-    borderWidth: 1.5, borderColor: COLORS.border,
+  typeBtnActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
+  typeBtnText: { color: COLORS.muted, fontSize: 12, fontWeight: '600' },
+  servicesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 },
+  svcChip: {
+    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14,
+    backgroundColor: COLORS.bg, borderWidth: 1, borderColor: COLORS.border,
   },
-  serviceChipActive: { backgroundColor: COLORS.surface, borderColor: COLORS.green },
-  serviceChipText: { color: COLORS.muted, fontSize: 13, fontWeight: '600' },
-  modalBtns: { flexDirection: 'row', gap: 12, marginTop: 4 },
-  modalCancelBtn: {
-    flex: 1, borderRadius: 12, paddingVertical: 14, alignItems: 'center',
-    borderWidth: 1, borderColor: COLORS.border,
+  svcChipActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
+  svcChipText: { color: COLORS.muted, fontSize: 11, fontWeight: '600' },
+  modalActions: { flexDirection: 'row', gap: 10, marginTop: 4 },
+  cancelBtn: {
+    flex: 1, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border,
+    paddingVertical: 12, alignItems: 'center',
   },
-  modalCancelText: { color: COLORS.muted, fontWeight: '700' },
-  modalCreateBtn: { flex: 1, borderRadius: 12, paddingVertical: 14, alignItems: 'center', backgroundColor: COLORS.green },
-  modalCreateText: { color: '#FFF', fontWeight: '900', fontSize: 15 },
+  cancelBtnText: { color: COLORS.muted, fontSize: 14, fontWeight: '600' },
+  createBtn: { flex: 2, borderRadius: 12, backgroundColor: COLORS.accent, paddingVertical: 12, alignItems: 'center' },
+  createBtnText: { color: '#000', fontSize: 14, fontWeight: '800' },
 });
