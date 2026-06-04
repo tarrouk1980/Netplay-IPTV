@@ -350,6 +350,8 @@ import SOSRatingDetailScreen from './screens/sos/SOSRatingDetailScreen';
 import AdminLiveDriversScreen from './screens/admin/AdminLiveDriversScreen';
 import ClientAddressBookScreen from './screens/client/ClientAddressBookScreen';
 import LivreurScheduleScreen from './screens/delivery/LivreurScheduleScreen';
+import AdminRevenueChartScreen from './screens/admin/AdminRevenueChartScreen';
+import LegalMentionsScreen from './screens/legal/LegalMentionsScreen';
 
 // Batch 32
 import ClientOrdersAllScreen from './screens/profile/ClientOrdersAllScreen';
@@ -1002,6 +1004,8 @@ function MainStack() {
       <Stack.Screen name="AdminLiveDrivers" component={AdminLiveDriversScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientAddressBook" component={ClientAddressBookScreen} options={{ headerShown: false }} />
       <Stack.Screen name="LivreurSchedule" component={LivreurScheduleScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminRevenueChart" component={AdminRevenueChartScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="LegalMentions" component={LegalMentionsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientOrdersAll" component={ClientOrdersAllScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminCouponList" component={AdminCouponListScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DeliveryRating" component={DeliveryRatingScreen} options={{ headerShown: false, gestureEnabled: false }} />
