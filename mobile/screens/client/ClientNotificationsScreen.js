@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  ActivityIndicator, StatusBar,
+  StatusBar, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
@@ -12,44 +12,38 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB',
 };
 
-const CATEGORIES = ['Toutes', 'Commandes', 'Promos', 'Système'];
-
-const CAT_MAP = {
-  ORDER: 'Commandes', PROMO: 'Promos', SYSTEM: 'Système',
+const TYPE_ICONS = {
+  ORDER: '📦', TAXI: '🚕', SOS: '🔧', PROMO: '🎁',
+  PAYMENT: '💳', SYSTEM: '⚙️', LOYALTY: '🏆',
 };
 
-const MOCK_NOTIFS = [
-  { id: '1', type: 'ORDER', title: 'Chauffeur en route', body: 'Karim B. arrive dans 4 min.', time: '14:32', read: false },
-  { id: '2', type: 'ORDER', title: 'Livraison terminée', body: 'Votre commande Pizza Roma a été livrée.', time: '13:15', read: false },
-  { id: '3', type: 'PROMO', title: '🎁 Offre exclusive', body: '-20% sur votre prochaine course taxi ce soir !', time: '12:00', read: true },
-  { id: '4', type: 'ORDER', title: 'Commande confirmée', body: 'Votre épicerie est en préparation.', time: 'Hier', read: true },
-  { id: '5', type: 'SYSTEM', title: 'Mise à jour disponible', body: 'EasyWay v2.1 est disponible avec de nouvelles fonctionnalités.', time: 'Hier', read: true },
-  { id: '6', type: 'PROMO', title: '🔧 SOS à -15%', body: 'Profitez de 15% de réduction sur le premier dépannage du mois.', time: '03 juin', read: true },
+const MOCK = [
+  { id: '1', type: 'TAXI', title: 'Course terminée', body: 'Votre course avec Mohamed A. est terminée. Notez votre expérience !', read: false, date: 'Il y a 5 min' },
+  { id: '2', type: 'PROMO', title: 'Offre exclusive !', body: '🎉 -20% sur votre prochaine course taxi avec le code EASY20. Valable 24h.', read: false, date: 'Il y a 1h' },
+  { id: '3', type: 'ORDER', title: 'Livraison en route', body: 'Sami K. est parti avec votre commande. ETA : 12 min.', read: true, date: 'Il y a 2h' },
+  { id: '4', type: 'LOYALTY', title: 'Nouveau badge !', body: 'Félicitations, vous atteignez le statut Silver ! 10% de réduction sur tous les services.', read: true, date: 'Hier' },
+  { id: '5', type: 'PAYMENT', title: 'Paiement confirmé', body: 'Votre paiement de 12.500 TND a bien été traité.', read: true, date: 'Hier' },
+  { id: '6', type: 'SOS', title: 'Technicien assigné', body: 'Karim M. prend en charge votre demande SOS. Il arrive dans ~20 min.', read: true, date: 'Il y a 3 jours' },
 ];
 
-const TYPE_ICON = { ORDER: '📦', PROMO: '🎁', SYSTEM: '⚙️' };
-const TYPE_COLOR = { ORDER: COLORS.blue, PROMO: COLORS.accent, SYSTEM: COLORS.muted };
-
-function NotifItem({ item, onPress, onMarkRead }) {
-  const icon = TYPE_ICON[item.type] || '🔔';
-  const color = TYPE_COLOR[item.type] || COLORS.muted;
+function NotifCard({ item, onPress }) {
   return (
     <TouchableOpacity
-      style={[styles.notifItem, !item.read && styles.notifItemUnread]}
+      style={[styles.card, !item.read && styles.cardUnread]}
       onPress={() => onPress(item)}
       activeOpacity={0.8}
     >
-      <View style={[styles.notifIcon, { backgroundColor: color + '20' }]}>
-        <Text style={{ fontSize: 18 }}>{icon}</Text>
+      <View style={[styles.iconBox, { backgroundColor: COLORS.accent + (item.read ? '15' : '25') }]}>
+        <Text style={styles.icon}>{TYPE_ICONS[item.type] || '🔔'}</Text>
       </View>
-      <View style={styles.notifContent}>
-        <View style={styles.notifHeader}>
-          <Text style={[styles.notifTitle, !item.read && styles.notifTitleBold]}>{item.title}</Text>
-          <Text style={styles.notifTime}>{item.time}</Text>
+      <View style={{ flex: 1 }}>
+        <View style={styles.titleRow}>
+          <Text style={[styles.title, !item.read && { color: COLORS.accent }]}>{item.title}</Text>
+          {!item.read && <View style={styles.unreadDot} />}
         </View>
-        <Text style={styles.notifBody} numberOfLines={2}>{item.body}</Text>
+        <Text style={styles.body} numberOfLines={2}>{item.body}</Text>
+        <Text style={styles.date}>{item.date}</Text>
       </View>
-      {!item.read && <View style={styles.unreadDot} />}
     </TouchableOpacity>
   );
 }
@@ -57,87 +51,63 @@ function NotifItem({ item, onPress, onMarkRead }) {
 export default function ClientNotificationsScreen({ navigation }) {
   const [notifs, setNotifs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [category, setCategory] = useState('Toutes');
 
   const load = useCallback(() => {
     api.get('/api/client/notifications')
-      .then(r => setNotifs(r.data.notifications || MOCK_NOTIFS))
-      .catch(() => setNotifs(MOCK_NOTIFS))
+      .then(r => setNotifs(r.data.notifications || MOCK))
+      .catch(() => setNotifs(MOCK))
       .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => { load(); }, [load]);
 
-  const markAllRead = async () => {
-    await api.post('/api/client/notifications/read-all').catch(() => {});
+  const markRead = (item) => {
+    setNotifs(prev => prev.map(n => n.id === item.id ? { ...n, read: true } : n));
+    api.post('/api/client/notifications/' + item.id + '/read').catch(() => {});
+  };
+
+  const markAllRead = () => {
     setNotifs(prev => prev.map(n => ({ ...n, read: true })));
+    api.post('/api/client/notifications/read-all').catch(() => {});
   };
-
-  const handlePress = async (notif) => {
-    if (!notif.read) {
-      await api.post(`/api/client/notifications/${notif.id}/read`).catch(() => {});
-      setNotifs(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
-    }
-  };
-
-  const filtered = notifs.filter(n => {
-    if (category === 'Toutes') return true;
-    return CAT_MAP[n.type] === category;
-  });
 
   const unreadCount = notifs.filter(n => !n.read).length;
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
-
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backArrow}>‹</Text>
+          <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Text style={styles.headerTitle}>Notifications</Text>
+        <View style={styles.headerCenter}>
+          <Text style={styles.headerTitle}>🔔 Notifications</Text>
           {unreadCount > 0 && (
-            <View style={styles.badge}><Text style={styles.badgeText}>{unreadCount}</Text></View>
+            <View style={styles.countBadge}>
+              <Text style={styles.countText}>{unreadCount}</Text>
+            </View>
           )}
         </View>
         {unreadCount > 0 ? (
           <TouchableOpacity onPress={markAllRead} style={styles.readAllBtn}>
             <Text style={styles.readAllText}>Tout lire</Text>
           </TouchableOpacity>
-        ) : (
-          <View style={{ width: 60 }} />
-        )}
-      </View>
-
-      <View style={styles.catRow}>
-        {CATEGORIES.map(c => (
-          <TouchableOpacity
-            key={c}
-            style={[styles.catBtn, category === c && styles.catBtnActive]}
-            onPress={() => setCategory(c)}
-          >
-            <Text style={[styles.catLabel, category === c && styles.catLabelActive]}>{c}</Text>
-          </TouchableOpacity>
-        ))}
+        ) : <View style={{ width: 64 }} />}
       </View>
 
       {loading ? (
-        <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} />
+        <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 60 }} />
       ) : (
         <FlatList
-          data={filtered}
-          keyExtractor={n => n.id}
-          renderItem={({ item }) => (
-            <NotifItem item={item} onPress={handlePress} />
-          )}
-          contentContainerStyle={{ paddingVertical: 8, paddingBottom: 40 }}
+          data={notifs}
+          keyExtractor={item => item.id}
+          renderItem={({ item }) => <NotifCard item={item} onPress={markRead} />}
+          contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
           ListEmptyComponent={
-            <View style={{ alignItems: 'center', marginTop: 80 }}>
+            <View style={styles.empty}>
               <Text style={{ fontSize: 48 }}>🔔</Text>
-              <Text style={{ color: COLORS.muted, marginTop: 12 }}>Aucune notification</Text>
+              <Text style={{ color: COLORS.muted, marginTop: 14, fontSize: 15 }}>Aucune notification</Text>
             </View>
           }
         />
@@ -153,39 +123,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 14,
     borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
-  backBtn: { width: 40 },
-  backArrow: { color: COLORS.text, fontSize: 30, fontWeight: '300' },
-  headerTitle: { color: COLORS.text, fontSize: 17, fontWeight: '700' },
-  badge: { backgroundColor: COLORS.red, borderRadius: 10, paddingHorizontal: 7, paddingVertical: 2 },
-  badgeText: { color: '#FFF', fontSize: 11, fontWeight: '800' },
+  backBtn: { padding: 4 },
+  backText: { color: COLORS.accent, fontSize: 22 },
+  headerCenter: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  headerTitle: { color: COLORS.text, fontSize: 18, fontWeight: '900' },
+  countBadge: {
+    backgroundColor: COLORS.red, borderRadius: 10, paddingHorizontal: 7, paddingVertical: 2,
+  },
+  countText: { color: '#FFF', fontSize: 11, fontWeight: '800' },
   readAllBtn: { paddingHorizontal: 4 },
   readAllText: { color: COLORS.accent, fontSize: 13, fontWeight: '600' },
-  catRow: {
-    flexDirection: 'row', paddingHorizontal: 16, paddingVertical: 12, gap: 8,
-    borderBottomWidth: 1, borderBottomColor: COLORS.border,
+  list: { padding: 16 },
+  card: {
+    flexDirection: 'row', gap: 12,
+    backgroundColor: COLORS.surface, borderRadius: 14, padding: 14,
+    marginBottom: 10, borderWidth: 1, borderColor: COLORS.border,
   },
-  catBtn: {
-    paddingHorizontal: 14, paddingVertical: 6, borderRadius: 16,
-    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
+  cardUnread: { borderColor: COLORS.accent + '40', backgroundColor: COLORS.accent + '08' },
+  iconBox: {
+    width: 44, height: 44, borderRadius: 12,
+    alignItems: 'center', justifyContent: 'center',
   },
-  catBtnActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
-  catLabel: { color: COLORS.muted, fontSize: 12, fontWeight: '600' },
-  catLabelActive: { color: '#000' },
-  notifItem: {
-    flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: 16,
-    paddingVertical: 14, gap: 12,
-  },
-  notifItemUnread: { backgroundColor: COLORS.surface },
-  notifIcon: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  notifContent: { flex: 1 },
-  notifHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 },
-  notifTitle: { color: COLORS.muted, fontSize: 14, fontWeight: '500', flex: 1 },
-  notifTitleBold: { color: COLORS.text, fontWeight: '700' },
-  notifTime: { color: COLORS.muted, fontSize: 11, marginLeft: 8 },
-  notifBody: { color: COLORS.muted, fontSize: 13, lineHeight: 18 },
-  unreadDot: {
-    width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.accent,
-    marginTop: 6,
-  },
-  separator: { height: 1, backgroundColor: COLORS.border, marginHorizontal: 16 },
+  icon: { fontSize: 22 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 3 },
+  title: { color: COLORS.text, fontSize: 14, fontWeight: '700', flex: 1 },
+  unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.accent },
+  body: { color: COLORS.muted, fontSize: 13, lineHeight: 18, marginBottom: 5 },
+  date: { color: COLORS.muted, fontSize: 11 },
+  empty: { alignItems: 'center', paddingTop: 80 },
 });

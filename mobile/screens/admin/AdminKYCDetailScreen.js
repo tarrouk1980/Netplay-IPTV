@@ -1,380 +1,241 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Alert, ActivityIndicator, TextInput, Modal,
+  StatusBar, Alert, ActivityIndicator, TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
 
 const COLORS = {
-  bg: '#0A0A0F', surface: '#1C1C28', surfaceAlt: '#16161F',
-  accent: '#D32F2F', accentLight: '#FF5252', white: '#FFFFFF',
-  muted: '#8A8A9A', border: '#2A2A3A', green: '#2E7D32',
-  amber: '#F57C00', blue: '#1565C0',
+  bg: '#0A0A0F', surface: '#1C1C28', border: '#2C2C3E',
+  text: '#FFFFFF', muted: '#8E8E9A', accent: '#F5A623',
+  green: '#27AE60', red: '#E74C3C', blue: '#3498DB',
 };
 
-const DOC_LABELS = {
-  CIN: 'Carte d\'identité nationale',
-  PERMIS: 'Permis de conduire',
-  CARTE_GRISE: 'Carte grise',
-  ASSURANCE: 'Assurance véhicule',
-  VISITE_TECHNIQUE: 'Visite technique',
-  CASIER: 'Casier judiciaire',
-  PHOTO: 'Photo professionnelle',
-  RIB: 'RIB bancaire',
+const MOCK_KYC = {
+  id: 'KYC-001',
+  userId: 'USR-4821',
+  name: 'Mohamed Ali Trabelsi',
+  phone: '+216 55 123 456',
+  role: 'CHAUFFEUR',
+  submittedAt: '03/06/2026 09:30',
+  documents: [
+    { type: 'CIN', label: 'Carte d\'identité nationale', status: 'PENDING', filename: 'cin_recto.jpg' },
+    { type: 'LICENSE', label: 'Permis de conduire', status: 'PENDING', filename: 'permis.jpg' },
+    { type: 'VEHICLE_CARD', label: 'Carte grise', status: 'PENDING', filename: 'carte_grise.jpg' },
+    { type: 'INSURANCE', label: 'Attestation d\'assurance', status: 'PENDING', filename: 'assurance.pdf' },
+  ],
+  selfie: { label: 'Selfie de vérification', status: 'PENDING', filename: 'selfie.jpg' },
 };
 
-const STATUS_CFG = {
-  PENDING:  { color: COLORS.amber, label: 'En attente', emoji: '⏳' },
-  APPROVED: { color: COLORS.green, label: 'Approuvé',   emoji: '✅' },
-  REJECTED: { color: COLORS.accent, label: 'Rejeté',    emoji: '❌' },
-};
+const DOC_ICONS = { CIN: '🪪', LICENSE: '🚗', VEHICLE_CARD: '📋', INSURANCE: '🛡️' };
 
-const REJECT_REASONS = [
-  'Document illisible ou flou',
-  'Document expiré',
-  'Document non conforme',
-  'Identité ne correspond pas',
-  'Document incomplet',
-  'Mauvais type de document',
-];
+export default function AdminKYCDetailScreen({ navigation, route }) {
+  const { kycId } = route.params || {};
+  const [kyc] = useState(MOCK_KYC);
+  const [docStatuses, setDocStatuses] = useState({});
+  const [rejectReason, setRejectReason] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-function DocReviewCard({ doc, onApprove, onReject }) {
-  const cfg = STATUS_CFG[doc.status] || STATUS_CFG.PENDING;
-  return (
-    <View style={[styles.docCard, { borderLeftColor: cfg.color }]}>
-      <View style={styles.docTop}>
-        <View>
-          <Text style={styles.docType}>{DOC_LABELS[doc.type] || doc.type}</Text>
-          <View style={styles.docStatusRow}>
-            <Text style={styles.docStatusEmoji}>{cfg.emoji}</Text>
-            <Text style={[styles.docStatusLabel, { color: cfg.color }]}>{cfg.label}</Text>
-          </View>
-          {doc.uploadedAt && (
-            <Text style={styles.docDate}>Déposé le {new Date(doc.uploadedAt).toLocaleDateString('fr-TN')}</Text>
-          )}
-          {doc.expiresAt && (
-            <Text style={styles.docExpiry}>Expire le {new Date(doc.expiresAt).toLocaleDateString('fr-TN')}</Text>
-          )}
-        </View>
-        <View style={styles.docPreview}>
-          <Text style={{ color: COLORS.muted, fontSize: 11 }}>📄 Document</Text>
-        </View>
-      </View>
-
-      {doc.note && (
-        <View style={[styles.noteBox, { borderColor: cfg.color }]}>
-          <Text style={[styles.noteText, { color: cfg.color }]}>{doc.note}</Text>
-        </View>
-      )}
-
-      {doc.status === 'PENDING' && (
-        <View style={styles.docActions}>
-          <TouchableOpacity style={styles.approveBtn} onPress={() => onApprove(doc.type)}>
-            <Text style={styles.approveBtnText}>✅ Approuver</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.rejectBtn} onPress={() => onReject(doc.type)}>
-            <Text style={styles.rejectBtnText}>❌ Rejeter</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </View>
-  );
-}
-
-function RejectModal({ visible, docType, onConfirm, onClose }) {
-  const [reason, setReason] = useState('');
-  const [custom, setCustom] = useState('');
-  return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.bg }}>
-        <View style={modal.header}>
-          <TouchableOpacity onPress={onClose}><Text style={modal.cancel}>Annuler</Text></TouchableOpacity>
-          <Text style={modal.title}>Motif de rejet</Text>
-          <TouchableOpacity onPress={() => reason || custom ? onConfirm(reason || custom) : null}>
-            <Text style={[modal.confirm, !(reason || custom) && { opacity: 0.3 }]}>Rejeter</Text>
-          </TouchableOpacity>
-        </View>
-        <ScrollView style={{ padding: 16 }}>
-          <Text style={modal.label}>{DOC_LABELS[docType] || docType}</Text>
-          <Text style={modal.sublabel}>Sélectionnez un motif :</Text>
-          {REJECT_REASONS.map(r => (
-            <TouchableOpacity
-              key={r}
-              style={[modal.reasonRow, reason === r && modal.reasonRowActive]}
-              onPress={() => setReason(r)}
-            >
-              <View style={[modal.radio, reason === r && modal.radioActive]}>
-                {reason === r && <View style={modal.radioFill} />}
-              </View>
-              <Text style={[modal.reasonText, reason === r && { color: COLORS.accentLight }]}>{r}</Text>
-            </TouchableOpacity>
-          ))}
-          <Text style={[modal.sublabel, { marginTop: 16 }]}>Ou motif personnalisé :</Text>
-          <TextInput
-            style={modal.input}
-            value={custom}
-            onChangeText={t => { setCustom(t); setReason(''); }}
-            placeholder="Précisez le motif…"
-            placeholderTextColor={COLORS.muted}
-            multiline
-          />
-        </ScrollView>
-      </SafeAreaView>
-    </Modal>
-  );
-}
-
-export default function AdminKYCDetailScreen({ route, navigation }) {
-  const { userId, userName } = route.params || {};
-  const [user, setUser] = useState(null);
-  const [docs, setDocs] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [rejectModal, setRejectModal] = useState(null);
-  const [saving, setSaving] = useState(false);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await api.get(`/api/admin/kyc/${userId}`);
-      setUser(res.data.user);
-      setDocs(res.data.documents || []);
-    } catch {
-      setUser({ id: userId, name: userName || 'Prestataire', role: 'CHAUFFEUR', phone: '+216 55 000 000', email: 'test@easyway.tn', kycStatus: 'PENDING', createdAt: new Date().toISOString() });
-      setDocs([
-        { type: 'CIN', status: 'PENDING', uploadedAt: new Date().toISOString(), expiresAt: null, note: '' },
-        { type: 'PERMIS', status: 'APPROVED', uploadedAt: new Date(Date.now() - 86400000).toISOString(), expiresAt: '2033-06-20', note: '' },
-        { type: 'ASSURANCE', status: 'PENDING', uploadedAt: new Date().toISOString(), expiresAt: null, note: '' },
-        { type: 'CARTE_GRISE', status: 'REJECTED', uploadedAt: new Date(Date.now() - 172800000).toISOString(), note: 'Document illisible ou flou' },
-        { type: 'PHOTO', status: 'PENDING', uploadedAt: new Date().toISOString(), note: '' },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  }, [userId]);
-
-  useEffect(() => { load(); }, [load]);
-
-  const handleApprove = async (docType) => {
-    setSaving(true);
-    try {
-      await api.post(`/api/admin/kyc/${userId}/documents/${docType}/approve`);
-      setDocs(d => d.map(x => x.type === docType ? { ...x, status: 'APPROVED', note: '' } : x));
-    } catch {
-      Alert.alert('Erreur', 'Impossible d\'approuver.');
-    } finally {
-      setSaving(false);
-    }
+  const setDocStatus = (type, status) => {
+    setDocStatuses(prev => ({ ...prev, [type]: status }));
   };
 
-  const handleReject = (docType) => setRejectModal(docType);
+  const allReviewed = kyc.documents.every(d => docStatuses[d.type]);
 
-  const confirmReject = async (reason) => {
-    setSaving(true);
-    setRejectModal(null);
+  const approve = async () => {
+    setSubmitting(true);
     try {
-      await api.post(`/api/admin/kyc/${userId}/documents/${rejectModal}/reject`, { reason });
-      setDocs(d => d.map(x => x.type === rejectModal ? { ...x, status: 'REJECTED', note: reason } : x));
+      await api.post('/api/admin/kyc/' + (kycId || kyc.id) + '/approve');
+      Alert.alert('Approuvé', 'Le dossier KYC a été approuvé.', [{ text: 'OK', onPress: () => navigation.goBack() }]);
     } catch {
-      Alert.alert('Erreur', 'Impossible de rejeter.');
-    } finally {
-      setSaving(false);
-    }
+      Alert.alert('Erreur', 'Impossible d\'approuver pour l\'instant.');
+    } finally { setSubmitting(false); }
   };
 
-  const handleApproveAll = () => {
-    Alert.alert('Tout approuver', 'Valider tous les documents en attente ?', [
-      { text: 'Annuler', style: 'cancel' },
-      {
-        text: 'Approuver tout', onPress: async () => {
-          setSaving(true);
-          try {
-            await api.post(`/api/admin/kyc/${userId}/approve-all`);
-            setDocs(d => d.map(x => x.status === 'PENDING' ? { ...x, status: 'APPROVED' } : x));
-            Alert.alert('✅ KYC validé', `Le compte de ${user?.name} est maintenant certifié.`);
-          } catch {
-            Alert.alert('Erreur', 'Validation impossible.');
-          } finally {
-            setSaving(false);
-          }
-        },
-      },
-    ]);
+  const reject = async () => {
+    if (!rejectReason.trim()) { Alert.alert('Motif requis', 'Indiquez le motif de refus.'); return; }
+    setSubmitting(true);
+    try {
+      await api.post('/api/admin/kyc/' + (kycId || kyc.id) + '/reject', { reason: rejectReason });
+      Alert.alert('Refusé', 'Le dossier a été refusé.', [{ text: 'OK', onPress: () => navigation.goBack() }]);
+    } catch {
+      Alert.alert('Erreur', 'Impossible de refuser pour l\'instant.');
+    } finally { setSubmitting(false); }
   };
-
-  const pending = docs.filter(d => d.status === 'PENDING').length;
-  const approved = docs.filter(d => d.status === 'APPROVED').length;
-  const rejected = docs.filter(d => d.status === 'REJECTED').length;
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backText}>‹</Text>
+          <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>🔖 Revue KYC</Text>
-        {pending > 0 && (
-          <TouchableOpacity style={styles.approveAllBtn} onPress={handleApproveAll} disabled={saving}>
-            <Text style={styles.approveAllText}>Tout valider</Text>
-          </TouchableOpacity>
-        )}
+        <Text style={styles.headerTitle}>🪪 Dossier KYC</Text>
+        <View style={{ width: 36 }} />
       </View>
 
-      {loading ? (
-        <View style={styles.centered}><ActivityIndicator color={COLORS.accent} size="large" /></View>
-      ) : (
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
-          {/* User card */}
-          {user && (
-            <View style={styles.userCard}>
-              <View style={styles.userAvatar}>
-                <Text style={styles.userAvatarText}>{(user.name || '?')[0].toUpperCase()}</Text>
-              </View>
-              <View style={{ flex: 1, marginLeft: 14 }}>
-                <Text style={styles.userName}>{user.name}</Text>
-                <Text style={styles.userRole}>👤 {user.role}</Text>
-                <Text style={styles.userContact}>{user.phone} · {user.email}</Text>
-                <Text style={styles.userJoined}>Inscrit le {new Date(user.createdAt).toLocaleDateString('fr-TN')}</Text>
-              </View>
-            </View>
-          )}
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
-          {/* Progress */}
-          <View style={styles.progressCard}>
-            <Text style={styles.sectionTitle}>Avancement du dossier</Text>
-            <View style={styles.progressRow}>
-              <View style={[styles.progressChip, { borderColor: COLORS.green }]}>
-                <Text style={[styles.progressNum, { color: COLORS.green }]}>{approved}</Text>
-                <Text style={styles.progressLabel}>Approuvés</Text>
+        <View style={styles.profileCard}>
+          <View style={styles.avatar}>
+            <Text style={{ fontSize: 34 }}>👤</Text>
+          </View>
+          <Text style={styles.profileName}>{kyc.name}</Text>
+          <Text style={styles.profilePhone}>{kyc.phone}</Text>
+          <View style={styles.roleBadge}>
+            <Text style={styles.roleText}>{kyc.role}</Text>
+          </View>
+          <Text style={styles.submitDate}>Soumis le {kyc.submittedAt}</Text>
+        </View>
+
+        <Text style={styles.sectionTitle}>DOCUMENTS</Text>
+        {kyc.documents.map(doc => {
+          const st = docStatuses[doc.type];
+          return (
+            <View key={doc.type} style={styles.docCard}>
+              <View style={styles.docTop}>
+                <Text style={styles.docIcon}>{DOC_ICONS[doc.type] || '📄'}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.docLabel}>{doc.label}</Text>
+                  <Text style={styles.docFile}>{doc.filename}</Text>
+                </View>
               </View>
-              <View style={[styles.progressChip, { borderColor: COLORS.amber }]}>
-                <Text style={[styles.progressNum, { color: COLORS.amber }]}>{pending}</Text>
-                <Text style={styles.progressLabel}>En attente</Text>
-              </View>
-              <View style={[styles.progressChip, { borderColor: COLORS.accent }]}>
-                <Text style={[styles.progressNum, { color: COLORS.accent }]}>{rejected}</Text>
-                <Text style={styles.progressLabel}>Rejetés</Text>
+              <View style={styles.docActions}>
+                <TouchableOpacity
+                  style={[styles.docBtn, styles.docBtnApprove, st === 'APPROVED' && styles.docBtnApproveActive]}
+                  onPress={() => setDocStatus(doc.type, 'APPROVED')}
+                >
+                  <Text style={[styles.docBtnText, st === 'APPROVED' && { color: COLORS.green }]}>✓ Valider</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.docBtn, styles.docBtnReject, st === 'REJECTED' && styles.docBtnRejectActive]}
+                  onPress={() => setDocStatus(doc.type, 'REJECTED')}
+                >
+                  <Text style={[styles.docBtnText, st === 'REJECTED' && { color: COLORS.red }]}>✗ Refuser</Text>
+                </TouchableOpacity>
               </View>
             </View>
-            <View style={styles.progressBg}>
-              <View style={[styles.progressFill, { width: `${docs.length ? (approved / docs.length) * 100 : 0}%` }]} />
+          );
+        })}
+
+        <View style={styles.docCard}>
+          <View style={styles.docTop}>
+            <Text style={styles.docIcon}>🤳</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.docLabel}>{kyc.selfie.label}</Text>
+              <Text style={styles.docFile}>{kyc.selfie.filename}</Text>
             </View>
           </View>
+          <View style={styles.docActions}>
+            <TouchableOpacity
+              style={[styles.docBtn, styles.docBtnApprove, docStatuses['SELFIE'] === 'APPROVED' && styles.docBtnApproveActive]}
+              onPress={() => setDocStatus('SELFIE', 'APPROVED')}
+            >
+              <Text style={[styles.docBtnText, docStatuses['SELFIE'] === 'APPROVED' && { color: COLORS.green }]}>✓ Valider</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.docBtn, styles.docBtnReject, docStatuses['SELFIE'] === 'REJECTED' && styles.docBtnRejectActive]}
+              onPress={() => setDocStatus('SELFIE', 'REJECTED')}
+            >
+              <Text style={[styles.docBtnText, docStatuses['SELFIE'] === 'REJECTED' && { color: COLORS.red }]}>✗ Refuser</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
 
-          {/* Documents */}
-          <Text style={[styles.sectionTitle, { marginHorizontal: 16 }]}>Documents ({docs.length})</Text>
-          {docs.map(d => (
-            <DocReviewCard
-              key={d.type}
-              doc={d}
-              onApprove={handleApprove}
-              onReject={handleReject}
-            />
-          ))}
+        <Text style={[styles.sectionTitle, { marginTop: 8 }]}>MOTIF DE REFUS (si applicable)</Text>
+        <TextInput
+          style={styles.reasonInput}
+          placeholder="Ex: Document illisible, selfie non conforme..."
+          placeholderTextColor={COLORS.muted}
+          value={rejectReason}
+          onChangeText={setRejectReason}
+          multiline
+          numberOfLines={3}
+          textAlignVertical="top"
+        />
 
-          {pending === 0 && approved === docs.length && docs.length > 0 && (
-            <View style={styles.successBanner}>
-              <Text style={styles.successText}>🎉 Dossier complet — tous les documents sont validés !</Text>
-            </View>
-          )}
-        </ScrollView>
-      )}
+        {submitting ? (
+          <ActivityIndicator color={COLORS.accent} style={{ marginVertical: 20 }} />
+        ) : (
+          <View style={styles.actionRow}>
+            <TouchableOpacity style={styles.rejectBtn} onPress={reject}>
+              <Text style={styles.rejectBtnText}>✗ Refuser le dossier</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.approveBtn} onPress={approve}>
+              <Text style={styles.approveBtnText}>✓ Approuver</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
-      <RejectModal
-        visible={!!rejectModal}
-        docType={rejectModal}
-        onConfirm={confirmReject}
-        onClose={() => setRejectModal(null)}
-      />
+        <View style={{ height: 40 }} />
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12,
+    paddingHorizontal: 16, paddingVertical: 14,
     borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
-  backBtn: { width: 36, alignItems: 'center' },
-  backText: { color: COLORS.white, fontSize: 28 },
-  headerTitle: { color: COLORS.white, fontSize: 17, fontWeight: '700' },
-  approveAllBtn: { backgroundColor: COLORS.green + '22', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: COLORS.green },
-  approveAllText: { color: COLORS.green, fontWeight: '700', fontSize: 12 },
-  userCard: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.surface,
-    margin: 16, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: COLORS.border,
+  backBtn: { padding: 4 },
+  backText: { color: COLORS.accent, fontSize: 22 },
+  headerTitle: { color: COLORS.text, fontSize: 17, fontWeight: '900' },
+  scroll: { padding: 16 },
+  profileCard: {
+    backgroundColor: COLORS.surface, borderRadius: 16, padding: 20,
+    alignItems: 'center', marginBottom: 20, borderWidth: 1, borderColor: COLORS.border,
   },
-  userAvatar: {
-    width: 56, height: 56, borderRadius: 28, backgroundColor: COLORS.accent + '22',
-    alignItems: 'center', justifyContent: 'center',
+  avatar: {
+    width: 70, height: 70, borderRadius: 35, backgroundColor: COLORS.bg,
+    alignItems: 'center', justifyContent: 'center', marginBottom: 12,
+    borderWidth: 2, borderColor: COLORS.border,
   },
-  userAvatarText: { color: COLORS.accent, fontSize: 22, fontWeight: '800' },
-  userName: { color: COLORS.white, fontSize: 17, fontWeight: '700', marginBottom: 3 },
-  userRole: { color: COLORS.muted, fontSize: 13 },
-  userContact: { color: COLORS.muted, fontSize: 12, marginTop: 2 },
-  userJoined: { color: COLORS.muted, fontSize: 11, marginTop: 2 },
-  progressCard: {
-    backgroundColor: COLORS.surface, marginHorizontal: 16, marginBottom: 12,
-    borderRadius: 16, padding: 16, borderWidth: 1, borderColor: COLORS.border,
+  profileName: { color: COLORS.text, fontSize: 18, fontWeight: '800', marginBottom: 4 },
+  profilePhone: { color: COLORS.muted, fontSize: 14, marginBottom: 8 },
+  roleBadge: {
+    backgroundColor: COLORS.accent + '20', borderRadius: 20,
+    paddingHorizontal: 14, paddingVertical: 4, marginBottom: 8,
   },
-  sectionTitle: { color: COLORS.muted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 },
-  progressRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
-  progressChip: { flex: 1, backgroundColor: COLORS.surfaceAlt, borderRadius: 10, padding: 10, alignItems: 'center', borderWidth: 1 },
-  progressNum: { fontSize: 20, fontWeight: '800' },
-  progressLabel: { color: COLORS.muted, fontSize: 10, marginTop: 2 },
-  progressBg: { height: 6, backgroundColor: COLORS.border, borderRadius: 3 },
-  progressFill: { height: 6, backgroundColor: COLORS.green, borderRadius: 3 },
+  roleText: { color: COLORS.accent, fontSize: 12, fontWeight: '700' },
+  submitDate: { color: COLORS.muted, fontSize: 12 },
+  sectionTitle: { color: COLORS.muted, fontSize: 10, fontWeight: '700', letterSpacing: 1.4, marginBottom: 10 },
   docCard: {
-    backgroundColor: COLORS.surface, marginHorizontal: 16, marginBottom: 8,
-    borderRadius: 14, padding: 14, borderWidth: 1, borderColor: COLORS.border, borderLeftWidth: 4,
+    backgroundColor: COLORS.surface, borderRadius: 12, padding: 14,
+    marginBottom: 10, borderWidth: 1, borderColor: COLORS.border,
   },
-  docTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  docType: { color: COLORS.white, fontSize: 14, fontWeight: '700', marginBottom: 4 },
-  docStatusRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 3 },
-  docStatusEmoji: { fontSize: 12 },
-  docStatusLabel: { fontSize: 12, fontWeight: '600' },
-  docDate: { color: COLORS.muted, fontSize: 11 },
-  docExpiry: { color: COLORS.amber, fontSize: 11, marginTop: 2 },
-  docPreview: {
-    backgroundColor: COLORS.surfaceAlt, borderRadius: 10, padding: 12,
-    alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: COLORS.border,
-    width: 80, height: 60,
+  docTop: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
+  docIcon: { fontSize: 24 },
+  docLabel: { color: COLORS.text, fontSize: 14, fontWeight: '600' },
+  docFile: { color: COLORS.muted, fontSize: 12, marginTop: 2 },
+  docActions: { flexDirection: 'row', gap: 8 },
+  docBtn: {
+    flex: 1, borderRadius: 10, paddingVertical: 8, alignItems: 'center',
+    borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bg,
   },
-  noteBox: { borderRadius: 8, padding: 8, marginTop: 10, borderWidth: 1, backgroundColor: COLORS.surfaceAlt },
-  noteText: { fontSize: 12 },
-  docActions: { flexDirection: 'row', gap: 8, marginTop: 12 },
-  approveBtn: { flex: 1, backgroundColor: COLORS.green + '22', borderRadius: 10, paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderColor: COLORS.green },
-  approveBtnText: { color: COLORS.green, fontWeight: '700', fontSize: 13 },
-  rejectBtn: { flex: 1, backgroundColor: COLORS.accent + '15', borderRadius: 10, paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderColor: COLORS.accent },
-  rejectBtnText: { color: COLORS.accentLight, fontWeight: '700', fontSize: 13 },
-  successBanner: {
-    backgroundColor: COLORS.green + '15', margin: 16, borderRadius: 14, padding: 16,
-    alignItems: 'center', borderWidth: 1, borderColor: COLORS.green,
+  docBtnApprove: {},
+  docBtnApproveActive: { backgroundColor: COLORS.green + '15', borderColor: COLORS.green },
+  docBtnReject: {},
+  docBtnRejectActive: { backgroundColor: COLORS.red + '15', borderColor: COLORS.red },
+  docBtnText: { color: COLORS.muted, fontSize: 13, fontWeight: '600' },
+  reasonInput: {
+    backgroundColor: COLORS.surface, borderRadius: 12, padding: 14,
+    color: COLORS.text, fontSize: 14, minHeight: 80,
+    borderWidth: 1, borderColor: COLORS.border, marginBottom: 20,
   },
-  successText: { color: COLORS.green, fontWeight: '700', fontSize: 14, textAlign: 'center' },
-});
-
-const modal = StyleSheet.create({
-  header: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    padding: 16, borderBottomWidth: 1, borderBottomColor: COLORS.border,
+  actionRow: { flexDirection: 'row', gap: 10 },
+  rejectBtn: {
+    flex: 1, backgroundColor: COLORS.red + '15', borderRadius: 14,
+    paddingVertical: 14, alignItems: 'center',
+    borderWidth: 1, borderColor: COLORS.red + '50',
   },
-  title: { color: COLORS.white, fontSize: 16, fontWeight: '700' },
-  cancel: { color: COLORS.muted, fontSize: 15 },
-  confirm: { color: COLORS.accent, fontSize: 15, fontWeight: '700' },
-  label: { color: COLORS.white, fontSize: 16, fontWeight: '700', marginBottom: 6 },
-  sublabel: { color: COLORS.muted, fontSize: 13, marginBottom: 10 },
-  reasonRow: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 10, marginBottom: 6, backgroundColor: COLORS.surface, gap: 12 },
-  reasonRowActive: { backgroundColor: COLORS.accent + '15', borderWidth: 1, borderColor: COLORS.accent },
-  radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center' },
-  radioActive: { borderColor: COLORS.accent },
-  radioFill: { width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.accent },
-  reasonText: { color: COLORS.muted, fontSize: 14, flex: 1 },
-  input: {
-    backgroundColor: COLORS.surface, borderRadius: 10, borderWidth: 1, borderColor: COLORS.border,
-    color: COLORS.white, fontSize: 14, padding: 12, minHeight: 80, textAlignVertical: 'top',
+  rejectBtnText: { color: COLORS.red, fontSize: 14, fontWeight: '700' },
+  approveBtn: {
+    flex: 1, backgroundColor: COLORS.green, borderRadius: 14,
+    paddingVertical: 14, alignItems: 'center',
   },
+  approveBtnText: { color: '#FFF', fontSize: 14, fontWeight: '800' },
 });
