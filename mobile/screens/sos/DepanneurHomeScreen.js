@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback} from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  StatusBar, Switch, ActivityIndicator, Alert,
+  StatusBar, Switch, ActivityIndicator, Alert,,
+  BackHandler,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import api from '../../services/api';
 
 const COLORS = {
@@ -41,6 +43,14 @@ export default function DepanneurHomeScreen({ navigation }) {
     api.get('/api/sos/depanneur/stats')
       .then(r => setStats(r.data || MOCK_STATS))
       .catch(() => {});
+
+  // Block Android hardware back button — this is a root dashboard screen
+  useFocusEffect(
+    useCallback(() => {
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
+      return () => sub.remove();
+    }, [])
+  );
   }, []);
 
   useEffect(() => {

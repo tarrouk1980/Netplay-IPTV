@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  StatusBar, ActivityIndicator, RefreshControl,
+  StatusBar, ActivityIndicator, RefreshControl, BackHandler,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
 
@@ -64,6 +65,14 @@ export default function AdminDashboardScreen({ navigation }) {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  // Block Android hardware back button — AdminDashboard is the root screen
+  useFocusEffect(
+    useCallback(() => {
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
+      return () => sub.remove();
+    }, [])
+  );
 
   const onRefresh = () => { setRefreshing(true); load(true); };
 

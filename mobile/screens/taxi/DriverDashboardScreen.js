@@ -8,9 +8,11 @@ import {
   Switch,
   Alert,
   ActivityIndicator,
-  StatusBar,
+  StatusBar,,
+  BackHandler,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import useAuthStore from '../../store/authStore';
 import usePassStore from '../../store/passStore';
 import useTaxiStore from '../../store/taxiStore';
@@ -47,6 +49,14 @@ export default function DriverDashboardScreen({ navigation }) {
 
   useEffect(() => {
     fetchSubscription();
+
+  // Block Android hardware back button — this is a root dashboard screen
+  useFocusEffect(
+    useCallback(() => {
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
+      return () => sub.remove();
+    }, [])
+  );
     fetchPassStatus();
     fetchTodayEarnings();
   }, []);

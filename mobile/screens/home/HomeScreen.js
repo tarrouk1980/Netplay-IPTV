@@ -123,13 +123,24 @@ export default function HomeScreen({ navigation }) {
     const PROVIDER_ROLES = ['CHAUFFEUR', 'LIVREUR', 'DEPANNEUR', 'MARCHAND'];
 
     try {
-      if (user.role === 'ADMIN') { navigation.replace('AdminDashboard'); return; }
+      if (user.role === 'ADMIN') {
+        navigation.reset({ index: 0, routes: [{ name: 'AdminDashboard' }] });
+        return;
+      }
       if (PROVIDER_ROLES.includes(user.role)) {
-        if (user.kycStatus !== 'APPROVED') { navigation.replace('KYCPending'); return; }
-        if (user.role === 'CHAUFFEUR') navigation.replace('DriverDashboard');
-        else if (user.role === 'LIVREUR') navigation.replace('LivreurDashboard');
-        else if (user.role === 'DEPANNEUR') navigation.replace('DepanneurDashboard');
-        else if (user.role === 'MARCHAND') navigation.replace('MerchantDashboard');
+        if (user.kycStatus !== 'APPROVED') {
+          navigation.reset({ index: 0, routes: [{ name: 'KYCPending' }] });
+          return;
+        }
+        const dashMap = {
+          CHAUFFEUR: 'DriverDashboard',
+          LIVREUR: 'LivreurDashboard',
+          DEPANNEUR: 'DepanneurDashboard',
+          MARCHAND: 'MerchantDashboard',
+        };
+        if (dashMap[user.role]) {
+          navigation.reset({ index: 0, routes: [{ name: dashMap[user.role] }] });
+        }
         return;
       }
     } catch {}
