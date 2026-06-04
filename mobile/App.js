@@ -439,32 +439,20 @@ import FlashSaleScreen from './screens/promo/FlashSaleScreen';
 import LiveTrafficScreen from './screens/traffic/LiveTrafficScreen';
 import EasyCommunityScreen from './screens/community/EasyCommunityScreen';
 import EarningsDashboardScreen from './screens/driver/EarningsDashboardScreen';
-import SOSHistoryScreen from './screens/sos/SOSHistoryScreen';
 import ReviewsScreen from './screens/shared/ReviewsScreen';
-import DriverChecklistScreen from './screens/taxi/DriverChecklistScreen';
 import GroceryReorderScreen from './screens/grocery/GroceryReorderScreen';
 import DisputeScreen from './screens/shared/DisputeScreen';
 import NotificationsSettingsScreen from './screens/profile/NotificationsSettingsScreen';
-import TaxiScheduleScreen from './screens/taxi/TaxiScheduleScreen';
 import MerchantAddProductScreen from './screens/merchant/MerchantAddProductScreen';
-import SOSRequestScreen from './screens/sos/SOSRequestScreen';
 import PackageTrackingScreen from './screens/delivery/PackageTrackingScreen';
 import DeleteAccountScreen from './screens/profile/DeleteAccountScreen';
-import GroceryProductDetailScreen from './screens/grocery/GroceryProductDetailScreen';
 import DriverIncidentScreen from './screens/driver/DriverIncidentScreen';
 import PassBenefitsScreen from './screens/subscriptions/PassBenefitsScreen';
 import EasyPointsHistoryScreen from './screens/loyalty/EasyPointsHistoryScreen';
-import TaxiRatingScreen from './screens/taxi/TaxiRatingScreen';
-import AdminUserDetailScreen from './screens/admin/AdminUserDetailScreen';
 import DeliveryScheduleScreen from './screens/delivery/DeliveryScheduleScreen';
-import AddressBookScreen from './screens/profile/AddressBookScreen';
 import MerchantAnalyticsScreen from './screens/merchant/MerchantAnalyticsScreen';
-import TaxiPromoScreen from './screens/taxi/TaxiPromoScreen';
 import ProviderAvailabilityScreen from './screens/provider/ProviderAvailabilityScreen';
-import OrderCancelScreen from './screens/shared/OrderCancelScreen';
-import SOSTrackingScreen from './screens/sos/SOSTrackingScreen';
 import AdminPromoCreateScreen from './screens/admin/AdminPromoCreateScreen';
-import TaxiReceiptScreen from './screens/taxi/TaxiReceiptScreen';
 import GroceryOrderSuccessScreen from './screens/grocery/GroceryOrderSuccessScreen';
 import DriverWithdrawScreen from './screens/driver/DriverWithdrawScreen';
 import MerchantPayoutsScreen from './screens/merchant/MerchantPayoutsScreen';
@@ -775,7 +763,6 @@ function MainStack() {
       <Stack.Screen name="ChatList" component={ChatListScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ProviderHome" component={ProviderHomeScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminFinancialDashboard" component={AdminFinancialDashboardScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="DriverChecklist" component={DriverChecklistScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MerchantLiveOrders" component={MerchantLiveOrdersScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminVehicleInspection" component={AdminVehicleInspectionScreen} options={{ headerShown: false }} />
       <Stack.Screen name="PromoCodesClient" component={PromoCodesClientScreen} options={{ headerShown: false }} />
@@ -914,7 +901,6 @@ function MainStack() {
       <Stack.Screen name="TaxiWaiting" component={TaxiWaitingScreen} options={{ headerShown: false, gestureEnabled: false }} />
       <Stack.Screen name="AdminAuditLog" component={AdminAuditLogScreen} options={{ headerShown: false }} />
       <Stack.Screen name="LivreurRating" component={LivreurRatingScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="SOSHistory" component={SOSHistoryScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminDriverVerification" component={AdminDriverVerificationScreen} options={{ headerShown: false }} />
       <Stack.Screen name="GroceryOrderDetail" component={GroceryOrderDetailScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DeliveryAddress" component={DeliveryAddressScreen} options={{ headerShown: false }} />
