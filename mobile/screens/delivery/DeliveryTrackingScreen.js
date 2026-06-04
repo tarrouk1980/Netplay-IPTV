@@ -1,390 +1,269 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
+  View, Text, StyleSheet, TouchableOpacity, StatusBar,
+  Animated, Alert, Linking, ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import MapboxWebView from '../../components/MapboxWebView';
+import api from '../../services/api';
 
 const COLORS = {
-  background: '#0A0A0F',
-  surface: '#1C1C28',
-  primary: '#F5A623',
-  text: '#FFFFFF',
-  muted: '#8E8E9A',
-  border: '#2C2C3A',
-  mapBg: '#0D0D1A',
-  red: '#E74C3C',
-  green: '#2ECC71',
-};
-
-const MOCK_LIVREUR = {
-  name: "Yassine D.",
-  initials: "YD",
-  type: "Moto",
-  rating: 4.6,
-};
-
-const MOCK_ORDER = {
-  restaurant: "Burger House",
-  articles: 3,
-  total: "34.50",
-  eta: 18,
+  bg: '#0A0A0F', surface: '#1C1C28', border: '#2C2C3E',
+  text: '#FFFFFF', muted: '#8E8E9A', accent: '#F5A623',
+  green: '#27AE60', red: '#E74C3C', blue: '#3498DB',
 };
 
 const STEPS = [
-  { key: 'prep', label: "Préparation", done: true },
-  { key: 'route', label: "En route", done: true },
-  { key: 'proche', label: "Proche", done: false, active: true },
-  { key: 'livre', label: "Livré", done: false },
+  { key: 'CONFIRMED', label: 'Confirmée', icon: '✅' },
+  { key: 'PREPARING', label: 'Préparation', icon: '👨‍🍳' },
+  { key: 'READY', label: 'Prête', icon: '📦' },
+  { key: 'PICKED_UP', label: 'Récupérée', icon: '🛵' },
+  { key: 'DELIVERED', label: 'Livrée', icon: '🏠' },
 ];
 
-export default function DeliveryTrackingScreen({ navigation }) {
+const STATUS_IDX = {
+  CONFIRMED: 0, ACCEPTED: 0, PREPARING: 1, READY: 2,
+  PICKED_UP: 3, DELIVERING: 3, DELIVERED: 4,
+};
+
+function ProgressSteps({ status }) {
+  const idx = STATUS_IDX[status] ?? 0;
   return (
-    <View style={styles.container}>
-      {/* Map area */}
-      <MapboxWebView
-        style={{ flex: 1 }}
-        centerCoordinate={[10.1815, 36.8065]}
-        zoom={14}
-        markers={[
-          { id: 'livreur', coordinates: [10.1815, 36.8065], color: '#2ECC71', label: '🛵' },
-          { id: 'client', coordinates: [10.1950, 36.8200], color: '#E74C3C', label: '🏠' },
-        ]}
-        route={[[10.1815, 36.8065], [10.1880, 36.8120], [10.1950, 36.8200]]}
-      />
-
-      {/* Header overlay */}
-      <SafeAreaView style={styles.headerOverlay} edges={['top']}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backBtn}
-            onPress={() => navigation && navigation.goBack()}
-          >
-            <Text style={styles.backBtnText}>←</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Livraison en cours</Text>
-          <View style={styles.backBtn} />
-        </View>
-      </SafeAreaView>
-
-      {/* Bottom card */}
-      <SafeAreaView style={styles.bottomCardWrapper} edges={['bottom']}>
-        <View style={styles.bottomCard}>
-          {/* Livreur info */}
-          <View style={styles.livreurRow}>
-            <View style={styles.avatarCircle}>
-              <Text style={styles.avatarInitials}>{MOCK_LIVREUR.initials}</Text>
+    <View style={styles.stepsRow}>
+      {STEPS.map((s, i) => (
+        <React.Fragment key={s.key}>
+          <View style={styles.stepCol}>
+            <View style={[styles.stepCircle, i <= idx && styles.stepCircleActive]}>
+              <Text style={{ fontSize: 14 }}>{i <= idx ? s.icon : '·'}</Text>
             </View>
-            <View style={styles.livreurInfo}>
-              <Text style={styles.livreurName}>{MOCK_LIVREUR.name}</Text>
-              <Text style={styles.livreurType}>{MOCK_LIVREUR.type}</Text>
-            </View>
-            <View style={styles.ratingBadge}>
-              <Text style={styles.ratingText}>⭐ {MOCK_LIVREUR.rating}</Text>
-            </View>
-          </View>
-
-          {/* Progress stepper */}
-          <View style={styles.stepperRow}>
-            {STEPS.map((step, index) => (
-              <View key={step.key} style={styles.stepItem}>
-                <View style={[
-                  styles.stepDot,
-                  step.done && styles.stepDotDone,
-                  step.active && styles.stepDotActive,
-                ]}>
-                  {step.done && <Text style={styles.stepCheck}>✓</Text>}
-                </View>
-                <Text style={[
-                  styles.stepLabel,
-                  step.active && styles.stepLabelActive,
-                  step.done && styles.stepLabelDone,
-                ]}>{step.label}</Text>
-                {index < STEPS.length - 1 && (
-                  <View style={[styles.stepLine, step.done && styles.stepLineDone]} />
-                )}
-              </View>
-            ))}
-          </View>
-
-          <View style={styles.divider} />
-
-          {/* Order summary */}
-          <View style={styles.orderRow}>
-            <View>
-              <Text style={styles.restaurantName}>{MOCK_ORDER.restaurant}</Text>
-              <Text style={styles.orderDetails}>{MOCK_ORDER.articles} articles</Text>
-            </View>
-            <Text style={styles.orderTotal}>{MOCK_ORDER.total} TND</Text>
-          </View>
-
-          {/* ETA */}
-          <View style={styles.etaBox}>
-            <Text style={styles.etaText}>
-              Livraison estimée dans{' '}
-              <Text style={styles.etaHighlight}>{MOCK_ORDER.eta} min</Text>
+            <Text style={[styles.stepLabel, i <= idx && styles.stepLabelActive]} numberOfLines={1}>
+              {s.label}
             </Text>
           </View>
-
-          <View style={styles.divider} />
-
-          {/* Buttons */}
-          <View style={styles.actionsRow}>
-            <TouchableOpacity style={styles.callBtn}>
-              <Text style={styles.callBtnText}>📞 Appeler livreur</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.cancelBtn}>
-              <Text style={styles.cancelBtnText}>✕ Annuler commande</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </SafeAreaView>
+          {i < STEPS.length - 1 && (
+            <View style={[styles.stepConnector, i < idx && styles.stepConnectorActive]} />
+          )}
+        </React.Fragment>
+      ))}
     </View>
   );
 }
 
+export default function DeliveryTrackingScreen({ navigation, route }) {
+  const { orderId } = route?.params || {};
+  const [order, setOrder] = useState(null);
+  const [eta, setEta] = useState(null);
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  const animatePulse = useCallback(() => {
+    Animated.sequence([
+      Animated.timing(pulseAnim, { toValue: 1.2, duration: 800, useNativeDriver: true }),
+      Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+    ]).start(() => animatePulse());
+  }, [pulseAnim]);
+
+  useEffect(() => { animatePulse(); }, [animatePulse]);
+
+  useEffect(() => {
+    if (!orderId) return;
+    const poll = setInterval(async () => {
+      try {
+        const res = await api.get(`/api/delivery/orders/${orderId}`);
+        setOrder(res.data.order || res.data);
+        if (res.data.order?.eta) setEta(res.data.order.eta);
+        if (res.data.order?.status === 'DELIVERED') {
+          clearInterval(poll);
+          setTimeout(() => navigation.replace('Home'), 3000);
+        }
+      } catch {}
+    }, 8000);
+    api.get(`/api/delivery/orders/${orderId}`)
+      .then(r => { setOrder(r.data.order || r.data); if (r.data.order?.eta) setEta(r.data.order.eta); })
+      .catch(() => {});
+    return () => clearInterval(poll);
+  }, [orderId]);
+
+  const status = order?.status || 'CONFIRMED';
+  const livreur = order?.livreur;
+  const isDelivered = status === 'DELIVERED';
+
+  const handleCallLivreur = () => {
+    const phone = livreur?.phone;
+    if (phone) Linking.openURL(`tel:${phone}`).catch(() => {});
+  };
+
+  const handleCancel = () => {
+    if (['PICKED_UP', 'DELIVERING', 'DELIVERED'].includes(status)) {
+      Alert.alert('Annulation impossible', 'La livraison est déjà en route.');
+      return;
+    }
+    Alert.alert('Annuler la commande ?', '', [
+      { text: 'Non', style: 'cancel' },
+      {
+        text: 'Annuler', style: 'destructive', onPress: async () => {
+          try {
+            await api.post(`/api/delivery/orders/${orderId}/cancel`);
+            navigation.replace('Home');
+          } catch { Alert.alert('Erreur', "Impossible d'annuler."); }
+        },
+      },
+    ]);
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
+
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Text style={styles.backArrow}>‹</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Suivi de livraison</Text>
+        <View style={{ width: 40 }} />
+      </View>
+
+      <ProgressSteps status={status} />
+
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+
+        {/* Status hero */}
+        <View style={styles.statusHero}>
+          <Animated.Text style={[styles.statusEmoji, { transform: [{ scale: isDelivered ? 1 : pulseAnim }] }]}>
+            {isDelivered ? '🎉' : STATUS_IDX[status] >= 3 ? '🛵' : STATUS_IDX[status] >= 2 ? '📦' : '👨‍🍳'}
+          </Animated.Text>
+          <Text style={styles.statusText}>
+            {isDelivered ? 'Livraison effectuée !' :
+              STATUS_IDX[status] >= 3 ? 'Livreur en route vers vous' :
+              STATUS_IDX[status] >= 2 ? 'Commande prête, récupération en cours' :
+              'Votre commande est en préparation'}
+          </Text>
+          {eta && !isDelivered && (
+            <Text style={styles.etaText}>⏱ Arrivée estimée dans {eta} min</Text>
+          )}
+        </View>
+
+        {/* Livreur card */}
+        {livreur && STATUS_IDX[status] >= 3 && (
+          <View style={styles.livreurCard}>
+            <View style={[styles.livreurAvatar, { backgroundColor: COLORS.blue + '25' }]}>
+              <Text style={{ fontSize: 22 }}>🛵</Text>
+            </View>
+            <View style={styles.livreurInfo}>
+              <Text style={styles.livreurName}>{livreur.name || 'Livreur'}</Text>
+              <Text style={styles.livreurRating}>★ {livreur.rating || '4.8'} · {livreur.totalDeliveries || 0} livraisons</Text>
+            </View>
+            <TouchableOpacity style={styles.callBtn} onPress={handleCallLivreur}>
+              <Text style={{ fontSize: 20 }}>📞</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Order summary */}
+        {order?.items && (
+          <View style={styles.orderCard}>
+            <Text style={styles.orderCardTitle}>VOTRE COMMANDE</Text>
+            {order.items.map((item, i) => (
+              <View key={i} style={styles.orderItem}>
+                <Text style={styles.orderItemQty}>{item.qty}×</Text>
+                <Text style={styles.orderItemName}>{item.name}</Text>
+                <Text style={styles.orderItemPrice}>{(item.qty * item.price).toFixed(3)} TND</Text>
+              </View>
+            ))}
+            <View style={styles.orderTotal}>
+              <Text style={styles.orderTotalLabel}>Total payé</Text>
+              <Text style={styles.orderTotalValue}>{order.total?.toFixed(3) || '—'} TND</Text>
+            </View>
+          </View>
+        )}
+
+        {/* Actions */}
+        {!isDelivered && !['PICKED_UP', 'DELIVERING'].includes(status) && (
+          <TouchableOpacity style={styles.cancelBtn} onPress={handleCancel}>
+            <Text style={styles.cancelBtnText}>✕ Annuler la commande</Text>
+          </TouchableOpacity>
+        )}
+
+        {isDelivered && (
+          <TouchableOpacity style={styles.homeBtn} onPress={() => navigation.replace('Home')}>
+            <Text style={styles.homeBtnText}>Retour à l'accueil</Text>
+          </TouchableOpacity>
+        )}
+
+        <View style={{ height: 40 }} />
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.mapBg,
-  },
-  mapArea: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  mapIcon: {
-    fontSize: 64,
-    marginBottom: 12,
-  },
-  mapTitle: {
-    fontSize: 18,
-    color: COLORS.muted,
-    fontWeight: '600',
-  },
-  mapSubtitle: {
-    fontSize: 13,
-    color: COLORS.muted,
-    marginTop: 4,
-    opacity: 0.7,
-  },
-  headerOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-  },
+  container: { flex: 1, backgroundColor: COLORS.bg },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: 'rgba(10,10,15,0.85)',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingVertical: 14,
+    borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
-  backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
+  backBtn: { width: 40 },
+  backArrow: { color: COLORS.text, fontSize: 30, fontWeight: '300' },
+  headerTitle: { color: COLORS.text, fontSize: 17, fontWeight: '700' },
+  stepsRow: {
+    flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: 12,
+    paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
-  backBtnText: {
-    color: COLORS.text,
-    fontSize: 20,
-    fontWeight: '700',
+  stepCol: { alignItems: 'center', width: 52 },
+  stepCircle: {
+    width: 32, height: 32, borderRadius: 16, backgroundColor: COLORS.surface,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: COLORS.border,
   },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    color: COLORS.text,
-    fontSize: 17,
-    fontWeight: '700',
+  stepCircleActive: { backgroundColor: COLORS.accent + '30', borderColor: COLORS.accent },
+  stepLabel: { color: COLORS.muted, fontSize: 9, textAlign: 'center', marginTop: 4 },
+  stepLabelActive: { color: COLORS.accent },
+  stepConnector: { flex: 1, height: 1, backgroundColor: COLORS.border, marginTop: 16 },
+  stepConnectorActive: { backgroundColor: COLORS.accent },
+  scroll: { padding: 16 },
+  statusHero: {
+    backgroundColor: COLORS.surface, borderRadius: 20, padding: 28,
+    alignItems: 'center', marginBottom: 16,
+    borderWidth: 1, borderColor: COLORS.border,
   },
-  bottomCardWrapper: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+  statusEmoji: { fontSize: 52, marginBottom: 12 },
+  statusText: { color: COLORS.text, fontSize: 16, fontWeight: '700', textAlign: 'center' },
+  etaText: { color: COLORS.accent, fontSize: 14, fontWeight: '700', marginTop: 8 },
+  livreurCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: COLORS.surface, borderRadius: 16, padding: 14,
+    marginBottom: 16, borderWidth: 1, borderColor: COLORS.border,
   },
-  bottomCard: {
-    backgroundColor: COLORS.surface,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 12,
-  },
-  livreurRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  avatarCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: COLORS.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  avatarInitials: {
-    color: '#000',
-    fontWeight: '800',
-    fontSize: 16,
-  },
-  livreurInfo: {
-    flex: 1,
-  },
-  livreurName: {
-    color: COLORS.text,
-    fontWeight: '700',
-    fontSize: 16,
-  },
-  livreurType: {
-    color: COLORS.muted,
-    fontSize: 13,
-    marginTop: 2,
-  },
-  ratingBadge: {
-    backgroundColor: COLORS.background,
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  ratingText: {
-    color: COLORS.text,
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  stepperRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 8,
-    position: 'relative',
-  },
-  stepItem: {
-    alignItems: 'center',
-    flex: 1,
-    position: 'relative',
-  },
-  stepDot: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: COLORS.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 4,
-  },
-  stepDotDone: {
-    backgroundColor: COLORS.green,
-  },
-  stepDotActive: {
-    backgroundColor: COLORS.primary,
-  },
-  stepCheck: {
-    color: '#000',
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  stepLine: {
-    position: 'absolute',
-    top: 12,
-    left: '60%',
-    right: '-60%',
-    height: 2,
-    backgroundColor: COLORS.border,
-  },
-  stepLineDone: {
-    backgroundColor: COLORS.green,
-  },
-  stepLabel: {
-    color: COLORS.muted,
-    fontSize: 10,
-    textAlign: 'center',
-  },
-  stepLabelActive: {
-    color: COLORS.primary,
-    fontWeight: '700',
-  },
-  stepLabelDone: {
-    color: COLORS.green,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: COLORS.border,
-    marginVertical: 12,
-  },
-  orderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  restaurantName: {
-    color: COLORS.text,
-    fontWeight: '700',
-    fontSize: 15,
-  },
-  orderDetails: {
-    color: COLORS.muted,
-    fontSize: 13,
-    marginTop: 2,
-  },
-  orderTotal: {
-    color: COLORS.primary,
-    fontWeight: '700',
-    fontSize: 16,
-  },
-  etaBox: {
-    backgroundColor: COLORS.background,
-    borderRadius: 10,
-    padding: 10,
-    alignItems: 'center',
-  },
-  etaText: {
-    color: COLORS.muted,
-    fontSize: 14,
-  },
-  etaHighlight: {
-    color: COLORS.primary,
-    fontWeight: '700',
-  },
-  actionsRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 4,
-  },
+  livreurAvatar: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+  livreurInfo: { flex: 1 },
+  livreurName: { color: COLORS.text, fontSize: 15, fontWeight: '700' },
+  livreurRating: { color: COLORS.muted, fontSize: 12, marginTop: 2 },
   callBtn: {
-    flex: 1,
-    backgroundColor: COLORS.primary,
-    borderRadius: 12,
-    paddingVertical: 11,
-    alignItems: 'center',
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: COLORS.green + '20', alignItems: 'center', justifyContent: 'center',
   },
-  callBtnText: {
-    color: '#000',
-    fontWeight: '700',
-    fontSize: 13,
+  orderCard: {
+    backgroundColor: COLORS.surface, borderRadius: 14, padding: 14,
+    marginBottom: 16, borderWidth: 1, borderColor: COLORS.border,
   },
+  orderCardTitle: { color: COLORS.muted, fontSize: 10, fontWeight: '700', letterSpacing: 1.4, marginBottom: 10 },
+  orderItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 4, gap: 8 },
+  orderItemQty: { color: COLORS.accent, fontSize: 13, fontWeight: '700', width: 24 },
+  orderItemName: { flex: 1, color: COLORS.text, fontSize: 13 },
+  orderItemPrice: { color: COLORS.muted, fontSize: 13 },
+  orderTotal: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    borderTopWidth: 1, borderTopColor: COLORS.border, marginTop: 8, paddingTop: 10,
+  },
+  orderTotalLabel: { color: COLORS.muted, fontSize: 13 },
+  orderTotalValue: { color: COLORS.accent, fontSize: 14, fontWeight: '800' },
   cancelBtn: {
-    flex: 1,
-    backgroundColor: 'rgba(231,76,60,0.15)',
-    borderRadius: 12,
-    paddingVertical: 11,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.red,
+    borderRadius: 12, borderWidth: 1, borderColor: COLORS.red,
+    paddingVertical: 12, alignItems: 'center', marginBottom: 8,
   },
-  cancelBtnText: {
-    color: COLORS.red,
-    fontWeight: '700',
-    fontSize: 13,
+  cancelBtnText: { color: COLORS.red, fontSize: 14, fontWeight: '700' },
+  homeBtn: {
+    backgroundColor: COLORS.accent, borderRadius: 14,
+    paddingVertical: 14, alignItems: 'center',
   },
+  homeBtnText: { color: '#000', fontSize: 15, fontWeight: '800' },
 });

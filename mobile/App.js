@@ -548,6 +548,10 @@ import ClientNotificationsScreen from './screens/client/ClientNotificationsScree
 // Batch 107
 import ClientProfileScreen from './screens/profile/ClientProfileScreen';
 
+// Batch 109
+import AdminStatsScreen from './screens/admin/AdminStatsScreen';
+import ProviderProfileScreen2 from './screens/provider/ProviderProfileScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -982,6 +986,8 @@ function MainStack() {
       <Stack.Screen name="ClientSavedAddresses" component={ClientSavedAddressesScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientNotifications" component={ClientNotificationsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientProfile" component={ClientProfileScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminStats" component={AdminStatsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ProviderProfileV2" component={ProviderProfileScreen2} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
