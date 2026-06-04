@@ -11,49 +11,137 @@ const { width } = Dimensions.get('window');
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', border: '#2C2C3E',
   text: '#FFFFFF', muted: '#8E8E9A', accent: '#F5A623',
-  green: '#27AE60',
+  green: '#27AE60', red: '#E74C3C', blue: '#3498DB',
 };
+
+// EasyWay logo rendered purely with View components — no image file needed
+function EasyWayLogo({ size = 100, color = COLORS.accent }) {
+  const s = size;
+  return (
+    <View style={{ width: s, height: s, alignItems: 'center', justifyContent: 'center' }}>
+      {/* Outer ring */}
+      <View style={{
+        position: 'absolute', width: s, height: s, borderRadius: s / 2,
+        borderWidth: s * 0.03, borderColor: color + '40',
+      }} />
+      {/* Inner ring */}
+      <View style={{
+        position: 'absolute', width: s * 0.78, height: s * 0.78, borderRadius: s * 0.39,
+        borderWidth: s * 0.02, borderColor: color + '25',
+      }} />
+      {/* Lightning bolt — top segment */}
+      <View style={{
+        position: 'absolute',
+        top: s * 0.14, left: s * 0.52,
+        width: s * 0.28, height: s * 0.36,
+        backgroundColor: color,
+        transform: [{ skewX: '-20deg' }],
+        borderRadius: s * 0.03,
+      }} />
+      {/* Lightning bolt — bottom segment */}
+      <View style={{
+        position: 'absolute',
+        top: s * 0.46, left: s * 0.24,
+        width: s * 0.28, height: s * 0.36,
+        backgroundColor: color,
+        transform: [{ skewX: '-20deg' }],
+        borderRadius: s * 0.03,
+      }} />
+      {/* Center bridge */}
+      <View style={{
+        position: 'absolute',
+        top: s * 0.38, left: s * 0.3,
+        width: s * 0.44, height: s * 0.12,
+        backgroundColor: color,
+        transform: [{ skewX: '-20deg' }],
+        borderRadius: s * 0.02,
+      }} />
+    </View>
+  );
+}
+
+function ServiceIcon({ icon, label, color }) {
+  return (
+    <View style={[styles.serviceItem, { borderColor: color + '30' }]}>
+      <View style={[styles.serviceIconBox, { backgroundColor: color + '15' }]}>
+        <Text style={{ fontSize: 26 }}>{icon}</Text>
+      </View>
+      <Text style={styles.serviceLabel}>{label}</Text>
+    </View>
+  );
+}
 
 const SLIDES = [
   {
     key: '1',
-    emoji: '⚡',
-    title: 'EASYWAY',
-    subtitle: 'La super-app tunisienne',
-    desc: 'Taxi, livraison, épicerie, dépannage — tout en une seule application. Zéro commission prélevée sur vos courses.',
     color: COLORS.accent,
+    logoColor: COLORS.accent,
+    showLogo: true,
+    title: 'EASYWAY',
+    tag: 'La super-app tunisienne',
+    desc: 'Taxi, livraison, épicerie, dépannage — tout en une seule application. Première plateforme à 0% de commission.',
+    services: null,
   },
   {
     key: '2',
-    emoji: '🚕',
-    title: 'Taxi instantané',
-    subtitle: 'En moins de 5 minutes',
-    desc: 'Commandez un taxi standard, confort ou van. Suivez votre chauffeur en temps réel et payez en toute sécurité.',
     color: '#3498DB',
+    logoColor: '#3498DB',
+    showLogo: false,
+    title: 'Taxi en 5 minutes',
+    tag: '🚕 Transport',
+    desc: 'Réservez un taxi immédiatement ou planifiez vos courses à l\'avance. Suivi GPS en temps réel.',
+    services: [
+      { icon: '🚗', label: 'Berline', color: '#3498DB' },
+      { icon: '🚐', label: 'Van 7 pl.', color: '#3498DB' },
+      { icon: '🚘', label: 'Premium', color: '#3498DB' },
+      { icon: '📅', label: 'Planifié', color: '#3498DB' },
+    ],
   },
   {
     key: '3',
-    emoji: '📦',
-    title: 'Livraison express',
-    subtitle: 'Restau, épicerie, colis',
-    desc: 'Faites livrer vos repas, courses ou colis depuis les meilleurs commerçants de votre ville.',
     color: COLORS.green,
+    logoColor: COLORS.green,
+    showLogo: false,
+    title: 'Livraison Express',
+    tag: '📦 Livraison & Épicerie',
+    desc: 'Commandez depuis les meilleurs restaurants ou faites vos courses. Livraison en moins de 30 min.',
+    services: [
+      { icon: '🍕', label: 'Restaurants', color: COLORS.green },
+      { icon: '🛒', label: 'Épicerie', color: COLORS.green },
+      { icon: '📦', label: 'Colis', color: COLORS.green },
+      { icon: '⚡', label: 'Express', color: COLORS.green },
+    ],
   },
   {
     key: '4',
-    emoji: '🔧',
-    title: 'SOS Dépannage',
-    subtitle: 'Intervention sous 20 min',
-    desc: 'Panne, crevaison, batterie ? Nos dépanneurs certifiés interviennent rapidement où que vous soyez.',
-    color: '#E74C3C',
+    color: COLORS.red,
+    logoColor: COLORS.red,
+    showLogo: false,
+    title: 'SOS Dépannage 24h',
+    tag: '🔧 Assistance Routière',
+    desc: 'Panne, crevaison, batterie vide ? Nos dépanneurs certifiés interviennent en moins de 20 minutes.',
+    services: [
+      { icon: '🔋', label: 'Batterie', color: COLORS.red },
+      { icon: '🔧', label: 'Crevaison', color: COLORS.red },
+      { icon: '🚛', label: 'Remorquage', color: COLORS.red },
+      { icon: '⛽', label: 'Carburant', color: COLORS.red },
+    ],
   },
   {
     key: '5',
-    emoji: '🛡️',
-    title: 'Sécurisé & gratuit',
-    subtitle: '0% de commission',
-    desc: 'EasyWay ne prélève aucune commission. Les prestataires gardent 100% de leurs revenus. Rejoignez la révolution.',
     color: COLORS.accent,
+    logoColor: COLORS.accent,
+    showLogo: true,
+    title: '0% Commission',
+    tag: '✅ Révolution tunisienne',
+    desc: 'EasyWay ne prélève aucune commission. Les prestataires gardent 100% de leurs revenus. Rejoignez des milliers d\'utilisateurs.',
+    services: null,
+    perks: [
+      { icon: '💰', text: 'Zéro commission' },
+      { icon: '🔒', text: 'Paiement sécurisé' },
+      { icon: '⭐', text: 'Note & avis vérifiés' },
+      { icon: '🎁', text: 'Programme fidélité' },
+    ],
   },
 ];
 
@@ -86,14 +174,17 @@ export default function OnboardingScreen({ navigation }) {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
 
-      {/* Skip button */}
       <View style={styles.topBar}>
         <View style={{ width: 60 }} />
         <View style={styles.dotsRow}>
           {SLIDES.map((_, i) => (
             <View
               key={i}
-              style={[styles.dot, i === currentIdx && styles.dotActive, i === currentIdx && { backgroundColor: slide.color }]}
+              style={[
+                styles.dot,
+                { backgroundColor: i === currentIdx ? slide.color : COLORS.border },
+                i === currentIdx && { width: 24 },
+              ]}
             />
           ))}
         </View>
@@ -102,7 +193,6 @@ export default function OnboardingScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Slides */}
       <ScrollView
         ref={scrollRef}
         horizontal
@@ -114,30 +204,60 @@ export default function OnboardingScreen({ navigation }) {
       >
         {SLIDES.map((s) => (
           <View key={s.key} style={styles.slide}>
-            <View style={[styles.emojiCircle, { backgroundColor: s.color + '20', borderColor: s.color + '50' }]}>
-              <Text style={styles.emojiText}>{s.emoji}</Text>
+            {/* Hero area */}
+            <View style={styles.heroArea}>
+              {s.showLogo ? (
+                <View style={styles.logoWrapper}>
+                  <View style={[styles.logoBg, { backgroundColor: s.color + '12', borderColor: s.color + '30' }]}>
+                    <EasyWayLogo size={110} color={s.color} />
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.serviceGrid}>
+                  {(s.services || []).map((sv, i) => (
+                    <ServiceIcon key={i} icon={sv.icon} label={sv.label} color={sv.color} />
+                  ))}
+                </View>
+              )}
             </View>
-            <Text style={[styles.slideTitle, { color: s.color }]}>{s.title}</Text>
-            <Text style={styles.slideSubtitle}>{s.subtitle}</Text>
-            <Text style={styles.slideDesc}>{s.desc}</Text>
+
+            {/* Text area */}
+            <View style={styles.textArea}>
+              <View style={[styles.tagPill, { backgroundColor: s.color + '18', borderColor: s.color + '35' }]}>
+                <Text style={[styles.tagText, { color: s.color }]}>{s.tag}</Text>
+              </View>
+              <Text style={styles.slideTitle}>{s.title}</Text>
+              <Text style={styles.slideDesc}>{s.desc}</Text>
+
+              {s.perks && (
+                <View style={styles.perksGrid}>
+                  {s.perks.map((p, i) => (
+                    <View key={i} style={[styles.perkCard, { borderColor: s.color + '25' }]}>
+                      <Text style={{ fontSize: 22 }}>{p.icon}</Text>
+                      <Text style={styles.perkText}>{p.text}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
           </View>
         ))}
       </ScrollView>
 
-      {/* Bottom */}
       <View style={styles.bottom}>
         <TouchableOpacity
           style={[styles.nextBtn, { backgroundColor: slide.color }]}
           onPress={handleNext}
+          activeOpacity={0.85}
         >
           <Text style={styles.nextBtnText}>
-            {currentIdx === SLIDES.length - 1 ? 'Commencer →' : 'Suivant →'}
+            {currentIdx === SLIDES.length - 1 ? '🚀 Commencer' : 'Suivant →'}
           </Text>
         </TouchableOpacity>
 
         {currentIdx === SLIDES.length - 1 && (
-          <TouchableOpacity style={styles.signupBtn} onPress={() => { handleFinish(); }}>
-            <Text style={styles.signupBtnText}>Créer un compte</Text>
+          <TouchableOpacity style={styles.loginBtn} onPress={handleFinish}>
+            <Text style={styles.loginBtnText}>J'ai déjà un compte</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -149,34 +269,45 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg },
   topBar: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingVertical: 12,
+    paddingHorizontal: 20, paddingVertical: 10,
   },
-  dotsRow: { flexDirection: 'row', gap: 6 },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.border },
-  dotActive: { width: 20, height: 6, borderRadius: 3 },
-  skipBtn: { padding: 4 },
+  dotsRow: { flexDirection: 'row', gap: 6, alignItems: 'center' },
+  dot: { width: 8, height: 8, borderRadius: 4 },
+  skipBtn: { padding: 6 },
   skipText: { color: COLORS.muted, fontSize: 14 },
-  slide: {
-    width,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-  },
-  emojiCircle: {
-    width: 120, height: 120, borderRadius: 60,
+  slide: { width, flex: 1, paddingHorizontal: 24 },
+  heroArea: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 20 },
+  logoWrapper: { alignItems: 'center' },
+  logoBg: {
+    width: 180, height: 180, borderRadius: 90,
     alignItems: 'center', justifyContent: 'center',
-    marginBottom: 32, borderWidth: 2,
+    borderWidth: 2,
   },
-  emojiText: { fontSize: 52 },
-  slideTitle: { fontSize: 28, fontWeight: '900', marginBottom: 8, textAlign: 'center' },
-  slideSubtitle: { color: COLORS.text, fontSize: 16, fontWeight: '700', marginBottom: 16, textAlign: 'center' },
-  slideDesc: { color: COLORS.muted, fontSize: 14, lineHeight: 22, textAlign: 'center' },
-  bottom: { paddingHorizontal: 24, paddingBottom: 24, gap: 10 },
-  nextBtn: { borderRadius: 16, paddingVertical: 16, alignItems: 'center' },
+  serviceGrid: {
+    flexDirection: 'row', flexWrap: 'wrap', gap: 16,
+    justifyContent: 'center', paddingHorizontal: 10,
+  },
+  serviceItem: {
+    width: 110, alignItems: 'center', gap: 8,
+    backgroundColor: COLORS.surface, borderRadius: 16,
+    padding: 16, borderWidth: 1,
+  },
+  serviceIconBox: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
+  serviceLabel: { color: COLORS.text, fontSize: 12, fontWeight: '700', textAlign: 'center' },
+  textArea: { paddingBottom: 8 },
+  tagPill: { alignSelf: 'flex-start', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 5, borderWidth: 1, marginBottom: 12 },
+  tagText: { fontSize: 12, fontWeight: '800' },
+  slideTitle: { color: COLORS.text, fontSize: 30, fontWeight: '900', marginBottom: 12, lineHeight: 36 },
+  slideDesc: { color: COLORS.muted, fontSize: 14, lineHeight: 22, marginBottom: 16 },
+  perksGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  perkCard: {
+    width: '47%', flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: COLORS.surface, borderRadius: 14, padding: 12, borderWidth: 1,
+  },
+  perkText: { color: COLORS.text, fontSize: 12, fontWeight: '700', flex: 1 },
+  bottom: { paddingHorizontal: 24, paddingBottom: 20, gap: 10 },
+  nextBtn: { borderRadius: 16, paddingVertical: 17, alignItems: 'center' },
   nextBtnText: { color: '#000', fontSize: 16, fontWeight: '900' },
-  signupBtn: {
-    borderRadius: 16, borderWidth: 1, borderColor: COLORS.border,
-    paddingVertical: 14, alignItems: 'center',
-  },
-  signupBtnText: { color: COLORS.text, fontSize: 15, fontWeight: '700' },
+  loginBtn: { paddingVertical: 12, alignItems: 'center' },
+  loginBtnText: { color: COLORS.muted, fontSize: 14, fontWeight: '600' },
 });
