@@ -539,6 +539,9 @@ import SecuritySettingsScreen from './screens/profile/SecuritySettingsScreen';
 // Batch 103
 import ClientRideHistoryScreen from './screens/client/ClientRideHistoryScreen';
 
+// Batch 104
+import ClientSavedAddressesScreen from './screens/client/ClientSavedAddressesScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -972,6 +975,7 @@ function MainStack() {
       <Stack.Screen name="GroceryOrderTracking" component={GroceryOrderTrackingScreen} options={{ headerShown: false }} />
       <Stack.Screen name="SecuritySettings" component={SecuritySettingsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientRideHistory" component={ClientRideHistoryScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ClientSavedAddresses" component={ClientSavedAddressesScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
