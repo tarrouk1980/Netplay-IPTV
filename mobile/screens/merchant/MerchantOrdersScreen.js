@@ -1,404 +1,272 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  FlatList,
+  View, Text, StyleSheet, FlatList, TouchableOpacity,
+  ActivityIndicator, StatusBar, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import api from '../../services/api';
 
 const COLORS = {
-  background: '#0A0A0F',
-  surface: '#1C1C28',
-  primary: '#F5A623',
-  text: '#FFFFFF',
-  muted: '#8E8E9A',
-  border: '#2C2C3A',
-  green: '#4CAF50',
-  red: '#F44336',
-  orange: '#FF9800',
+  bg: '#0A0A0F', surface: '#1C1C28', border: '#2C2C3E',
+  text: '#FFFFFF', muted: '#8E8E9A', accent: '#F5A623',
+  green: '#27AE60', red: '#E74C3C', blue: '#3498DB', orange: '#E67E22',
 };
 
-const TABS = ['Nouvelles', 'En préparation', 'Prêtes', 'Historique'];
-
-const STATUT = {
-  nouvelle: 'Nouvelles',
-  preparation: 'En préparation',
-  prete: 'Prêtes',
-  historique: 'Historique',
+const TABS = ['En attente', 'En cours', 'Terminées'];
+const STATUS_MAP = {
+  PENDING: 0, ACCEPTED: 1, PREPARING: 1, READY: 1,
+  PICKED_UP: 1, DELIVERING: 1, DELIVERED: 2, CANCELLED: 2,
 };
 
 const MOCK_ORDERS = [
   {
-    id: 'CMD-2401',
-    statut: 'nouvelle',
-    heureRecue: '14:32',
-    client: 'Client ****li',
-    items: '2x Burger Classic, 1x Frites, 1x Coca',
-    total: 28.5,
-    timer: 180,
+    id: 'ORD001', clientName: 'Nadia K.', status: 'PENDING', createdAt: '14:32',
+    items: [{ name: 'Kafteji', qty: 2, price: 5.500 }, { name: 'Lablabi', qty: 1, price: 3.000 }],
+    total: 14.000, note: 'Sans piment svp',
   },
   {
-    id: 'CMD-2400',
-    statut: 'nouvelle',
-    heureRecue: '14:28',
-    client: 'Client ****ma',
-    items: '1x Pizza Margherita, 2x Jus Orange',
-    total: 19.9,
-    timer: 420,
+    id: 'ORD002', clientName: 'Ahmed B.', status: 'PREPARING', createdAt: '14:18',
+    items: [{ name: 'Sandwich Tunisien', qty: 3, price: 4.000 }, { name: "Jus d'orange", qty: 3, price: 2.500 }],
+    total: 19.500, note: '',
   },
   {
-    id: 'CMD-2398',
-    statut: 'preparation',
-    heureRecue: '14:10',
-    client: 'Client ****ss',
-    items: '3x Sandwich Thon, 1x Salade César',
-    total: 33.0,
-    timer: null,
-  },
-  {
-    id: 'CMD-2395',
-    statut: 'prete',
-    heureRecue: '13:55',
-    client: 'Client ****ad',
-    items: '1x Couscous Agneau, 1x Lben',
-    total: 22.5,
-    timer: null,
-  },
-  {
-    id: 'CMD-2390',
-    statut: 'historique',
-    heureRecue: '13:20',
-    client: 'Client ****ne',
-    items: '2x Merguez, 1x Frites, 2x Eau',
-    total: 25.0,
-    timer: null,
+    id: 'ORD003', clientName: 'Meriem T.', status: 'DELIVERED', createdAt: '12:05',
+    items: [{ name: 'Couscous poulet', qty: 2, price: 9.000 }],
+    total: 18.000, note: '',
   },
 ];
 
-function formatTimer(seconds) {
-  if (seconds <= 0) return '00:00';
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-}
+const statusColor = (s) => {
+  if (s === 'PENDING') return COLORS.accent;
+  if (['ACCEPTED', 'PREPARING', 'READY'].includes(s)) return COLORS.blue;
+  if (['PICKED_UP', 'DELIVERING'].includes(s)) return COLORS.orange;
+  if (s === 'DELIVERED') return COLORS.green;
+  return COLORS.red;
+};
+const statusLabel = (s) => ({
+  PENDING: 'Nouveau', ACCEPTED: 'Accepté', PREPARING: 'En préparation',
+  READY: 'Prêt', PICKED_UP: 'Récupéré', DELIVERING: 'En livraison',
+  DELIVERED: 'Livré', CANCELLED: 'Annulé',
+}[s] || s);
 
-function StatBadge({ label, count, color }) {
+function OrderCard({ item, onAccept, onReject, onReady }) {
   return (
-    <View style={styles.statBadge}>
-      <View style={[styles.statDot, { backgroundColor: color }]}>
-        <Text style={styles.statCount}>{count}</Text>
-      </View>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
-  );
-}
-
-function OrderCard({ order, onAccepter, onRefuser, onPret }) {
-  const [timerSec, setTimerSec] = useState(order.timer || 0);
-
-  useEffect(() => {
-    if (order.statut !== 'nouvelle' || !order.timer) return;
-    const interval = setInterval(() => {
-      setTimerSec((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [order.statut, order.timer]);
-
-  const timerUrgent = timerSec < 60 && timerSec > 0;
-
-  return (
-    <View style={styles.orderCard}>
-      <View style={styles.orderHeader}>
+    <View style={styles.card}>
+      <View style={styles.cardHeader}>
         <View>
-          <Text style={styles.orderId}>{order.id}</Text>
-          <Text style={styles.orderTime}>Reçue à {order.heureRecue}</Text>
+          <Text style={styles.orderId}>#{item.id}</Text>
+          <Text style={styles.clientName}>{item.clientName}</Text>
         </View>
-        {order.statut === 'nouvelle' && (
-          <View style={[styles.timerBadge, timerUrgent && styles.timerBadgeUrgent]}>
-            <Text style={[styles.timerText, timerUrgent && styles.timerTextUrgent]}>
-              ⏱ {formatTimer(timerSec)}
-            </Text>
+        <View style={styles.headerRight}>
+          <Text style={styles.orderTime}>{item.createdAt}</Text>
+          <View style={[styles.statusBadge, {
+            borderColor: statusColor(item.status) + '60',
+            backgroundColor: statusColor(item.status) + '15',
+          }]}>
+            <Text style={[styles.statusText, { color: statusColor(item.status) }]}>{statusLabel(item.status)}</Text>
           </View>
-        )}
-        {order.statut === 'preparation' && (
-          <View style={styles.statutBadgePrep}>
-            <Text style={styles.statutBadgePrepText}>En préparation</Text>
-          </View>
-        )}
-        {order.statut === 'prete' && (
-          <View style={styles.statutBadgePrete}>
-            <Text style={styles.statutBadgePreteText}>Prête ✓</Text>
-          </View>
-        )}
-        {order.statut === 'historique' && (
-          <View style={styles.statutBadgeHisto}>
-            <Text style={styles.statutBadgeHistoText}>Livrée</Text>
-          </View>
-        )}
+        </View>
       </View>
 
-      <View style={styles.orderDivider} />
-
-      <View style={styles.orderBody}>
-        <Text style={styles.orderClient}>{order.client}</Text>
-        <Text style={styles.orderItems}>{order.items}</Text>
-        <Text style={styles.orderTotal}>{order.total.toFixed(2)} TND</Text>
+      <View style={styles.itemsList}>
+        {item.items.map((it, i) => (
+          <View key={i} style={styles.itemRow}>
+            <Text style={styles.itemQty}>{it.qty}×</Text>
+            <Text style={styles.itemName}>{it.name}</Text>
+            <Text style={styles.itemPrice}>{(it.qty * it.price).toFixed(3)}</Text>
+          </View>
+        ))}
       </View>
 
-      {order.statut === 'nouvelle' && (
-        <View style={styles.actionRow}>
-          <TouchableOpacity style={styles.refuserBtn} onPress={() => onRefuser(order.id)}>
-            <Text style={styles.refuserBtnText}>✕ Refuser</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.accepterBtn} onPress={() => onAccepter(order.id)}>
-            <Text style={styles.accepterBtnText}>✓ Accepter</Text>
-          </TouchableOpacity>
+      {!!item.note && (
+        <View style={styles.noteRow}>
+          <Text style={styles.noteIcon}>📝</Text>
+          <Text style={styles.noteText}>{item.note}</Text>
         </View>
       )}
 
-      {order.statut === 'preparation' && (
-        <TouchableOpacity style={styles.pretBtn} onPress={() => onPret(order.id)}>
-          <Text style={styles.pretBtnText}>Marquer comme Prête</Text>
+      <View style={styles.totalRow}>
+        <Text style={styles.totalLabel}>Total</Text>
+        <Text style={styles.totalAmount}>{item.total.toFixed(3)} TND</Text>
+      </View>
+
+      {item.status === 'PENDING' && (
+        <View style={styles.actionRow}>
+          <TouchableOpacity style={styles.rejectBtn} onPress={() => onReject(item.id)}>
+            <Text style={styles.rejectBtnText}>✕ Refuser</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.acceptBtn} onPress={() => onAccept(item.id)}>
+            <Text style={styles.acceptBtnText}>✓ Accepter</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      {item.status === 'PREPARING' && (
+        <TouchableOpacity style={styles.readyBtn} onPress={() => onReady(item.id)}>
+          <Text style={styles.readyBtnText}>✓ Marquer comme prêt</Text>
         </TouchableOpacity>
       )}
     </View>
   );
 }
 
-export default function MerchantOrdersScreen() {
-  const navigation = useNavigation();
-  const [activeTab, setActiveTab] = useState('Nouvelles');
-  const [orders, setOrders] = useState(MOCK_ORDERS);
+export default function MerchantOrdersScreen({ navigation }) {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState(0);
 
-  const handleAccepter = (id) => {
-    setOrders((prev) =>
-      prev.map((o) => (o.id === id ? { ...o, statut: 'preparation', timer: null } : o))
-    );
+  const load = useCallback(() => {
+    setLoading(true);
+    api.get('/api/merchant/orders')
+      .then(r => setOrders(r.data.orders || MOCK_ORDERS))
+      .catch(() => setOrders(MOCK_ORDERS))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleAccept = async (id) => {
+    try {
+      await api.post(`/api/merchant/orders/${id}/accept`);
+      setOrders(prev => prev.map(o => o.id === id ? { ...o, status: 'PREPARING' } : o));
+    } catch { Alert.alert('Erreur', "Impossible d'accepter la commande."); }
   };
 
-  const handleRefuser = (id) => {
-    setOrders((prev) => prev.filter((o) => o.id !== id));
+  const handleReject = (id) => {
+    Alert.alert('Refuser la commande', 'Êtes-vous sûr ?', [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'Refuser', style: 'destructive', onPress: async () => {
+          try {
+            await api.post(`/api/merchant/orders/${id}/cancel`);
+            setOrders(prev => prev.map(o => o.id === id ? { ...o, status: 'CANCELLED' } : o));
+          } catch { Alert.alert('Erreur', 'Impossible de refuser.'); }
+        },
+      },
+    ]);
   };
 
-  const handlePret = (id) => {
-    setOrders((prev) =>
-      prev.map((o) => (o.id === id ? { ...o, statut: 'prete' } : o))
-    );
+  const handleReady = async (id) => {
+    try {
+      await api.post(`/api/merchant/orders/${id}/ready`);
+      setOrders(prev => prev.map(o => o.id === id ? { ...o, status: 'READY' } : o));
+    } catch { Alert.alert('Erreur', 'Impossible de marquer comme prêt.'); }
   };
 
-  const filteredOrders = orders.filter((o) => STATUT[o.statut] === activeTab);
-
-  const countByStatut = (statut) => orders.filter((o) => o.statut === statut).length;
+  const filtered = orders.filter(o => (STATUS_MAP[o.status] ?? 0) === tab);
+  const pendingCount = orders.filter(o => o.status === 'PENDING').length;
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      {/* Header */}
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
+
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backBtnText}>←</Text>
+          <Text style={styles.backArrow}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Mes commandes</Text>
-        <View style={{ width: 40 }} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Text style={styles.headerTitle}>Commandes</Text>
+          {pendingCount > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{pendingCount}</Text>
+            </View>
+          )}
+        </View>
+        <TouchableOpacity onPress={load} style={styles.refreshBtn}>
+          <Text style={{ color: COLORS.accent, fontSize: 20 }}>↻</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Stats bar */}
-      <View style={styles.statsBar}>
-        <StatBadge label="En attente" count={countByStatut('nouvelle')} color={COLORS.red} />
-        <StatBadge label="Préparation" count={countByStatut('preparation')} color={COLORS.orange} />
-        <StatBadge label="Prêtes" count={countByStatut('prete')} color={COLORS.green} />
-      </View>
-
-      {/* Filter tabs */}
-      <View style={styles.tabsRow}>
-        {TABS.map((tab) => (
-          <TouchableOpacity
-            key={tab}
-            style={[styles.tab, activeTab === tab && styles.tabActive]}
-            onPress={() => setActiveTab(tab)}
-          >
-            <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
-              {tab}
-            </Text>
+      <View style={styles.tabRow}>
+        {TABS.map((t, i) => (
+          <TouchableOpacity key={i} style={[styles.tabBtn, tab === i && styles.tabBtnActive]} onPress={() => setTab(i)}>
+            <Text style={[styles.tabLabel, tab === i && styles.tabLabelActive]}>{t}</Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      {/* Orders list */}
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {filteredOrders.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>📋</Text>
-            <Text style={styles.emptyText}>Aucune commande dans cette catégorie</Text>
-          </View>
-        ) : (
-          filteredOrders.map((order) => (
-            <OrderCard
-              key={order.id}
-              order={order}
-              onAccepter={handleAccepter}
-              onRefuser={handleRefuser}
-              onPret={handlePret}
-            />
-          ))
-        )}
-        <View style={{ height: 24 }} />
-      </ScrollView>
+      {loading ? (
+        <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} />
+      ) : (
+        <FlatList
+          data={filtered}
+          keyExtractor={i => i.id}
+          renderItem={({ item }) => (
+            <OrderCard item={item} onAccept={handleAccept} onReject={handleReject} onReady={handleReady} />
+          )}
+          contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={{ alignItems: 'center', marginTop: 60 }}>
+              <Text style={{ fontSize: 40 }}>📋</Text>
+              <Text style={{ color: COLORS.muted, marginTop: 12 }}>Aucune commande ici</Text>
+            </View>
+          }
+        />
+      )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
+  container: { flex: 1, backgroundColor: COLORS.bg },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingVertical: 14,
+    borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
-  backBtn: { width: 40, height: 40, justifyContent: 'center' },
-  backBtnText: { color: COLORS.text, fontSize: 22 },
-  headerTitle: { color: COLORS.text, fontSize: 18, fontWeight: '700' },
-
-  statsBar: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.surface,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    gap: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+  backBtn: { width: 40 },
+  backArrow: { color: COLORS.text, fontSize: 30, fontWeight: '300' },
+  headerTitle: { color: COLORS.text, fontSize: 17, fontWeight: '700' },
+  badge: { backgroundColor: COLORS.red, borderRadius: 10, paddingHorizontal: 7, paddingVertical: 2 },
+  badgeText: { color: '#FFF', fontSize: 11, fontWeight: '800' },
+  refreshBtn: { width: 40, alignItems: 'flex-end' },
+  tabRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  tabBtn: { flex: 1, paddingVertical: 12, alignItems: 'center' },
+  tabBtnActive: { borderBottomWidth: 2, borderBottomColor: COLORS.accent },
+  tabLabel: { color: COLORS.muted, fontSize: 13, fontWeight: '600' },
+  tabLabelActive: { color: COLORS.accent },
+  card: {
+    backgroundColor: COLORS.surface, borderRadius: 14, padding: 14,
+    marginBottom: 12, borderWidth: 1, borderColor: COLORS.border,
   },
-  statBadge: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  statDot: {
-    borderRadius: 12,
-    minWidth: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 6,
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
+  orderId: { color: COLORS.muted, fontSize: 11 },
+  clientName: { color: COLORS.text, fontSize: 15, fontWeight: '700', marginTop: 2 },
+  headerRight: { alignItems: 'flex-end', gap: 4 },
+  orderTime: { color: COLORS.muted, fontSize: 12 },
+  statusBadge: { borderRadius: 8, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 3 },
+  statusText: { fontSize: 11, fontWeight: '700' },
+  itemsList: { borderTopWidth: 1, borderTopColor: COLORS.border, paddingTop: 10, marginBottom: 10, gap: 6 },
+  itemRow: { flexDirection: 'row', alignItems: 'center' },
+  itemQty: { color: COLORS.accent, fontSize: 13, fontWeight: '700', width: 28 },
+  itemName: { flex: 1, color: COLORS.text, fontSize: 13 },
+  itemPrice: { color: COLORS.muted, fontSize: 13 },
+  noteRow: {
+    flexDirection: 'row', backgroundColor: '#F5A62310', borderRadius: 8, padding: 8,
+    marginBottom: 10, gap: 6, borderWidth: 1, borderColor: '#F5A62330',
   },
-  statCount: { color: COLORS.text, fontSize: 12, fontWeight: '700' },
-  statLabel: { color: COLORS.muted, fontSize: 12 },
-
-  tabsRow: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+  noteIcon: { fontSize: 12 },
+  noteText: { color: COLORS.accent, fontSize: 12, flex: 1 },
+  totalRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    borderTopWidth: 1, borderTopColor: COLORS.border, paddingTop: 10,
   },
-  tab: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
+  totalLabel: { color: COLORS.muted, fontSize: 13 },
+  totalAmount: { color: COLORS.text, fontSize: 16, fontWeight: '900' },
+  actionRow: { flexDirection: 'row', gap: 10, marginTop: 12 },
+  rejectBtn: {
+    flex: 1, borderRadius: 10, borderWidth: 1, borderColor: COLORS.red,
+    paddingVertical: 10, alignItems: 'center',
   },
-  tabActive: { borderBottomColor: COLORS.primary },
-  tabText: { color: COLORS.muted, fontSize: 12, fontWeight: '600' },
-  tabTextActive: { color: COLORS.primary },
-
-  scroll: { flex: 1, padding: 16 },
-
-  orderCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 14,
-    marginBottom: 14,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: COLORS.border,
+  rejectBtnText: { color: COLORS.red, fontSize: 14, fontWeight: '700' },
+  acceptBtn: {
+    flex: 2, borderRadius: 10, backgroundColor: COLORS.green,
+    paddingVertical: 10, alignItems: 'center',
   },
-  orderHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    padding: 14,
+  acceptBtnText: { color: '#FFF', fontSize: 14, fontWeight: '700' },
+  readyBtn: {
+    marginTop: 12, borderRadius: 10, backgroundColor: COLORS.blue,
+    paddingVertical: 10, alignItems: 'center',
   },
-  orderId: { color: COLORS.text, fontSize: 15, fontWeight: '700' },
-  orderTime: { color: COLORS.muted, fontSize: 12, marginTop: 2 },
-
-  timerBadge: {
-    backgroundColor: '#1A2A1A',
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  timerBadgeUrgent: { backgroundColor: '#2A1010' },
-  timerText: { color: COLORS.green, fontSize: 13, fontWeight: '700' },
-  timerTextUrgent: { color: COLORS.red },
-
-  statutBadgePrep: {
-    backgroundColor: '#2A200A',
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  statutBadgePrepText: { color: COLORS.orange, fontSize: 12, fontWeight: '600' },
-
-  statutBadgePrete: {
-    backgroundColor: '#0A2A10',
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  statutBadgePreteText: { color: COLORS.green, fontSize: 12, fontWeight: '600' },
-
-  statutBadgeHisto: {
-    backgroundColor: '#16162A',
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  statutBadgeHistoText: { color: COLORS.muted, fontSize: 12, fontWeight: '600' },
-
-  orderDivider: { height: 1, backgroundColor: COLORS.border, marginHorizontal: 14 },
-
-  orderBody: { padding: 14 },
-  orderClient: { color: COLORS.muted, fontSize: 13, marginBottom: 4 },
-  orderItems: { color: COLORS.text, fontSize: 14, marginBottom: 6, lineHeight: 20 },
-  orderTotal: { color: COLORS.primary, fontSize: 16, fontWeight: '800' },
-
-  actionRow: {
-    flexDirection: 'row',
-    gap: 10,
-    padding: 14,
-    paddingTop: 0,
-  },
-  refuserBtn: {
-    flex: 1,
-    borderWidth: 1.5,
-    borderColor: COLORS.red,
-    borderRadius: 10,
-    paddingVertical: 11,
-    alignItems: 'center',
-  },
-  refuserBtnText: { color: COLORS.red, fontSize: 14, fontWeight: '700' },
-  accepterBtn: {
-    flex: 2,
-    backgroundColor: COLORS.green,
-    borderRadius: 10,
-    paddingVertical: 11,
-    alignItems: 'center',
-  },
-  accepterBtnText: { color: COLORS.text, fontSize: 14, fontWeight: '700' },
-
-  pretBtn: {
-    backgroundColor: COLORS.primary,
-    margin: 14,
-    marginTop: 0,
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  pretBtnText: { color: COLORS.background, fontSize: 14, fontWeight: '800' },
-
-  emptyState: { alignItems: 'center', paddingVertical: 60 },
-  emptyIcon: { fontSize: 48, marginBottom: 12 },
-  emptyText: { color: COLORS.muted, fontSize: 15 },
+  readyBtnText: { color: '#FFF', fontSize: 14, fontWeight: '700' },
 });

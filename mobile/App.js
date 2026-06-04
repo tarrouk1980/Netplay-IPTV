@@ -536,6 +536,9 @@ import AdminAppSettingsScreen from './screens/admin/AdminAppSettingsScreen';
 import GroceryOrderTrackingScreen from './screens/grocery/GroceryOrderTrackingScreen';
 import SecuritySettingsScreen from './screens/profile/SecuritySettingsScreen';
 
+// Batch 103
+import ClientRideHistoryScreen from './screens/client/ClientRideHistoryScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -968,6 +971,7 @@ function MainStack() {
       <Stack.Screen name="LivreurHistory" component={LivreurHistoryScreen} options={{ headerShown: false }} />
       <Stack.Screen name="GroceryOrderTracking" component={GroceryOrderTrackingScreen} options={{ headerShown: false }} />
       <Stack.Screen name="SecuritySettings" component={SecuritySettingsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ClientRideHistory" component={ClientRideHistoryScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
