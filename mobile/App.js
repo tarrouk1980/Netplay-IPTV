@@ -985,19 +985,14 @@ export default function App() {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      // Connect socket
-      connectSocket().catch(console.warn);
-
-      // Register FCM token
-      registerForPushNotifications();
+      try { connectSocket().catch(() => {}); } catch {}
+      setTimeout(() => {
+        try { registerForPushNotifications(); } catch {}
+      }, 3000);
     } else {
-      // Disconnect socket on logout
-      disconnectSocket();
+      try { disconnectSocket(); } catch {}
     }
-
-    return () => {
-      disconnectSocket();
-    };
+    return () => { try { disconnectSocket(); } catch {} };
   }, [isAuthenticated, user]);
 
   useEffect(() => {
@@ -1066,31 +1061,20 @@ export default function App() {
 async function registerForPushNotifications() {
   try {
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
-
     if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
+      await Notifications.requestPermissionsAsync();
     }
-
-    if (finalStatus !== 'granted') {
-      console.warn('[Notifications] Permission not granted');
-      return;
-    }
-
-    const tokenData = await Notifications.getExpoPushTokenAsync();
-    const fcmToken = tokenData.data;
-
-    // Store locally
-    await AsyncStorage.setItem('fcmToken', fcmToken);
-
-    // Register with backend
-    await api.post('/api/notifications/register-token', { fcmToken }).catch((err) => {
-      console.warn('[Notifications] Failed to register token with backend:', err.message);
-    });
-
-    console.log('[Notifications] FCM token registered:', fcmToken.slice(0, 20) + '...');
-  } catch (err) {
-    console.warn('[Notifications] Error registering push notifications:', err.message);
-  }
+    // Ne pas bloquer sur getExpoPushTokenAsync — peut échouer hors Expo Go
+    try {
+      const tokenData = await Promise.race([
+        Notifications.getExpoPushTokenAsync({ projectId: '028c05e2-49a4-41fd-b364-3e5be6bc7ca1' }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000)),
+      ]);
+      if (tokenData?.data) {
+        await AsyncStorage.setItem('fcmToken', tokenData.data).catch(() => {});
+        api.post('/api/notifications/register-token', { fcmToken: tokenData.data }).catch(() => {});
+      }
+    } catch {}
+  } catch {}
+}
 }

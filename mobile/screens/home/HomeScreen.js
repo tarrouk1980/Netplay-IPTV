@@ -114,34 +114,26 @@ export default function HomeScreen({ navigation }) {
   }, []);
 
   useEffect(() => {
-    fetchSubscription();
-    fetchActivity();
-    fetchAds();
+    try { fetchSubscription(); } catch {}
+    try { fetchActivity(); } catch {}
+    try { fetchAds(); } catch {}
 
     if (!user?.role) return;
 
     const PROVIDER_ROLES = ['CHAUFFEUR', 'LIVREUR', 'DEPANNEUR', 'MARCHAND'];
 
-    if (user.role === 'ADMIN') {
-      navigation.replace('AdminDashboard');
-      return;
-    }
-
-    if (PROVIDER_ROLES.includes(user.role)) {
-      // Tout prestataire non encore approuvé → attente KYC
-      if (user.kycStatus !== 'APPROVED') {
-        navigation.replace('KYCPending');
+    try {
+      if (user.role === 'ADMIN') { navigation.replace('AdminDashboard'); return; }
+      if (PROVIDER_ROLES.includes(user.role)) {
+        if (user.kycStatus !== 'APPROVED') { navigation.replace('KYCPending'); return; }
+        if (user.role === 'CHAUFFEUR') navigation.replace('DriverDashboard');
+        else if (user.role === 'LIVREUR') navigation.replace('LivreurDashboard');
+        else if (user.role === 'DEPANNEUR') navigation.replace('DepanneurDashboard');
+        else if (user.role === 'MARCHAND') navigation.replace('MerchantDashboard');
         return;
       }
-      // Prestataire approuvé → son tableau de bord
-      if (user.role === 'CHAUFFEUR') navigation.replace('DriverDashboard');
-      else if (user.role === 'LIVREUR') navigation.replace('LivreurDashboard');
-      else if (user.role === 'DEPANNEUR') navigation.replace('DepanneurDashboard');
-      else if (user.role === 'MARCHAND') navigation.replace('MerchantDashboard');
-      return;
-    }
-
-    // CLIENT → reste sur HomeScreen (ne pas rediriger)
+    } catch {}
+    // CLIENT → reste sur HomeScreen
   }, [user?.role, user?.kycStatus]);
 
   const activeOrder = (() => {
