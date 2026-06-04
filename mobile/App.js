@@ -498,6 +498,11 @@ import DriverChecklistScreen from './screens/driver/DriverChecklistScreen';
 import MerchantLiveOrdersScreen from './screens/merchant/MerchantLiveOrdersScreen';
 import AdminVehicleInspectionScreen from './screens/admin/AdminVehicleInspectionScreen';
 
+// Batch 92
+import PromoCodesClientScreen from './screens/promo/PromoCodesClientScreen';
+import ProviderIncidentScreen from './screens/provider/ProviderIncidentScreen';
+import AdminSOSInterventionsScreen from './screens/admin/AdminSOSInterventionsScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -743,6 +748,9 @@ function MainStack() {
       <Stack.Screen name="DriverChecklist" component={DriverChecklistScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MerchantLiveOrders" component={MerchantLiveOrdersScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminVehicleInspection" component={AdminVehicleInspectionScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="PromoCodesClient" component={PromoCodesClientScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ProviderIncident" component={ProviderIncidentScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminSOSInterventions" component={AdminSOSInterventionsScreen} options={{ headerShown: false }} />
 
       {/* Chat */}
       <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
