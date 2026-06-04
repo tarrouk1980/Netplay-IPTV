@@ -545,6 +545,9 @@ import ClientSavedAddressesScreen from './screens/client/ClientSavedAddressesScr
 // Batch 105
 import ClientNotificationsScreen from './screens/client/ClientNotificationsScreen';
 
+// Batch 107
+import ClientProfileScreen from './screens/profile/ClientProfileScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -631,7 +634,7 @@ function MainStack() {
 
       {/* SOS */}
       <Stack.Screen name="SOSHome" component={SOSHomeScreen} options={{ title: 'SOS Remorquage', headerShown: false }} />
-      <Stack.Screen name="SOSRequest" component={SOSRequestScreen} options={{ title: 'Demande SOS' }} />
+      <Stack.Screen name="SOSRequest" component={SOSRequestScreen} options={{ headerShown: false }} />
       <Stack.Screen name="SOSTracking" component={SOSTrackingScreen} options={{ title: 'Suivi SOS', headerShown: false }} />
       <Stack.Screen name="DepanneurDashboard" component={DepanneurDashboardScreen} options={{ title: 'Tableau de bord', headerShown: false }} />
       <Stack.Screen name="ConstatAmiable" component={ConstatAmiableScreen} options={{ title: 'Constat Amiable', headerShown: false }} />
@@ -744,7 +747,6 @@ function MainStack() {
       <Stack.Screen name="NotificationsSettings" component={NotificationsSettingsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiSchedule" component={TaxiScheduleScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MerchantAddProduct" component={MerchantAddProductScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="SOSRequest" component={SOSRequestScreen} options={{ headerShown: false }} />
       <Stack.Screen name="PackageTracking" component={PackageTrackingScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} options={{ headerShown: false }} />
       <Stack.Screen name="GroceryProductDetail" component={GroceryProductDetailScreen} options={{ headerShown: false }} />
@@ -980,6 +982,7 @@ function MainStack() {
       <Stack.Screen name="ClientRideHistory" component={ClientRideHistoryScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientSavedAddresses" component={ClientSavedAddressesScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientNotifications" component={ClientNotificationsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ClientProfile" component={ClientProfileScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }

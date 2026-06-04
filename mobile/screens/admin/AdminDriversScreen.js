@@ -1,299 +1,220 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  TextInput,
-  Alert,
+  View, Text, StyleSheet, FlatList, TouchableOpacity,
+  ActivityIndicator, StatusBar, TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COLORS = {
-  bg: '#0A0A0F',
-  surface: '#1C1C28',
-  primary: '#F5A623',
-  text: '#FFFFFF',
-  muted: '#8E8E9A',
-  border: '#2C2C3A',
-  green: '#2ECC71',
-  grey: '#555566',
-  orange: '#F5A623',
+  bg: '#0A0A0F', surface: '#1C1C28', border: '#2C2C3E',
+  text: '#FFFFFF', muted: '#8E8E9A', accent: '#F5A623',
+  green: '#27AE60', red: '#E74C3C', blue: '#3498DB',
 };
+
+const FILTERS = ['Tous', 'En ligne', 'En course', 'Hors ligne'];
 
 const MOCK_DRIVERS = [
-  { id: '1', name: "Sami Ben Ali", role: "chauffeur", phone: "+216 22 111 001", courses: 142, rating: 4.8, earnings: 1240.00, status: "online" },
-  { id: '2', name: "Rania Tlili", role: "livreur", phone: "+216 55 222 002", courses: 89, rating: 4.5, earnings: 680.50, status: "busy" },
-  { id: '3', name: "Khalil Mansour", role: "depanneur", phone: "+216 99 333 003", courses: 34, rating: 4.7, earnings: 920.00, status: "offline" },
-  { id: '4', name: "Nour Chebbi", role: "chauffeur", phone: "+216 22 444 004", courses: 210, rating: 4.9, earnings: 1850.00, status: "online" },
-  { id: '5', name: "Amine Dridi", role: "livreur", phone: "+216 55 555 005", courses: 67, rating: 4.2, earnings: 530.00, status: "online" },
-  { id: '6', name: "Fatma Haddad", role: "chauffeur", phone: "+216 22 666 006", courses: 98, rating: 4.6, earnings: 870.00, status: "offline" },
-  { id: '7', name: "Malek Jomni", role: "depanneur", phone: "+216 99 777 007", courses: 51, rating: 4.4, earnings: 1100.00, status: "busy" },
-  { id: '8', name: "Youssef Karray", role: "livreur", phone: "+216 55 888 008", courses: 115, rating: 4.7, earnings: 760.00, status: "online" },
-  { id: '9', name: "Sirine Gharbi", role: "chauffeur", phone: "+216 22 999 009", courses: 73, rating: 4.3, earnings: 640.00, status: "offline" },
-  { id: '10', name: "Bilel Nasri", role: "depanneur", phone: "+216 99 000 010", courses: 28, rating: 4.1, earnings: 580.00, status: "online" },
+  { id: 'D1', name: 'Karim Ben Salah', phone: '+216 98 765 432', rating: 4.9, totalRides: 1240, todayRides: 8, online: true, inRide: false, zone: 'Tunis Centre', car: 'Citroën C3 • TU 123 456' },
+  { id: 'D2', name: 'Sami Rjab', phone: '+216 55 001 122', rating: 4.7, totalRides: 856, todayRides: 5, online: true, inRide: true, zone: 'La Marsa', car: 'Dacia Logan • TU 789 012' },
+  { id: 'D3', name: 'Aymen Khelifi', phone: '+216 22 334 455', rating: 4.5, totalRides: 423, todayRides: 2, online: false, inRide: false, zone: 'Ariana', car: 'Kia Picanto • TU 345 678' },
+  { id: 'D4', name: 'Mounir Trabelsi', phone: '+216 77 889 900', rating: 4.8, totalRides: 2100, todayRides: 12, online: true, inRide: true, zone: 'Sousse', car: 'Hyundai i10 • SS 111 222' },
 ];
 
-const TABS = [
-  { key: "all", label: "Tous" },
-  { key: "chauffeur", label: "Chauffeurs 🚕" },
-  { key: "livreur", label: "Livreurs 🛵" },
-  { key: "depanneur", label: "Dépanneurs 🛻" },
-];
+function statusInfo(driver) {
+  if (driver.inRide) return { label: 'En course', color: COLORS.blue };
+  if (driver.online) return { label: 'En ligne', color: COLORS.green };
+  return { label: 'Hors ligne', color: COLORS.muted };
+}
 
-const ROLE_LABELS = {
-  chauffeur: "Chauffeur 🚕",
-  livreur: "Livreur 🛵",
-  depanneur: "Dépanneur 🛻",
-};
-
-const STATUS_CONFIG = {
-  online: { label: "En ligne", color: '#2ECC71' },
-  offline: { label: "Hors ligne", color: '#8E8E9A' },
-  busy: { label: "En course", color: '#F5A623' },
-};
-
-function getStats(drivers) {
-  return {
-    online: drivers.filter((d) => d.status === 'online').length,
-    offline: drivers.filter((d) => d.status === 'offline').length,
-    busy: drivers.filter((d) => d.status === 'busy').length,
-  };
+function DriverCard({ item }) {
+  const st = statusInfo(item);
+  return (
+    <View style={styles.card}>
+      <View style={styles.cardTop}>
+        <View style={[styles.avatar, { backgroundColor: COLORS.accent + '20' }]}>
+          <Text style={[styles.avatarText, { color: COLORS.accent }]}>{item.name.charAt(0)}</Text>
+        </View>
+        <View style={styles.driverInfo}>
+          <Text style={styles.driverName}>{item.name}</Text>
+          <Text style={styles.driverCar}>{item.car}</Text>
+          <Text style={styles.driverZone}>📍 {item.zone}</Text>
+        </View>
+        <View style={[styles.statusBadge, { backgroundColor: st.color + '20', borderColor: st.color + '50' }]}>
+          <Text style={[styles.statusText, { color: st.color }]}>{st.label}</Text>
+        </View>
+      </View>
+      <View style={styles.kpiRow}>
+        <View style={styles.kpi}>
+          <Text style={styles.kpiNum}>★ {item.rating}</Text>
+          <Text style={styles.kpiLabel}>note</Text>
+        </View>
+        <View style={styles.kpiDiv} />
+        <View style={styles.kpi}>
+          <Text style={styles.kpiNum}>{item.todayRides}</Text>
+          <Text style={styles.kpiLabel}>aujourd'hui</Text>
+        </View>
+        <View style={styles.kpiDiv} />
+        <View style={styles.kpi}>
+          <Text style={styles.kpiNum}>{item.totalRides.toLocaleString()}</Text>
+          <Text style={styles.kpiLabel}>total</Text>
+        </View>
+      </View>
+    </View>
+  );
 }
 
 export default function AdminDriversScreen({ navigation }) {
-  const [activeTab, setActiveTab] = useState("all");
-  const [search, setSearch] = useState("");
+  const [drivers, setDrivers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('Tous');
+  const [search, setSearch] = useState('');
 
-  const filtered = MOCK_DRIVERS.filter((d) => {
-    const matchTab = activeTab === "all" || d.role === activeTab;
-    const matchSearch = d.name.toLowerCase().includes(search.toLowerCase()) ||
-      d.phone.includes(search);
-    return matchTab && matchSearch;
+  const load = useCallback(() => {
+    setLoading(true);
+    api.get('/api/admin/drivers')
+      .then(r => setDrivers(r.data.drivers || MOCK_DRIVERS))
+      .catch(() => setDrivers(MOCK_DRIVERS))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const filtered = drivers.filter(d => {
+    const q = search.toLowerCase();
+    const matchSearch = !q || d.name.toLowerCase().includes(q) || d.phone.includes(q) || d.zone.toLowerCase().includes(q);
+    if (!matchSearch) return false;
+    if (filter === 'En ligne') return d.online && !d.inRide;
+    if (filter === 'En course') return d.inRide;
+    if (filter === 'Hors ligne') return !d.online;
+    return true;
   });
 
-  const stats = getStats(MOCK_DRIVERS);
-
-  function renderDriver({ item }) {
-    const sc = STATUS_CONFIG[item.status];
-    const initials = item.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
-    return (
-      <TouchableOpacity
-        style={styles.card}
-        onPress={() => Alert.alert(item.name, `Téléphone: ${item.phone}\nRole: ${ROLE_LABELS[item.role]}\nStatut: ${sc.label}`)}
-      >
-        <View style={styles.cardLeft}>
-          <View style={styles.avatarWrap}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{initials}</Text>
-            </View>
-            <View style={[styles.statusDot, { backgroundColor: sc.color }]} />
-          </View>
-        </View>
-        <View style={styles.cardCenter}>
-          <View style={styles.nameRow}>
-            <Text style={styles.driverName}>{item.name}</Text>
-            <View style={[styles.roleBadge, { backgroundColor: COLORS.surface }]}>
-              <Text style={styles.roleBadgeText}>{ROLE_LABELS[item.role]}</Text>
-            </View>
-          </View>
-          <Text style={styles.phone}>{item.phone}</Text>
-          <View style={styles.statsRow}>
-            <Text style={styles.stat}>{item.courses} courses</Text>
-            <Text style={styles.stat}>⭐ {item.rating}</Text>
-            <Text style={styles.stat}>{item.earnings.toFixed(0)} TND/mois</Text>
-          </View>
-          <View style={[styles.statusChip, { borderColor: sc.color }]}>
-            <View style={[styles.chipDot, { backgroundColor: sc.color }]} />
-            <Text style={[styles.chipText, { color: sc.color }]}>{sc.label}</Text>
-          </View>
-        </View>
-        <View style={styles.cardRight}>
-          <Text style={styles.chevron}>›</Text>
-        </View>
-      </TouchableOpacity>
-    );
-  }
+  const onlineCount = drivers.filter(d => d.online).length;
+  const inRideCount = drivers.filter(d => d.inRide).length;
 
   return (
-    <SafeAreaView style={styles.safe}>
-      {/* Header */}
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
+
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backText}>‹</Text>
+          <Text style={styles.backArrow}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Gestion conducteurs</Text>
-        <View style={{ width: 40 }} />
+        <Text style={styles.headerTitle}>Chauffeurs</Text>
+        <TouchableOpacity onPress={load} style={styles.refreshBtn}>
+          <Text style={{ color: COLORS.accent, fontSize: 20 }}>↻</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Search */}
-      <View style={styles.searchWrap}>
+      <View style={styles.statsBar}>
+        <View style={styles.statItem}>
+          <Text style={styles.statNum}>{drivers.length}</Text>
+          <Text style={styles.statLabel}>total</Text>
+        </View>
+        <View style={styles.statDivider} />
+        <View style={styles.statItem}>
+          <Text style={[styles.statNum, { color: COLORS.green }]}>{onlineCount}</Text>
+          <Text style={styles.statLabel}>en ligne</Text>
+        </View>
+        <View style={styles.statDivider} />
+        <View style={styles.statItem}>
+          <Text style={[styles.statNum, { color: COLORS.blue }]}>{inRideCount}</Text>
+          <Text style={styles.statLabel}>en course</Text>
+        </View>
+      </View>
+
+      <View style={styles.searchRow}>
         <TextInput
           style={styles.searchInput}
-          placeholder="Rechercher un conducteur..."
+          placeholder="Nom, zone, téléphone..."
           placeholderTextColor={COLORS.muted}
           value={search}
           onChangeText={setSearch}
         />
       </View>
 
-      {/* Stats row */}
-      <View style={styles.statsBar}>
-        <View style={styles.statBadge}>
-          <View style={[styles.statDot, { backgroundColor: '#2ECC71' }]} />
-          <Text style={styles.statBadgeText}>En ligne: {stats.online}</Text>
-        </View>
-        <View style={styles.statBadge}>
-          <View style={[styles.statDot, { backgroundColor: '#8E8E9A' }]} />
-          <Text style={styles.statBadgeText}>Hors ligne: {stats.offline}</Text>
-        </View>
-        <View style={styles.statBadge}>
-          <View style={[styles.statDot, { backgroundColor: '#F5A623' }]} />
-          <Text style={styles.statBadgeText}>En course: {stats.busy}</Text>
-        </View>
-      </View>
-
-      {/* Filter tabs */}
-      <View style={styles.tabs}>
-        {TABS.map((tab) => (
+      <View style={styles.filterRow}>
+        {FILTERS.map(f => (
           <TouchableOpacity
-            key={tab.key}
-            style={[styles.tab, activeTab === tab.key && styles.tabActive]}
-            onPress={() => setActiveTab(tab.key)}
+            key={f}
+            style={[styles.filterBtn, filter === f && styles.filterBtnActive]}
+            onPress={() => setFilter(f)}
           >
-            <Text style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>
-              {tab.label}
-            </Text>
+            <Text style={[styles.filterLabel, filter === f && styles.filterLabelActive]}>{f}</Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      <FlatList
-        data={filtered}
-        keyExtractor={(item) => item.id}
-        renderItem={renderDriver}
-        contentContainerStyle={styles.list}
-        ListEmptyComponent={
-          <Text style={styles.empty}>Aucun conducteur trouvé.</Text>
-        }
-      />
+      {loading ? (
+        <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} />
+      ) : (
+        <FlatList
+          data={filtered}
+          keyExtractor={d => d.id}
+          renderItem={({ item }) => <DriverCard item={item} />}
+          contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={{ alignItems: 'center', marginTop: 60 }}>
+              <Text style={{ fontSize: 40 }}>🚕</Text>
+              <Text style={{ color: COLORS.muted, marginTop: 12 }}>Aucun chauffeur trouvé</Text>
+            </View>
+          }
+        />
+      )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.bg },
+  container: { flex: 1, backgroundColor: COLORS.bg },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingVertical: 14,
+    borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
-  backBtn: { width: 40, alignItems: 'flex-start' },
-  backText: { fontSize: 28, color: COLORS.text, lineHeight: 32 },
-  headerTitle: { flex: 1, textAlign: 'center', fontSize: 18, fontWeight: '700', color: COLORS.text },
-  searchWrap: { paddingHorizontal: 16, paddingVertical: 10 },
+  backBtn: { width: 40 },
+  backArrow: { color: COLORS.text, fontSize: 30, fontWeight: '300' },
+  headerTitle: { color: COLORS.text, fontSize: 17, fontWeight: '700' },
+  refreshBtn: { width: 40, alignItems: 'flex-end' },
+  statsBar: { flexDirection: 'row', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  statItem: { flex: 1, alignItems: 'center' },
+  statNum: { color: COLORS.text, fontSize: 20, fontWeight: '800' },
+  statLabel: { color: COLORS.muted, fontSize: 10, marginTop: 2 },
+  statDivider: { width: 1, backgroundColor: COLORS.border },
+  searchRow: { paddingHorizontal: 16, paddingVertical: 10 },
   searchInput: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    color: COLORS.text,
-    fontSize: 15,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface, borderRadius: 12, paddingHorizontal: 14,
+    paddingVertical: 10, color: COLORS.text, fontSize: 14,
+    borderWidth: 1, borderColor: COLORS.border,
   },
-  statsBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingHorizontal: 16,
-    paddingBottom: 10,
+  filterRow: { flexDirection: 'row', paddingHorizontal: 16, gap: 8, marginBottom: 4 },
+  filterBtn: {
+    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16,
+    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
   },
-  statBadge: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  statDot: { width: 8, height: 8, borderRadius: 4 },
-  statBadgeText: { fontSize: 12, color: COLORS.muted },
-  tabs: {
-    flexDirection: 'row',
-    paddingHorizontal: 12,
-    marginBottom: 6,
-    gap: 8,
-  },
-  tab: {
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 20,
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  tabActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-  },
-  tabText: { fontSize: 12, color: COLORS.muted },
-  tabTextActive: { color: '#000', fontWeight: '700' },
-  list: { paddingHorizontal: 16, paddingBottom: 24 },
+  filterBtnActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
+  filterLabel: { color: COLORS.muted, fontSize: 12, fontWeight: '600' },
+  filterLabelActive: { color: '#000' },
   card: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.surface,
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    alignItems: 'center',
+    backgroundColor: COLORS.surface, borderRadius: 14, padding: 14,
+    marginBottom: 10, borderWidth: 1, borderColor: COLORS.border,
   },
-  cardLeft: { marginRight: 12 },
-  avatarWrap: { position: 'relative' },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: COLORS.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+  cardTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 12 },
+  avatar: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  avatarText: { fontSize: 18, fontWeight: '800' },
+  driverInfo: { flex: 1 },
+  driverName: { color: COLORS.text, fontSize: 14, fontWeight: '700' },
+  driverCar: { color: COLORS.muted, fontSize: 12, marginTop: 2 },
+  driverZone: { color: COLORS.muted, fontSize: 11, marginTop: 2 },
+  statusBadge: { borderRadius: 8, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 3 },
+  statusText: { fontSize: 11, fontWeight: '700' },
+  kpiRow: {
+    flexDirection: 'row', borderTopWidth: 1, borderTopColor: COLORS.border, paddingTop: 10,
   },
-  avatarText: { fontSize: 18, fontWeight: '700', color: '#000' },
-  statusDot: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 13,
-    height: 13,
-    borderRadius: 7,
-    borderWidth: 2,
-    borderColor: COLORS.surface,
-  },
-  cardCenter: { flex: 1 },
-  nameRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 2 },
-  driverName: { fontSize: 15, fontWeight: '700', color: COLORS.text },
-  roleBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  roleBadgeText: { fontSize: 11, color: COLORS.muted },
-  phone: { fontSize: 12, color: COLORS.muted, marginBottom: 4 },
-  statsRow: { flexDirection: 'row', gap: 10, marginBottom: 6 },
-  stat: { fontSize: 11, color: COLORS.muted },
-  statusChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
-    borderWidth: 1,
-    gap: 4,
-  },
-  chipDot: { width: 6, height: 6, borderRadius: 3 },
-  chipText: { fontSize: 11, fontWeight: '600' },
-  cardRight: { paddingLeft: 8 },
-  chevron: { fontSize: 24, color: COLORS.muted },
-  empty: { textAlign: 'center', color: COLORS.muted, marginTop: 40 },
+  kpi: { flex: 1, alignItems: 'center' },
+  kpiNum: { color: COLORS.text, fontSize: 14, fontWeight: '700' },
+  kpiLabel: { color: COLORS.muted, fontSize: 10, marginTop: 2 },
+  kpiDiv: { width: 1, backgroundColor: COLORS.border },
 });
