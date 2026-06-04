@@ -352,6 +352,7 @@ import ClientAddressBookScreen from './screens/client/ClientAddressBookScreen';
 import LivreurScheduleScreen from './screens/delivery/LivreurScheduleScreen';
 import AdminRevenueChartScreen from './screens/admin/AdminRevenueChartScreen';
 import LegalMentionsScreen from './screens/legal/LegalMentionsScreen';
+import ClientLoyaltyScreen from './screens/client/ClientLoyaltyScreen';
 import GroceryReviewsScreen from './screens/grocery/GroceryReviewsScreen';
 import ProviderTripHistoryScreen from './screens/provider/ProviderTripHistoryScreen';
 import AdminNotificationsScreen from './screens/admin/AdminNotificationsScreen';
@@ -1022,6 +1023,7 @@ function MainStack() {
       <Stack.Screen name="GroceryReviews" component={GroceryReviewsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ProviderTripHistory" component={ProviderTripHistoryScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminNotifications" component={AdminNotificationsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ClientLoyalty" component={ClientLoyaltyScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientFeedback" component={ClientFeedbackScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MerchantStockAlert" component={MerchantStockAlertScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientOrdersAll" component={ClientOrdersAllScreen} options={{ headerShown: false }} />
@@ -1054,6 +1056,7 @@ function MainStack() {
       <Stack.Screen name="SOSPayment" component={SOSPaymentScreen} options={{ headerShown: false, gestureEnabled: false }} />
       <Stack.Screen name="ProviderStats" component={ProviderStatsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminNotifications" component={AdminNotificationsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ClientLoyalty" component={ClientLoyaltyScreen} options={{ headerShown: false }} />
       <Stack.Screen name="GroceryCheckoutReview" component={GroceryCheckoutReviewScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MerchantProfile" component={MerchantProfileScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminRefunds" component={AdminRefundsScreen} options={{ headerShown: false }} />
