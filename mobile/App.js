@@ -422,6 +422,10 @@ import GroceryOrderTrackingScreen from './screens/grocery/GroceryOrderTrackingSc
 import ClientNotificationsScreen from './screens/client/ClientNotificationsScreen';
 import DepanneurEarningsScreen from './screens/sos/DepanneurEarningsScreen';
 import AdminKYCDetailScreen from './screens/admin/AdminKYCDetailScreen';
+// Batch 139
+import DriverTripHistoryScreen from './screens/taxi/DriverTripHistoryScreen';
+import GroceryStoreScreen from './screens/grocery/GroceryStoreScreen';
+import AdminUsersScreen from './screens/admin/AdminUsersScreen';
 
 // Batch 46
 import MerchantProfileScreen from './screens/merchant/MerchantProfileScreen';
@@ -1055,6 +1059,9 @@ function MainStack() {
       <Stack.Screen name="ClientNotifications" component={ClientNotificationsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DepanneurEarnings" component={DepanneurEarningsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminKYCDetail" component={AdminKYCDetailScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="DriverTripHistory" component={DriverTripHistoryScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="GroceryStore" component={GroceryStoreScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminUsers" component={AdminUsersScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminCouponList" component={AdminCouponListScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DeliveryRating" component={DeliveryRatingScreen} options={{ headerShown: false, gestureEnabled: false }} />
       <Stack.Screen name="TaxiPromo" component={TaxiPromoScreen} options={{ headerShown: false }} />
@@ -1098,6 +1105,9 @@ function MainStack() {
       <Stack.Screen name="ClientNotifications" component={ClientNotificationsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DepanneurEarnings" component={DepanneurEarningsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminKYCDetail" component={AdminKYCDetailScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="DriverTripHistory" component={DriverTripHistoryScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="GroceryStore" component={GroceryStoreScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminUsers" component={AdminUsersScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MerchantProfile" component={MerchantProfileScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminRefunds" component={AdminRefundsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiConfirmRide" component={TaxiConfirmRideScreen} options={{ headerShown: false }} />
