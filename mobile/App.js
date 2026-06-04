@@ -503,6 +503,11 @@ import PromoCodesClientScreen from './screens/promo/PromoCodesClientScreen';
 import ProviderIncidentScreen from './screens/provider/ProviderIncidentScreen';
 import AdminSOSInterventionsScreen from './screens/admin/AdminSOSInterventionsScreen';
 
+// Batch 93
+import WalletHistoryScreen from './screens/wallet/WalletHistoryScreen';
+import LivreurProfileScreen from './screens/delivery/LivreurProfileScreen';
+import AdminEasyPassScreen from './screens/admin/AdminEasyPassScreen';
+
 const Stack = createNativeStackNavigator();
 
 const linking = {
@@ -751,6 +756,9 @@ function MainStack() {
       <Stack.Screen name="PromoCodesClient" component={PromoCodesClientScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ProviderIncident" component={ProviderIncidentScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminSOSInterventions" component={AdminSOSInterventionsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="WalletHistory" component={WalletHistoryScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="LivreurProfile" component={LivreurProfileScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminEasyPass" component={AdminEasyPassScreen} options={{ headerShown: false }} />
 
       {/* Chat */}
       <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
