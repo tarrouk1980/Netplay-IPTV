@@ -49,19 +49,27 @@ jobs:
       - name: Bundle JS into APK
         working-directory: mobile
         run: |
+          set -e
           mkdir -p android/app/src/main/assets
+          ENTRY="node_modules/expo/AppEntry.js"
+          if [ ! -f "$ENTRY" ]; then
+            echo "ERROR: $ENTRY not found"
+            exit 1
+          fi
           npx react-native bundle \
             --platform android \
             --dev false \
-            --entry-file node_modules/expo/AppEntry.js \
+            --entry-file "$ENTRY" \
             --bundle-output android/app/src/main/assets/index.android.bundle \
-            --assets-dest android/app/src/main/res \
-            2>&1 | tail -20
+            --assets-dest android/app/src/main/res
+          echo "=== Bundle size ==="
+          ls -lh android/app/src/main/assets/index.android.bundle
 
       - name: Build Debug APK
         working-directory: mobile/android
         env:
           GRADLE_OPTS: "-Xmx4096m -XX:MaxMetaspaceSize=512m"
+          SKIP_BUNDLING: "true"
         run: ./gradlew assembleDebug --no-daemon 2>&1 | tail -60
 
       - name: Locate APK
