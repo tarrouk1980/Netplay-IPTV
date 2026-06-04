@@ -532,6 +532,9 @@ import AdminAppSettingsScreen from './screens/admin/AdminAppSettingsScreen';
 
 // Batch 101
 
+// Batch 102
+import GroceryOrderTrackingScreen from './screens/grocery/GroceryOrderTrackingScreen';
+import SecuritySettingsScreen from './screens/profile/SecuritySettingsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -963,6 +966,8 @@ function MainStack() {
       <Stack.Screen name="DepanneurStatus" component={DepanneurStatusScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminLiveMap" component={AdminLiveMapScreen} options={{ headerShown: false }} />
       <Stack.Screen name="LivreurHistory" component={LivreurHistoryScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="GroceryOrderTracking" component={GroceryOrderTrackingScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="SecuritySettings" component={SecuritySettingsScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
