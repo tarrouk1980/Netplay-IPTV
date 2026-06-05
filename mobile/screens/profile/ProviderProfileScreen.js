@@ -49,7 +49,7 @@ export default function ProviderProfileScreen({ route, navigation }) {
   const [reviews, setReviews] = useState([]);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) { setLoading(false); return; }
     api.get(`/api/users/provider/${userId}/profile`)
       .then((res) => setProvider(res.data))
       .catch((err) => {

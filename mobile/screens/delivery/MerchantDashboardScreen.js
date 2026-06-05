@@ -60,6 +60,9 @@ export default function MerchantDashboardScreen({ navigation }) {
       <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
 
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={{ padding: 8, marginRight: 8 }}>
+          <Text style={{ color: '#FFFFFF', fontSize: 24, fontWeight: '300' }}>‹</Text>
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>🏪 Mon commerce</Text>
         <TouchableOpacity
           style={[styles.statusToggle, isOpen ? styles.statusOpen : styles.statusClosed]}
