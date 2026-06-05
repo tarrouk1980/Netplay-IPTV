@@ -48,7 +48,7 @@ const DEFAULT_PROMOS = [
   { id: 'p1', label: '🔥 -20% sur EasyTaxy', sub: 'Ce week-end seulement', color: '#F5A623', imageUrl: null, ctaUrl: null },
   { id: 'p2', label: '🚀 Livraison gratuite', sub: 'Commandes > 30 TND', color: '#27AE60', imageUrl: null, ctaUrl: null },
   { id: 'p3', label: '💎 Pass VIP -50%', sub: 'Offre limitée', color: '#D32F2F', imageUrl: null, ctaUrl: null },
-  { id: 'p4', label: '👩 Easy For Lady disponible', sub: 'Conductrices certifiées', color: '#E91E8C', imageUrl: null, ctaUrl: null },
+  { id: 'p4', label: '🛵 Easy For Lady disponible', sub: 'Conductrices certifiées', color: '#E91E8C', imageUrl: null, ctaUrl: null },
   { id: 'p5', label: '🚑 SOS 24h/24', sub: 'Dépannage rapide en Tunisie', color: '#E74C3C', imageUrl: null, ctaUrl: null },
 ];
 
@@ -122,28 +122,18 @@ export default function HomeScreen({ navigation }) {
 
     const PROVIDER_ROLES = ['CHAUFFEUR', 'LIVREUR', 'DEPANNEUR', 'MARCHAND'];
 
-    const timer = setTimeout(() => {
-      try {
-        if (user.role === 'ADMIN') {
-          navigation.reset({ index: 0, routes: [{ name: 'AdminDashboard' }] });
-          return;
-        }
-        if (PROVIDER_ROLES.includes(user.role)) {
-          const kycOk = user.kycStatus === 'APPROVED';
-          const dashMap = {
-            CHAUFFEUR: 'DriverDashboard',
-            LIVREUR: 'LivreurDashboard',
-            DEPANNEUR: 'DepanneurDashboard',
-            MARCHAND: 'MerchantDashboard',
-          };
-          const target = kycOk && dashMap[user.role] ? dashMap[user.role] : 'KYCPending';
-          navigation.reset({ index: 0, routes: [{ name: target }] });
-          return;
-        }
-        // CLIENT → reste sur HomeScreen
-      } catch {}
-    }, 100);
-    return () => clearTimeout(timer);
+    try {
+      if (user.role === 'ADMIN') { navigation.replace('AdminDashboard'); return; }
+      if (PROVIDER_ROLES.includes(user.role)) {
+        if (user.kycStatus !== 'APPROVED') { navigation.replace('KYCPending'); return; }
+        if (user.role === 'CHAUFFEUR') navigation.replace('DriverDashboard');
+        else if (user.role === 'LIVREUR') navigation.replace('LivreurDashboard');
+        else if (user.role === 'DEPANNEUR') navigation.replace('DepanneurDashboard');
+        else if (user.role === 'MARCHAND') navigation.replace('MerchantDashboard');
+        return;
+      }
+    } catch {}
+    // CLIENT → reste sur HomeScreen
   }, [user?.role, user?.kycStatus]);
 
   const activeOrder = (() => {
