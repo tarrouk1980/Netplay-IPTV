@@ -124,7 +124,7 @@ export default function OnboardingScreen({ navigation }) {
                 <Text style={styles.emojiText}>{s.emoji}</Text>
               </View>
             )}
-            <Text style={[styles.slideTitle, { color: s.color }]}>{s.title}</Text>
+            <Text style={[styles.slideTitle, { color: s.key === '1' ? COLORS.text : s.color }]}>{s.title}</Text>
             <Text style={styles.slideSubtitle}>{s.subtitle}</Text>
             <Text style={styles.slideDesc}>{s.desc}</Text>
           </View>

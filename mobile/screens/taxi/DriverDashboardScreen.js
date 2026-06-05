@@ -17,7 +17,7 @@ import useAuthStore from '../../store/authStore';
 import usePassStore from '../../store/passStore';
 import useTaxiStore from '../../store/taxiStore';
 import api from '../../services/api';
-import socketService from '../../services/socket';
+import { getSocket } from '../../services/socket';
 import * as Location from 'expo-location';
 import PassAlertBanner from '../../components/PassAlertBanner';
 
@@ -64,7 +64,7 @@ export default function DriverDashboardScreen({ navigation }) {
   // Listen for incoming taxi requests via Socket.io
   // Navigation vers DriverRequest uniquement si en ligne
   useEffect(() => {
-    const socket = socketService.getSocket();
+    const socket = getSocket();
     if (!socket) return;
 
     const onNewRequest = (data) => {
@@ -145,13 +145,13 @@ export default function DriverDashboardScreen({ navigation }) {
         if (ok) {
           setIsOnline(true);
           // Join TAXI socket room to receive incoming requests
-          const socket = socketService.getSocket();
+          const socket = getSocket();
           if (socket) socket.emit('join:service', 'TAXI');
         }
       } else {
         stopLocationTracking();
         setIsOnline(false);
-        const socket = socketService.getSocket();
+        const socket = getSocket();
         if (socket) socket.emit('leave:service', 'TAXI');
         setIncomingRequests([]);
       }
