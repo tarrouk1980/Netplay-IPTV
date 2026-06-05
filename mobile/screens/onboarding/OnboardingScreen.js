@@ -114,9 +114,16 @@ export default function OnboardingScreen({ navigation }) {
       >
         {SLIDES.map((s) => (
           <View key={s.key} style={styles.slide}>
-            <View style={[styles.emojiCircle, { backgroundColor: s.color + '20', borderColor: s.color + '50' }]}>
-              <Text style={styles.emojiText}>{s.emoji}</Text>
-            </View>
+            {s.key === '1' ? (
+              <View style={[styles.emojiCircle, { backgroundColor: '#1C1C28', borderColor: '#2C2C3A' }]}>
+                <Text style={{ color: '#FFFFFF', fontSize: 28, fontWeight: '900', letterSpacing: 2 }}>EASY</Text>
+                <Text style={{ color: '#D32F2F', fontSize: 28, fontWeight: '900', letterSpacing: 2 }}>WAY</Text>
+              </View>
+            ) : (
+              <View style={[styles.emojiCircle, { backgroundColor: s.color + '20', borderColor: s.color + '50' }]}>
+                <Text style={styles.emojiText}>{s.emoji}</Text>
+              </View>
+            )}
             <Text style={[styles.slideTitle, { color: s.color }]}>{s.title}</Text>
             <Text style={styles.slideSubtitle}>{s.subtitle}</Text>
             <Text style={styles.slideDesc}>{s.desc}</Text>
