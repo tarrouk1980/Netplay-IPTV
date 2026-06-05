@@ -262,6 +262,123 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ── Bannières Publicitaires ── */}
+      <section className="py-6 px-4 bg-white border-b border-slate-100">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="bg-rose-800 text-white text-[10px] font-black px-2 py-0.5 rounded">SPONSORISÉ</span>
+            <span className="text-slate-400 text-xs">Espaces publicitaires premium</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              { bg: "from-amber-400 to-orange-500", icon: "⚡", title: "Flash Deal", sub: "Jusqu'à -70% aujourd'hui", badge: "Expire dans 2h" },
+              { bg: "from-rose-700 to-rose-900", icon: "🏆", title: "Produit Vedette", sub: "Boostez votre visibilité x10", badge: "Annonceur" },
+              { bg: "from-slate-700 to-slate-900", icon: "📣", title: "Votre Pub Ici", sub: "Touchez 50 000+ acheteurs/jour", badge: "Disponible" },
+            ].map(({ bg, icon, title, sub, badge }) => (
+              <div key={title} className={`bg-gradient-to-r ${bg} rounded-2xl p-5 text-white flex items-center gap-4 cursor-pointer hover:opacity-90 transition`}>
+                <span className="text-4xl">{icon}</span>
+                <div className="flex-1">
+                  <p className="font-black text-lg">{title}</p>
+                  <p className="text-white/80 text-sm">{sub}</p>
+                </div>
+                <span className="bg-white/20 text-white text-xs font-bold px-2 py-1 rounded-lg flex-shrink-0">{badge}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── FBO — Fulfillment By OPTIMARK ── */}
+      <section className="py-14 px-4 bg-slate-900 text-white">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row items-center gap-10">
+            <div className="flex-shrink-0 text-center">
+              <div className="w-28 h-28 bg-rose-800 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-xl shadow-rose-900/50">
+                <span className="text-6xl">📦</span>
+              </div>
+              <span className="bg-rose-800 text-white text-xs font-black px-3 py-1 rounded-full">NOUVEAU</span>
+            </div>
+            <div className="flex-1">
+              <p className="text-rose-400 font-bold text-sm uppercase tracking-widest mb-2">Fulfillment By OPTIMARK</p>
+              <h2 className="text-3xl font-black mb-3">Vendez. On s&apos;occupe du reste.</h2>
+              <p className="text-slate-400 mb-6">Stockage, emballage, livraison et retours gérés par OPTIMARK. Concentrez-vous sur vos ventes, on fait le reste — comme Amazon FBA mais pour la Tunisie.</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                {[
+                  { icon: "🏭", text: "Stockage sécurisé" },
+                  { icon: "📬", text: "Livraison J+1" },
+                  { icon: "↩️", text: "Retours gérés" },
+                  { icon: "📊", text: "Suivi en temps réel" },
+                ].map(({ icon, text }) => (
+                  <div key={text} className="bg-slate-800 rounded-xl p-3 text-center">
+                    <span className="text-2xl block mb-1">{icon}</span>
+                    <span className="text-xs text-slate-300 font-medium">{text}</span>
+                  </div>
+                ))}
+              </div>
+              <Link href="/pricing" className="inline-flex items-center gap-2 bg-rose-800 hover:bg-rose-700 text-white font-bold px-6 py-3 rounded-xl transition">
+                Démarrer avec FBO →
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Livraison Express ── */}
+      <section className="py-12 px-4 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row items-center gap-8 bg-gradient-to-r from-rose-50 to-white border border-rose-100 rounded-3xl p-8">
+            <div className="flex-1">
+              <div className="inline-flex items-center gap-2 bg-rose-100 text-rose-800 text-xs font-black px-3 py-1 rounded-full mb-4">
+                ⚡ OPTIMARK EXPRESS
+              </div>
+              <h2 className="text-2xl font-black text-slate-900 mb-3">Livraison en 24h partout en Tunisie</h2>
+              <p className="text-slate-500 mb-5">Abonnez-vous à OPTIMARK Express et profitez de livraisons prioritaires, retours gratuits et accès aux ventes privées.</p>
+              <div className="flex flex-wrap gap-3 mb-6">
+                {["🚀 Livraison J+1", "↩️ Retours gratuits", "🔒 Paiement sécurisé", "🎁 Ventes privées"].map(t => (
+                  <span key={t} className="bg-white border border-rose-200 text-slate-700 text-xs font-semibold px-3 py-1.5 rounded-full">{t}</span>
+                ))}
+              </div>
+              <Link href="/pricing" className="inline-flex items-center gap-2 bg-rose-800 hover:bg-rose-900 text-white font-bold px-6 py-3 rounded-xl transition shadow-md shadow-rose-200">
+                Essayer Express gratuit 30 jours →
+              </Link>
+            </div>
+            <div className="flex-shrink-0">
+              <div className="w-32 h-32 bg-rose-800 rounded-full flex items-center justify-center shadow-xl shadow-rose-200 animate-float">
+                <span className="text-6xl">🚚</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Dashboard Vendeur ── */}
+      <section className="py-12 px-4 bg-slate-50">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-black text-slate-900 mb-2">Dashboard Vendeur Pro</h2>
+            <p className="text-slate-500">Gérez votre boutique, vos commandes et vos analyses en temps réel</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            {[
+              { icon: "📊", title: "Analytics IA", desc: "Ventes, conversions, ROI — analysés par l'IA pour optimiser vos revenus", color: "border-purple-200 bg-purple-50" },
+              { icon: "🏪", title: "Gestion Boutique", desc: "Ajoutez produits, gérez stock et commandes depuis un seul endroit", color: "border-rose-200 bg-rose-50" },
+              { icon: "📣", title: "Publicité Ciblée", desc: "Créez des campagnes publicitaires et boostez vos produits en 1 clic", color: "border-amber-200 bg-amber-50" },
+            ].map(({ icon, title, desc, color }) => (
+              <div key={title} className={`border ${color} rounded-2xl p-6`}>
+                <span className="text-4xl block mb-3">{icon}</span>
+                <h3 className="font-black text-slate-800 mb-2">{title}</h3>
+                <p className="text-slate-500 text-sm">{desc}</p>
+              </div>
+            ))}
+          </div>
+          <div className="text-center">
+            <Link href="/vendeur/dashboard" className="inline-flex items-center gap-2 bg-rose-800 hover:bg-rose-900 text-white font-bold px-8 py-3.5 rounded-xl transition shadow-md shadow-rose-200">
+              Accéder au Dashboard →
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* ── AI Features Banner ── */}
       <section className="py-12 px-4 bg-gradient-to-r from-slate-900 to-purple-950">
         <div className="max-w-6xl mx-auto">
