@@ -80,7 +80,7 @@ export default function LoginScreen({ navigation }) {
   const { setUser, setTokens: storeSetTokens } = useAuthStore();
 
   const handleDemoLogin = async (account) => {
-    const user = { id: account.role.toLowerCase() + '_demo', name: account.name, phone: account.phone, role: account.role };
+    const user = { id: account.role.toLowerCase() + '_demo', name: account.name, phone: account.phone, role: account.role, kycStatus: 'APPROVED' };
     await AsyncStorage.setItem('user', JSON.stringify(user));
     await AsyncStorage.setItem('accessToken', 'demo_token_' + account.role);
     storeSetTokens('demo_token_' + account.role, 'demo_refresh_' + account.role);

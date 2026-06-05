@@ -122,29 +122,28 @@ export default function HomeScreen({ navigation }) {
 
     const PROVIDER_ROLES = ['CHAUFFEUR', 'LIVREUR', 'DEPANNEUR', 'MARCHAND'];
 
-    try {
-      if (user.role === 'ADMIN') {
-        navigation.reset({ index: 0, routes: [{ name: 'AdminDashboard' }] });
-        return;
-      }
-      if (PROVIDER_ROLES.includes(user.role)) {
-        if (user.kycStatus !== 'APPROVED') {
-          navigation.reset({ index: 0, routes: [{ name: 'KYCPending' }] });
+    const timer = setTimeout(() => {
+      try {
+        if (user.role === 'ADMIN') {
+          navigation.reset({ index: 0, routes: [{ name: 'AdminDashboard' }] });
           return;
         }
-        const dashMap = {
-          CHAUFFEUR: 'DriverDashboard',
-          LIVREUR: 'LivreurDashboard',
-          DEPANNEUR: 'DepanneurDashboard',
-          MARCHAND: 'MerchantDashboard',
-        };
-        if (dashMap[user.role]) {
-          navigation.reset({ index: 0, routes: [{ name: dashMap[user.role] }] });
+        if (PROVIDER_ROLES.includes(user.role)) {
+          const kycOk = user.kycStatus === 'APPROVED';
+          const dashMap = {
+            CHAUFFEUR: 'DriverDashboard',
+            LIVREUR: 'LivreurDashboard',
+            DEPANNEUR: 'DepanneurDashboard',
+            MARCHAND: 'MerchantDashboard',
+          };
+          const target = kycOk && dashMap[user.role] ? dashMap[user.role] : 'KYCPending';
+          navigation.reset({ index: 0, routes: [{ name: target }] });
+          return;
         }
-        return;
-      }
-    } catch {}
-    // CLIENT → reste sur HomeScreen
+        // CLIENT → reste sur HomeScreen
+      } catch {}
+    }, 100);
+    return () => clearTimeout(timer);
   }, [user?.role, user?.kycStatus]);
 
   const activeOrder = (() => {

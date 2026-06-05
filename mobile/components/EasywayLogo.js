@@ -28,11 +28,11 @@ export default function EasywayLogo({ size = 120, showTagline = false }) {
         {/* EASY in white */}
         <SvgText
           x="60"
-          y="58"
+          y="55"
           textAnchor="middle"
-          fontSize="30"
+          fontSize="26"
           fontWeight="900"
-          letterSpacing="-1"
+          letterSpacing="2"
           fill="#FFFFFF"
           fontFamily="System"
         >
@@ -41,11 +41,11 @@ export default function EasywayLogo({ size = 120, showTagline = false }) {
         {/* WAY in red */}
         <SvgText
           x="60"
-          y="88"
+          y="83"
           textAnchor="middle"
-          fontSize="30"
+          fontSize="26"
           fontWeight="900"
-          letterSpacing="-1"
+          letterSpacing="2"
           fill="#D32F2F"
           fontFamily="System"
         >
