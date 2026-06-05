@@ -49,6 +49,9 @@ export default function DriverDashboardScreen({ navigation }) {
 
   useEffect(() => {
     fetchSubscription();
+    fetchPassStatus();
+    fetchTodayEarnings();
+  }, []);
 
   // Block Android hardware back button — this is a root dashboard screen
   useFocusEffect(
@@ -57,9 +60,6 @@ export default function DriverDashboardScreen({ navigation }) {
       return () => sub.remove();
     }, [])
   );
-    fetchPassStatus();
-    fetchTodayEarnings();
-  }, []);
 
   // Listen for incoming taxi requests via Socket.io
   // Navigation vers DriverRequest uniquement si en ligne

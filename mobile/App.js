@@ -1276,8 +1276,9 @@ export default function App() {
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="__Loading" component={() => (
             <View style={{ flex: 1, backgroundColor: '#0A0A0F', alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 48, marginBottom: 16 }}>⚡</Text>
-              <Text style={{ color: '#F5A623', fontSize: 22, fontWeight: '900', letterSpacing: 3 }}>EASYWAY</Text>
+              <Text style={{ color: '#FFFFFF', fontSize: 26, fontWeight: '900', letterSpacing: 2 }}>EASY</Text>
+              <Text style={{ color: '#D32F2F', fontSize: 26, fontWeight: '900', letterSpacing: 2, marginBottom: 8 }}>WAY</Text>
+              <Text style={{ color: '#8E8E9A', fontSize: 11, letterSpacing: 0.5 }}>La super-app tunisienne</Text>
             </View>
           )} />
         </Stack.Navigator>
