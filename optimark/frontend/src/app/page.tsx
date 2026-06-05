@@ -8,11 +8,22 @@ import ServiceCard from "@/components/ServiceCard";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+const CATEGORIES = [
+  { icon: "📱", label: "Électronique", href: "/produits?cat=electronique" },
+  { icon: "👗", label: "Mode", href: "/produits?cat=mode" },
+  { icon: "🏺", label: "Artisanat", href: "/produits?cat=decoration" },
+  { icon: "💼", label: "Services", href: "/services" },
+  { icon: "🏠", label: "Maison", href: "/produits?cat=maison" },
+  { icon: "🥘", label: "Alimentation", href: "/produits?cat=alimentation" },
+  { icon: "⚽", label: "Sport", href: "/produits?cat=sport" },
+];
+
 export default function HomePage() {
   const [trending, setTrending] = useState<any[]>([]);
   const [lives, setLives] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [heroSearch, setHeroSearch] = useState("");
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -38,191 +49,225 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
       <Header />
 
-      <section className="bg-gradient-to-br from-blue-800 to-blue-600 text-white py-20 px-4">
-        <div className="max-w-5xl mx-auto text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-            La marketplace tunisienne<br />qui change tout
-          </h1>
-          <p className="text-xl md:text-2xl text-blue-100 mb-10 max-w-2xl mx-auto">
-            Achetez, vendez et collaborez avec des milliers de Tunisiens. Produits, services et artisans au même endroit.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/produits" className="bg-white text-blue-800 font-bold px-8 py-4 rounded-xl text-lg hover:bg-blue-50 transition">
-              Explorer
-            </Link>
-            <Link href="/auth/inscription" className="border-2 border-white text-white font-bold px-8 py-4 rounded-xl text-lg hover:bg-white hover:text-blue-800 transition">
-              Vendre
-            </Link>
-          </div>
-        </div>
-      </section>
+      {/* ── Hero ── */}
+      <section className="relative bg-red-600 text-white overflow-hidden">
+        {/* decorative circles */}
+        <div className="absolute -top-20 -right-20 w-96 h-96 bg-red-500 rounded-full opacity-40" />
+        <div className="absolute -bottom-16 -left-16 w-72 h-72 bg-red-700 rounded-full opacity-50" />
+        <div className="absolute top-10 left-1/3 w-40 h-40 bg-white rounded-full opacity-5" />
 
-      <section className="py-16 px-4 bg-slate-50">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-slate-800 text-center mb-12">Explorez nos catégories</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Link href="/produits" className="group bg-white rounded-2xl shadow-md p-8 flex flex-col items-center hover:shadow-xl transition">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4 group-hover:bg-blue-200 transition">
-                <span className="text-3xl">📦</span>
-              </div>
-              <h3 className="text-xl font-bold text-slate-800 mb-2">Produits</h3>
-              <p className="text-slate-500 text-center">Électronique, mode, maison, alimentation et bien plus encore.</p>
-            </Link>
-            <Link href="/services" className="group bg-white rounded-2xl shadow-md p-8 flex flex-col items-center hover:shadow-xl transition">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4 group-hover:bg-blue-200 transition">
-                <span className="text-3xl">💼</span>
-              </div>
-              <h3 className="text-xl font-bold text-slate-800 mb-2">Services</h3>
-              <p className="text-slate-500 text-center">Freelances tunisiens pour vos projets web, design, marketing et plus.</p>
-            </Link>
-            <Link href="/produits" className="group bg-white rounded-2xl shadow-md p-8 flex flex-col items-center hover:shadow-xl transition">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4 group-hover:bg-blue-200 transition">
-                <span className="text-3xl">🏺</span>
-              </div>
-              <h3 className="text-xl font-bold text-slate-800 mb-2">Artisans</h3>
-              <p className="text-slate-500 text-center">Produits artisanaux authentiques directement des artisans tunisiens.</p>
-            </Link>
-          </div>
-        </div>
-      </section>
+        <div className="relative max-w-6xl mx-auto px-4 py-16 md:py-24">
+          <div className="max-w-3xl mx-auto text-center">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur border border-white/25 rounded-full px-4 py-1.5 text-sm font-medium mb-6">
+              <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
+              La marketplace tunisienne #1
+            </div>
 
-      <section className="py-16 px-4 bg-blue-800 text-white">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Une opportunité unique en Tunisie</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <div>
-              <p className="text-5xl font-extrabold mb-2">12M+</p>
-              <p className="text-blue-200 text-lg">internautes tunisiens</p>
+            <h1 className="text-4xl md:text-6xl font-black text-white leading-tight mb-5">
+              Achetez et vendez<br />
+              <span className="text-white/90">comme jamais avant</span>
+            </h1>
+
+            <p className="text-red-100 text-lg mb-10 max-w-lg mx-auto">
+              Produits, services et artisans tunisiens — au même endroit, en toute confiance.
+            </p>
+
+            {/* Hero search bar */}
+            <div className="flex bg-white rounded-2xl overflow-hidden shadow-2xl max-w-2xl mx-auto mb-8">
+              <input
+                type="text"
+                value={heroSearch}
+                onChange={(e) => setHeroSearch(e.target.value)}
+                placeholder="Que recherchez-vous ?"
+                className="flex-1 px-5 py-4 text-slate-700 outline-none text-base placeholder-slate-400"
+              />
+              <Link
+                href={`/produits${heroSearch ? `?q=${encodeURIComponent(heroSearch)}` : ""}`}
+                className="bg-red-600 hover:bg-red-700 text-white font-bold px-7 py-4 transition flex items-center gap-2 flex-shrink-0"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <span className="hidden sm:inline">Chercher</span>
+              </Link>
             </div>
-            <div>
-              <p className="text-5xl font-extrabold mb-2">0</p>
-              <p className="text-blue-200 text-lg">concurrent local sérieux</p>
-            </div>
-            <div>
-              <p className="text-5xl font-extrabold mb-2">2.1Md$</p>
-              <p className="text-blue-200 text-lg">marché e-commerce estimé</p>
+
+            {/* Quick links */}
+            <div className="flex flex-wrap gap-2 justify-center">
+              {CATEGORIES.slice(0, 5).map(({ icon, label, href }) => (
+                <Link key={label} href={href} className="bg-white/15 hover:bg-white/25 border border-white/20 text-white text-sm px-4 py-1.5 rounded-full transition font-medium">
+                  {icon} {label}
+                </Link>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
-      <section className="py-16 px-4 bg-white">
+      {/* ── Stats ── */}
+      <section className="bg-white border-b border-slate-100">
+        <div className="max-w-5xl mx-auto px-4 py-8 grid grid-cols-3 gap-4 text-center">
+          {[
+            { value: "12M+", label: "internautes tunisiens" },
+            { value: "100%", label: "paiements sécurisés" },
+            { value: "2.1Md$", label: "marché e-commerce TN" },
+          ].map(({ value, label }) => (
+            <div key={label}>
+              <p className="text-2xl md:text-4xl font-black text-red-600">{value}</p>
+              <p className="text-slate-500 text-xs md:text-sm mt-1">{label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Categories ── */}
+      <section className="py-12 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold text-slate-800">Tendances du moment</h2>
-            <Link href="/produits" className="text-blue-800 font-medium text-sm hover:underline">Voir tout</Link>
+          <h2 className="text-2xl font-black text-slate-900 mb-6">Explorez les catégories</h2>
+          <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+            {CATEGORIES.map(({ icon, label, href }) => (
+              <Link
+                key={label}
+                href={href}
+                className="flex-shrink-0 flex flex-col items-center gap-2 group"
+              >
+                <div className="w-16 h-16 md:w-20 md:h-20 bg-red-50 group-hover:bg-red-100 rounded-2xl flex items-center justify-center text-3xl transition-all duration-200 group-hover:scale-105 shadow-sm">
+                  {icon}
+                </div>
+                <span className="text-xs font-semibold text-slate-600 group-hover:text-red-600 transition whitespace-nowrap">{label}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Trending Products ── */}
+      <section className="py-12 px-4 bg-slate-50">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-black text-slate-900">Tendances du moment</h2>
+              <p className="text-slate-500 text-sm mt-0.5">Les produits les plus populaires</p>
+            </div>
+            <Link href="/produits" className="text-red-600 font-bold text-sm hover:underline flex items-center gap-1">
+              Voir tout <span>→</span>
+            </Link>
           </div>
           {loading ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="bg-slate-100 rounded-xl h-64 animate-pulse" />
+                <div key={i} className="skeleton rounded-2xl h-64" />
               ))}
             </div>
           ) : trending.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {trending.map((p: any) => (
-                <ProductCard
-                  key={p.id}
-                  id={p.id}
-                  title={p.title}
-                  price={p.price}
-                  seller={p.seller?.name || "Vendeur"}
-                  rating={0}
-                  isVerified={p.seller?.isVerified}
-                  category={p.category}
-                />
+                <ProductCard key={p.id} id={p.id} title={p.title} price={p.price} seller={p.seller?.name || "Vendeur"} rating={0} isVerified={p.seller?.isVerified} category={p.category} />
               ))}
             </div>
           ) : (
-            <p className="text-slate-400 text-center py-8">Aucun produit tendance pour le moment.</p>
+            <div className="text-center py-16 bg-white rounded-2xl border border-slate-100">
+              <span className="text-4xl mb-3 block">📦</span>
+              <p className="text-slate-400 font-medium">Aucun produit tendance pour le moment.</p>
+              <Link href="/produits" className="text-red-600 font-semibold text-sm mt-2 inline-block hover:underline">Voir tous les produits →</Link>
+            </div>
           )}
         </div>
       </section>
 
-      <section className="py-16 px-4 bg-slate-50">
+      {/* ── Live Commerce ── */}
+      <section className="py-12 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <span className="w-3 h-3 bg-red-600 rounded-full animate-pulse inline-block"></span>
-              <h2 className="text-2xl font-bold text-slate-800">Lives en cours</h2>
+              <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center shadow-md shadow-red-200">
+                <span className="w-3 h-3 bg-white rounded-full animate-pulse" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-black text-slate-900">Lives en cours</h2>
+                <p className="text-slate-500 text-sm">Commerce en direct</p>
+              </div>
             </div>
-            <Link href="/live" className="text-blue-800 font-medium text-sm hover:underline">Voir tout</Link>
+            <Link href="/live" className="text-red-600 font-bold text-sm hover:underline flex items-center gap-1">
+              Voir tout <span>→</span>
+            </Link>
           </div>
+
           {loading ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="bg-slate-200 rounded-xl h-56 animate-pulse" />
+                <div key={i} className="skeleton rounded-2xl h-48" />
               ))}
             </div>
           ) : lives.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {lives.map((l: any) => (
-                <LiveCard
-                  key={l.id}
-                  id={l.id}
-                  title={l.title}
-                  vendorName={l.vendor?.name || "Vendeur"}
-                  viewerCount={l.viewerCount}
-                  isActive={l.isActive}
-                />
+                <LiveCard key={l.id} id={l.id} title={l.title} vendorName={l.vendor?.name || "Vendeur"} viewerCount={l.viewerCount} isActive={l.isActive} />
               ))}
             </div>
           ) : (
-            <div className="text-center py-12">
-              <p className="text-slate-400 mb-4">Aucun live en cours pour le moment.</p>
-              <Link href="/vendeur/live" className="text-blue-800 font-semibold hover:underline text-sm">Démarrer un live</Link>
+            <div className="text-center py-16 bg-red-50 rounded-2xl border border-red-100">
+              <span className="text-4xl mb-3 block">🎥</span>
+              <p className="text-slate-500 font-medium mb-3">Aucun live en cours pour le moment.</p>
+              <Link href="/vendeur/live" className="bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition inline-block">
+                Démarrer un live
+              </Link>
             </div>
           )}
         </div>
       </section>
 
-      <section className="py-16 px-4 bg-white">
+      {/* ── Popular Services ── */}
+      <section className="py-12 px-4 bg-slate-50">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold text-slate-800">Services populaires</h2>
-            <Link href="/services" className="text-blue-800 font-medium text-sm hover:underline">Voir tout</Link>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-black text-slate-900">Services populaires</h2>
+              <p className="text-slate-500 text-sm mt-0.5">Freelances tunisiens de qualité</p>
+            </div>
+            <Link href="/services" className="text-red-600 font-bold text-sm hover:underline flex items-center gap-1">
+              Voir tout <span>→</span>
+            </Link>
           </div>
           {loading ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="bg-slate-100 rounded-xl h-64 animate-pulse" />
+                <div key={i} className="skeleton rounded-2xl h-56" />
               ))}
             </div>
           ) : services.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {services.map((s: any) => (
-                <ServiceCard
-                  key={s.id}
-                  id={s.id}
-                  title={s.title}
-                  provider={s.seller?.name || "Prestataire"}
-                  startingPrice={s.price}
-                  rating={0}
-                  category={s.category}
-                  isVerified={s.seller?.isVerified}
-                />
+                <ServiceCard key={s.id} id={s.id} title={s.title} provider={s.seller?.name || "Prestataire"} startingPrice={s.price} rating={0} category={s.category} isVerified={s.seller?.isVerified} />
               ))}
             </div>
           ) : (
-            <p className="text-slate-400 text-center py-8">Aucun service pour le moment.</p>
+            <div className="text-center py-16 bg-white rounded-2xl border border-slate-100">
+              <span className="text-4xl mb-3 block">💼</span>
+              <p className="text-slate-400 font-medium">Aucun service pour le moment.</p>
+            </div>
           )}
         </div>
       </section>
 
-      <section className="py-16 px-4 bg-white">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-slate-800 mb-4">Prêt à rejoindre OPTIMARK ?</h2>
-          <p className="text-slate-500 text-lg mb-8">
+      {/* ── CTA Banner ── */}
+      <section className="py-16 px-4 bg-red-600">
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="text-3xl md:text-4xl font-black text-white mb-4">
+            Prêt à rejoindre OPTIMARK ?
+          </h2>
+          <p className="text-red-100 text-lg mb-8">
             Créez votre compte gratuitement et commencez à acheter ou vendre dès aujourd&apos;hui.
           </p>
-          <div className="flex gap-4 justify-center">
-            <Link href="/auth/inscription" className="bg-blue-800 text-white font-bold px-10 py-4 rounded-xl text-lg hover:bg-blue-700 transition">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/auth/inscription" className="bg-white text-red-600 font-black px-10 py-4 rounded-2xl text-lg hover:bg-red-50 transition shadow-lg shadow-red-800/20">
               Créer un compte gratuit
             </Link>
-            <Link href="/pricing" className="border-2 border-blue-800 text-blue-800 font-bold px-10 py-4 rounded-xl text-lg hover:bg-blue-50 transition">
+            <Link href="/pricing" className="border-2 border-white/60 text-white font-bold px-10 py-4 rounded-2xl text-lg hover:bg-white/10 transition">
               Voir les tarifs
             </Link>
           </div>

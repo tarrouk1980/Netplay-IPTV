@@ -1,66 +1,151 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
-import SearchBar from "./SearchBar";
 
 export default function Header() {
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const pathname = usePathname();
+
+  const navLinks = [
+    { href: "/", label: "Accueil" },
+    { href: "/produits", label: "Produits" },
+    { href: "/services", label: "Services" },
+    { href: "/pricing", label: "Tarifs" },
+  ];
 
   return (
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
-      <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-        <Link href="/" className="text-2xl font-extrabold text-blue-800 tracking-tight">
-          OPTIMARK
-        </Link>
+    <>
+      <header className="bg-white border-b border-red-100 sticky top-0 z-50 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4">
+          {/* Main bar */}
+          <div className="flex items-center gap-3 py-3">
+            {/* Logo */}
+            <Link href="/" className="flex-shrink-0 mr-2">
+              <span className="text-2xl font-black tracking-tight leading-none">
+                <span className="text-red-600">OPTI</span>
+                <span className="text-slate-900">MARK</span>
+              </span>
+            </Link>
 
-        <div className="hidden md:flex flex-1 max-w-lg mx-6">
-          <SearchBar />
+            {/* Search — desktop */}
+            <div className="hidden md:flex flex-1 max-w-2xl">
+              <div className="flex w-full border border-slate-200 rounded-xl overflow-hidden focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-100 transition">
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Rechercher produits, services, artisans..."
+                  className="flex-1 px-4 py-2.5 bg-white text-slate-700 placeholder-slate-400 outline-none text-sm"
+                />
+                <button className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 font-semibold text-sm transition flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  Chercher
+                </button>
+              </div>
+            </div>
+
+            {/* Mobile right actions */}
+            <div className="flex md:hidden items-center gap-2 ml-auto">
+              <button className="p-2 text-slate-500 hover:text-red-600 transition">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </button>
+              <Link href="/panier" className="p-2 text-slate-500 hover:text-red-600 transition relative">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+              </Link>
+            </div>
+
+            {/* Desktop right actions */}
+            <div className="hidden md:flex items-center gap-2 flex-shrink-0 ml-auto">
+              <Link href="/panier" className="p-2.5 text-slate-500 hover:text-red-600 transition">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+              </Link>
+              <Link href="/auth/connexion" className="text-slate-700 font-semibold hover:text-red-600 transition text-sm px-4 py-2.5 rounded-xl hover:bg-red-50">
+                Connexion
+              </Link>
+              <Link href="/auth/inscription" className="bg-red-600 hover:bg-red-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition shadow-sm shadow-red-200">
+                S&apos;inscrire
+              </Link>
+            </div>
+          </div>
+
+          {/* Desktop nav */}
+          <nav className="hidden md:flex items-center gap-1 border-t border-slate-50 pt-1.5 pb-1.5">
+            {navLinks.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition ${
+                  pathname === href
+                    ? "bg-red-50 text-red-600 font-semibold"
+                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                }`}
+              >
+                {label}
+              </Link>
+            ))}
+            <Link
+              href="/live"
+              className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition flex items-center gap-1.5 ${
+                pathname === "/live" ? "bg-red-100 text-red-700" : "text-red-600 hover:bg-red-50"
+              }`}
+            >
+              <span className="w-2 h-2 bg-red-600 rounded-full animate-pulse" />
+              Live
+            </Link>
+          </nav>
         </div>
+      </header>
 
-        <nav className="hidden md:flex items-center gap-8">
-          <Link href="/" className="text-slate-600 hover:text-blue-800 font-medium transition">Accueil</Link>
-          <Link href="/produits" className="text-slate-600 hover:text-blue-800 font-medium transition">Produits</Link>
-          <Link href="/services" className="text-slate-600 hover:text-blue-800 font-medium transition">Services</Link>
-          <Link href="/live" className="text-red-600 hover:text-red-700 font-medium transition flex items-center gap-1">
-            <span className="w-2 h-2 bg-red-600 rounded-full animate-pulse inline-block"></span>
-            Live
-          </Link>
-          <Link href="/pricing" className="text-slate-600 hover:text-blue-800 font-medium transition">Tarifs</Link>
-        </nav>
-
-        <div className="hidden md:flex items-center gap-4">
-          <Link href="/panier" className="relative p-2 text-slate-600 hover:text-blue-800 transition">
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+      {/* Mobile bottom navigation */}
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white border-t border-red-100 shadow-lg">
+        <div className="flex items-end justify-around px-2 py-1">
+          <Link href="/" className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition ${pathname === "/" ? "text-red-600" : "text-slate-400"}`}>
+            <svg className="w-6 h-6" fill={pathname === "/" ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={pathname === "/" ? 0 : 1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
+            <span className="text-[10px] font-semibold">Accueil</span>
           </Link>
-          <Link href="/auth/connexion" className="text-blue-800 font-semibold hover:text-blue-600 transition">
-            Connexion
+
+          <Link href="/produits" className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition ${pathname.startsWith("/produits") ? "text-red-600" : "text-slate-400"}`}>
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            </svg>
+            <span className="text-[10px] font-semibold">Produits</span>
           </Link>
-          <Link href="/auth/inscription" className="bg-blue-800 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-            S&apos;inscrire
+
+          {/* Live center button */}
+          <Link href="/live" className="flex flex-col items-center -mt-4">
+            <div className="w-14 h-14 rounded-full bg-red-600 flex flex-col items-center justify-center shadow-lg shadow-red-300 border-4 border-white">
+              <span className="w-2 h-2 bg-white rounded-full animate-pulse mb-0.5" />
+              <span className="text-white text-[11px] font-black tracking-wide">LIVE</span>
+            </div>
+          </Link>
+
+          <Link href="/services" className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition ${pathname.startsWith("/services") ? "text-red-600" : "text-slate-400"}`}>
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <span className="text-[10px] font-semibold">Services</span>
+          </Link>
+
+          <Link href="/auth/connexion" className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition ${pathname.startsWith("/auth") ? "text-red-600" : "text-slate-400"}`}>
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <span className="text-[10px] font-semibold">Compte</span>
           </Link>
         </div>
-
-        <button className="md:hidden p-2 text-slate-600" onClick={() => setMenuOpen(!menuOpen)}>
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={menuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
-          </svg>
-        </button>
-      </div>
-
-      {menuOpen && (
-        <div className="md:hidden border-t border-slate-100 px-4 py-4 flex flex-col gap-4 bg-white">
-          <Link href="/" className="text-slate-600 font-medium" onClick={() => setMenuOpen(false)}>Accueil</Link>
-          <Link href="/produits" className="text-slate-600 font-medium" onClick={() => setMenuOpen(false)}>Produits</Link>
-          <Link href="/services" className="text-slate-600 font-medium" onClick={() => setMenuOpen(false)}>Services</Link>
-          <Link href="/produits" className="text-slate-600 font-medium" onClick={() => setMenuOpen(false)}>Vendeurs</Link>
-          <Link href="/panier" className="text-slate-600 font-medium" onClick={() => setMenuOpen(false)}>Panier</Link>
-          <Link href="/auth/connexion" className="text-blue-800 font-semibold" onClick={() => setMenuOpen(false)}>Connexion</Link>
-          <Link href="/auth/inscription" className="bg-blue-800 text-white font-semibold px-4 py-2 rounded-lg text-center" onClick={() => setMenuOpen(false)}>S&apos;inscrire</Link>
-        </div>
-      )}
-    </header>
+      </nav>
+    </>
   );
 }
