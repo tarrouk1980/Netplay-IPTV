@@ -131,7 +131,7 @@ export default function NouveauProduitPage() {
               placeholder="Ex: Smartphone Samsung Galaxy A54"
               className={`w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-300 ${errors.title ? "border-red-400" : "border-slate-300"}`}
             />
-            {errors.title && <p className="text-crimson-light text-xs mt-1">{errors.title}</p>}
+            {errors.title && <p className="text-rose-600 text-xs mt-1">{errors.title}</p>}
           </div>
 
           <div>
@@ -143,7 +143,7 @@ export default function NouveauProduitPage() {
               rows={4}
               className={`w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-300 resize-none ${errors.description ? "border-red-400" : "border-slate-300"}`}
             />
-            {errors.description && <p className="text-crimson-light text-xs mt-1">{errors.description}</p>}
+            {errors.description && <p className="text-rose-600 text-xs mt-1">{errors.description}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -158,7 +158,7 @@ export default function NouveauProduitPage() {
                 placeholder="0.00"
                 className={`w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-300 ${errors.price ? "border-red-400" : "border-slate-300"}`}
               />
-              {errors.price && <p className="text-crimson-light text-xs mt-1">{errors.price}</p>}
+              {errors.price && <p className="text-rose-600 text-xs mt-1">{errors.price}</p>}
             </div>
 
             <div>
@@ -171,7 +171,7 @@ export default function NouveauProduitPage() {
                 placeholder="0"
                 className={`w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-300 ${errors.stock ? "border-red-400" : "border-slate-300"}`}
               />
-              {errors.stock && <p className="text-crimson-light text-xs mt-1">{errors.stock}</p>}
+              {errors.stock && <p className="text-rose-600 text-xs mt-1">{errors.stock}</p>}
             </div>
           </div>
 
@@ -187,7 +187,7 @@ export default function NouveauProduitPage() {
                 <option key={cat} value={cat}>{cat}</option>
               ))}
             </select>
-            {errors.category && <p className="text-crimson-light text-xs mt-1">{errors.category}</p>}
+            {errors.category && <p className="text-rose-600 text-xs mt-1">{errors.category}</p>}
           </div>
 
           <div>

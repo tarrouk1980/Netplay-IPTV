@@ -53,10 +53,10 @@ export default function HomePage() {
       <Header />
 
       {/* ── Hero ── */}
-      <section className="relative bg-crimson text-white overflow-hidden">
+      <section className="relative bg-rose-800 text-white overflow-hidden">
         {/* decorative circles */}
-        <div className="absolute -top-20 -right-20 w-96 h-96 bg-crimson-light rounded-full opacity-40" />
-        <div className="absolute -bottom-16 -left-16 w-72 h-72 bg-crimson-dark rounded-full opacity-50" />
+        <div className="absolute -top-20 -right-20 w-96 h-96 bg-rose-700 rounded-full opacity-40" />
+        <div className="absolute -bottom-16 -left-16 w-72 h-72 bg-rose-900 rounded-full opacity-50" />
         <div className="absolute top-10 left-1/3 w-40 h-40 bg-white rounded-full opacity-5" />
 
         <div className="relative max-w-6xl mx-auto px-4 py-16 md:py-24">
@@ -93,7 +93,7 @@ export default function HomePage() {
                 />
                 <Link
                   href={`/produits${heroSearch ? `?q=${encodeURIComponent(heroSearch)}` : ""}`}
-                  className="bg-crimson hover:bg-crimson-dark text-white font-bold px-7 py-4 transition flex items-center gap-2 flex-shrink-0"
+                  className="bg-rose-800 hover:bg-rose-900 text-white font-bold px-7 py-4 transition flex items-center gap-2 flex-shrink-0"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -125,7 +125,7 @@ export default function HomePage() {
             { value: "2.1Md$", label: "marché e-commerce TN" },
           ].map(({ value, label }) => (
             <div key={label}>
-              <p className="text-2xl md:text-4xl font-black text-crimson">{value}</p>
+              <p className="text-2xl md:text-4xl font-black text-rose-800">{value}</p>
               <p className="text-slate-500 text-xs md:text-sm mt-1">{label}</p>
             </div>
           ))}
@@ -146,7 +146,7 @@ export default function HomePage() {
                 <div className="w-16 h-16 md:w-20 md:h-20 bg-rose-50 group-hover:bg-rose-100 rounded-2xl flex items-center justify-center text-3xl transition-all duration-200 group-hover:scale-105 shadow-sm">
                   {icon}
                 </div>
-                <span className="text-xs font-semibold text-slate-600 group-hover:text-crimson transition whitespace-nowrap">{label}</span>
+                <span className="text-xs font-semibold text-slate-600 group-hover:text-rose-800 transition whitespace-nowrap">{label}</span>
               </Link>
             ))}
           </div>
@@ -161,7 +161,7 @@ export default function HomePage() {
               <h2 className="text-2xl font-black text-slate-900">Tendances du moment</h2>
               <p className="text-slate-500 text-sm mt-0.5">Les produits les plus populaires</p>
             </div>
-            <Link href="/produits" className="text-crimson font-bold text-sm hover:underline flex items-center gap-1">
+            <Link href="/produits" className="text-rose-800 font-bold text-sm hover:underline flex items-center gap-1">
               Voir tout <span>→</span>
             </Link>
           </div>
@@ -181,7 +181,7 @@ export default function HomePage() {
             <div className="text-center py-16 bg-white rounded-2xl border border-slate-100">
               <span className="text-4xl mb-3 block">📦</span>
               <p className="text-slate-400 font-medium">Aucun produit tendance pour le moment.</p>
-              <Link href="/produits" className="text-crimson font-semibold text-sm mt-2 inline-block hover:underline">Voir tous les produits →</Link>
+              <Link href="/produits" className="text-rose-800 font-semibold text-sm mt-2 inline-block hover:underline">Voir tous les produits →</Link>
             </div>
           )}
         </div>
@@ -192,7 +192,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-crimson rounded-xl flex items-center justify-center shadow-md shadow-rose-200">
+              <div className="w-10 h-10 bg-rose-800 rounded-xl flex items-center justify-center shadow-md shadow-rose-200">
                 <span className="w-3 h-3 bg-white rounded-full animate-pulse" />
               </div>
               <div>
@@ -200,7 +200,7 @@ export default function HomePage() {
                 <p className="text-slate-500 text-sm">Commerce en direct</p>
               </div>
             </div>
-            <Link href="/live" className="text-crimson font-bold text-sm hover:underline flex items-center gap-1">
+            <Link href="/live" className="text-rose-800 font-bold text-sm hover:underline flex items-center gap-1">
               Voir tout <span>→</span>
             </Link>
           </div>
@@ -221,7 +221,7 @@ export default function HomePage() {
             <div className="text-center py-16 bg-rose-50 rounded-2xl border border-rose-100">
               <span className="text-4xl mb-3 block">🎥</span>
               <p className="text-slate-500 font-medium mb-3">Aucun live en cours pour le moment.</p>
-              <Link href="/vendeur/live" className="bg-crimson hover:bg-crimson-dark text-white font-bold px-6 py-2.5 rounded-xl text-sm transition inline-block">
+              <Link href="/vendeur/live" className="bg-rose-800 hover:bg-rose-900 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition inline-block">
                 Démarrer un live
               </Link>
             </div>
@@ -237,7 +237,7 @@ export default function HomePage() {
               <h2 className="text-2xl font-black text-slate-900">Services populaires</h2>
               <p className="text-slate-500 text-sm mt-0.5">Freelances tunisiens de qualité</p>
             </div>
-            <Link href="/services" className="text-crimson font-bold text-sm hover:underline flex items-center gap-1">
+            <Link href="/services" className="text-rose-800 font-bold text-sm hover:underline flex items-center gap-1">
               Voir tout <span>→</span>
             </Link>
           </div>
@@ -293,7 +293,7 @@ export default function HomePage() {
       </section>
 
       {/* ── CTA Banner ── */}
-      <section className="py-16 px-4 bg-crimson">
+      <section className="py-16 px-4 bg-rose-800">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-black text-white mb-4">
             Prêt à rejoindre OPTIMARK ?
@@ -302,7 +302,7 @@ export default function HomePage() {
             Créez votre compte gratuitement et commencez à acheter ou vendre dès aujourd&apos;hui.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/auth/inscription" className="bg-white text-crimson font-black px-10 py-4 rounded-2xl text-lg hover:bg-rose-50 transition shadow-lg shadow-rose-200/20">
+            <Link href="/auth/inscription" className="bg-white text-rose-800 font-black px-10 py-4 rounded-2xl text-lg hover:bg-rose-50 transition shadow-lg shadow-rose-200/20">
               Créer un compte gratuit
             </Link>
             <Link href="/pricing" className="border-2 border-white/60 text-white font-bold px-10 py-4 rounded-2xl text-lg hover:bg-white/10 transition">

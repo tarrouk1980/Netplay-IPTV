@@ -143,7 +143,7 @@ export default function VendeurProduitsPage() {
                           </button>
                           <button
                             onClick={() => handleDelete(product.id)}
-                            className="text-crimson-light hover:text-crimson-dark text-xs font-medium"
+                            className="text-rose-600 hover:text-rose-900 text-xs font-medium"
                           >
                             Supprimer
                           </button>

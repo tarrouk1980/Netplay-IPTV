@@ -45,7 +45,7 @@ export default function ServiceCard({ id, title, provider, startingPrice, rating
         <h3 className="font-semibold text-slate-800 text-sm mb-1 line-clamp-2 leading-snug">{title}</h3>
 
         <div className="flex items-center gap-2 mb-3">
-          <div className="w-6 h-6 rounded-full bg-rose-100 flex items-center justify-center text-xs font-bold text-crimson">
+          <div className="w-6 h-6 rounded-full bg-rose-100 flex items-center justify-center text-xs font-bold text-rose-800">
             {provider.charAt(0).toUpperCase()}
           </div>
           <span className="text-slate-500 text-xs truncate">{provider}</span>
@@ -62,9 +62,9 @@ export default function ServiceCard({ id, title, provider, startingPrice, rating
           <div className="flex items-center justify-between">
             <div>
               <span className="text-slate-400 text-[10px]">À partir de</span>
-              <p className="text-crimson font-black text-base">{startingPrice} <span className="text-xs font-semibold">TND</span></p>
+              <p className="text-rose-800 font-black text-base">{startingPrice} <span className="text-xs font-semibold">TND</span></p>
             </div>
-            <span className="text-xs text-crimson font-semibold bg-rose-50 px-2.5 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+            <span className="text-xs text-rose-800 font-semibold bg-rose-50 px-2.5 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
               Contacter →
             </span>
           </div>

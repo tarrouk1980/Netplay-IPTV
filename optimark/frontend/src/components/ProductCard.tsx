@@ -71,8 +71,8 @@ export default function ProductCard({ id, title, price, seller, rating, isVerifi
           </div>
 
           <div className="flex items-center justify-between">
-            <p className="text-crimson font-black text-base">{price.toFixed(2)} <span className="text-xs font-semibold">TND</span></p>
-            <span className="text-xs text-crimson font-semibold bg-rose-50 px-2.5 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+            <p className="text-rose-800 font-black text-base">{price.toFixed(2)} <span className="text-xs font-semibold">TND</span></p>
+            <span className="text-xs text-rose-800 font-semibold bg-rose-50 px-2.5 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
               Voir →
             </span>
           </div>

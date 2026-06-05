@@ -15,9 +15,9 @@ export default function ConnexionPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left — Brand Panel (desktop only) */}
-      <div className="hidden lg:flex flex-1 bg-crimson flex-col items-center justify-center p-12 relative overflow-hidden">
-        <div className="absolute -top-24 -left-24 w-96 h-96 bg-crimson-light rounded-full opacity-50" />
-        <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-crimson-dark rounded-full opacity-40" />
+      <div className="hidden lg:flex flex-1 bg-rose-800 flex-col items-center justify-center p-12 relative overflow-hidden">
+        <div className="absolute -top-24 -left-24 w-96 h-96 bg-rose-700 rounded-full opacity-50" />
+        <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-rose-900 rounded-full opacity-40" />
 
         <div className="relative text-center">
           <p className="text-5xl font-black text-white mb-3">
@@ -48,7 +48,7 @@ export default function ConnexionPage() {
           {/* Mobile logo */}
           <Link href="/" className="lg:hidden block text-center mb-8">
             <span className="text-3xl font-black">
-              <span className="text-crimson">OPTI</span>
+              <span className="text-rose-800">OPTI</span>
               <span className="text-slate-900">MARK</span>
             </span>
           </Link>
@@ -72,7 +72,7 @@ export default function ConnexionPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="vous@exemple.com"
-                    className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-crimson focus:border-transparent transition"
+                    className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-rose-800 focus:border-transparent transition"
                   />
                 </div>
               </div>
@@ -91,7 +91,7 @@ export default function ConnexionPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-11 py-3 border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-crimson focus:border-transparent transition"
+                    className="w-full pl-10 pr-11 py-3 border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-rose-800 focus:border-transparent transition"
                   />
                   <button
                     type="button"
@@ -104,13 +104,13 @@ export default function ConnexionPage() {
                   </button>
                 </div>
                 <div className="flex justify-end mt-1.5">
-                  <a href="#" className="text-xs text-crimson hover:underline font-medium">Mot de passe oublié ?</a>
+                  <a href="#" className="text-xs text-rose-800 hover:underline font-medium">Mot de passe oublié ?</a>
                 </div>
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-crimson hover:bg-crimson-dark text-white font-black py-3.5 rounded-xl transition shadow-md shadow-rose-200 text-base"
+                className="w-full bg-rose-800 hover:bg-rose-900 text-white font-black py-3.5 rounded-xl transition shadow-md shadow-rose-200 text-base"
               >
                 Se connecter
               </button>
@@ -145,7 +145,7 @@ export default function ConnexionPage() {
 
             <p className="text-center text-slate-500 text-sm mt-6">
               Pas encore de compte ?{" "}
-              <Link href="/auth/inscription" className="text-crimson font-bold hover:underline">S&apos;inscrire</Link>
+              <Link href="/auth/inscription" className="text-rose-800 font-bold hover:underline">S&apos;inscrire</Link>
             </p>
           </div>
         </div>
