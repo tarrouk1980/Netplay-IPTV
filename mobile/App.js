@@ -1,5 +1,26 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AppState, Linking, View, Text } from 'react-native';
+import { AppState, Linking, View, Text, ScrollView, TouchableOpacity } from 'react-native';
+
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(e) { return { error: e }; }
+  componentDidCatch(e) { console.error('[ErrorBoundary]', e); }
+  render() {
+    if (this.state.error) {
+      return (
+        <ScrollView style={{ flex: 1, backgroundColor: '#0A0A0F', padding: 24, paddingTop: 60 }}>
+          <Text style={{ color: '#E74C3C', fontSize: 18, fontWeight: '900', marginBottom: 12 }}>⚠ Erreur détectée</Text>
+          <Text style={{ color: '#FFFFFF', fontSize: 13, marginBottom: 8 }}>{this.state.error?.message || String(this.state.error)}</Text>
+          <Text style={{ color: '#8E8E9A', fontSize: 11 }}>{this.state.error?.stack?.slice(0, 600)}</Text>
+          <TouchableOpacity style={{ marginTop: 24, backgroundColor: '#F5A623', padding: 14, borderRadius: 10 }} onPress={() => this.setState({ error: null })}>
+            <Text style={{ color: '#000', fontWeight: '700', textAlign: 'center' }}>Réessayer</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      );
+    }
+    return this.props.children;
+  }
+}
 import { initI18n } from './i18n';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -1287,10 +1308,12 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer linking={linking}>
-      <StatusBar style="light" />
-      {isAuthenticated ? <MainStack /> : <AuthStack onboardingDone={onboardingDone} />}
-    </NavigationContainer>
+    <ErrorBoundary>
+      <NavigationContainer linking={linking}>
+        <StatusBar style="light" />
+        {isAuthenticated ? <MainStack /> : <AuthStack onboardingDone={onboardingDone} />}
+      </NavigationContainer>
+    </ErrorBoundary>
   );
 }
 

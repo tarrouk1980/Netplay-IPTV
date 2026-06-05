@@ -17,7 +17,7 @@ const COLORS = {
 const SLIDES = [
   {
     key: '1',
-    emoji: '⚡',
+    emoji: '🚀',
     title: 'EASYWAY',
     subtitle: 'La super-app tunisienne',
     desc: 'Taxi, livraison, épicerie, dépannage — tout en une seule application. Zéro commission prélevée sur vos courses.',
@@ -41,7 +41,7 @@ const SLIDES = [
   },
   {
     key: '4',
-    emoji: '🔧',
+    emoji: '🚛',
     title: 'SOS Dépannage',
     subtitle: 'Intervention sous 20 min',
     desc: 'Panne, crevaison, batterie ? Nos dépanneurs certifiés interviennent rapidement où que vous soyez.',
