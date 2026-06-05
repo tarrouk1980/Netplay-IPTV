@@ -2,6 +2,7 @@
 
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import HeroSlider from "@/components/HeroSlider";
 import LiveCard from "@/components/LiveCard";
 import ProductCard from "@/components/ProductCard";
 import ServiceCard from "@/components/ServiceCard";
@@ -23,7 +24,6 @@ export default function HomePage() {
   const [lives, setLives] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [heroSearch, setHeroSearch] = useState("");
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -52,69 +52,8 @@ export default function HomePage() {
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <Header />
 
-      {/* ── Hero ── */}
-      <section className="relative bg-rose-800 text-white overflow-hidden">
-        {/* decorative circles */}
-        <div className="absolute -top-20 -right-20 w-96 h-96 bg-rose-700 rounded-full opacity-40" />
-        <div className="absolute -bottom-16 -left-16 w-72 h-72 bg-rose-900 rounded-full opacity-50" />
-        <div className="absolute top-10 left-1/3 w-40 h-40 bg-white rounded-full opacity-5" />
-
-        <div className="relative max-w-6xl mx-auto px-4 py-16 md:py-24">
-          <div className="max-w-3xl mx-auto text-center">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur border border-white/25 rounded-full px-4 py-1.5 text-sm font-medium mb-6">
-              <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
-              La marketplace tunisienne #1
-            </div>
-
-            <h1 className="text-4xl md:text-6xl font-black text-white leading-tight mb-5">
-              Achetez et vendez<br />
-              <span className="text-white/90">comme jamais avant</span>
-            </h1>
-
-            <p className="text-rose-100 text-lg mb-10 max-w-lg mx-auto">
-              Produits, services et artisans tunisiens — au même endroit, en toute confiance.
-            </p>
-
-            {/* Hero search bar — IA powered */}
-            <div className="max-w-2xl mx-auto mb-3">
-              <div className="flex bg-white rounded-2xl overflow-hidden shadow-2xl">
-                <div className="flex items-center pl-4 flex-shrink-0">
-                  <span className="bg-purple-100 text-purple-700 text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
-                    ✨ IA
-                  </span>
-                </div>
-                <input
-                  type="text"
-                  value={heroSearch}
-                  onChange={(e) => setHeroSearch(e.target.value)}
-                  placeholder="Décrivez ce que vous cherchez..."
-                  className="flex-1 px-4 py-4 text-slate-700 outline-none text-base placeholder-slate-400"
-                />
-                <Link
-                  href={`/produits${heroSearch ? `?q=${encodeURIComponent(heroSearch)}` : ""}`}
-                  className="bg-rose-800 hover:bg-rose-900 text-white font-bold px-7 py-4 transition flex items-center gap-2 flex-shrink-0"
-                >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <span className="hidden sm:inline">Chercher</span>
-                </Link>
-              </div>
-              <p className="text-white/60 text-xs mt-2 text-center">✨ Recherche intelligente propulsée par l&apos;IA</p>
-            </div>
-
-            {/* Quick links */}
-            <div className="flex flex-wrap gap-2 justify-center">
-              {CATEGORIES.slice(0, 5).map(({ icon, label, href }) => (
-                <Link key={label} href={href} className="bg-white/15 hover:bg-white/25 border border-white/20 text-white text-sm px-4 py-1.5 rounded-full transition font-medium">
-                  {icon} {label}
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* ── Hero Slider ── */}
+      <HeroSlider />
 
       {/* ── Stats ── */}
       <section className="bg-white border-b border-slate-100">

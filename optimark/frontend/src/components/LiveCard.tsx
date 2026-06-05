@@ -27,7 +27,7 @@ export default function LiveCard({ id, title, vendorName, viewerCount, isActive 
         </span>
       </div>
       <div className="p-4">
-        <h3 className="font-semibold text-slate-800 mb-1 line-clamp-2 group-hover:text-blue-800 transition">{title}</h3>
+        <h3 className="font-semibold text-slate-800 mb-1 line-clamp-2 group-hover:text-rose-800 transition">{title}</h3>
         <p className="text-slate-500 text-sm">{vendorName}</p>
       </div>
     </Link>
