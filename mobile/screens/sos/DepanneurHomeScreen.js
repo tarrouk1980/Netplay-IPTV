@@ -43,6 +43,7 @@ export default function DepanneurHomeScreen({ navigation }) {
     api.get('/api/sos/depanneur/stats')
       .then(r => setStats(r.data || MOCK_STATS))
       .catch(() => {});
+  }, []);
 
   // Block Android hardware back button — this is a root dashboard screen
   useFocusEffect(
@@ -51,7 +52,6 @@ export default function DepanneurHomeScreen({ navigation }) {
       return () => sub.remove();
     }, [])
   );
-  }, []);
 
   useEffect(() => {
     if (!online) { setIncoming(null); return; }
