@@ -621,6 +621,116 @@
     .fade-in:nth-child(13) { animation-delay: 0.65s }
     .fade-in:nth-child(14) { animation-delay: 0.70s }
     .fade-in:nth-child(15) { animation-delay: 0.75s }
+
+    /* ═══════════════════════════════════════════
+       SCHEDULE BANNER
+    ═══════════════════════════════════════════ */
+    .schedule-banner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(135deg, rgba(26,107,60,0.25), rgba(10,20,30,0.6));
+      border: 1px solid rgba(46,204,113,0.3);
+      border-radius: 16px;
+      padding: 14px 20px;
+      margin-bottom: 20px;
+    }
+    .sb-now, .sb-next {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 220px;
+    }
+    .sb-now { border-left: 3px solid var(--green-light); padding-left: 10px; }
+    .sb-next { border-left: 3px solid var(--gold-dark); padding-left: 10px; }
+    .sb-label { font-size: 0.72rem; color: var(--text-muted); white-space: nowrap; }
+    .sb-prog { font-size: 0.95rem; font-weight: 700; color: var(--text-main); flex: 1; }
+    .sb-now .sb-prog { color: var(--green-light); }
+    .sb-time { font-size: 0.72rem; color: var(--gold); white-space: nowrap; background: rgba(212,175,55,0.1); padding: 2px 8px; border-radius: 20px; }
+    .sb-toggle-btn {
+      margin-right: auto;
+      background: rgba(212,175,55,0.1);
+      border: 1px solid rgba(212,175,55,0.3);
+      border-radius: 20px;
+      color: var(--gold);
+      padding: 6px 16px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-family: 'Cairo', sans-serif;
+      white-space: nowrap;
+    }
+    .sb-toggle-btn:hover { background: rgba(212,175,55,0.22); }
+
+    /* ═══════════════════════════════════════════
+       SCHEDULE PANEL
+    ═══════════════════════════════════════════ */
+    .schedule-panel {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .schedule-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 10px;
+    }
+    .sched-slot {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(212,175,55,0.1);
+      border-radius: 12px;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .sched-slot:hover { border-color: rgba(212,175,55,0.35); background: rgba(255,255,255,0.06); }
+    .sched-slot.active-slot {
+      border-color: var(--green-light);
+      background: rgba(46,204,113,0.08);
+    }
+    .sched-slot.active-slot::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(46,204,113,0.06), transparent);
+    }
+    .sched-time-range {
+      font-size: 0.78rem;
+      color: var(--gold);
+      font-weight: 700;
+      min-width: 80px;
+      text-align: center;
+      background: rgba(212,175,55,0.1);
+      border-radius: 8px;
+      padding: 4px 8px;
+      white-space: nowrap;
+    }
+    .sched-cat-icon { font-size: 1.3rem; }
+    .sched-info { flex: 1; }
+    .sched-cat-name { font-size: 0.88rem; font-weight: 700; color: var(--text-main); }
+    .sched-reciter { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+    .sched-now-badge {
+      font-size: 0.65rem;
+      background: var(--green-light);
+      color: var(--bg-deep);
+      padding: 2px 7px;
+      border-radius: 20px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    @media (max-width: 600px) {
+      .schedule-banner { flex-direction: column; align-items: flex-start; }
+      .sb-toggle-btn { margin-right: 0; width: 100%; text-align: center; }
+    }
   </style>
 </head>
 <body>
@@ -701,6 +811,29 @@
     </div>
 
     <div class="status-bar" id="statusBar">اختر محطة من القائمة أدناه للبدء ✦</div>
+  </div>
+
+  <!-- SCHEDULE BANNER -->
+  <div class="schedule-banner fade-in" id="scheduleBanner">
+    <div class="sb-now">
+      <span class="sb-label">📡 يُبَثُّ الآن</span>
+      <span class="sb-prog" id="sbNowProg">—</span>
+      <span class="sb-time" id="sbNowTime">—</span>
+    </div>
+    <div class="sb-next">
+      <span class="sb-label">⏭ التالي</span>
+      <span class="sb-prog" id="sbNextProg">—</span>
+      <span class="sb-time" id="sbNextTime">—</span>
+    </div>
+    <button class="sb-toggle-btn" id="sbToggleBtn" title="عرض البرنامج الكامل">
+      <i class="fa-solid fa-calendar-days"></i> البرنامج اليومي
+    </button>
+  </div>
+
+  <!-- FULL SCHEDULE PANEL -->
+  <div class="schedule-panel" id="schedulePanel" style="display:none">
+    <h2 class="section-title fade-in"><i class="fa-solid fa-clock"></i> برنامج البث اليومي <i class="fa-solid fa-clock"></i></h2>
+    <div class="schedule-grid" id="scheduleGrid"><!-- filled by JS --></div>
   </div>
 
   <!-- STATION LIST -->
@@ -1122,6 +1255,117 @@ const STATIONS = [
 ];
 
 // ════════════════════════════════════════════════════════════
+//  DAILY BROADCAST SCHEDULE  (heure locale)
+//  Chaque créneau : { start, end, category, label, icon, stationId }
+//  stationId correspond à l'id dans STATIONS (null = garder la station actuelle)
+// ════════════════════════════════════════════════════════════
+const SCHEDULE = [
+  { start: '00:00', end: '02:00', category: 'tarawih',   label: 'صلاة التراويح',        icon: '🌙', stationId: 7  },
+  { start: '02:00', end: '04:00', category: 'tartil',    label: 'تلاوة بالترتيل',       icon: '📖', stationId: 8  },
+  { start: '04:00', end: '05:00', category: 'fajr',      label: 'تلاوة الفجر',          icon: '🌅', stationId: 6  },
+  { start: '05:00', end: '06:30', category: 'tajwid',    label: 'دروس التجويد',         icon: '🎓', stationId: 3  },
+  { start: '06:30', end: '08:00', category: 'tartil',    label: 'تلاوة بالترتيل',       icon: '📖', stationId: 4  },
+  { start: '08:00', end: '09:30', category: 'kids',      label: 'قرآن للأطفال',         icon: '👶', stationId: 18 },
+  { start: '09:30', end: '11:00', category: 'tajwid',    label: 'تعليم التجويد',        icon: '🎓', stationId: 2  },
+  { start: '11:00', end: '12:30', category: 'tartil',    label: 'تلاوة بالترتيل',       icon: '📖', stationId: 5  },
+  { start: '12:30', end: '13:30', category: 'dhohr',     label: 'تلاوة الظهر',          icon: '☀️',  stationId: 11 },
+  { start: '13:30', end: '15:00', category: 'tartil',    label: 'تلاوة المسجد الحرام',  icon: '🕋', stationId: 16 },
+  { start: '15:00', end: '16:30', category: 'asr',       label: 'تلاوة العصر',          icon: '🌤', stationId: 14 },
+  { start: '16:30', end: '17:30', category: 'kids',      label: 'قرآن للأطفال',         icon: '👶', stationId: 18 },
+  { start: '17:30', end: '18:30', category: 'maghrib',   label: 'تلاوة المغرب',         icon: '🌇', stationId: 9  },
+  { start: '18:30', end: '19:30', category: 'isha',      label: 'تلاوة العشاء',         icon: '🌃', stationId: 13 },
+  { start: '19:30', end: '21:00', category: 'tajwid',    label: 'حلقة التجويد المسائية',icon: '🎓', stationId: 3  },
+  { start: '21:00', end: '22:30', category: 'murattal',  label: 'تلاوة المرتّل',        icon: '🎵', stationId: 7  },
+  { start: '22:30', end: '23:00', category: 'dua',       label: 'الدعاء والأذكار',      icon: '🤲', stationId: 6  },
+  { start: '23:00', end: '24:00', category: 'tarawih',   label: 'ختم القرآن الكريم',    icon: '📗', stationId: 8  },
+];
+
+// Map category → color accent
+const CAT_COLORS = {
+  tarawih : '#9b59b6',
+  tartil  : '#2ecc71',
+  tajwid  : '#3498db',
+  kids    : '#f39c12',
+  fajr    : '#e8daef',
+  dhohr   : '#f7dc6f',
+  asr     : '#85c1e9',
+  maghrib : '#e59866',
+  isha    : '#7fb3d3',
+  murattal: '#a9cce3',
+  dua     : '#a8d5a2',
+};
+
+function timeToMinutes(t) {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+
+function getCurrentSlotIndex() {
+  const now = new Date();
+  const mins = now.getHours() * 60 + now.getMinutes();
+  return SCHEDULE.findIndex(s => {
+    const start = timeToMinutes(s.start);
+    const end   = s.end === '24:00' ? 1440 : timeToMinutes(s.end);
+    return mins >= start && mins < end;
+  });
+}
+
+function buildScheduleGrid() {
+  const grid = document.getElementById('scheduleGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  const activeIdx = getCurrentSlotIndex();
+  SCHEDULE.forEach((slot, i) => {
+    const station = STATIONS.find(s => s.id === slot.stationId);
+    const isActive = i === activeIdx;
+    const color = CAT_COLORS[slot.category] || '#d4af37';
+    const div = document.createElement('div');
+    div.className = 'sched-slot' + (isActive ? ' active-slot' : '');
+    div.style.borderLeftColor = isActive ? '#2ecc71' : color;
+    div.innerHTML = `
+      <div class="sched-time-range" style="color:${color}">${slot.start}–${slot.end}</div>
+      <div class="sched-cat-icon">${slot.icon}</div>
+      <div class="sched-info">
+        <div class="sched-cat-name">${slot.label}</div>
+        <div class="sched-reciter">${station ? station.flag + ' ' + station.name : '—'}</div>
+      </div>
+      ${isActive ? '<span class="sched-now-badge">الآن</span>' : ''}
+    `;
+    div.addEventListener('click', () => {
+      if (station) selectStation(STATIONS.findIndex(s => s.id === slot.stationId));
+    });
+    grid.appendChild(div);
+  });
+}
+
+function updateScheduleBanner() {
+  const idx = getCurrentSlotIndex();
+  if (idx < 0) return;
+  const cur  = SCHEDULE[idx];
+  const next = SCHEDULE[(idx + 1) % SCHEDULE.length];
+  const curStation  = STATIONS.find(s => s.id === cur.stationId);
+  const nextStation = STATIONS.find(s => s.id === next.stationId);
+
+  document.getElementById('sbNowProg').textContent  = cur.icon + ' ' + cur.label + (curStation ? ' · ' + curStation.name : '');
+  document.getElementById('sbNowTime').textContent  = cur.start + ' – ' + cur.end;
+  document.getElementById('sbNextProg').textContent = next.icon + ' ' + next.label + (nextStation ? ' · ' + nextStation.name : '');
+  document.getElementById('sbNextTime').textContent = next.start + ' – ' + next.end;
+}
+
+function scheduleAutoSwitch() {
+  const idx = getCurrentSlotIndex();
+  if (idx < 0) return;
+  const slot = SCHEDULE[idx];
+  const stIdx = STATIONS.findIndex(s => s.id === slot.stationId);
+  if (stIdx >= 0 && window._lastScheduleIdx !== idx) {
+    window._lastScheduleIdx = idx;
+    selectStation(stIdx);
+    updateScheduleBanner();
+    buildScheduleGrid();
+  }
+}
+
+// ════════════════════════════════════════════════════════════
 //  QURAN VERSES FOR TICKER
 // ════════════════════════════════════════════════════════════
 const TICKER_VERSES = [
@@ -1220,6 +1464,27 @@ function buildStations() {
   });
 }
 buildStations();
+
+// ════════════════════════════════════════════════════════════
+//  SCHEDULE INIT
+// ════════════════════════════════════════════════════════════
+updateScheduleBanner();
+buildScheduleGrid();
+scheduleAutoSwitch();
+
+// Check every minute if we need to switch slot
+setInterval(() => {
+  scheduleAutoSwitch();
+  updateScheduleBanner();
+}, 60000);
+
+// Toggle schedule panel
+document.getElementById('sbToggleBtn').addEventListener('click', () => {
+  const panel = document.getElementById('schedulePanel');
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) buildScheduleGrid();
+});
 
 // ════════════════════════════════════════════════════════════
 //  SELECT & LOAD STATION
