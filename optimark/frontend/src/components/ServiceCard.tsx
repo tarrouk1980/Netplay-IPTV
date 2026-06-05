@@ -15,18 +15,18 @@ const categoryConfig: Record<string, { gradient: string; icon: string }> = {
   DESIGN: { gradient: "from-purple-500 to-pink-600", icon: "🎨" },
   MARKETING: { gradient: "from-green-500 to-teal-600", icon: "📣" },
   REDACTION: { gradient: "from-amber-500 to-orange-500", icon: "✍️" },
-  VIDEO: { gradient: "from-red-500 to-rose-600", icon: "🎬" },
+  VIDEO: { gradient: "from-rose-700 to-rose-600", icon: "🎬" },
   PHOTO: { gradient: "from-cyan-500 to-blue-500", icon: "📸" },
 };
 
 export default function ServiceCard({ id, title, provider, startingPrice, rating, category, isVerified = false }: ServiceCardProps) {
   const cat = category?.toUpperCase() || "";
-  const config = categoryConfig[cat] || { gradient: "from-red-500 to-red-700", icon: "💼" };
+  const config = categoryConfig[cat] || { gradient: "from-rose-700 to-rose-900", icon: "💼" };
 
   return (
     <Link
       href={`/services/${id}`}
-      className="group bg-white rounded-2xl overflow-hidden flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-red-100 border border-transparent hover:border-red-100"
+      className="group bg-white rounded-2xl overflow-hidden flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-rose-200 border border-transparent hover:border-rose-100"
       style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}
     >
       <div className={`relative h-36 bg-gradient-to-br ${config.gradient} flex items-center justify-center`}>
@@ -45,7 +45,7 @@ export default function ServiceCard({ id, title, provider, startingPrice, rating
         <h3 className="font-semibold text-slate-800 text-sm mb-1 line-clamp-2 leading-snug">{title}</h3>
 
         <div className="flex items-center gap-2 mb-3">
-          <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center text-xs font-bold text-red-600">
+          <div className="w-6 h-6 rounded-full bg-rose-100 flex items-center justify-center text-xs font-bold text-crimson">
             {provider.charAt(0).toUpperCase()}
           </div>
           <span className="text-slate-500 text-xs truncate">{provider}</span>
@@ -62,9 +62,9 @@ export default function ServiceCard({ id, title, provider, startingPrice, rating
           <div className="flex items-center justify-between">
             <div>
               <span className="text-slate-400 text-[10px]">À partir de</span>
-              <p className="text-red-600 font-black text-base">{startingPrice} <span className="text-xs font-semibold">TND</span></p>
+              <p className="text-crimson font-black text-base">{startingPrice} <span className="text-xs font-semibold">TND</span></p>
             </div>
-            <span className="text-xs text-red-600 font-semibold bg-red-50 px-2.5 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+            <span className="text-xs text-crimson font-semibold bg-rose-50 px-2.5 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
               Contacter →
             </span>
           </div>

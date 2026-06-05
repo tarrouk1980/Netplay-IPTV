@@ -30,13 +30,13 @@ const categoryIcons: Record<string, string> = {
 
 export default function ProductCard({ id, title, price, seller, rating, isVerified = false, category }: ProductCardProps) {
   const cat = category?.toUpperCase() || "";
-  const gradient = categoryColors[cat] || "from-red-500 to-red-700";
+  const gradient = categoryColors[cat] || "from-rose-700 to-rose-900";
   const icon = categoryIcons[cat] || "📦";
 
   return (
     <Link
       href={`/produits/${id}`}
-      className="group bg-white rounded-2xl overflow-hidden flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-red-100 border border-transparent hover:border-red-100"
+      className="group bg-white rounded-2xl overflow-hidden flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-rose-200 border border-transparent hover:border-rose-100"
       style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}
     >
       {/* Image area */}
@@ -71,8 +71,8 @@ export default function ProductCard({ id, title, price, seller, rating, isVerifi
           </div>
 
           <div className="flex items-center justify-between">
-            <p className="text-red-600 font-black text-base">{price.toFixed(2)} <span className="text-xs font-semibold">TND</span></p>
-            <span className="text-xs text-red-600 font-semibold bg-red-50 px-2.5 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+            <p className="text-crimson font-black text-base">{price.toFixed(2)} <span className="text-xs font-semibold">TND</span></p>
+            <span className="text-xs text-crimson font-semibold bg-rose-50 px-2.5 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
               Voir →
             </span>
           </div>

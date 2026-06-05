@@ -75,7 +75,7 @@ export default function VendeurDashboardPage() {
     CONFIRMED: "bg-blue-100 text-blue-800",
     SHIPPED: "bg-purple-100 text-purple-800",
     DELIVERED: "bg-green-100 text-green-800",
-    CANCELLED: "bg-red-100 text-red-800",
+    CANCELLED: "bg-rose-100 text-red-800",
   };
 
   if (loading || fetching) {

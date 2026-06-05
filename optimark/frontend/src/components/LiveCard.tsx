@@ -14,7 +14,7 @@ export default function LiveCard({ id, title, vendorName, viewerCount, isActive 
       <div className="relative bg-slate-900 h-44 flex items-center justify-center">
         <span className="text-6xl">📹</span>
         {isActive && (
-          <span className="absolute top-3 left-3 flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
+          <span className="absolute top-3 left-3 flex items-center gap-1.5 bg-crimson text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
             <span className="w-2 h-2 bg-white rounded-full inline-block"></span>
             EN DIRECT
           </span>

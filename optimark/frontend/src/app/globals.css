@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@theme {
+  --color-crimson: #9f1239;
+  --color-crimson-light: #be123c;
+  --color-crimson-dark: #881337;
+}
+
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(24px); }
   to { opacity: 1; transform: translateY(0); }

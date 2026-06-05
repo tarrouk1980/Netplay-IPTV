@@ -64,7 +64,7 @@ export default function VendeurLivePage() {
 
         <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm mb-10">
           <h2 className="text-lg font-bold text-slate-800 mb-4">Démarrer un nouveau live</h2>
-          {error && <p className="text-red-600 text-sm mb-4 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
+          {error && <p className="text-crimson text-sm mb-4 bg-rose-50 px-3 py-2 rounded-lg">{error}</p>}
           <form onSubmit={handleCreate} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Titre du live</label>
@@ -91,7 +91,7 @@ export default function VendeurLivePage() {
             <button
               type="submit"
               disabled={submitting}
-              className="bg-red-600 text-white font-bold px-8 py-3 rounded-xl hover:bg-red-700 transition disabled:opacity-50"
+              className="bg-crimson text-white font-bold px-8 py-3 rounded-xl hover:bg-crimson-dark transition disabled:opacity-50"
             >
               {submitting ? "Démarrage..." : "Démarrer le live"}
             </button>
@@ -120,7 +120,7 @@ export default function VendeurLivePage() {
                   </div>
                   <div className="text-right">
                     <p className="text-slate-600 text-sm font-medium">{s.viewerCount} viewers max</p>
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${s.isActive ? "bg-red-100 text-red-600" : "bg-slate-100 text-slate-500"}`}>
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${s.isActive ? "bg-rose-100 text-crimson" : "bg-slate-100 text-slate-500"}`}>
                       {s.isActive ? "EN DIRECT" : "Terminé"}
                     </span>
                   </div>

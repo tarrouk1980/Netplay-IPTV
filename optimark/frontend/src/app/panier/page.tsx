@@ -120,7 +120,7 @@ export default function PanierPage() {
                         <span className="font-bold text-blue-800">{(item.price * item.quantity).toFixed(2)} TND</span>
                         <button
                           onClick={() => removeItem(item.id)}
-                          className="text-red-400 hover:text-red-600 text-sm transition"
+                          className="text-red-400 hover:text-crimson text-sm transition"
                         >
                           Supprimer
                         </button>

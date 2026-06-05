@@ -25,10 +25,10 @@ export default function LivePage() {
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-10">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <span className="w-3 h-3 bg-red-600 rounded-full animate-pulse inline-block"></span>
+            <span className="w-3 h-3 bg-crimson rounded-full animate-pulse inline-block"></span>
             <h1 className="text-3xl font-bold text-slate-800">Lives en cours</h1>
           </div>
-          <Link href="/vendeur/live" className="bg-red-600 text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-red-700 transition text-sm">
+          <Link href="/vendeur/live" className="bg-crimson text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-crimson-dark transition text-sm">
             Démarrer un live
           </Link>
         </div>
@@ -44,7 +44,7 @@ export default function LivePage() {
             <p className="text-5xl mb-4">📹</p>
             <p className="text-slate-500 text-lg mb-2">Aucun live en cours</p>
             <p className="text-slate-400 text-sm mb-6">Soyez le premier à démarrer un live !</p>
-            <Link href="/vendeur/live" className="bg-red-600 text-white font-semibold px-6 py-3 rounded-xl hover:bg-red-700 transition">
+            <Link href="/vendeur/live" className="bg-crimson text-white font-semibold px-6 py-3 rounded-xl hover:bg-crimson-dark transition">
               Démarrer un live
             </Link>
           </div>

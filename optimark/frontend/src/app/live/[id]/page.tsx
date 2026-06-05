@@ -109,7 +109,7 @@ export default function LiveSessionPage() {
           <div className="relative bg-slate-800 flex-1 flex items-center justify-center min-h-64">
             <span className="text-8xl">📹</span>
             <div className="absolute top-4 left-4 flex items-center gap-2">
-              <span className="flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-full animate-pulse">
+              <span className="flex items-center gap-1.5 bg-crimson text-white text-xs font-bold px-3 py-1.5 rounded-full animate-pulse">
                 <span className="w-2 h-2 bg-white rounded-full"></span>
                 EN DIRECT
               </span>
