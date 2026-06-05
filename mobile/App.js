@@ -1056,7 +1056,6 @@ function MainStack() {
       <Stack.Screen name="LegalMentions" component={LegalMentionsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminDriverPerformance" component={AdminDriverPerformanceScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiScheduledTrips" component={TaxiScheduledTripsScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="AdminUserDetail" component={AdminUserDetailScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientPromoCodes" component={ClientPromoCodesScreen} options={{ headerShown: false }} />
       <Stack.Screen name="GroceryReviews" component={GroceryReviewsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ProviderTripHistory" component={ProviderTripHistoryScreen} options={{ headerShown: false }} />
@@ -1065,26 +1064,18 @@ function MainStack() {
       <Stack.Screen name="ClientFeedback" component={ClientFeedbackScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MerchantStockAlert" component={MerchantStockAlertScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientOrdersAll" component={ClientOrdersAllScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="AdminZones" component={AdminZonesScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientMap" component={ClientMapScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="MerchantAnalytics" component={MerchantAnalyticsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminRevenue" component={AdminRevenueScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="ClientSupport" component={ClientSupportScreen} options={{ headerShown: false }} />
       <Stack.Screen name="LivreurHistory" component={LivreurHistoryScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiRating" component={TaxiRatingScreen} options={{ headerShown: false, gestureEnabled: false }} />
-      <Stack.Screen name="SOSHistory" component={SOSHistoryScreen} options={{ headerShown: false }} />
       <Stack.Screen name="GroceryOrderTracking" component={GroceryOrderTrackingScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientNotifications" component={ClientNotificationsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DepanneurEarnings" component={DepanneurEarningsScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="AdminKYCDetail" component={AdminKYCDetailScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DriverTripHistory" component={DriverTripHistoryScreen} options={{ headerShown: false }} />
       <Stack.Screen name="GroceryStore" component={GroceryStoreScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="AdminUsers" component={AdminUsersScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientAddresses" component={ClientAddressesScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminDrivers" component={AdminDriversScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="ProviderProfile" component={ProviderProfileScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientWallet" component={ClientWalletDetailScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="AdminOrders" component={AdminOrdersScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiHome2" component={TaxiHomeScreen2} options={{ headerShown: false }} />
       <Stack.Screen name="MerchantOrders" component={MerchantOrdersScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DepanneurHome2" component={DepanneurHomeScreen2} options={{ headerShown: false }} />
@@ -1098,7 +1089,6 @@ function MainStack() {
       <Stack.Screen name="DeliveryRating" component={DeliveryRatingScreen} options={{ headerShown: false, gestureEnabled: false }} />
       <Stack.Screen name="TaxiPromo" component={TaxiPromoScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminUserSessions" component={AdminUserSessionsScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="DepanneurEarnings" component={DepanneurEarningsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="GroceryStoreAnalytics" component={GroceryStoreAnalyticsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminAppVersion" component={AdminAppVersionScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiReceipt" component={TaxiReceiptScreen} options={{ headerShown: false, gestureEnabled: false }} />
@@ -1122,38 +1112,7 @@ function MainStack() {
       <Stack.Screen name="AdminUsersExport" component={AdminUsersExportScreen} options={{ headerShown: false }} />
       <Stack.Screen name="SOSPayment" component={SOSPaymentScreen} options={{ headerShown: false, gestureEnabled: false }} />
       <Stack.Screen name="ProviderStats" component={ProviderStatsScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="AdminNotifications" component={AdminNotificationsScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="ClientLoyalty" component={ClientLoyaltyScreen} options={{ headerShown: false }} />
       <Stack.Screen name="GroceryCheckoutReview" component={GroceryCheckoutReviewScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="AdminZones" component={AdminZonesScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="ClientMap" component={ClientMapScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="MerchantAnalytics" component={MerchantAnalyticsScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="AdminRevenue" component={AdminRevenueScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="ClientSupport" component={ClientSupportScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="LivreurHistory" component={LivreurHistoryScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="TaxiRating" component={TaxiRatingScreen} options={{ headerShown: false, gestureEnabled: false }} />
-      <Stack.Screen name="SOSHistory" component={SOSHistoryScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="GroceryOrderTracking" component={GroceryOrderTrackingScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="ClientNotifications" component={ClientNotificationsScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="DepanneurEarnings" component={DepanneurEarningsScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="AdminKYCDetail" component={AdminKYCDetailScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="DriverTripHistory" component={DriverTripHistoryScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="GroceryStore" component={GroceryStoreScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="AdminUsers" component={AdminUsersScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="ClientAddresses" component={ClientAddressesScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="AdminDrivers" component={AdminDriversScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="ProviderProfile" component={ProviderProfileScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="ClientWallet" component={ClientWalletDetailScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="AdminOrders" component={AdminOrdersScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="TaxiHome2" component={TaxiHomeScreen2} options={{ headerShown: false }} />
-      <Stack.Screen name="MerchantOrders" component={MerchantOrdersScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="DepanneurHome2" component={DepanneurHomeScreen2} options={{ headerShown: false }} />
-      <Stack.Screen name="AdminLiveMap" component={AdminLiveMapScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="ClientOrderHistory" component={ClientOrderHistoryScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="AdminPromotions" component={AdminPromotionsScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="ProviderIncome2" component={ProviderIncomeScreen2} options={{ headerShown: false }} />
-      <Stack.Screen name="TaxiTracking2" component={TaxiTrackingScreen2} options={{ headerShown: false, gestureEnabled: false }} />
-      <Stack.Screen name="AdminProviders" component={AdminProvidersScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MerchantProfile" component={MerchantProfileScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminRefunds" component={AdminRefundsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiConfirmRide" component={TaxiConfirmRideScreen} options={{ headerShown: false }} />
@@ -1168,15 +1127,12 @@ function MainStack() {
       <Stack.Screen name="DeliveryAddress" component={DeliveryAddressScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminHeatmap" component={AdminHeatmapScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ProviderFeedback" component={ProviderFeedbackScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="TaxiRating" component={TaxiRatingScreen} options={{ headerShown: false, gestureEnabled: false }} />
       <Stack.Screen name="AdminChatMonitor" component={AdminChatMonitorScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="ClientWallet" component={ClientWalletDetailScreen} options={{ headerShown: false }} />
       <Stack.Screen name="SOSDepanneurDetail" component={SOSDepanneurDetailScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminSubscriptions" component={AdminSubscriptionsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DeliveryRate" component={DeliveryRateScreen} options={{ headerShown: false, gestureEnabled: false }} />
       <Stack.Screen name="TaxiDriverEarnings" component={TaxiDriverEarningsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminPayments" component={AdminPaymentsScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="GroceryStore" component={GroceryStoreScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiHomeV2" component={TaxiHomeV2Screen} options={{ headerShown: false }} />
       <Stack.Screen name="DeliveryHomeV2" component={DeliveryHomeV2Screen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminStatsOverview" component={AdminStatsOverviewScreen} options={{ headerShown: false }} />
@@ -1185,7 +1141,6 @@ function MainStack() {
       <Stack.Screen name="GrocerySearch" component={GrocerySearchScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DriverAcceptRide" component={DriverAcceptRideScreen} options={{ headerShown: false }} />
       <Stack.Screen name="LivreurAcceptOrder" component={LivreurAcceptOrderScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="AdminDrivers" component={AdminDriversScreen} options={{ headerShown: false }} />
       <Stack.Screen name="PaymentSuccess" component={PaymentSuccessScreen} options={{ headerShown: false }} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ headerShown: false }} />
       <Stack.Screen name="SOSContract" component={SOSContractScreen} options={{ headerShown: false }} />
@@ -1195,21 +1150,15 @@ function MainStack() {
       <Stack.Screen name="NotificationPreferences" component={NotificationPreferencesScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiSearch" component={TaxiSearchScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DepanneurProfile" component={DepanneurProfileScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="MerchantOrders" component={MerchantOrdersScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Security" component={SecurityScreen} options={{ headerShown: false }} />
       <Stack.Screen name="HelpCenter" component={HelpCenterScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminSOS" component={AdminSOSScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="AdminRevenue" component={AdminRevenueScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiLiveTracking" component={TaxiLiveTrackingScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DriverStatus" component={DriverStatusScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DepanneurStatus" component={DepanneurStatusScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="AdminLiveMap" component={AdminLiveMapScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="LivreurHistory" component={LivreurHistoryScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="GroceryOrderTracking" component={GroceryOrderTrackingScreen} options={{ headerShown: false }} />
       <Stack.Screen name="SecuritySettings" component={SecuritySettingsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientRideHistory" component={ClientRideHistoryScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientSavedAddresses" component={ClientSavedAddressesScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="ClientNotifications" component={ClientNotificationsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientProfile" component={ClientProfileScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminStats" component={AdminStatsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ProviderProfileV2" component={ProviderProfileScreen} options={{ headerShown: false }} />
