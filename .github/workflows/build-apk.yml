@@ -60,14 +60,13 @@ jobs:
           echo "=== Bundle size ==="
           ls -lh android/app/src/main/assets/index.android.bundle
 
-      - name: Build Debug APK
+      - name: Build Release APK (auto-signed with debug key)
         working-directory: mobile/android
         env:
           GRADLE_OPTS: "-Xmx4096m -XX:MaxMetaspaceSize=512m"
-          SKIP_BUNDLING: "true"
         run: |
           set -o pipefail
-          ./gradlew assembleDebug --no-daemon 2>&1 | tail -60
+          ./gradlew assembleRelease --no-daemon 2>&1 | tail -60
 
       - name: Locate APK
         run: |
@@ -77,6 +76,6 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: easyway-debug.apk
-          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          name: easyway-release.apk
+          path: mobile/android/app/build/outputs/apk/release/app-release.apk
           retention-days: 30
