@@ -1,0 +1,31 @@
+import { Module } from '@nestjs/common';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { AuthModule } from './auth/auth.module';
+import { LiveModule } from './live/live.module';
+import { OrdersModule } from './orders/orders.module';
+import { PaymentsModule } from './payments/payments.module';
+import { PrismaModule } from './prisma/prisma.module';
+import { ProductsModule } from './products/products.module';
+import { RecommendationsModule } from './recommendations/recommendations.module';
+import { ReviewsModule } from './reviews/reviews.module';
+import { SearchModule } from './search/search.module';
+import { ServicesModule } from './services/services.module';
+import { VendorsModule } from './vendors/vendors.module';
+
+@Module({
+  imports: [
+    PrismaModule,
+    AuthModule,
+    ProductsModule,
+    ServicesModule,
+    OrdersModule,
+    PaymentsModule,
+    VendorsModule,
+    ReviewsModule,
+    RecommendationsModule,
+    SearchModule,
+    AnalyticsModule,
+    LiveModule,
+  ],
+})
+export class AppModule {}

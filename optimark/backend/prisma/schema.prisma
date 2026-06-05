@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                String        @id @default(uuid())
+  email             String        @unique
+  password          String
+  name              String
+  phone             String?
+  role              Role          @default(BUYER)
+  isVerified        Boolean       @default(false)
+  subscriptionPlan  String        @default("FREE")
+  subscriptionEnd   DateTime?
+  createdAt         DateTime      @default(now())
+  products          Product[]
+  services          Service[]
+  orders            Order[]
+  reviews           Review[]
+  lives             LiveSession[] @relation("VendorLives")
+}
+
+enum Role {
+  BUYER
+  SELLER
+  ADMIN
+}
+
+model Product {
+  id          String      @id @default(uuid())
+  title       String
+  description String
+  price       Float
+  images      String[]
+  category    String
+  stock       Int         @default(0)
+  isActive    Boolean     @default(true)
+  sellerId    String
+  seller      User        @relation(fields: [sellerId], references: [id])
+  createdAt   DateTime    @default(now())
+  orderItems  OrderItem[]
+  reviews     Review[]
+  views       ProductView[]
+}
+
+model Service {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  price       Float
+  category    String
+  sellerId    String
+  seller      User     @relation(fields: [sellerId], references: [id])
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  reviews     Review[]
+}
+
+model Order {
+  id            String        @id @default(uuid())
+  buyerId       String
+  buyer         User          @relation(fields: [buyerId], references: [id])
+  items         OrderItem[]
+  total         Float
+  status        OrderStatus   @default(PENDING)
+  paymentMethod PaymentMethod
+  createdAt     DateTime      @default(now())
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  KONNECT
+  PAYMEE
+  CASH_ON_DELIVERY
+  CARD
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float
+}
+
+model ProductView {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  userId    String?
+  createdAt DateTime @default(now())
+}
+
+model SearchLog {
+  id        String   @id @default(uuid())
+  query     String
+  userId    String?
+  results   Int
+  createdAt DateTime @default(now())
+}
+
+model LiveSession {
+  id          String    @id @default(uuid())
+  title       String
+  vendorId    String
+  vendor      User      @relation("VendorLives", fields: [vendorId], references: [id])
+  isActive    Boolean   @default(true)
+  viewerCount Int       @default(0)
+  products    String[]
+  startedAt   DateTime  @default(now())
+  endedAt     DateTime?
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  rating    Int
+  comment   String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
+  serviceId String?
+  service   Service? @relation(fields: [serviceId], references: [id])
+  createdAt DateTime @default(now())
+}
