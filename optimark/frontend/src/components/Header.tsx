@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { useCart } from "@/contexts/CartContext";
 
 export default function Header() {
+  const { count } = useCart();
   const [search, setSearch] = useState("");
   const [lang, setLang] = useState("FR");
   const [currency, setCurrency] = useState("TND");
@@ -89,15 +91,25 @@ export default function Header() {
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
+                {count > 0 && (
+                  <span className="absolute top-0 right-0 min-w-[16px] h-4 px-1 bg-rose-800 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                    {count > 9 ? "9+" : count}
+                  </span>
+                )}
               </Link>
             </div>
 
             {/* Desktop right actions */}
             <div className="hidden md:flex items-center gap-2 flex-shrink-0 ml-auto">
-              <Link href="/panier" className="p-2.5 text-slate-500 hover:text-rose-800 transition">
+              <Link href="/panier" className="p-2.5 text-slate-500 hover:text-rose-800 transition relative">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
+                {count > 0 && (
+                  <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 bg-rose-800 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                    {count > 9 ? "9+" : count}
+                  </span>
+                )}
               </Link>
               <Link href="/auth/connexion" className="text-slate-700 font-semibold hover:text-rose-800 transition text-sm px-4 py-2.5 rounded-xl hover:bg-rose-50">
                 Connexion
