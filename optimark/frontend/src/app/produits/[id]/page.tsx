@@ -7,7 +7,7 @@ import { useCart } from "@/contexts/CartContext";
 import api from "@/lib/api";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 
 const MOCK_REVIEWS = [
   { id: 1, author: "Sami B.", rating: 5, comment: "Produit excellent, conforme à la description. Livraison rapide.", date: "15 mai 2025" },
@@ -15,7 +15,8 @@ const MOCK_REVIEWS = [
   { id: 3, author: "Youssef K.", rating: 5, comment: "Parfait ! Je suis très satisfait de mon achat.", date: "22 avril 2025" },
 ];
 
-export default function ProductDetailPage({ params }: { params: { id: string } }) {
+export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const [product, setProduct] = useState<any>(null);
   const [similar, setSimilar] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,8 +34,8 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
     setAdded(false);
 
     Promise.all([
-      api.get(`/products/${params.id}`).catch(() => null),
-      api.get(`/recommendations/similar/${params.id}?limit=4`).catch(() => null),
+      api.get(`/products/${id}`).catch(() => null),
+      api.get(`/recommendations/similar/${id}?limit=4`).catch(() => null),
     ]).then(([pRes, sRes]) => {
       if (!mounted) return;
       setProduct(pRes?.data?.data || null);
@@ -43,7 +44,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
     });
 
     return () => { mounted = false; };
-  }, [params.id]);
+  }, [id]);
 
   if (loading) {
     return (
