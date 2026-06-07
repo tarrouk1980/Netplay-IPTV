@@ -3,7 +3,8 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
-import { useState } from "react";
+import api from "@/lib/api";
+import { useEffect, useState } from "react";
 
 const MOCK_PRODUCTS = [
   { id: "1", title: "Smartphone Samsung Galaxy A54", price: 1299.99, originalPrice: 1599.00, seller: "TechStore TN", rating: 4.5, reviewCount: 128, isVerified: true, category: "Électronique", badge: "FLASH", image: "https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=400&q=80" },
@@ -26,8 +27,34 @@ export default function ProduitsPage() {
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
+  const [products, setProducts] = useState<any[]>(MOCK_PRODUCTS);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = MOCK_PRODUCTS
+  useEffect(() => {
+    api.get("/products")
+      .then(res => {
+        const real = res.data?.data || [];
+        if (real.length > 0) {
+          setProducts(real.map((p: any) => ({
+            id: p.id,
+            title: p.title,
+            price: p.price,
+            originalPrice: p.originalPrice,
+            seller: p.seller?.name || "Vendeur",
+            rating: p.rating || 0,
+            reviewCount: p.reviewCount || 0,
+            isVerified: !!p.seller?.isVerified,
+            category: p.category,
+            image: p.image,
+            badge: p.badge,
+          })));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = products
     .filter(p => selectedCat === "Tous" || p.category === selectedCat)
     .filter(p => !verifiedOnly || p.isVerified)
     .filter(p => !minPrice || p.price >= parseFloat(minPrice))
@@ -139,7 +166,13 @@ export default function ProduitsPage() {
               </select>
             </div>
 
-            {filtered.length === 0 ? (
+            {loading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="skeleton rounded-2xl h-72" />
+                ))}
+              </div>
+            ) : filtered.length === 0 ? (
               <div className="text-center py-20 text-slate-400">
                 <p className="text-5xl mb-4">🔍</p>
                 <p className="font-semibold">Aucun produit trouvé</p>
