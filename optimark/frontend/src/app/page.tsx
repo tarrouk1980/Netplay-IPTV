@@ -348,6 +348,97 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ── Marques partenaires ── */}
+      <section className="py-10 px-4 bg-white border-b border-slate-100">
+        <div className="max-w-6xl mx-auto">
+          <p className="text-center text-slate-400 text-xs font-bold uppercase tracking-widest mb-6">Ils nous font confiance</p>
+          <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6 opacity-60">
+            {["Samsung", "Tunisie Telecom", "Ooredoo", "Monoprix", "Carrefour", "Jumia Pay"].map((name) => (
+              <span key={name} className="text-slate-500 font-black text-lg">{name}</span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Témoignages ── */}
+      <section className="py-14 px-4 bg-slate-50">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl font-black text-slate-900 mb-2">Ils nous font confiance</h2>
+            <p className="text-slate-500">Plus de 50 000 clients satisfaits en Tunisie</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {[
+              { name: "Sami B.", city: "Tunis", text: "Livraison en 24h comme promis ! Le service FBO change vraiment la donne pour mon e-commerce.", rating: 5 },
+              { name: "Amira K.", city: "Sfax", text: "J'ai trouvé des produits artisanaux de qualité que je ne trouvais nulle part ailleurs. Très satisfaite.", rating: 5 },
+              { name: "Walid T.", city: "Sousse", text: "Le dashboard vendeur avec l'IA m'a aidé à augmenter mes ventes de 30% en deux mois.", rating: 4 },
+            ].map(({ name, city, text, rating }) => (
+              <div key={name} className="bg-white border border-slate-100 rounded-2xl p-6" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+                <div className="flex items-center gap-1 mb-3">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <svg key={i} className={`w-4 h-4 ${i < rating ? "text-amber-400" : "text-slate-200"}`} fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  ))}
+                </div>
+                <p className="text-slate-600 text-sm mb-4 leading-relaxed">&ldquo;{text}&rdquo;</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-rose-100 text-rose-800 font-black flex items-center justify-center text-sm">
+                    {name.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-800 text-sm">{name}</p>
+                    <p className="text-slate-400 text-xs">{city}, Tunisie</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── FAQ ── */}
+      <section className="py-14 px-4 bg-white">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-2xl font-black text-slate-900 mb-8 text-center">Questions fréquentes</h2>
+          <div className="space-y-3">
+            {[
+              { q: "Comment fonctionne la livraison OPTIMARK Express ?", a: "Vos commandes sont livrées en 24h dans toute la Tunisie grâce à notre réseau logistique et au service FBO." },
+              { q: "Quels moyens de paiement sont acceptés ?", a: "Carte bancaire, Konnect, Paymee et paiement à la livraison sont disponibles selon les vendeurs." },
+              { q: "Comment devenir vendeur sur OPTIMARK ?", a: "Créez un compte vendeur gratuit, ajoutez vos produits depuis le dashboard et commencez à vendre immédiatement." },
+              { q: "Puis-je changer la langue ou la devise du site ?", a: "Oui, utilisez les sélecteurs en haut de page pour choisir entre Français, Arabe, Anglais et TND, EUR, USD." },
+            ].map(({ q, a }) => (
+              <details key={q} className="group bg-slate-50 rounded-xl p-4 cursor-pointer">
+                <summary className="font-semibold text-slate-800 text-sm flex items-center justify-between list-none">
+                  {q}
+                  <span className="text-rose-800 group-open:rotate-45 transition-transform text-lg">+</span>
+                </summary>
+                <p className="text-slate-500 text-sm mt-3 leading-relaxed">{a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Newsletter ── */}
+      <section className="py-14 px-4 bg-slate-900">
+        <div className="max-w-2xl mx-auto text-center">
+          <span className="text-4xl block mb-4">📬</span>
+          <h2 className="text-2xl font-black text-white mb-2">Ne manquez aucune offre</h2>
+          <p className="text-slate-400 mb-6">Recevez les meilleures promotions et nouveautés directement dans votre boîte mail.</p>
+          <form className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto" onSubmit={(e) => e.preventDefault()}>
+            <input
+              type="email"
+              placeholder="votre@email.com"
+              className="flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-rose-700 text-sm"
+            />
+            <button className="bg-rose-800 hover:bg-rose-700 text-white font-bold px-6 py-3 rounded-xl transition text-sm">
+              S&apos;abonner
+            </button>
+          </form>
+        </div>
+      </section>
+
       {/* ── CTA Banner ── */}
       <section className="py-16 px-4 bg-rose-800">
         <div className="max-w-3xl mx-auto text-center">

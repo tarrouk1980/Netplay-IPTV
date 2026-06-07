@@ -6,6 +6,8 @@ import { useState } from "react";
 
 export default function Header() {
   const [search, setSearch] = useState("");
+  const [lang, setLang] = useState("FR");
+  const [currency, setCurrency] = useState("TND");
   const pathname = usePathname();
 
   const navLinks = [
@@ -17,6 +19,34 @@ export default function Header() {
 
   return (
     <>
+      {/* Top utility bar — language & currency */}
+      <div className="hidden md:block bg-slate-900 text-slate-300 text-xs">
+        <div className="max-w-7xl mx-auto px-4 py-1.5 flex items-center justify-between">
+          <p>🇹🇳 Livraison partout en Tunisie • Service client 7j/7</p>
+          <div className="flex items-center gap-4">
+            <select
+              value={lang}
+              onChange={(e) => setLang(e.target.value)}
+              className="bg-transparent text-slate-300 hover:text-white outline-none cursor-pointer text-xs"
+            >
+              <option value="FR" className="text-slate-900">🇫🇷 Français</option>
+              <option value="AR" className="text-slate-900">🇹🇳 العربية</option>
+              <option value="EN" className="text-slate-900">🇬🇧 English</option>
+            </select>
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+              className="bg-transparent text-slate-300 hover:text-white outline-none cursor-pointer text-xs"
+            >
+              <option value="TND" className="text-slate-900">TND (د.ت)</option>
+              <option value="EUR" className="text-slate-900">EUR (€)</option>
+              <option value="USD" className="text-slate-900">USD ($)</option>
+            </select>
+            <Link href="/vendeur/dashboard" className="hover:text-white transition">Vendre sur OPTIMARK</Link>
+          </div>
+        </div>
+      </div>
+
       <header className="bg-white border-b border-rose-100 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4">
           {/* Main bar */}
