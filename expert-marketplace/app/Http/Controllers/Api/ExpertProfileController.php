@@ -18,6 +18,33 @@ class ExpertProfileController extends Controller
             $query->where('category_id', $request->integer('category_id'));
         }
 
+        if ($request->filled('q')) {
+            $search = $request->string('q');
+            $query->where(function ($q) use ($search) {
+                $q->where('bio', 'like', "%{$search}%")
+                    ->orWhereHas('user', fn ($u) => $u->where('name', 'like', "%{$search}%"));
+            });
+        }
+
+        if ($request->filled('min_price')) {
+            $query->where('hourly_rate', '>=', $request->float('min_price'));
+        }
+
+        if ($request->filled('max_price')) {
+            $query->where('hourly_rate', '<=', $request->float('max_price'));
+        }
+
+        if ($request->filled('min_rating')) {
+            $query->where('rating_avg', '>=', $request->float('min_rating'));
+        }
+
+        $sort = $request->string('sort', 'rating_avg');
+        $direction = $request->string('direction', 'desc');
+
+        if (in_array($sort->value(), ['hourly_rate', 'rating_avg', 'total_sessions'], true)) {
+            $query->orderBy($sort->value(), $direction->value() === 'asc' ? 'asc' : 'desc');
+        }
+
         return $query->paginate(15);
     }
 

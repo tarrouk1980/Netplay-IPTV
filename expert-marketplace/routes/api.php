@@ -8,6 +8,8 @@ use App\Http\Controllers\Api\AvailabilitySlotController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ExpertProfileController;
+use App\Http\Controllers\Api\MessageController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\StripeConnectController;
@@ -44,6 +46,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/bookings/{booking}/checkout', [PaymentController::class, 'checkout']);
     Route::post('/bookings/{booking}/review', [ReviewController::class, 'store']);
+    Route::post('/bookings/{booking}/complete', [BookingController::class, 'complete']);
+
+    Route::get('/bookings/{booking}/messages', [MessageController::class, 'index']);
+    Route::post('/bookings/{booking}/messages', [MessageController::class, 'store']);
+
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
 
     Route::get('/subscriptions', [SubscriptionController::class, 'index']);
     Route::post('/subscriptions/checkout', [SubscriptionController::class, 'checkout']);

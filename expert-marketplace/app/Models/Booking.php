@@ -40,4 +40,9 @@ class Booking extends Model
     {
         return $this->hasOne(Review::class);
     }
+
+    public function messages(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Message::class);
+    }
 }

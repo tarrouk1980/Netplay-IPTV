@@ -64,7 +64,10 @@ class StripeWebhookController extends Controller
                 'paid_at' => Carbon::now(),
             ]);
 
-            $payment->booking()->update(['status' => 'confirmed']);
+            $booking = $payment->booking;
+            $booking->update(['status' => 'confirmed']);
+            $booking->client->notify(new \App\Notifications\BookingStatusChanged($booking, 'confirmed'));
+            $booking->expert->user->notify(new \App\Notifications\BookingStatusChanged($booking, 'confirmed'));
         }
     }
 

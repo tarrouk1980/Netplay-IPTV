@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\ExpertProfile;
+use App\Notifications\BookingStatusChanged;
 use Illuminate\Http\Request;
 
 class BookingController extends Controller
@@ -88,6 +89,28 @@ class BookingController extends Controller
         }
 
         $booking->update(['status' => 'cancelled']);
+
+        $other = $booking->client_id === $user->id ? $booking->expert->user : $booking->client;
+        $other->notify(new BookingStatusChanged($booking, 'cancelled'));
+
+        return $booking;
+    }
+
+    public function complete(Request $request, Booking $booking)
+    {
+        $user = $request->user();
+
+        if ($booking->expert_id !== $user->expertProfile?->id) {
+            abort(403);
+        }
+
+        if ($booking->status !== 'confirmed') {
+            abort(409, 'Seule une réservation confirmée peut être marquée comme terminée.');
+        }
+
+        $booking->update(['status' => 'completed']);
+        $booking->expert->increment('total_sessions');
+        $booking->client->notify(new BookingStatusChanged($booking, 'completed'));
 
         return $booking;
     }
