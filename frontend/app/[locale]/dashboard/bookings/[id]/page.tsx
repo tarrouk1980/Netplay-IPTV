@@ -4,6 +4,7 @@ import {use} from 'react';
 import {useTranslations} from 'next-intl';
 import {useQuery, useMutation} from '@tanstack/react-query';
 import {api, type Booking} from '@/lib/api';
+import {BookingChat} from '@/components/booking-chat';
 
 export default function BookingDetailPage({params}: {params: Promise<{id: string}>}) {
   const {id} = use(params);
@@ -32,7 +33,8 @@ export default function BookingDetailPage({params}: {params: Promise<{id: string
   }
 
   return (
-    <div className="mx-auto max-w-lg rounded-xl border border-neutral-200 bg-white p-6">
+    <div className="mx-auto max-w-lg">
+    <div className="rounded-xl border border-neutral-200 bg-white p-6">
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-xl font-semibold">{booking.expert?.user.name}</h1>
         <span className="rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium">
@@ -72,6 +74,11 @@ export default function BookingDetailPage({params}: {params: Promise<{id: string
       >
         ↻
       </button>
+    </div>
+
+    {(booking.status === 'confirmed' || booking.status === 'completed') && (
+      <BookingChat bookingId={id} />
+    )}
     </div>
   );
 }

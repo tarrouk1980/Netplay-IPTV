@@ -137,5 +137,17 @@
     "noProfiles": "Aucun profil pour le moment.",
     "categoryNamePlaceholder": "Nom de la catégorie",
     "planNamePlaceholder": "Nom du plan"
+  },
+  "messaging": {
+    "title": "Messages",
+    "placeholder": "Écrivez votre message...",
+    "send": "Envoyer",
+    "empty": "Aucun message pour le moment.",
+    "unavailable": "La messagerie est disponible uniquement pour les réservations confirmées."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "Aucune notification.",
+    "markAllRead": "Tout marquer comme lu"
   }
 }

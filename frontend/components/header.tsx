@@ -3,6 +3,7 @@
 import {useTranslations, useLocale} from 'next-intl';
 import {Link, usePathname, useRouter} from '@/i18n/navigation';
 import {useAuth} from '@/lib/auth-context';
+import {NotificationBell} from './notification-bell';
 
 const locales = [
   {code: 'fr', label: 'FR'},
@@ -43,6 +44,7 @@ export function Header() {
               >
                 {t('dashboard')}
               </Link>
+              <NotificationBell />
               <button onClick={() => logout()} className="text-neutral-500 hover:text-indigo-600">
                 {t('logout')}
               </button>

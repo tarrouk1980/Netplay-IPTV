@@ -137,5 +137,17 @@
     "noProfiles": "لا توجد ملفات بعد.",
     "categoryNamePlaceholder": "اسم الفئة",
     "planNamePlaceholder": "اسم الخطة"
+  },
+  "messaging": {
+    "title": "الرسائل",
+    "placeholder": "اكتب رسالتك...",
+    "send": "إرسال",
+    "empty": "لا توجد رسائل بعد.",
+    "unavailable": "المراسلة متاحة فقط للحجوزات المؤكدة."
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "empty": "لا توجد إشعارات.",
+    "markAllRead": "تعليم الكل كمقروء"
   }
 }

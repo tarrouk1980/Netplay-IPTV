@@ -74,3 +74,19 @@ export type Paginated<T> = {
   current_page: number;
   last_page: number;
 };
+
+export type Message = {
+  id: number;
+  body: string;
+  sender_id: number;
+  sender: {id: number; name: string; avatar_url: string | null};
+  read_at: string | null;
+  created_at: string;
+};
+
+export type AppNotification = {
+  id: string;
+  data: {booking_id: number; status: string; message: string};
+  read_at: string | null;
+  created_at: string;
+};

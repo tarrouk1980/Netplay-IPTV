@@ -137,5 +137,17 @@
     "noProfiles": "No profiles yet.",
     "categoryNamePlaceholder": "Category name",
     "planNamePlaceholder": "Plan name"
+  },
+  "messaging": {
+    "title": "Messages",
+    "placeholder": "Write your message...",
+    "send": "Send",
+    "empty": "No messages yet.",
+    "unavailable": "Messaging is only available for confirmed bookings."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No notifications.",
+    "markAllRead": "Mark all as read"
   }
 }
