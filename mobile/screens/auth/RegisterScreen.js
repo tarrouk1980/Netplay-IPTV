@@ -645,20 +645,12 @@ export default function RegisterScreen({ navigation }) {
         if (chauffeurFacePhoto) {
           uploadKycPhotos(accessToken, { facePhoto: chauffeurFacePhoto });
         }
-        Alert.alert(
-          'Compte créé !',
-          'En attente de vérification.',
-          [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
-        );
+        navigation.navigate('Home');
         return;
       }
 
       if (role === 'LIVREUR') {
-        Alert.alert(
-          'Compte créé !',
-          'En attente de vérification.',
-          [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
-        );
+        navigation.navigate('Home');
         return;
       }
 
@@ -667,11 +659,7 @@ export default function RegisterScreen({ navigation }) {
         if (depFacePhoto || depPhoto) {
           uploadKycPhotos(accessToken, { facePhoto: depFacePhoto, truckPhoto: depPhoto });
         }
-        Alert.alert(
-          'Compte créé !',
-          'En attente de vérification.',
-          [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
-        );
+        navigation.navigate('Home');
         return;
       }
 
@@ -688,11 +676,7 @@ export default function RegisterScreen({ navigation }) {
         } catch (mErr) {
           console.warn('[RegisterScreen] Merchant registration failed (non-blocking):', mErr?.response?.data);
         }
-        Alert.alert(
-          'Compte créé !',
-          'En attente de vérification.',
-          [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
-        );
+        navigation.navigate('Home');
         return;
       }
 

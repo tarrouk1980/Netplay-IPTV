@@ -7,6 +7,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import api from '../../services/api';
+import useAuthStore from '../../store/authStore';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', border: '#2C2C3E',
@@ -61,6 +62,7 @@ function OrderCard({ item, onAccept }) {
 }
 
 export default function LivreurDashboardScreen({ navigation }) {
+  const { logout } = useAuthStore();
   const [online, setOnline] = useState(false);
   const [orders, setOrders] = useState([]);
   const [stats, setStats] = useState(MOCK_STATS);
@@ -115,7 +117,7 @@ export default function LivreurDashboardScreen({ navigation }) {
       <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
 
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.replace('Home')} style={{ padding: 8, marginRight: 4 }}>
+        <TouchableOpacity onPress={() => { logout(); navigation.replace('Login'); }} style={{ padding: 8, marginRight: 4 }}>
           <Text style={{ color: COLORS.text, fontSize: 24, fontWeight: '300' }}>‹</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>📦 Tableau de bord</Text>

@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
+import useAuthStore from '../../store/authStore';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', border: '#2C2C3E',
@@ -34,6 +35,7 @@ function KPICard({ icon, value, label, color, onPress }) {
 }
 
 export default function MerchantDashboardScreen({ navigation }) {
+  const { logout } = useAuthStore();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(true);
@@ -60,7 +62,7 @@ export default function MerchantDashboardScreen({ navigation }) {
       <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
 
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.replace('Home')} style={{ padding: 8, marginRight: 8 }}>
+        <TouchableOpacity onPress={() => { logout(); navigation.replace('Login'); }} style={{ padding: 8, marginRight: 8 }}>
           <Text style={{ color: '#FFFFFF', fontSize: 24, fontWeight: '300' }}>‹</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>🏪 Mon commerce</Text>
