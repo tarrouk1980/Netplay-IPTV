@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Api\Admin\CategoryController as AdminCategoryController;
+use App\Http\Controllers\Api\Admin\ExpertProfileModerationController;
+use App\Http\Controllers\Api\Admin\SubscriptionPlanController as AdminSubscriptionPlanController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AvailabilitySlotController;
 use App\Http\Controllers\Api\BookingController;
@@ -50,4 +53,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/bookings/{booking}', [BookingController::class, 'show']);
     Route::post('/bookings', [BookingController::class, 'store']);
     Route::post('/bookings/{booking}/cancel', [BookingController::class, 'cancel']);
+
+    Route::middleware('role:admin')->prefix('admin')->group(function () {
+        Route::get('/expert-profiles', [ExpertProfileModerationController::class, 'index']);
+        Route::patch('/expert-profiles/{expertProfile}', [ExpertProfileModerationController::class, 'update']);
+
+        Route::post('/categories', [AdminCategoryController::class, 'store']);
+        Route::patch('/categories/{category}', [AdminCategoryController::class, 'update']);
+        Route::delete('/categories/{category}', [AdminCategoryController::class, 'destroy']);
+
+        Route::post('/subscription-plans', [AdminSubscriptionPlanController::class, 'store']);
+        Route::patch('/subscription-plans/{subscriptionPlan}', [AdminSubscriptionPlanController::class, 'update']);
+        Route::delete('/subscription-plans/{subscriptionPlan}', [AdminSubscriptionPlanController::class, 'destroy']);
+    });
 });
