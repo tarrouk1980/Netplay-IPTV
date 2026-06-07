@@ -6,7 +6,10 @@ use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ExpertProfileController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\StripeConnectController;
+use App\Http\Controllers\Api\SubscriptionController;
+use App\Http\Controllers\Api\SubscriptionPlanController;
 use App\Http\Controllers\Api\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -17,6 +20,8 @@ Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/experts', [ExpertProfileController::class, 'index']);
 Route::get('/experts/{expertProfile}', [ExpertProfileController::class, 'show']);
 Route::get('/availability-slots', [AvailabilitySlotController::class, 'index']);
+Route::get('/reviews', [ReviewController::class, 'index']);
+Route::get('/subscription-plans', [SubscriptionPlanController::class, 'index']);
 
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle']);
 
@@ -35,6 +40,11 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::post('/bookings/{booking}/checkout', [PaymentController::class, 'checkout']);
+    Route::post('/bookings/{booking}/review', [ReviewController::class, 'store']);
+
+    Route::get('/subscriptions', [SubscriptionController::class, 'index']);
+    Route::post('/subscriptions/checkout', [SubscriptionController::class, 'checkout']);
+    Route::post('/subscriptions/{subscription}/cancel', [SubscriptionController::class, 'cancel']);
 
     Route::get('/bookings', [BookingController::class, 'index']);
     Route::get('/bookings/{booking}', [BookingController::class, 'show']);
