@@ -83,6 +83,9 @@ export default function AdminDashboardScreen({ navigation }) {
       <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
 
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.replace('Home')} style={{ padding: 8, marginRight: 4 }}>
+          <Text style={{ color: COLORS.text, fontSize: 24, fontWeight: '300' }}>‹</Text>
+        </TouchableOpacity>
         <View>
           <Text style={styles.headerTitle}>⚡ EASYWAY Admin</Text>
           <Text style={styles.headerSub}>Tableau de bord</Text>

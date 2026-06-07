@@ -115,6 +115,9 @@ export default function LivreurDashboardScreen({ navigation }) {
       <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
 
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.replace('Home')} style={{ padding: 8, marginRight: 4 }}>
+          <Text style={{ color: COLORS.text, fontSize: 24, fontWeight: '300' }}>‹</Text>
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>📦 Tableau de bord</Text>
         <TouchableOpacity onPress={() => navigation.navigate('ProviderIncome')} style={styles.earningsBtn}>
           <Text style={styles.earningsBtnText}>Revenus</Text>

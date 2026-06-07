@@ -93,6 +93,9 @@ export default function DepanneurHomeScreen({ navigation }) {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.replace('Home')} style={{ padding: 8, marginRight: 4 }}>
+          <Text style={{ color: COLORS.text, fontSize: 24, fontWeight: '300' }}>‹</Text>
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>🔧 EasyWay Dépannage</Text>
         <TouchableOpacity onPress={() => navigation.navigate('ProviderProfile')}>
           <Text style={{ fontSize: 24 }}>👤</Text>
