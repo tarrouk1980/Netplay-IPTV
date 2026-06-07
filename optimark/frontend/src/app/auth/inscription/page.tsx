@@ -2,15 +2,39 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function InscriptionPage() {
   const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", role: "BUYER" });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { register } = useAuth();
+  const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      await register({
+        name: form.name,
+        email: form.email,
+        phone: form.phone || undefined,
+        password: form.password,
+        role: form.role as "BUYER" | "SELLER",
+      });
+      router.push("/");
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "Impossible de créer le compte. Réessayez.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex">
@@ -81,8 +105,16 @@ export default function InscriptionPage() {
                 </div>
               </div>
 
-              <button type="submit" className="w-full bg-rose-800 hover:bg-rose-900 text-white font-black py-3.5 rounded-xl transition shadow-md shadow-rose-200 text-base">
-                Créer mon compte
+              {error && (
+                <p className="text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-4 py-2.5 text-sm font-medium">{error}</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-rose-800 hover:bg-rose-900 text-white font-black py-3.5 rounded-xl transition shadow-md shadow-rose-200 text-base disabled:opacity-60"
+              >
+                {loading ? "Création..." : "Créer mon compte"}
               </button>
             </form>
 

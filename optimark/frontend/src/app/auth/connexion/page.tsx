@@ -2,14 +2,31 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ConnexionPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      await login(email, password);
+      router.push(searchParams.get("redirect") || "/");
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "E-mail ou mot de passe incorrect.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -108,11 +125,16 @@ export default function ConnexionPage() {
                 </div>
               </div>
 
+              {error && (
+                <p className="text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-4 py-2.5 text-sm font-medium">{error}</p>
+              )}
+
               <button
                 type="submit"
-                className="w-full bg-rose-800 hover:bg-rose-900 text-white font-black py-3.5 rounded-xl transition shadow-md shadow-rose-200 text-base"
+                disabled={loading}
+                className="w-full bg-rose-800 hover:bg-rose-900 text-white font-black py-3.5 rounded-xl transition shadow-md shadow-rose-200 text-base disabled:opacity-60"
               >
-                Se connecter
+                {loading ? "Connexion..." : "Se connecter"}
               </button>
             </form>
 

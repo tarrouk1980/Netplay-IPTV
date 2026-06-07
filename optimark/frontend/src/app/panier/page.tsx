@@ -17,7 +17,7 @@ export default function PanierPage() {
 
   const handleOrder = async () => {
     if (!user) {
-      router.push("/auth/connexion");
+      router.push("/auth/connexion?redirect=/panier");
       return;
     }
     if (!selectedPayment) return;
