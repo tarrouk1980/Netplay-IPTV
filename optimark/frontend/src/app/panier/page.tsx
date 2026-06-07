@@ -80,7 +80,7 @@ export default function PanierPage() {
             <p className="text-xl font-medium">Votre panier est vide</p>
             <button
               onClick={() => router.push("/produits")}
-              className="mt-4 text-blue-800 hover:underline text-sm"
+              className="mt-4 text-rose-800 hover:underline text-sm"
             >
               Découvrir les produits
             </button>
@@ -117,7 +117,7 @@ export default function PanierPage() {
                         </button>
                       </div>
                       <div className="flex items-center gap-4">
-                        <span className="font-bold text-blue-800">{(item.price * item.quantity).toFixed(2)} TND</span>
+                        <span className="font-bold text-rose-800">{(item.price * item.quantity).toFixed(2)} TND</span>
                         <button
                           onClick={() => removeItem(item.id)}
                           className="text-red-400 hover:text-rose-800 text-sm transition"
@@ -144,7 +144,7 @@ export default function PanierPage() {
                   ))}
                   <div className="border-t border-slate-200 pt-2 flex justify-between font-bold text-slate-800 text-base">
                     <span>Total</span>
-                    <span className="text-blue-800">{total.toFixed(2)} TND</span>
+                    <span className="text-rose-800">{total.toFixed(2)} TND</span>
                   </div>
                 </div>
 
@@ -160,8 +160,8 @@ export default function PanierPage() {
                         key={method.id}
                         className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition ${
                           selectedPayment === method.id
-                            ? "border-blue-800 bg-blue-50"
-                            : "border-slate-200 hover:border-blue-300"
+                            ? "border-rose-800 bg-rose-50"
+                            : "border-slate-200 hover:border-rose-300"
                         }`}
                       >
                         <input
@@ -170,7 +170,7 @@ export default function PanierPage() {
                           value={method.id}
                           checked={selectedPayment === method.id}
                           onChange={() => setSelectedPayment(method.id)}
-                          className="accent-blue-800"
+                          className="accent-rose-800"
                         />
                         <span>{method.icon}</span>
                         <span className="text-slate-700 text-sm font-medium">{method.label}</span>
@@ -182,7 +182,7 @@ export default function PanierPage() {
                 <button
                   disabled={!selectedPayment || processing}
                   onClick={handleOrder}
-                  className="w-full bg-blue-800 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-rose-800 text-white font-bold py-3 rounded-xl hover:bg-rose-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {processing ? "Traitement..." : "Passer la commande"}
                 </button>
