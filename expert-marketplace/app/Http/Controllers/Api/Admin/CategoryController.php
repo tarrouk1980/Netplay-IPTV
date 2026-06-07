@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class CategoryController extends Controller
 {
@@ -12,9 +13,11 @@ class CategoryController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'max:255', 'unique:categories,slug'],
+            'slug' => ['nullable', 'string', 'max:255', 'unique:categories,slug'],
             'parent_id' => ['nullable', 'exists:categories,id'],
         ]);
+
+        $data['slug'] = $data['slug'] ?? Str::slug($data['name']);
 
         return response()->json(Category::create($data), 201);
     }

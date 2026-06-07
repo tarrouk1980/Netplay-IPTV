@@ -90,7 +90,15 @@
     "noSlots": "لا توجد مواعيد مسجلة بعد.",
     "noBookings": "لا توجد حجوزات بعد.",
     "delete": "حذف",
-    "days": ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"],
+    "days": [
+      "الأحد",
+      "الإثنين",
+      "الثلاثاء",
+      "الأربعاء",
+      "الخميس",
+      "الجمعة",
+      "السبت"
+    ],
     "markComplete": "تحديد كمنتهية",
     "incomingBookings": "الحجوزات الواردة"
   },
@@ -99,5 +107,35 @@
     "save": "حفظ",
     "cancel": "إلغاء",
     "back": "رجوع"
+  },
+  "admin": {
+    "title": "لوحة الإدارة",
+    "expertProfiles": "ملفات الخبراء",
+    "categories": "الفئات",
+    "subscriptionPlans": "خطط الاشتراك",
+    "status": "الحالة",
+    "all": "الكل",
+    "pending": "قيد الانتظار",
+    "approved": "مقبول",
+    "rejected": "مرفوض",
+    "approve": "قبول",
+    "reject": "رفض",
+    "name": "الاسم",
+    "slug": "المعرّف",
+    "add": "إضافة",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "price": "السعر",
+    "billingInterval": "فترة الفوترة",
+    "monthly": "شهري",
+    "yearly": "سنوي",
+    "includedSessions": "الجلسات المضمنة شهريًا",
+    "noCategories": "لا توجد فئات بعد.",
+    "noPlans": "لا توجد خطط بعد.",
+    "noProfiles": "لا توجد ملفات بعد.",
+    "categoryNamePlaceholder": "اسم الفئة",
+    "planNamePlaceholder": "اسم الخطة"
   }
 }

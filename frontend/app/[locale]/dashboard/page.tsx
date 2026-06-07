@@ -18,6 +18,8 @@ export default function DashboardPage() {
       router.replace('/login');
     } else if (!loading && user?.role === 'expert') {
       router.replace('/dashboard/expert');
+    } else if (!loading && user?.role === 'admin') {
+      router.replace('/dashboard/admin');
     }
   }, [loading, user, router]);
 

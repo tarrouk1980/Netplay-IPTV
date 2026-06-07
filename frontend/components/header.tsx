@@ -32,7 +32,13 @@ export function Header() {
           {user ? (
             <>
               <Link
-                href={user.role === 'expert' ? '/dashboard/expert' : '/dashboard'}
+                href={
+                  user.role === 'admin'
+                    ? '/dashboard/admin'
+                    : user.role === 'expert'
+                      ? '/dashboard/expert'
+                      : '/dashboard'
+                }
                 className="hover:text-indigo-600"
               >
                 {t('dashboard')}

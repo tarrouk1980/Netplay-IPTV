@@ -21,7 +21,9 @@ export default function LoginPage() {
 
     try {
       const logged = await login(email, password);
-      router.push(logged.role === 'expert' ? '/dashboard/expert' : '/dashboard');
+      router.push(
+        logged.role === 'admin' ? '/dashboard/admin' : logged.role === 'expert' ? '/dashboard/expert' : '/dashboard'
+      );
     } catch {
       setError(t('error'));
     } finally {

@@ -31,7 +31,13 @@ export default function RegisterPage() {
 
     try {
       const registered = await register(form);
-      router.push(registered.role === 'expert' ? '/dashboard/expert' : '/dashboard');
+      router.push(
+        registered.role === 'admin'
+          ? '/dashboard/admin'
+          : registered.role === 'expert'
+            ? '/dashboard/expert'
+            : '/dashboard'
+      );
     } catch {
       setError(t('error'));
     } finally {

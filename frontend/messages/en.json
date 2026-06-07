@@ -90,7 +90,15 @@
     "noSlots": "No slots registered yet.",
     "noBookings": "No bookings yet.",
     "delete": "Delete",
-    "days": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+    "days": [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday"
+    ],
     "markComplete": "Mark as completed",
     "incomingBookings": "Incoming bookings"
   },
@@ -99,5 +107,35 @@
     "save": "Save",
     "cancel": "Cancel",
     "back": "Back"
+  },
+  "admin": {
+    "title": "Admin panel",
+    "expertProfiles": "Expert profiles",
+    "categories": "Categories",
+    "subscriptionPlans": "Subscription plans",
+    "status": "Status",
+    "all": "All",
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "approve": "Approve",
+    "reject": "Reject",
+    "name": "Name",
+    "slug": "Slug",
+    "add": "Add",
+    "delete": "Delete",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "price": "Price",
+    "billingInterval": "Billing interval",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "includedSessions": "Included sessions per month",
+    "noCategories": "No categories yet.",
+    "noPlans": "No plans yet.",
+    "noProfiles": "No profiles yet.",
+    "categoryNamePlaceholder": "Category name",
+    "planNamePlaceholder": "Plan name"
   }
 }

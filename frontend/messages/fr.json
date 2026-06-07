@@ -90,7 +90,15 @@
     "noSlots": "Aucun créneau enregistré pour le moment.",
     "noBookings": "Aucune réservation pour le moment.",
     "delete": "Supprimer",
-    "days": ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"],
+    "days": [
+      "Dimanche",
+      "Lundi",
+      "Mardi",
+      "Mercredi",
+      "Jeudi",
+      "Vendredi",
+      "Samedi"
+    ],
     "markComplete": "Marquer comme terminée",
     "incomingBookings": "Réservations reçues"
   },
@@ -99,5 +107,35 @@
     "save": "Enregistrer",
     "cancel": "Annuler",
     "back": "Retour"
+  },
+  "admin": {
+    "title": "Panneau d'administration",
+    "expertProfiles": "Profils experts",
+    "categories": "Catégories",
+    "subscriptionPlans": "Plans d'abonnement",
+    "status": "Statut",
+    "all": "Tous",
+    "pending": "En attente",
+    "approved": "Approuvé",
+    "rejected": "Refusé",
+    "approve": "Approuver",
+    "reject": "Refuser",
+    "name": "Nom",
+    "slug": "Slug",
+    "add": "Ajouter",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "price": "Prix",
+    "billingInterval": "Intervalle de facturation",
+    "monthly": "Mensuel",
+    "yearly": "Annuel",
+    "includedSessions": "Sessions incluses par mois",
+    "noCategories": "Aucune catégorie pour le moment.",
+    "noPlans": "Aucun plan pour le moment.",
+    "noProfiles": "Aucun profil pour le moment.",
+    "categoryNamePlaceholder": "Nom de la catégorie",
+    "planNamePlaceholder": "Nom du plan"
   }
 }
