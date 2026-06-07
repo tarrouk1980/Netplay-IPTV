@@ -1,3 +1,20 @@
+import { readFileSync, existsSync } from 'fs';
+import { join } from 'path';
+
+const envPath = join(__dirname, '..', '.env');
+if (existsSync(envPath) && !process.env.DATABASE_URL) {
+  for (const line of readFileSync(envPath, 'utf-8').split('\n')) {
+    const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+    if (match) {
+      const key = match[1];
+      let value = (match[2] || '').trim();
+      if (value.startsWith('"') && value.endsWith('"')) value = value.slice(1, -1);
+      if (value.startsWith("'") && value.endsWith("'")) value = value.slice(1, -1);
+      if (!process.env[key]) process.env[key] = value;
+    }
+  }
+}
+
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import * as bcrypt from 'bcrypt';
