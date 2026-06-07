@@ -1,0 +1,69 @@
+{
+  "nav": {
+    "home": "Accueil",
+    "experts": "Experts",
+    "login": "Connexion",
+    "register": "Inscription",
+    "dashboard": "Tableau de bord",
+    "logout": "Déconnexion"
+  },
+  "home": {
+    "title": "Trouvez l'expert qu'il vous faut",
+    "subtitle": "Réservez une session avec des coachs et mentors vérifiés, dans tous les domaines.",
+    "searchPlaceholder": "Rechercher un expert, une spécialité...",
+    "cta": "Rechercher"
+  },
+  "experts": {
+    "title": "Experts disponibles",
+    "filters": "Filtres",
+    "minPrice": "Prix min",
+    "maxPrice": "Prix max",
+    "minRating": "Note minimale",
+    "noResults": "Aucun expert ne correspond à votre recherche.",
+    "perHour": "/heure",
+    "viewProfile": "Voir le profil",
+    "bookSession": "Réserver une session"
+  },
+  "auth": {
+    "name": "Nom complet",
+    "email": "Adresse e-mail",
+    "password": "Mot de passe",
+    "passwordConfirmation": "Confirmer le mot de passe",
+    "role": "Je suis...",
+    "roleClient": "Un utilisateur cherchant un expert",
+    "roleExpert": "Un expert proposant mes services",
+    "loginButton": "Se connecter",
+    "registerButton": "Créer mon compte",
+    "loginTitle": "Connexion à votre compte",
+    "registerTitle": "Créer un compte",
+    "switchToRegister": "Pas encore de compte ? Inscrivez-vous",
+    "switchToLogin": "Déjà un compte ? Connectez-vous",
+    "error": "Identifiants invalides ou erreur de validation."
+  },
+  "booking": {
+    "selectSlot": "Choisissez un créneau",
+    "confirm": "Confirmer la réservation",
+    "price": "Prix",
+    "commission": "Commission plateforme",
+    "payNow": "Payer maintenant",
+    "status": {
+      "pending": "En attente de paiement",
+      "confirmed": "Confirmée",
+      "completed": "Terminée",
+      "cancelled": "Annulée"
+    }
+  },
+  "dashboard": {
+    "myBookings": "Mes réservations",
+    "myProfile": "Mon profil expert",
+    "availability": "Mes créneaux",
+    "payments": "Paiements",
+    "noBookings": "Vous n'avez aucune réservation pour le moment."
+  },
+  "common": {
+    "loading": "Chargement...",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "back": "Retour"
+  }
+}

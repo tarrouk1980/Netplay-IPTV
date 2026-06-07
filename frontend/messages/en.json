@@ -1,0 +1,69 @@
+{
+  "nav": {
+    "home": "Home",
+    "experts": "Experts",
+    "login": "Log in",
+    "register": "Sign up",
+    "dashboard": "Dashboard",
+    "logout": "Log out"
+  },
+  "home": {
+    "title": "Find the expert you need",
+    "subtitle": "Book a session with verified coaches and mentors, in any field.",
+    "searchPlaceholder": "Search an expert, a specialty...",
+    "cta": "Search"
+  },
+  "experts": {
+    "title": "Available experts",
+    "filters": "Filters",
+    "minPrice": "Min price",
+    "maxPrice": "Max price",
+    "minRating": "Minimum rating",
+    "noResults": "No expert matches your search.",
+    "perHour": "/hour",
+    "viewProfile": "View profile",
+    "bookSession": "Book a session"
+  },
+  "auth": {
+    "name": "Full name",
+    "email": "Email address",
+    "password": "Password",
+    "passwordConfirmation": "Confirm password",
+    "role": "I am...",
+    "roleClient": "A user looking for an expert",
+    "roleExpert": "An expert offering my services",
+    "loginButton": "Log in",
+    "registerButton": "Create my account",
+    "loginTitle": "Log in to your account",
+    "registerTitle": "Create an account",
+    "switchToRegister": "No account yet? Sign up",
+    "switchToLogin": "Already have an account? Log in",
+    "error": "Invalid credentials or validation error."
+  },
+  "booking": {
+    "selectSlot": "Choose a time slot",
+    "confirm": "Confirm booking",
+    "price": "Price",
+    "commission": "Platform commission",
+    "payNow": "Pay now",
+    "status": {
+      "pending": "Awaiting payment",
+      "confirmed": "Confirmed",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    }
+  },
+  "dashboard": {
+    "myBookings": "My bookings",
+    "myProfile": "My expert profile",
+    "availability": "My time slots",
+    "payments": "Payments",
+    "noBookings": "You have no bookings yet."
+  },
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "back": "Back"
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "nav": {
+    "home": "الرئيسية",
+    "experts": "الخبراء",
+    "login": "تسجيل الدخول",
+    "register": "إنشاء حساب",
+    "dashboard": "لوحة التحكم",
+    "logout": "تسجيل الخروج"
+  },
+  "home": {
+    "title": "ابحث عن الخبير الذي تحتاجه",
+    "subtitle": "احجز جلسة مع مدربين وموجهين موثوقين، في جميع المجالات.",
+    "searchPlaceholder": "ابحث عن خبير أو تخصص...",
+    "cta": "بحث"
+  },
+  "experts": {
+    "title": "الخبراء المتاحون",
+    "filters": "التصفية",
+    "minPrice": "أقل سعر",
+    "maxPrice": "أعلى سعر",
+    "minRating": "أدنى تقييم",
+    "noResults": "لا يوجد خبير يطابق بحثك.",
+    "perHour": "/ساعة",
+    "viewProfile": "عرض الملف الشخصي",
+    "bookSession": "احجز جلسة"
+  },
+  "auth": {
+    "name": "الاسم الكامل",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "passwordConfirmation": "تأكيد كلمة المرور",
+    "role": "أنا...",
+    "roleClient": "مستخدم يبحث عن خبير",
+    "roleExpert": "خبير أعرض خدماتي",
+    "loginButton": "تسجيل الدخول",
+    "registerButton": "إنشاء حسابي",
+    "loginTitle": "تسجيل الدخول إلى حسابك",
+    "registerTitle": "إنشاء حساب",
+    "switchToRegister": "ليس لديك حساب؟ سجل الآن",
+    "switchToLogin": "لديك حساب بالفعل؟ سجل الدخول",
+    "error": "بيانات الدخول غير صحيحة أو خطأ في التحقق."
+  },
+  "booking": {
+    "selectSlot": "اختر موعدًا",
+    "confirm": "تأكيد الحجز",
+    "price": "السعر",
+    "commission": "عمولة المنصة",
+    "payNow": "ادفع الآن",
+    "status": {
+      "pending": "بانتظار الدفع",
+      "confirmed": "مؤكد",
+      "completed": "منتهٍ",
+      "cancelled": "ملغى"
+    }
+  },
+  "dashboard": {
+    "myBookings": "حجوزاتي",
+    "myProfile": "ملفي كخبير",
+    "availability": "مواعيدي المتاحة",
+    "payments": "المدفوعات",
+    "noBookings": "ليس لديك أي حجوزات حتى الآن."
+  },
+  "common": {
+    "loading": "جارٍ التحميل...",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "back": "رجوع"
+  }
+}
