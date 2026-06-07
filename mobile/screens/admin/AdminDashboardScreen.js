@@ -91,7 +91,7 @@ export default function AdminDashboardScreen({ navigation }) {
           <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.navigate('AdminLiveMap')}>
             <Text style={{ fontSize: 18 }}>🗺️</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.headerBtn} onPress={() => { logout(); navigation.replace('Login'); }}>
+          <TouchableOpacity style={styles.headerBtn} onPress={() => logout()}>
             <Text style={{ fontSize: 18 }}>🚪</Text>
           </TouchableOpacity>
         </View>

@@ -215,7 +215,7 @@ export default function DriverDashboardScreen({ navigation }) {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => { logout(); navigation.replace('Login'); }} style={{ padding: 8, marginBottom: 4, marginLeft: -8, alignSelf: 'flex-start' }}>
+        <TouchableOpacity onPress={() => logout()} style={{ padding: 8, marginBottom: 4, marginLeft: -8, alignSelf: 'flex-start' }}>
           <Text style={{ color: COLORS.headerText, fontSize: 24, fontWeight: '300' }}>‹</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Dashboard Chauffeur</Text>
