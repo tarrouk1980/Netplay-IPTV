@@ -4,8 +4,14 @@ import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { AppModule } from './app.module';
 
-const envPath = join(__dirname, '..', '.env');
-if (existsSync(envPath)) {
+const candidatePaths = [
+  join(__dirname, '..', '.env'),
+  join(__dirname, '..', '..', '.env'),
+  join(process.cwd(), '.env'),
+];
+const envPath = candidatePaths.find((p) => existsSync(p));
+if (envPath) {
+  console.log(`[env] Loading environment from ${envPath}`);
   for (const line of readFileSync(envPath, 'utf-8').split('\n')) {
     const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
     if (match) {
@@ -13,12 +19,13 @@ if (existsSync(envPath)) {
       let value = (match[2] || '').trim();
       if (value.startsWith('"') && value.endsWith('"')) value = value.slice(1, -1);
       if (value.startsWith("'") && value.endsWith("'")) value = value.slice(1, -1);
-      if (!process.env[key]) process.env[key] = value;
+      process.env[key] = value;
     }
   }
 }
 
 async function bootstrap() {
+  console.log(`[env] DATABASE_URL is ${process.env.DATABASE_URL ? 'set' : 'NOT SET'}`);
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
