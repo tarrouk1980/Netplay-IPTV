@@ -20,8 +20,8 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await login(email, password);
-      router.push('/dashboard');
+      const logged = await login(email, password);
+      router.push(logged.role === 'expert' ? '/dashboard/expert' : '/dashboard');
     } catch {
       setError(t('error'));
     } finally {

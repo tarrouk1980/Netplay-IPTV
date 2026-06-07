@@ -31,7 +31,10 @@ export function Header() {
 
           {user ? (
             <>
-              <Link href="/dashboard" className="hover:text-indigo-600">
+              <Link
+                href={user.role === 'expert' ? '/dashboard/expert' : '/dashboard'}
+                className="hover:text-indigo-600"
+              >
                 {t('dashboard')}
               </Link>
               <button onClick={() => logout()} className="text-neutral-500 hover:text-indigo-600">

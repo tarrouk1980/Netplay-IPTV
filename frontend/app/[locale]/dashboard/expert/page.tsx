@@ -1,0 +1,438 @@
+'use client';
+
+import {useEffect, useState} from 'react';
+import {useTranslations} from 'next-intl';
+import {useQuery, useMutation, useQueryClient} from '@tanstack/react-query';
+import {useRouter} from '@/i18n/navigation';
+import {api, type Category, type AvailabilitySlot, type Booking, type Paginated} from '@/lib/api';
+import {useAuth} from '@/lib/auth-context';
+
+export default function ExpertDashboardPage() {
+  const router = useRouter();
+  const {user, loading} = useAuth();
+
+  useEffect(() => {
+    if (!loading && (!user || user.role !== 'expert')) {
+      router.replace('/dashboard');
+    }
+  }, [loading, user, router]);
+
+  if (!user || user.role !== 'expert') {
+    return null;
+  }
+
+  if (!user.expert_profile) {
+    return <CreateProfile />;
+  }
+
+  return <ExpertWorkspace />;
+}
+
+function CreateProfile() {
+  const t = useTranslations('expert');
+  const queryClient = useQueryClient();
+  const [form, setForm] = useState({
+    category_id: '',
+    bio: '',
+    hourly_rate: '',
+    currency: 'EUR',
+    years_experience: '',
+  });
+  const [error, setError] = useState<string | null>(null);
+
+  const {data: categories} = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const {data} = await api.get<Category[]>('/categories');
+      return data;
+    },
+  });
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const {data} = await api.post('/experts', {
+        ...form,
+        category_id: Number(form.category_id),
+        hourly_rate: Number(form.hourly_rate),
+        years_experience: form.years_experience ? Number(form.years_experience) : undefined,
+      });
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: ['me']});
+      window.location.reload();
+    },
+    onError: () => setError(t('createProfile')),
+  });
+
+  function update(field: string) {
+    return (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
+      setForm((f) => ({...f, [field]: e.target.value}));
+  }
+
+  return (
+    <div className="mx-auto max-w-lg">
+      <h1 className="text-2xl font-semibold">{t('createProfileTitle')}</h1>
+      <p className="mt-1 text-sm text-neutral-500">{t('createProfileSubtitle')}</p>
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          setError(null);
+          mutation.mutate();
+        }}
+        className="mt-6 space-y-4"
+      >
+        <div>
+          <label className="mb-1 block text-xs text-neutral-500">{t('category')}</label>
+          <select
+            required
+            value={form.category_id}
+            onChange={update('category_id')}
+            className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+          >
+            <option value="">—</option>
+            {categories?.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="mb-1 block text-xs text-neutral-500">{t('bio')}</label>
+          <textarea
+            required
+            rows={4}
+            placeholder={t('bioPlaceholder')}
+            value={form.bio}
+            onChange={update('bio')}
+            className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="mb-1 block text-xs text-neutral-500">{t('hourlyRate')}</label>
+            <input
+              type="number"
+              required
+              min="0"
+              value={form.hourly_rate}
+              onChange={update('hourly_rate')}
+              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-neutral-500">{t('currency')}</label>
+            <input
+              required
+              maxLength={3}
+              value={form.currency}
+              onChange={update('currency')}
+              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm uppercase"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="mb-1 block text-xs text-neutral-500">{t('yearsExperience')}</label>
+          <input
+            type="number"
+            min="0"
+            value={form.years_experience}
+            onChange={update('years_experience')}
+            className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+          />
+        </div>
+
+        {error && <p className="text-sm text-red-600">{error}</p>}
+
+        <button
+          type="submit"
+          disabled={mutation.isPending}
+          className="w-full rounded-full bg-indigo-600 px-6 py-3 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+        >
+          {t('createProfile')}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function ExpertWorkspace() {
+  const t = useTranslations('expert');
+  const {user} = useAuth();
+  const profile = user!.expert_profile!;
+
+  return (
+    <div className="space-y-10">
+      {profile.status !== 'approved' && (
+        <div
+          className={`rounded-lg p-4 text-sm ${
+            profile.status === 'rejected' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'
+          }`}
+        >
+          {profile.status === 'rejected' ? t('statusRejected') : t('statusPending')}
+        </div>
+      )}
+
+      <StripeConnectCard />
+      <AvailabilityManager />
+      <IncomingBookings />
+    </div>
+  );
+}
+
+function StripeConnectCard() {
+  const t = useTranslations('expert');
+
+  const {data: status} = useQuery({
+    queryKey: ['stripe-status'],
+    queryFn: async () => {
+      const {data} = await api.get<{onboarded: boolean}>('/stripe/connect/status');
+      return data;
+    },
+  });
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const {data} = await api.post<{url: string}>('/stripe/connect/onboard');
+      return data;
+    },
+    onSuccess: ({url}) => {
+      window.location.href = url;
+    },
+  });
+
+  return (
+    <section className="rounded-xl border border-neutral-200 bg-white p-6">
+      <h2 className="font-semibold">{t('stripeTitle')}</h2>
+
+      {status === undefined ? (
+        <p className="mt-2 text-sm text-neutral-500">{t('stripeChecking')}</p>
+      ) : status.onboarded ? (
+        <p className="mt-2 text-sm text-emerald-600">{t('stripeConnected')}</p>
+      ) : (
+        <>
+          <p className="mt-2 text-sm text-neutral-500">{t('stripeNotConnected')}</p>
+          <button
+            onClick={() => mutation.mutate()}
+            disabled={mutation.isPending}
+            className="mt-4 rounded-full bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {t('stripeConnect')}
+          </button>
+        </>
+      )}
+    </section>
+  );
+}
+
+function AvailabilityManager() {
+  const t = useTranslations('expert');
+  const queryClient = useQueryClient();
+  const {user} = useAuth();
+  const expertId = user!.expert_profile!.id;
+
+  const [form, setForm] = useState({
+    day_of_week: '1',
+    specific_date: '',
+    start_time: '09:00',
+    end_time: '10:00',
+    is_recurring: true,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  });
+
+  const {data: slots} = useQuery({
+    queryKey: ['availability-slots', expertId],
+    queryFn: async () => {
+      const {data} = await api.get<AvailabilitySlot[]>('/availability-slots', {
+        params: {expert_id: expertId},
+      });
+      return data;
+    },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      const {data} = await api.post('/availability-slots', {
+        ...form,
+        day_of_week: form.is_recurring ? Number(form.day_of_week) : null,
+        specific_date: form.is_recurring ? null : form.specific_date || null,
+      });
+      return data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({queryKey: ['availability-slots', expertId]}),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => api.delete(`/availability-slots/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({queryKey: ['availability-slots', expertId]}),
+  });
+
+  const days = t.raw('days') as string[];
+
+  return (
+    <section className="rounded-xl border border-neutral-200 bg-white p-6">
+      <h2 className="font-semibold">{t('availabilityTitle')}</h2>
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          createMutation.mutate();
+        }}
+        className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2"
+      >
+        <label className="flex items-center gap-2 text-sm sm:col-span-2">
+          <input
+            type="checkbox"
+            checked={form.is_recurring}
+            onChange={(e) => setForm((f) => ({...f, is_recurring: e.target.checked}))}
+          />
+          {t('recurring')}
+        </label>
+
+        {form.is_recurring ? (
+          <div>
+            <label className="mb-1 block text-xs text-neutral-500">{t('dayOfWeek')}</label>
+            <select
+              value={form.day_of_week}
+              onChange={(e) => setForm((f) => ({...f, day_of_week: e.target.value}))}
+              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+            >
+              {days.map((d, i) => (
+                <option key={i} value={i}>
+                  {d}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : (
+          <div>
+            <label className="mb-1 block text-xs text-neutral-500">{t('specificDate')}</label>
+            <input
+              type="date"
+              value={form.specific_date}
+              onChange={(e) => setForm((f) => ({...f, specific_date: e.target.value}))}
+              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+            />
+          </div>
+        )}
+
+        <div>
+          <label className="mb-1 block text-xs text-neutral-500">{t('timezone')}</label>
+          <input
+            value={form.timezone}
+            onChange={(e) => setForm((f) => ({...f, timezone: e.target.value}))}
+            className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-xs text-neutral-500">{t('startTime')}</label>
+          <input
+            type="time"
+            value={form.start_time}
+            onChange={(e) => setForm((f) => ({...f, start_time: e.target.value}))}
+            className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-xs text-neutral-500">{t('endTime')}</label>
+          <input
+            type="time"
+            value={form.end_time}
+            onChange={(e) => setForm((f) => ({...f, end_time: e.target.value}))}
+            className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={createMutation.isPending}
+          className="rounded-full bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 sm:col-span-2"
+        >
+          {t('addSlot')}
+        </button>
+      </form>
+
+      <div className="mt-6 space-y-2">
+        {slots?.length === 0 && <p className="text-sm text-neutral-500">{t('noSlots')}</p>}
+
+        {slots?.map((slot) => (
+          <div
+            key={slot.id}
+            className="flex items-center justify-between rounded-lg border border-neutral-100 px-4 py-2 text-sm"
+          >
+            <span>
+              {slot.is_recurring && slot.day_of_week !== null
+                ? days[slot.day_of_week]
+                : slot.specific_date}{' '}
+              · {slot.start_time}–{slot.end_time} ({slot.timezone})
+            </span>
+            <button
+              onClick={() => deleteMutation.mutate(slot.id)}
+              className="text-red-600 hover:underline"
+            >
+              {t('delete')}
+            </button>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function IncomingBookings() {
+  const t = useTranslations('expert');
+  const tb = useTranslations('booking');
+  const queryClient = useQueryClient();
+
+  const {data} = useQuery({
+    queryKey: ['bookings'],
+    queryFn: async () => {
+      const {data} = await api.get<Paginated<Booking>>('/bookings');
+      return data;
+    },
+  });
+
+  const completeMutation = useMutation({
+    mutationFn: (id: number) => api.post(`/bookings/${id}/complete`),
+    onSuccess: () => queryClient.invalidateQueries({queryKey: ['bookings']}),
+  });
+
+  return (
+    <section className="rounded-xl border border-neutral-200 bg-white p-6">
+      <h2 className="font-semibold">{t('incomingBookings')}</h2>
+
+      {data?.data.length === 0 && <p className="mt-2 text-sm text-neutral-500">{t('noBookings')}</p>}
+
+      <div className="mt-4 space-y-2">
+        {data?.data.map((booking) => (
+          <div
+            key={booking.id}
+            className="flex items-center justify-between rounded-lg border border-neutral-100 px-4 py-3 text-sm"
+          >
+            <div>
+              <p className="font-medium">{new Date(booking.slot_datetime_start).toLocaleString()}</p>
+              <p className="text-xs text-neutral-500">{tb(`status.${booking.status}`)}</p>
+            </div>
+
+            {booking.status === 'confirmed' && (
+              <button
+                onClick={() => completeMutation.mutate(booking.id)}
+                disabled={completeMutation.isPending}
+                className="rounded-full bg-indigo-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {t('markComplete')}
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}

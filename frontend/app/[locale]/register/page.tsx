@@ -30,8 +30,8 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      await register(form);
-      router.push('/dashboard');
+      const registered = await register(form);
+      router.push(registered.role === 'expert' ? '/dashboard/expert' : '/dashboard');
     } catch {
       setError(t('error'));
     } finally {

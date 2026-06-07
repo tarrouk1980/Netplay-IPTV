@@ -20,6 +20,7 @@ export type User = {
   email: string;
   role: 'client' | 'expert' | 'admin';
   avatar_url: string | null;
+  expert_profile?: FullExpertProfile | null;
 };
 
 export type ExpertProfile = {
@@ -31,6 +32,30 @@ export type ExpertProfile = {
   currency: string;
   rating_avg: number;
   total_sessions: number;
+};
+
+export type Category = {
+  id: number;
+  name: string;
+  slug: string;
+};
+
+export type AvailabilitySlot = {
+  id: number;
+  expert_id: number;
+  day_of_week: number | null;
+  specific_date: string | null;
+  start_time: string;
+  end_time: string;
+  is_recurring: boolean;
+  timezone: string;
+};
+
+export type FullExpertProfile = ExpertProfile & {
+  status: 'pending' | 'approved' | 'rejected';
+  stripe_account_id: string | null;
+  stripe_onboarded: boolean;
+  years_experience: number | null;
 };
 
 export type Booking = {

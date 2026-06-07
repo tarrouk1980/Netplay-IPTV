@@ -6,8 +6,8 @@ import {api, type User} from './api';
 type AuthContextValue = {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (data: Record<string, string>) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
+  register: (data: Record<string, string>) => Promise<User>;
   logout: () => Promise<void>;
 };
 
@@ -40,12 +40,14 @@ export function AuthProvider({children}: {children: ReactNode}) {
     const {data} = await api.post('/login', {email, password});
     window.localStorage.setItem('auth_token', data.token);
     setUser(data.user);
+    return data.user as User;
   }
 
   async function register(payload: Record<string, string>) {
     const {data} = await api.post('/register', payload);
     window.localStorage.setItem('auth_token', data.token);
     setUser(data.user);
+    return data.user as User;
   }
 
   async function logout() {
