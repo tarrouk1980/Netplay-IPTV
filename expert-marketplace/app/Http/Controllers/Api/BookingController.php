@@ -48,7 +48,7 @@ class BookingController extends Controller
 
         $hours = (strtotime($data['slot_datetime_end']) - strtotime($data['slot_datetime_start'])) / 3600;
         $price = round($expert->hourly_rate * $hours, 2);
-        $commission = round($price * $expert->commission_rate, 2);
+        $commission = round($price * $expert->commission_rate / 100, 2);
 
         $booking = Booking::create([
             'client_id' => $user->id,
