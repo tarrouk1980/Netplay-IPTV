@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>إذاعة القرآن الكريم FM</title>
+  <title>راديو القرآن الكريم</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Scheherazade+New:wght@400;700&family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet" />
@@ -732,54 +732,6 @@
       .sb-toggle-btn { margin-right: 0; width: 100%; text-align: center; }
     }
 
-    /* ═══════════════════════════════════════════
-       SELECTED CLIPS (مقتطفات مختارة)
-    ═══════════════════════════════════════════ */
-    .clips-note {
-      text-align: center;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      margin-top: -10px;
-      margin-bottom: 18px;
-    }
-    .clips-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 18px;
-      margin-bottom: 28px;
-    }
-    .clip-card {
-      background: var(--glass-bg);
-      border: 1px solid var(--glass-border);
-      border-radius: 16px;
-      overflow: hidden;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .clip-card:hover {
-      transform: translateY(-3px);
-      box-shadow: var(--shadow-gold);
-    }
-    .clip-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 14px 16px;
-    }
-    .clip-flag { font-size: 1.6rem; }
-    .clip-name { font-size: 1rem; font-weight: 700; color: var(--gold); }
-    .clip-country { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
-    .clip-frame-wrap {
-      position: relative;
-      width: 100%;
-      padding-bottom: 56.25%; /* 16:9 */
-    }
-    .clip-frame-wrap iframe {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      border: 0;
-    }
   </style>
 </head>
 <body>
@@ -796,7 +748,7 @@
     <span class="deco-moon">🌙</span>
     <span class="deco-star-r">✦</span>
     <span class="header-ornament">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</span>
-    <p class="header-subtitle">Quran FM Radio &nbsp;·&nbsp; إذاعة القرآن الكريم</p>
+    <p class="header-subtitle">راديو القرآن الكريم</p>
     <div class="header-divider">
       <span class="header-divider-icon">☽</span>
     </div>
@@ -885,10 +837,6 @@
     <div class="schedule-grid" id="scheduleGrid"><!-- filled by JS --></div>
   </div>
 
-  <!-- SELECTED CLIPS -->
-  <h2 class="section-title fade-in"><i class="fa-solid fa-star"></i> مقتطفات مختارة <i class="fa-solid fa-star"></i></h2>
-  <p class="clips-note fade-in">قراء ليس لهم بث مباشر متواصل — تسجيلات مختارة من يوتيوب</p>
-  <div class="clips-grid" id="clipsGrid"><!-- filled by JS --></div>
 
   <!-- STATION LIST -->
   <h2 class="section-title fade-in"><i class="fa-solid fa-mosque"></i> القراء والمحطات <i class="fa-solid fa-mosque"></i></h2>
@@ -900,7 +848,7 @@
   <!-- FOOTER -->
   <footer class="fade-in" style="animation-delay:0.9s">
     <p class="footer-ayah">﴿ إِنَّ هَٰذَا الْقُرْآنَ يَهْدِي لِلَّتِي هِيَ أَقْوَمُ ﴾</p>
-    <p>إذاعة القرآن الكريم الإنترنتية · Quran FM Radio &copy; 2025</p>
+    <p>راديو القرآن الكريم &copy; 2025</p>
   </footer>
 
 </div><!-- /app -->
@@ -1378,50 +1326,6 @@ function scheduleAutoSwitch() {
 }
 
 // ════════════════════════════════════════════════════════════
-//  مقتطفات مختارة — SELECTED CLIPS (reciters without live streams)
-//  Embedded YouTube videos for reciters not available on radio streams
-// ════════════════════════════════════════════════════════════
-const SELECTED_CLIPS = [
-  {
-    name: 'هيثم قانة',
-    country: 'تونس',
-    flag: '🇹🇳',
-    title: 'سورة التوبة — الآيات 117-119',
-    youtubeId: 'UYVN_f7S0nY'
-  }
-];
-
-function buildClipsSection() {
-  const grid = document.getElementById('clipsGrid');
-  if (!grid || !SELECTED_CLIPS.length) return;
-  grid.innerHTML = '';
-  SELECTED_CLIPS.forEach(clip => {
-    const card = document.createElement('div');
-    card.className = 'clip-card fade-in';
-    card.innerHTML = `
-      <div class="clip-header">
-        <span class="clip-flag">${clip.flag}</span>
-        <div>
-          <div class="clip-name">${clip.name}</div>
-          <div class="clip-country">${clip.country} · ${clip.title}</div>
-        </div>
-      </div>
-      <div class="clip-frame-wrap">
-        <iframe
-          src="https://www.youtube.com/embed/${clip.youtubeId}"
-          title="${clip.name} — ${clip.title}"
-          frameborder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowfullscreen
-          loading="lazy">
-        </iframe>
-      </div>
-    `;
-    grid.appendChild(card);
-  });
-}
-
-// ════════════════════════════════════════════════════════════
 //  QURAN VERSES FOR TICKER
 // ════════════════════════════════════════════════════════════
 const TICKER_VERSES = [
@@ -1520,7 +1424,6 @@ function buildStations() {
   });
 }
 buildStations();
-buildClipsSection();
 
 // ════════════════════════════════════════════════════════════
 //  SCHEDULE INIT
