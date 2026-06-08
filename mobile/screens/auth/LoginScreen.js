@@ -109,7 +109,7 @@ export default function LoginScreen({ navigation }) {
     }
 
     clearError();
-    const fullPhone = `${selectedCountry.code}${phone.trim()}`;
+    const fullPhone = `${selectedCountry.code}${phone.trim()}`.replace(/\s+/g, '');
     const result = await login(fullPhone, password);
 
     if (result.success) {
