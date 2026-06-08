@@ -129,6 +129,11 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
             <p className="text-sm text-amber-500">
               ★ {expert.rating_avg.toFixed(1)} · {expert.total_sessions} sessions
             </p>
+            {!!expert.years_experience && (
+              <p className="text-sm text-neutral-500">
+                {t('yearsExperience', {count: expert.years_experience})}
+              </p>
+            )}
             <div className="mt-1">
               <CredentialBadge
                 categorySlug={expert.category.slug}

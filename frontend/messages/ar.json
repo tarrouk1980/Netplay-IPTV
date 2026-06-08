@@ -33,6 +33,7 @@
     "minRating": "أدنى تقييم",
     "noResults": "لا يوجد خبير يطابق بحثك.",
     "perHour": "/ساعة",
+    "yearsExperience": "{count, plural, one {# سنة خبرة} two {سنتا خبرة} few {# سنوات خبرة} other {# سنة خبرة}}",
     "viewProfile": "عرض الملف الشخصي",
     "bookSession": "احجز جلسة",
     "previous": "السابق",

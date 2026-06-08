@@ -33,6 +33,7 @@
     "minRating": "Minimum rating",
     "noResults": "No expert matches your search.",
     "perHour": "/hour",
+    "yearsExperience": "{count, plural, one {# year of experience} other {# years of experience}}",
     "viewProfile": "View profile",
     "bookSession": "Book a session",
     "previous": "Previous",
