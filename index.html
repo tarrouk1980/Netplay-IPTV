@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Scheherazade+New:wght@400;700&family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/css/flag-icons.min.css" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -528,9 +529,14 @@
     .station-card.active::before { opacity: 1; }
 
     .station-flag {
-      font-size: 1.7rem;
+      font-size: 1.5rem;
+      width: 2rem;
+      height: 1.5rem;
       flex-shrink: 0;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+      border-radius: 3px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+      background-size: cover;
+      background-position: center;
     }
     .station-info { flex: 1; min-width: 0; }
     .station-name {
@@ -1480,7 +1486,7 @@ const STATIONS = [
     id: 1,
     name: 'منير المظفر أبو عبدالله التونسي',
     country: 'تونس',
-    flag: '🇹🇳',
+    flag: '🇹🇳', flagCode: 'tn',
     emoji: '🎤',
     freq: '100.1',
     quality: 'قالون عن نافع · MP3',
@@ -1497,7 +1503,7 @@ const STATIONS = [
     id: 2,
     name: 'خالد الجليل',
     country: 'المملكة العربية السعودية',
-    flag: '🇸🇦',
+    flag: '🇸🇦', flagCode: 'sa',
     emoji: '🕋',
     freq: '101.3',
     quality: 'MP3 · 128kbps',
@@ -1511,7 +1517,7 @@ const STATIONS = [
     id: 3,
     name: 'ماهر المعيقلي',
     country: 'المملكة العربية السعودية',
-    flag: '🇸🇦',
+    flag: '🇸🇦', flagCode: 'sa',
     emoji: '🕌',
     freq: '102.5',
     quality: 'MP3 · 128kbps',
@@ -1525,7 +1531,7 @@ const STATIONS = [
     id: 4,
     name: 'سعد الغامدي',
     country: 'المملكة العربية السعودية',
-    flag: '🇸🇦',
+    flag: '🇸🇦', flagCode: 'sa',
     emoji: '📿',
     freq: '103.7',
     quality: 'MP3 · 128kbps',
@@ -1539,7 +1545,7 @@ const STATIONS = [
     id: 5,
     name: 'أبو بكر الشاطري',
     country: 'المملكة العربية السعودية',
-    flag: '🇸🇦',
+    flag: '🇸🇦', flagCode: 'sa',
     emoji: '🎙',
     freq: '104.7',
     quality: 'MP3 · 128kbps',
@@ -1553,7 +1559,7 @@ const STATIONS = [
     id: 6,
     name: 'محمود خليل الحصري',
     country: 'مصر',
-    flag: '🇪🇬',
+    flag: '🇪🇬', flagCode: 'eg',
     emoji: '🎵',
     freq: '105.5',
     quality: 'MP3 · 128kbps',
@@ -1567,7 +1573,7 @@ const STATIONS = [
     id: 7,
     name: 'عبد الباسط عبد الصمد',
     country: 'مصر',
-    flag: '🇪🇬',
+    flag: '🇪🇬', flagCode: 'eg',
     emoji: '🌙',
     freq: '106.1',
     quality: 'MP3 · 128kbps',
@@ -1581,7 +1587,7 @@ const STATIONS = [
     id: 8,
     name: 'محمد صديق المنشاوي',
     country: 'مصر',
-    flag: '🇪🇬',
+    flag: '🇪🇬', flagCode: 'eg',
     emoji: '✨',
     freq: '107.3',
     quality: 'MP3 · 128kbps',
@@ -1595,7 +1601,7 @@ const STATIONS = [
     id: 9,
     name: 'محمد عبد الكريم',
     country: 'المغرب',
-    flag: '🇲🇦',
+    flag: '🇲🇦', flagCode: 'ma',
     emoji: '🌟',
     freq: '98.5',
     quality: 'MP3 · 128kbps',
@@ -1609,7 +1615,7 @@ const STATIONS = [
     id: 10,
     name: 'إدريس أبكر',
     country: 'المغرب',
-    flag: '🇲🇦',
+    flag: '🇲🇦', flagCode: 'ma',
     emoji: '⭐',
     freq: '99.3',
     quality: 'MP3 · 128kbps',
@@ -1623,7 +1629,7 @@ const STATIONS = [
     id: 11,
     name: 'محمد أيوب',
     country: 'المملكة العربية السعودية',
-    flag: '🇸🇦',
+    flag: '🇸🇦', flagCode: 'sa',
     emoji: '🎶',
     freq: '108.0',
     quality: 'MP3 · 128kbps',
@@ -1637,7 +1643,7 @@ const STATIONS = [
     id: 12,
     name: 'فارس عباد',
     country: 'الجزائر',
-    flag: '🇩🇿',
+    flag: '🇩🇿', flagCode: 'dz',
     emoji: '🌙',
     freq: '97.7',
     quality: 'MP3 · 128kbps',
@@ -1651,7 +1657,7 @@ const STATIONS = [
     id: 13,
     name: 'عبد الله الجهني',
     country: 'المملكة العربية السعودية',
-    flag: '🇸🇦',
+    flag: '🇸🇦', flagCode: 'sa',
     emoji: '🕌',
     freq: '96.5',
     quality: 'MP3 · 128kbps',
@@ -1665,7 +1671,7 @@ const STATIONS = [
     id: 14,
     name: 'ياسر الدوسري',
     country: 'المملكة العربية السعودية',
-    flag: '🇸🇦',
+    flag: '🇸🇦', flagCode: 'sa',
     emoji: '🎤',
     freq: '95.9',
     quality: 'MP3 · 128kbps',
@@ -1679,7 +1685,7 @@ const STATIONS = [
     id: 15,
     name: 'عبد الله خياط',
     country: 'المملكة العربية السعودية',
-    flag: '🇸🇦',
+    flag: '🇸🇦', flagCode: 'sa',
     emoji: '📿',
     freq: '94.7',
     quality: 'MP3 · 128kbps',
@@ -1693,7 +1699,7 @@ const STATIONS = [
     id: 16,
     name: 'إذاعة القرآن — السعودية',
     country: 'المملكة العربية السعودية',
-    flag: '🇸🇦',
+    flag: '🇸🇦', flagCode: 'sa',
     emoji: '📻',
     freq: '93.5',
     quality: 'AAC · 128kbps',
@@ -1707,7 +1713,7 @@ const STATIONS = [
     id: 17,
     name: 'إذاعة القرآن — القاهرة',
     country: 'مصر',
-    flag: '🇪🇬',
+    flag: '🇪🇬', flagCode: 'eg',
     emoji: '📡',
     freq: '92.3',
     quality: 'MP3 · 128kbps',
@@ -1721,7 +1727,7 @@ const STATIONS = [
     id: 18,
     name: 'سهل ياسين',
     country: 'إندونيسيا',
-    flag: '🇮🇩',
+    flag: '🇮🇩', flagCode: 'id',
     emoji: '🌺',
     freq: '91.1',
     quality: 'MP3 · 128kbps',
@@ -1735,7 +1741,7 @@ const STATIONS = [
     id: 19,
     name: 'علي جابر',
     country: 'المملكة العربية السعودية',
-    flag: '🇸🇦',
+    flag: '🇸🇦', flagCode: 'sa',
     emoji: '🌷',
     freq: '90.5',
     quality: 'MP3 · 128kbps',
@@ -1749,7 +1755,7 @@ const STATIONS = [
     id: 20,
     name: 'صلاح البدير',
     country: 'المملكة العربية السعودية',
-    flag: '🇸🇦',
+    flag: '🇸🇦', flagCode: 'sa',
     emoji: '☪',
     freq: '89.9',
     quality: 'MP3 · 128kbps',
@@ -1763,7 +1769,7 @@ const STATIONS = [
     id: 21,
     name: 'عمر القزابري',
     country: 'المغرب',
-    flag: '🇲🇦',
+    flag: '🇲🇦', flagCode: 'ma',
     emoji: '🌟',
     freq: '88.7',
     quality: 'MP3 · 128kbps',
@@ -1777,7 +1783,7 @@ const STATIONS = [
     id: 22,
     name: 'توفيق الصايغ',
     country: 'تونس',
-    flag: '🇹🇳',
+    flag: '🇹🇳', flagCode: 'tn',
     emoji: '🎵',
     freq: '87.5',
     quality: 'MP3 · 128kbps',
@@ -1791,7 +1797,7 @@ const STATIONS = [
     id: 23,
     name: 'محمد الطبلاوي',
     country: 'مصر',
-    flag: '🇪🇬',
+    flag: '🇪🇬', flagCode: 'eg',
     emoji: '✨',
     freq: '86.3',
     quality: 'MP3 · 128kbps',
@@ -1805,7 +1811,7 @@ const STATIONS = [
     id: 24,
     name: 'ناصر القطامي',
     country: 'الكويت',
-    flag: '🇰🇼',
+    flag: '🇰🇼', flagCode: 'kw',
     emoji: '🌙',
     freq: '85.1',
     quality: 'MP3 · 128kbps',
@@ -1819,7 +1825,7 @@ const STATIONS = [
     id: 25,
     name: 'محمد جبريل',
     country: 'مصر',
-    flag: '🇪🇬',
+    flag: '🇪🇬', flagCode: 'eg',
     emoji: '🎵',
     freq: '84.3',
     quality: 'MP3 · 128kbps',
@@ -1833,7 +1839,7 @@ const STATIONS = [
     id: 26,
     name: 'سعود الشريم',
     country: 'المملكة العربية السعودية',
-    flag: '🇸🇦',
+    flag: '🇸🇦', flagCode: 'sa',
     emoji: '🕌',
     freq: '83.1',
     quality: 'MP3 · 128kbps',
@@ -1918,7 +1924,7 @@ function buildScheduleGrid() {
       <div class="sched-cat-icon">${slot.icon}</div>
       <div class="sched-info">
         <div class="sched-cat-name">${slot.label}</div>
-        <div class="sched-reciter">${station ? station.flag + ' ' + station.name : '—'}</div>
+        <div class="sched-reciter">${station ? `<span class="fi fi-${station.flagCode}" style="width:1.2em;height:.9em;display:inline-block;border-radius:2px;vertical-align:middle;margin-left:4px"></span> ${station.name}` : '—'}</div>
       </div>
       ${isActive ? '<span class="sched-now-badge">الآن</span>' : ''}
     `;
@@ -2040,7 +2046,7 @@ function buildStations() {
     card.className = 'station-card fade-in';
     card.dataset.id = s.id;
     card.innerHTML = `
-      <span class="station-flag">${s.flag}</span>
+      <span class="fi fi-${s.flagCode} station-flag"></span>
       <div class="station-info">
         <div class="station-name">${s.name}</div>
         <div class="station-meta">${s.country} · ${s.freq} MHz</div>
@@ -2623,7 +2629,7 @@ function selectStation(idx) {
 
   // Update UI info
   reciterName.textContent   = s.name;
-  countryText.textContent   = s.flag + ' ' + s.country;
+  countryText.innerHTML     = `<span class="fi fi-${s.flagCode}" style="width:1.2em;height:.9em;display:inline-block;border-radius:2px;vertical-align:middle;margin-left:4px"></span> ${s.country}`;
   reciterAvatar.textContent = s.emoji;
   fmFreq.innerHTML          = `${s.freq} <span>MHz</span>`;
   streamQuality.textContent = s.quality;
