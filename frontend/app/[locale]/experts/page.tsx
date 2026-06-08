@@ -16,6 +16,7 @@ export default function ExpertsPage() {
     min_price: '',
     max_price: '',
     min_rating: '',
+    page: '1',
   });
 
   const {data: categories} = useQuery({
@@ -44,7 +45,7 @@ export default function ExpertsPage() {
           <label className="mb-1 block text-xs text-neutral-500">{t('category')}</label>
           <select
             value={filters.category_id}
-            onChange={(e) => setFilters((f) => ({...f, category_id: e.target.value}))}
+            onChange={(e) => setFilters((f) => ({...f, category_id: e.target.value, page: '1'}))}
             className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
           >
             <option value="">—</option>
@@ -61,7 +62,7 @@ export default function ExpertsPage() {
           <input
             type="number"
             value={filters.min_price}
-            onChange={(e) => setFilters((f) => ({...f, min_price: e.target.value}))}
+            onChange={(e) => setFilters((f) => ({...f, min_price: e.target.value, page: '1'}))}
             className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
           />
         </div>
@@ -71,7 +72,7 @@ export default function ExpertsPage() {
           <input
             type="number"
             value={filters.max_price}
-            onChange={(e) => setFilters((f) => ({...f, max_price: e.target.value}))}
+            onChange={(e) => setFilters((f) => ({...f, max_price: e.target.value, page: '1'}))}
             className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
           />
         </div>
@@ -80,7 +81,7 @@ export default function ExpertsPage() {
           <label className="mb-1 block text-xs text-neutral-500">{t('minRating')}</label>
           <select
             value={filters.min_rating}
-            onChange={(e) => setFilters((f) => ({...f, min_rating: e.target.value}))}
+            onChange={(e) => setFilters((f) => ({...f, min_rating: e.target.value, page: '1'}))}
             className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
           >
             <option value="">—</option>
@@ -127,6 +128,30 @@ export default function ExpertsPage() {
             </Link>
           ))}
         </div>
+
+        {data && data.last_page > 1 && (
+          <div className="mt-6 flex items-center justify-center gap-3">
+            <button
+              type="button"
+              disabled={data.current_page <= 1}
+              onClick={() => setFilters((f) => ({...f, page: String(data.current_page - 1)}))}
+              className="rounded-full border border-neutral-300 px-4 py-2 text-sm disabled:opacity-40"
+            >
+              {t('previous')}
+            </button>
+            <span className="text-sm text-neutral-500">
+              {data.current_page} / {data.last_page}
+            </span>
+            <button
+              type="button"
+              disabled={data.current_page >= data.last_page}
+              onClick={() => setFilters((f) => ({...f, page: String(data.current_page + 1)}))}
+              className="rounded-full border border-neutral-300 px-4 py-2 text-sm disabled:opacity-40"
+            >
+              {t('next')}
+            </button>
+          </div>
+        )}
       </section>
     </div>
   );

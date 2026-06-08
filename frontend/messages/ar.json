@@ -28,7 +28,9 @@
     "noResults": "لا يوجد خبير يطابق بحثك.",
     "perHour": "/ساعة",
     "viewProfile": "عرض الملف الشخصي",
-    "bookSession": "احجز جلسة"
+    "bookSession": "احجز جلسة",
+    "previous": "السابق",
+    "next": "التالي"
   },
   "auth": {
     "name": "الاسم الكامل",

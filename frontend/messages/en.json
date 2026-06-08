@@ -28,7 +28,9 @@
     "noResults": "No expert matches your search.",
     "perHour": "/hour",
     "viewProfile": "View profile",
-    "bookSession": "Book a session"
+    "bookSession": "Book a session",
+    "previous": "Previous",
+    "next": "Next"
   },
   "auth": {
     "name": "Full name",
