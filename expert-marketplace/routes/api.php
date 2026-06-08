@@ -78,6 +78,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/bookings/{booking}/reschedule', [BookingController::class, 'reschedule']);
 
     Route::middleware('role:admin')->prefix('admin')->group(function () {
+        Route::get('/stats', [\App\Http\Controllers\Api\Admin\StatsController::class, 'index']);
+
         Route::get('/expert-profiles', [ExpertProfileModerationController::class, 'index']);
         Route::patch('/expert-profiles/{expertProfile}', [ExpertProfileModerationController::class, 'update']);
 

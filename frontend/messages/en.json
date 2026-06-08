@@ -205,7 +205,14 @@
     "noProfiles": "No profiles yet.",
     "categoryNamePlaceholder": "Category name",
     "planNamePlaceholder": "Plan name",
-    "credentialReference": "Professional license number / reference"
+    "credentialReference": "Professional license number / reference",
+    "statsTitle": "Overview",
+    "statsUsers": "Users",
+    "statsApprovedExperts": "Approved experts",
+    "statsPendingExperts": "Pending",
+    "statsCompletedBookings": "Completed bookings",
+    "statsConfirmedBookings": "Confirmed",
+    "statsRevenue": "Platform revenue"
   },
   "messaging": {
     "title": "Messages",

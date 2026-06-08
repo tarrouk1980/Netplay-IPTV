@@ -205,7 +205,14 @@
     "noProfiles": "Aucun profil pour le moment.",
     "categoryNamePlaceholder": "Nom de la catégorie",
     "planNamePlaceholder": "Nom du plan",
-    "credentialReference": "Numéro / référence de licence professionnelle"
+    "credentialReference": "Numéro / référence de licence professionnelle",
+    "statsTitle": "Vue d'ensemble",
+    "statsUsers": "Utilisateurs",
+    "statsApprovedExperts": "Experts approuvés",
+    "statsPendingExperts": "En attente",
+    "statsCompletedBookings": "Réservations terminées",
+    "statsConfirmedBookings": "Confirmées",
+    "statsRevenue": "Revenus plateforme"
   },
   "messaging": {
     "title": "Messages",

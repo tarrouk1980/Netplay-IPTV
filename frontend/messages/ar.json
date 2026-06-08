@@ -205,7 +205,14 @@
     "noProfiles": "لا توجد ملفات بعد.",
     "categoryNamePlaceholder": "اسم الفئة",
     "planNamePlaceholder": "اسم الخطة",
-    "credentialReference": "رقم/مرجع الترخيص المهني"
+    "credentialReference": "رقم/مرجع الترخيص المهني",
+    "statsTitle": "نظرة عامة",
+    "statsUsers": "المستخدمون",
+    "statsApprovedExperts": "خبراء مقبولون",
+    "statsPendingExperts": "قيد الانتظار",
+    "statsCompletedBookings": "حجوزات منتهية",
+    "statsConfirmedBookings": "مؤكدة",
+    "statsRevenue": "إيرادات المنصة"
   },
   "messaging": {
     "title": "الرسائل",

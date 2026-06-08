@@ -5,6 +5,17 @@ import {useTranslations} from 'next-intl';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {useRouter} from '@/i18n/navigation';
 import {api, type Category, type FullExpertProfile, type Paginated} from '@/lib/api';
+
+type AdminStats = {
+  total_users: number;
+  total_experts: number;
+  pending_experts: number;
+  approved_experts: number;
+  total_bookings: number;
+  confirmed_bookings: number;
+  completed_bookings: number;
+  total_revenue: number;
+};
 import {useAuth} from '@/lib/auth-context';
 
 type SubscriptionPlan = {
@@ -33,10 +44,49 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-semibold">{t('title')}</h1>
+      <AdminStatsPanel />
       <ExpertProfileModeration />
       <CategoryManagement />
       <SubscriptionPlanManagement />
     </div>
+  );
+}
+
+function AdminStatsPanel() {
+  const t = useTranslations('admin');
+
+  const {data} = useQuery({
+    queryKey: ['admin', 'stats'],
+    queryFn: async () => {
+      const {data} = await api.get<AdminStats>('/admin/stats');
+      return data;
+    },
+  });
+
+  if (!data) return null;
+
+  const cards = [
+    {label: t('statsUsers'), value: data.total_users, icon: '👥'},
+    {label: t('statsApprovedExperts'), value: data.approved_experts, icon: '✅'},
+    {label: t('statsPendingExperts'), value: data.pending_experts, icon: '⏳'},
+    {label: t('statsCompletedBookings'), value: data.completed_bookings, icon: '📋'},
+    {label: t('statsConfirmedBookings'), value: data.confirmed_bookings, icon: '📅'},
+    {label: t('statsRevenue'), value: `${data.total_revenue.toFixed(2)} €`, icon: '💶'},
+  ];
+
+  return (
+    <section>
+      <h2 className="mb-3 font-semibold">{t('statsTitle')}</h2>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        {cards.map((c) => (
+          <div key={c.label} className="rounded-xl border border-neutral-200 bg-white p-4 text-center">
+            <div className="text-2xl">{c.icon}</div>
+            <div className="mt-1 text-xl font-bold text-indigo-600">{c.value}</div>
+            <div className="mt-1 text-xs text-neutral-500">{c.label}</div>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
