@@ -4,7 +4,7 @@ import {useEffect, useState} from 'react';
 import {useTranslations} from 'next-intl';
 import {useQuery, useMutation, useQueryClient} from '@tanstack/react-query';
 import {useRouter} from '@/i18n/navigation';
-import {api, type Category, type AvailabilitySlot, type Booking, type Paginated} from '@/lib/api';
+import {api, type Category, type AvailabilitySlot, type Booking, type Paginated, type ExpertStats} from '@/lib/api';
 import {useAuth} from '@/lib/auth-context';
 import {AvatarSettings} from '@/components/avatar-settings';
 import {ChangePasswordForm} from '@/components/change-password-form';
@@ -325,6 +325,41 @@ function EditProfileForm() {
   );
 }
 
+function StatsCards() {
+  const t = useTranslations('expert');
+  const {data} = useQuery({
+    queryKey: ['expert-stats'],
+    queryFn: async () => {
+      const {data} = await api.get<ExpertStats>('/expert/stats');
+      return data;
+    },
+  });
+
+  if (!data) return null;
+
+  const fmt = (n: number) =>
+    new Intl.NumberFormat(undefined, {style: 'currency', currency: data.currency, maximumFractionDigits: 0}).format(n);
+
+  const cards = [
+    {label: t('statsTotalEarnings'), value: fmt(data.total_earnings), icon: '💰'},
+    {label: t('statsUpcoming'), value: String(data.upcoming_bookings), icon: '📅'},
+    {label: t('statsCompleted'), value: String(data.completed_bookings), icon: '✅'},
+    {label: t('statsAvgRating'), value: data.total_reviews > 0 ? `${data.avg_rating} ★ (${data.total_reviews})` : '—', icon: '⭐'},
+  ];
+
+  return (
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      {cards.map((c) => (
+        <div key={c.label} className="rounded-xl border border-neutral-200 bg-white p-4 text-center">
+          <div className="text-2xl">{c.icon}</div>
+          <div className="mt-1 text-xl font-bold text-indigo-600">{c.value}</div>
+          <div className="mt-1 text-xs text-neutral-500">{c.label}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function ExpertWorkspace() {
   const t = useTranslations('expert');
   const {user} = useAuth();
@@ -332,6 +367,7 @@ function ExpertWorkspace() {
 
   return (
     <div className="space-y-10">
+      <StatsCards />
       <AvatarSettings />
       <ChangePasswordForm />
 

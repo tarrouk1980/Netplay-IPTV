@@ -163,7 +163,11 @@
     "languageEn": "Anglais",
     "editProfile": "Modifier mon profil",
     "editProfileSuccess": "Votre profil a été mis à jour.",
-    "editProfileError": "Impossible de mettre à jour votre profil. Vérifiez vos informations."
+    "editProfileError": "Impossible de mettre à jour votre profil. Vérifiez vos informations.",
+    "statsTotalEarnings": "Revenus totaux",
+    "statsUpcoming": "Sessions à venir",
+    "statsCompleted": "Sessions terminées",
+    "statsAvgRating": "Note moyenne"
   },
   "common": {
     "loading": "Chargement...",

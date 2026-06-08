@@ -163,7 +163,11 @@
     "languageEn": "الإنجليزية",
     "editProfile": "تعديل ملفي الشخصي",
     "editProfileSuccess": "تم تحديث ملفك الشخصي.",
-    "editProfileError": "تعذّر تحديث ملفك الشخصي. يرجى التحقق من معلوماتك."
+    "editProfileError": "تعذّر تحديث ملفك الشخصي. يرجى التحقق من معلوماتك.",
+    "statsTotalEarnings": "إجمالي الأرباح",
+    "statsUpcoming": "الجلسات القادمة",
+    "statsCompleted": "الجلسات المنتهية",
+    "statsAvgRating": "متوسط التقييم"
   },
   "common": {
     "loading": "جارٍ التحميل...",

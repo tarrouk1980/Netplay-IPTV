@@ -95,6 +95,16 @@ export type AppNotification = {
   created_at: string;
 };
 
+export type ExpertStats = {
+  total_bookings: number;
+  completed_bookings: number;
+  upcoming_bookings: number;
+  total_earnings: number;
+  currency: string;
+  avg_rating: number;
+  total_reviews: number;
+};
+
 export type Review = {
   id: number;
   rating: number;

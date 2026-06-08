@@ -163,7 +163,11 @@
     "languageEn": "English",
     "editProfile": "Edit my profile",
     "editProfileSuccess": "Your profile has been updated.",
-    "editProfileError": "Could not update your profile. Please check your information."
+    "editProfileError": "Could not update your profile. Please check your information.",
+    "statsTotalEarnings": "Total earnings",
+    "statsUpcoming": "Upcoming sessions",
+    "statsCompleted": "Completed sessions",
+    "statsAvgRating": "Average rating"
   },
   "common": {
     "loading": "Loading...",

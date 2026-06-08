@@ -51,6 +51,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/availability-slots/{availabilitySlot}', [AvailabilitySlotController::class, 'destroy']);
         Route::post('/stripe/connect/onboard', [StripeConnectController::class, 'onboard']);
         Route::get('/stripe/connect/status', [StripeConnectController::class, 'status']);
+        Route::get('/expert/stats', [ExpertProfileController::class, 'stats']);
     });
 
     Route::post('/bookings/{booking}/checkout', [PaymentController::class, 'checkout']);

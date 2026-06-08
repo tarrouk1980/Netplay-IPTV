@@ -112,4 +112,33 @@ class ExpertProfileController extends Controller
 
         return $expertProfile;
     }
+
+    public function stats(Request $request)
+    {
+        $profile = $request->user()->expertProfile;
+
+        if (! $profile) {
+            return response()->json(['message' => 'No expert profile found.'], 404);
+        }
+
+        $bookings = $profile->bookings();
+
+        $totalBookings = $bookings->count();
+        $completedBookings = $bookings->where('status', 'completed')->count();
+        $upcomingBookings = $profile->bookings()->where('status', 'confirmed')
+            ->where('starts_at', '>', now())->count();
+        $totalEarnings = $profile->bookings()->where('status', 'completed')->sum('expert_payout');
+        $avgRating = round($profile->reviews()->avg('rating') ?? 0, 1);
+        $totalReviews = $profile->reviews()->count();
+
+        return response()->json([
+            'total_bookings'    => $totalBookings,
+            'completed_bookings'=> $completedBookings,
+            'upcoming_bookings' => $upcomingBookings,
+            'total_earnings'    => (float) $totalEarnings,
+            'currency'          => $profile->currency ?? 'EUR',
+            'avg_rating'        => $avgRating,
+            'total_reviews'     => $totalReviews,
+        ]);
+    }
 }
