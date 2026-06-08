@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\AvailabilitySlotController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ExpertProfileController;
+use App\Http\Controllers\Api\ExpertBlockedDateController;
 use App\Http\Controllers\Api\ExpertPortfolioItemController;
 use App\Http\Controllers\Api\FavoriteController;
 use App\Http\Controllers\Api\MessageController;
@@ -30,6 +31,7 @@ Route::get('/experts', [ExpertProfileController::class, 'index']);
 Route::get('/experts/{expertProfile}', [ExpertProfileController::class, 'show']);
 Route::get('/experts/{expertProfile}/portfolio', [ExpertPortfolioItemController::class, 'index']);
 Route::get('/experts/{expertProfile}/similar', [ExpertProfileController::class, 'similar']);
+Route::get('/experts/{expertProfile}/blocked-dates', [ExpertBlockedDateController::class, 'index']);
 Route::get('/availability-slots', [AvailabilitySlotController::class, 'index']);
 Route::get('/reviews', [ReviewController::class, 'index']);
 Route::get('/subscription-plans', [SubscriptionPlanController::class, 'index']);
@@ -57,6 +59,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/expert/stats', [ExpertProfileController::class, 'stats']);
         Route::post('/expert/portfolio', [ExpertPortfolioItemController::class, 'store']);
         Route::delete('/expert/portfolio/{expertPortfolioItem}', [ExpertPortfolioItemController::class, 'destroy']);
+        Route::post('/expert/blocked-dates', [ExpertBlockedDateController::class, 'store']);
+        Route::delete('/expert/blocked-dates/{expertBlockedDate}', [ExpertBlockedDateController::class, 'destroy']);
     });
 
     Route::post('/bookings/{booking}/checkout', [PaymentController::class, 'checkout']);

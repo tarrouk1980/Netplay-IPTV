@@ -100,6 +100,12 @@ export type AppNotification = {
   created_at: string;
 };
 
+export type BlockedDate = {
+  id: number;
+  blocked_date: string;
+  reason: string | null;
+};
+
 export type PortfolioItem = {
   id: number;
   title: string;

@@ -197,7 +197,12 @@
     "portfolioUrlPlaceholder": "رابط (https://...)",
     "portfolioSave": "حفظ",
     "portfolioCancel": "إلغاء",
-    "portfolioEmpty": "لم يتم إضافة أي مشاريع بعد."
+    "portfolioEmpty": "لم يتم إضافة أي مشاريع بعد.",
+    "blockedDatesTitle": "الأيام غير المتاحة",
+    "blockedDatesHint": "أضف أياماً لا تكون متاحاً فيها (إجازات، ارتباطات).",
+    "blockedReasonPlaceholder": "السبب (اختياري)",
+    "blockedAdd": "حظر",
+    "blockedEmpty": "لا توجد أيام محظورة."
   },
   "common": {
     "loading": "جارٍ التحميل...",

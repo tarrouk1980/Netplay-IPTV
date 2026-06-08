@@ -197,7 +197,12 @@
     "portfolioUrlPlaceholder": "Link (https://...)",
     "portfolioSave": "Save",
     "portfolioCancel": "Cancel",
-    "portfolioEmpty": "No portfolio items yet."
+    "portfolioEmpty": "No portfolio items yet.",
+    "blockedDatesTitle": "Unavailable days",
+    "blockedDatesHint": "Block full days for vacation or unavailability.",
+    "blockedReasonPlaceholder": "Reason (optional)",
+    "blockedAdd": "Block",
+    "blockedEmpty": "No blocked days."
   },
   "common": {
     "loading": "Loading...",

@@ -385,6 +385,7 @@ function ExpertWorkspace() {
       <PortfolioManager />
       <StripeConnectCard />
       <AvailabilityManager />
+      <BlockedDatesManager />
       <IncomingBookings />
     </div>
   );
@@ -556,6 +557,95 @@ function StripeConnectCard() {
           </button>
         </>
       )}
+    </section>
+  );
+}
+
+function BlockedDatesManager() {
+  const t = useTranslations('expert');
+  const queryClient = useQueryClient();
+  const {user} = useAuth();
+  const profileId = user?.expert_profile?.id;
+
+  const [date, setDate] = useState('');
+  const [reason, setReason] = useState('');
+
+  const {data: blocked} = useQuery({
+    queryKey: ['blocked-dates', profileId],
+    queryFn: async () => {
+      const {data} = await api.get<import('@/lib/api').BlockedDate[]>(`/experts/${profileId}/blocked-dates`);
+      return data;
+    },
+    enabled: !!profileId,
+  });
+
+  const add = useMutation({
+    mutationFn: async () => api.post('/expert/blocked-dates', {blocked_date: date, reason: reason || null}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: ['blocked-dates', profileId]});
+      setDate('');
+      setReason('');
+    },
+  });
+
+  const remove = useMutation({
+    mutationFn: async (id: number) => api.delete(`/expert/blocked-dates/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({queryKey: ['blocked-dates', profileId]}),
+  });
+
+  return (
+    <section className="rounded-xl border border-neutral-200 bg-white p-6">
+      <h2 className="font-semibold">{t('blockedDatesTitle')}</h2>
+      <p className="mt-1 text-sm text-neutral-500">{t('blockedDatesHint')}</p>
+
+      <form
+        className="mt-4 flex flex-wrap gap-2"
+        onSubmit={(e) => { e.preventDefault(); add.mutate(); }}
+      >
+        <input
+          type="date"
+          required
+          min={new Date().toISOString().split('T')[0]}
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+        />
+        <input
+          type="text"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          placeholder={t('blockedReasonPlaceholder')}
+          className="flex-1 rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+        />
+        <button
+          type="submit"
+          disabled={add.isPending}
+          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 disabled:opacity-50"
+        >
+          {t('blockedAdd')}
+        </button>
+      </form>
+
+      {blocked && blocked.length === 0 && (
+        <p className="mt-4 text-sm text-neutral-500">{t('blockedEmpty')}</p>
+      )}
+
+      <div className="mt-4 space-y-2">
+        {blocked?.map((b) => (
+          <div key={b.id} className="flex items-center justify-between rounded-lg border border-amber-100 bg-amber-50 px-3 py-2">
+            <div>
+              <p className="text-sm font-medium">{new Date(b.blocked_date + 'T12:00:00').toLocaleDateString()}</p>
+              {b.reason && <p className="text-xs text-neutral-500">{b.reason}</p>}
+            </div>
+            <button
+              onClick={() => remove.mutate(b.id)}
+              className="text-xs text-red-500 hover:text-red-700"
+            >
+              {t('delete')}
+            </button>
+          </div>
+        ))}
+      </div>
     </section>
   );
 }

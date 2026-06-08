@@ -47,6 +47,11 @@ class BookingController extends Controller
             abort(409, 'Ce créneau est déjà réservé.');
         }
 
+        $slotDate = date('Y-m-d', strtotime($data['slot_datetime_start']));
+        if ($expert->blockedDates()->where('blocked_date', $slotDate)->exists()) {
+            abort(409, 'L\'expert n\'est pas disponible ce jour-là.');
+        }
+
         $hours = (strtotime($data['slot_datetime_end']) - strtotime($data['slot_datetime_start'])) / 3600;
         $price = round($expert->hourly_rate * $hours, 2);
         $commission = round($price * $expert->commission_rate / 100, 2);

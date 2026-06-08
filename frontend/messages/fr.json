@@ -197,7 +197,12 @@
     "portfolioUrlPlaceholder": "Lien (https://...)",
     "portfolioSave": "Enregistrer",
     "portfolioCancel": "Annuler",
-    "portfolioEmpty": "Aucune réalisation ajoutée pour l'instant."
+    "portfolioEmpty": "Aucune réalisation ajoutée pour l'instant.",
+    "blockedDatesTitle": "Jours indisponibles",
+    "blockedDatesHint": "Bloquez des journées entières pour vos congés ou indisponibilités.",
+    "blockedReasonPlaceholder": "Raison (optionnel)",
+    "blockedAdd": "Bloquer",
+    "blockedEmpty": "Aucun jour bloqué."
   },
   "common": {
     "loading": "Chargement...",
