@@ -4,9 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Header() {
   const { count } = useCart();
+  const { user, logout } = useAuth();
   const [search, setSearch] = useState("");
   const [lang, setLang] = useState("FR");
   const [currency, setCurrency] = useState("TND");
@@ -111,12 +113,31 @@ export default function Header() {
                   </span>
                 )}
               </Link>
-              <Link href="/auth/connexion" className="text-slate-700 font-semibold hover:text-rose-800 transition text-sm px-4 py-2.5 rounded-xl hover:bg-rose-50">
-                Connexion
-              </Link>
-              <Link href="/auth/inscription" className="bg-rose-800 hover:bg-rose-900 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition shadow-sm shadow-rose-200">
-                S&apos;inscrire
-              </Link>
+              {user ? (
+                <div className="flex items-center gap-2">
+                  <Link
+                    href="/commandes"
+                    className="text-slate-700 font-semibold hover:text-rose-800 transition text-sm px-4 py-2.5 rounded-xl hover:bg-rose-50"
+                  >
+                    {user.name}
+                  </Link>
+                  <button
+                    onClick={logout}
+                    className="bg-rose-800 hover:bg-rose-900 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition shadow-sm shadow-rose-200"
+                  >
+                    Déconnexion
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <Link href="/auth/connexion" className="text-slate-700 font-semibold hover:text-rose-800 transition text-sm px-4 py-2.5 rounded-xl hover:bg-rose-50">
+                    Connexion
+                  </Link>
+                  <Link href="/auth/inscription" className="bg-rose-800 hover:bg-rose-900 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition shadow-sm shadow-rose-200">
+                    S&apos;inscrire
+                  </Link>
+                </>
+              )}
             </div>
           </div>
 
