@@ -30,7 +30,7 @@ export default function CommandesPage() {
       router.push("/auth/connexion");
       return;
     }
-    api.get("/orders")
+    api.get("/orders/me")
       .then(res => setOrders(res.data?.data || []))
       .catch(() => setOrders([]))
       .finally(() => setLoading(false));

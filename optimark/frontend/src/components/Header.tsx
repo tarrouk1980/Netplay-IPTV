@@ -116,7 +116,7 @@ export default function Header() {
               {user ? (
                 <div className="flex items-center gap-2">
                   <Link
-                    href="/commandes"
+                    href="/compte"
                     className="text-slate-700 font-semibold hover:text-rose-800 transition text-sm px-4 py-2.5 rounded-xl hover:bg-rose-50"
                   >
                     {user.name}
