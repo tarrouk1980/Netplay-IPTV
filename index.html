@@ -1949,14 +1949,17 @@ function updateScheduleBanner() {
   document.getElementById('sbNextTime').textContent = next.start + ' – ' + next.end;
 }
 
-function scheduleAutoSwitch() {
+function scheduleAutoSwitch(userInitiated) {
   const idx = getCurrentSlotIndex();
   if (idx < 0) return;
   const slot = SCHEDULE[idx];
   const stIdx = STATIONS.findIndex(s => s.id === slot.stationId);
+  // Only auto-switch if the slot changed AND audio is already playing
   if (stIdx >= 0 && window._lastScheduleIdx !== idx) {
     window._lastScheduleIdx = idx;
-    selectStation(stIdx);
+    if (isPlaying || userInitiated) {
+      selectStation(stIdx);
+    }
     updateScheduleBanner();
     buildScheduleGrid();
   }
@@ -2056,7 +2059,7 @@ function buildStations() {
       </div>
       <i class="fa-solid fa-circle-play station-playing-icon"></i>
     `;
-    card.addEventListener('click', () => selectStation(idx));
+    card.addEventListener('click', () => { _userStarted = true; selectStation(idx); });
     stationsGrid.appendChild(card);
   });
 }
@@ -2666,6 +2669,8 @@ setInterval(() => {
 // ════════════════════════════════════════════════════════════
 function selectStation(idx) {
   if (idx < 0 || idx >= STATIONS.length) return;
+  // Cancel any pending reconnect timers from previous station
+  if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
   currentStation    = idx;
   urlIndex          = 0;
   reconnectCount    = 0;
@@ -2688,8 +2693,15 @@ function selectStation(idx) {
   loadStream();
 }
 
+let _userStarted = false; // becomes true after first user gesture
+
 function loadStream() {
   if (currentStation === null) return;
+  // Don't attempt to play until user has interacted (avoids autoplay blocking loop)
+  if (!_userStarted) {
+    setStatus('اضغط ▶ للبدء', '');
+    return;
+  }
   const s   = STATIONS[currentStation];
   const url = s.urls[urlIndex % s.urls.length];
 
@@ -2703,7 +2715,7 @@ function loadStream() {
   audio.play().then(() => {
     setLoading(false);
     setPlaying(true);
-    setStatus(`بث مباشر · ${s.urls[urlIndex % s.urls.length].split('/').pop()}`, 'success');
+    setStatus(`بث مباشر · ${s.name}`, 'success');
     reconnectCount = 0;
   }).catch(err => {
     console.warn('Play failed:', err);
@@ -2733,9 +2745,14 @@ function tryFallback() {
 //  PLAY / PAUSE TOGGLE
 // ════════════════════════════════════════════════════════════
 btnPlay.addEventListener('click', () => {
+  _userStarted = true;
   if (currentStation === null) {
-    // Auto-select first station
     selectStation(0);
+    return;
+  }
+  // If stream not loaded yet, load it now
+  if (!audio.src || audio.src === window.location.href) {
+    loadStream();
     return;
   }
   if (isPlaying) {
@@ -2959,8 +2976,9 @@ document.addEventListener('keydown', e => {
   if (e.code === 'KeyM')       btnMute.click();
 });
 
-// Auto-start with first station on page load (optional — comment out if unwanted)
-// selectStation(0);
+// Pre-select first station UI (no audio play — browser blocks autoplay)
+// User must click play button or a station card to start audio
+selectStation(0);
 </script>
 </body>
 </html>
