@@ -100,7 +100,9 @@
       "Samedi"
     ],
     "markComplete": "Marquer comme terminée",
-    "incomingBookings": "Réservations reçues"
+    "incomingBookings": "Réservations reçues",
+    "legalNotice": "Ce service de conseil juridique est fourni à titre informatif et ne constitue pas un avis juridique formel. Pour toute décision importante, consultez un avocat agréé.",
+    "medicalNotice": "Ce pré-diagnostic est fourni à titre informatif et ne remplace pas une consultation médicale en personne. Consultez un professionnel de santé pour tout diagnostic ou traitement."
   },
   "common": {
     "loading": "Chargement...",

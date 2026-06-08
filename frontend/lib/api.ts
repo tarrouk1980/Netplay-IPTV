@@ -26,7 +26,7 @@ export type User = {
 export type ExpertProfile = {
   id: number;
   user: {id: number; name: string; avatar_url: string | null};
-  category: {id: number; name: string};
+  category: {id: number; name: string; slug: string};
   bio: string;
   hourly_rate: number;
   currency: string;

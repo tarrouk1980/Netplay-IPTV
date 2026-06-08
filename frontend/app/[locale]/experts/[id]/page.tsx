@@ -7,6 +7,7 @@ import {useRouter} from '@/i18n/navigation';
 import {api, type ExpertProfile} from '@/lib/api';
 import {useAuth} from '@/lib/auth-context';
 import {ReviewList} from '@/components/review-list';
+import {RegulatoryNotice} from '@/components/regulatory-notice';
 
 export default function ExpertProfilePage({params}: {params: Promise<{id: string}>}) {
   const {id} = use(params);
@@ -84,6 +85,8 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
         </div>
 
         <p className="mt-6 whitespace-pre-line text-neutral-700">{expert.bio}</p>
+
+        <RegulatoryNotice categorySlug={expert.category.slug} />
 
         <ReviewList expertId={expert.id} />
       </div>
