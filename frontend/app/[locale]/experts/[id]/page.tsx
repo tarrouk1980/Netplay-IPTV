@@ -4,10 +4,38 @@ import {use, useState} from 'react';
 import {useTranslations} from 'next-intl';
 import {useQuery, useMutation, useQueryClient} from '@tanstack/react-query';
 import {useRouter} from '@/i18n/navigation';
-import {api, type ExpertProfile} from '@/lib/api';
+import {api, type ExpertProfile, type AvailabilitySlot} from '@/lib/api';
 import {useAuth} from '@/lib/auth-context';
 import {ReviewList} from '@/components/review-list';
 import {RegulatoryNotice, CredentialBadge} from '@/components/regulatory-notice';
+
+function nextSlotOccurrences(slot: AvailabilitySlot, count: number): Date[] {
+  const [hours, minutes] = slot.start_time.split(':').map(Number);
+  const occurrences: Date[] = [];
+  const now = new Date();
+
+  if (slot.specific_date) {
+    const d = new Date(`${slot.specific_date}T00:00:00`);
+    d.setHours(hours, minutes, 0, 0);
+    if (d > now) occurrences.push(d);
+    return occurrences;
+  }
+
+  if (slot.day_of_week === null || !slot.is_recurring) {
+    return occurrences;
+  }
+
+  const d = new Date(now);
+  d.setHours(hours, minutes, 0, 0);
+  while (d.getDay() !== slot.day_of_week || d <= now) {
+    d.setDate(d.getDate() + 1);
+  }
+  for (let i = 0; i < count; i++) {
+    occurrences.push(new Date(d));
+    d.setDate(d.getDate() + 7);
+  }
+  return occurrences;
+}
 
 export default function ExpertProfilePage({params}: {params: Promise<{id: string}>}) {
   const {id} = use(params);
@@ -17,6 +45,7 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
   const {user} = useAuth();
   const queryClient = useQueryClient();
   const [start, setStart] = useState('');
+  const [selectedSlot, setSelectedSlot] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const {data: expert} = useQuery({
@@ -27,9 +56,24 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
     },
   });
 
+  const {data: slots} = useQuery({
+    queryKey: ['availability-slots', id],
+    queryFn: async () => {
+      const {data} = await api.get<AvailabilitySlot[]>('/availability-slots', {
+        params: {expert_id: id},
+      });
+      return data;
+    },
+  });
+
+  const upcomingSlots = (slots ?? [])
+    .flatMap((slot) => nextSlotOccurrences(slot, 3))
+    .sort((a, b) => a.getTime() - b.getTime())
+    .slice(0, 8);
+
   const bookMutation = useMutation({
     mutationFn: async () => {
-      const startDate = new Date(start);
+      const startDate = selectedSlot ?? new Date(start);
       const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
 
       const {data} = await api.post('/bookings', {
@@ -58,6 +102,10 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
 
     if (!user) {
       router.push('/login');
+      return;
+    }
+
+    if (!selectedSlot && !start) {
       return;
     }
 
@@ -107,13 +155,37 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
         <form onSubmit={handleBook} className="mt-6 space-y-4">
           <div>
             <label className="mb-1 block text-xs text-neutral-500">{tb('selectSlot')}</label>
-            <input
-              type="datetime-local"
-              required
-              value={start}
-              onChange={(e) => setStart(e.target.value)}
-              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
-            />
+            {upcomingSlots.length > 0 ? (
+              <div className="grid grid-cols-2 gap-2">
+                {upcomingSlots.map((occurrence) => (
+                  <button
+                    key={occurrence.toISOString()}
+                    type="button"
+                    onClick={() => setSelectedSlot(occurrence)}
+                    className={`rounded border px-3 py-2 text-left text-xs ${
+                      selectedSlot?.getTime() === occurrence.getTime()
+                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                        : 'border-neutral-300 text-neutral-700 hover:border-indigo-300'
+                    }`}
+                  >
+                    <span className="block font-medium">
+                      {occurrence.toLocaleDateString(undefined, {weekday: 'short', day: 'numeric', month: 'short'})}
+                    </span>
+                    <span className="block text-neutral-500">
+                      {occurrence.toLocaleTimeString(undefined, {hour: '2-digit', minute: '2-digit'})}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <input
+                type="datetime-local"
+                required
+                value={start}
+                onChange={(e) => setStart(e.target.value)}
+                className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+              />
+            )}
           </div>
 
           {error && <p className="text-sm text-red-600">{error}</p>}
