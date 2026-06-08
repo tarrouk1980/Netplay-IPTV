@@ -145,7 +145,10 @@
     "credentialReference": "رقم/مرجع الترخيص المهني",
     "credentialReferencePlaceholder": "مثال: نقابة المحامين بتونس رقم ١٢٣٤ / نقابة الأطباء رقم ٥٦٧٨",
     "credentialReferenceHelp": "مطلوب للمجالات الخاضعة للتنظيم (قانوني، طبي) للتحقق من تأهيلك.",
-    "credentialVerified": "ترخيص مهني موثّق"
+    "credentialVerified": "ترخيص مهني موثّق",
+    "editProfile": "تعديل ملفي الشخصي",
+    "editProfileSuccess": "تم تحديث ملفك الشخصي.",
+    "editProfileError": "تعذّر تحديث ملفك الشخصي. يرجى التحقق من معلوماتك."
   },
   "common": {
     "loading": "جارٍ التحميل...",

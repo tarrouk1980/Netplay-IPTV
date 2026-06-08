@@ -145,7 +145,10 @@
     "credentialReference": "Professional license number / reference",
     "credentialReferencePlaceholder": "E.g. Tunis Bar Association #1234 / Medical Board #5678",
     "credentialReferenceHelp": "Required for regulated fields (legal, medical) to verify your qualification.",
-    "credentialVerified": "Verified professional license"
+    "credentialVerified": "Verified professional license",
+    "editProfile": "Edit my profile",
+    "editProfileSuccess": "Your profile has been updated.",
+    "editProfileError": "Could not update your profile. Please check your information."
   },
   "common": {
     "loading": "Loading...",

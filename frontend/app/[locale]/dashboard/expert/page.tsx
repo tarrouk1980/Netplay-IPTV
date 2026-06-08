@@ -183,6 +183,125 @@ function CreateProfile() {
   );
 }
 
+function EditProfileForm() {
+  const t = useTranslations('expert');
+  const tc = useTranslations('common');
+  const {user, refreshUser} = useAuth();
+  const profile = user!.expert_profile!;
+  const [form, setForm] = useState({
+    bio: profile.bio,
+    hourly_rate: String(profile.hourly_rate),
+    currency: profile.currency,
+    years_experience: profile.years_experience != null ? String(profile.years_experience) : '',
+    credential_reference: profile.credential_reference ?? '',
+  });
+  const [success, setSuccess] = useState(false);
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const {data} = await api.patch(`/experts/${profile.id}`, {
+        bio: form.bio,
+        hourly_rate: Number(form.hourly_rate),
+        currency: form.currency,
+        ...(form.years_experience ? {years_experience: Number(form.years_experience)} : {}),
+        credential_reference: form.credential_reference || null,
+      });
+      return data;
+    },
+    onSuccess: async () => {
+      setSuccess(true);
+      await refreshUser();
+    },
+  });
+
+  function update(field: keyof typeof form) {
+    return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setSuccess(false);
+      setForm((f) => ({...f, [field]: e.target.value}));
+    };
+  }
+
+  return (
+    <div className="rounded-xl border border-neutral-200 bg-white p-4">
+      <h2 className="mb-3 text-sm font-semibold">{t('editProfile')}</h2>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          mutation.mutate();
+        }}
+        className="space-y-4"
+      >
+        <div>
+          <label className="mb-1 block text-xs text-neutral-500">{t('bio')}</label>
+          <textarea
+            required
+            rows={4}
+            value={form.bio}
+            onChange={update('bio')}
+            className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="mb-1 block text-xs text-neutral-500">{t('hourlyRate')}</label>
+            <input
+              type="number"
+              required
+              min="0"
+              value={form.hourly_rate}
+              onChange={update('hourly_rate')}
+              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-neutral-500">{t('currency')}</label>
+            <input
+              required
+              maxLength={3}
+              value={form.currency}
+              onChange={update('currency')}
+              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm uppercase"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="mb-1 block text-xs text-neutral-500">{t('yearsExperience')}</label>
+          <input
+            type="number"
+            min="0"
+            value={form.years_experience}
+            onChange={update('years_experience')}
+            className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-xs text-neutral-500">{t('credentialReference')}</label>
+          <input
+            placeholder={t('credentialReferencePlaceholder')}
+            value={form.credential_reference}
+            onChange={update('credential_reference')}
+            className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+          />
+        </div>
+
+        {success && <p className="text-sm text-emerald-600">{t('editProfileSuccess')}</p>}
+        {mutation.isError && <p className="text-sm text-red-600">{t('editProfileError')}</p>}
+
+        <button
+          type="submit"
+          disabled={mutation.isPending}
+          className="rounded-full bg-indigo-600 px-6 py-3 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+        >
+          {tc('save')}
+        </button>
+      </form>
+    </div>
+  );
+}
+
 function ExpertWorkspace() {
   const t = useTranslations('expert');
   const {user} = useAuth();
@@ -203,6 +322,7 @@ function ExpertWorkspace() {
         </div>
       )}
 
+      <EditProfileForm />
       <StripeConnectCard />
       <AvailabilityManager />
       <IncomingBookings />

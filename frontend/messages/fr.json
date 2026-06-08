@@ -145,7 +145,10 @@
     "credentialReference": "Numéro / référence de licence professionnelle",
     "credentialReferencePlaceholder": "Ex. : Barreau de Tunis n°1234 / Ordre des médecins n°5678",
     "credentialReferenceHelp": "Requis pour les domaines réglementés (juridique, médical) afin de vérifier votre habilitation.",
-    "credentialVerified": "Licence professionnelle vérifiée"
+    "credentialVerified": "Licence professionnelle vérifiée",
+    "editProfile": "Modifier mon profil",
+    "editProfileSuccess": "Votre profil a été mis à jour.",
+    "editProfileError": "Impossible de mettre à jour votre profil. Vérifiez vos informations."
   },
   "common": {
     "loading": "Chargement...",
