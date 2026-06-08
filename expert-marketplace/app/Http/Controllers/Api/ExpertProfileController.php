@@ -57,6 +57,19 @@ class ExpertProfileController extends Controller
         return $expertProfile->load(['user:id,name,avatar_url,country', 'category', 'reviews', 'portfolioItems']);
     }
 
+    public function similar(ExpertProfile $expertProfile)
+    {
+        $similar = ExpertProfile::where('status', 'approved')
+            ->where('category_id', $expertProfile->category_id)
+            ->where('id', '!=', $expertProfile->id)
+            ->with(['user:id,name,avatar_url', 'category'])
+            ->inRandomOrder()
+            ->limit(3)
+            ->get();
+
+        return $similar;
+    }
+
     public function store(Request $request)
     {
         $user = $request->user();

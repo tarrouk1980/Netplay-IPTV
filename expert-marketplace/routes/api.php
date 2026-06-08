@@ -29,6 +29,7 @@ Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/experts', [ExpertProfileController::class, 'index']);
 Route::get('/experts/{expertProfile}', [ExpertProfileController::class, 'show']);
 Route::get('/experts/{expertProfile}/portfolio', [ExpertPortfolioItemController::class, 'index']);
+Route::get('/experts/{expertProfile}/similar', [ExpertProfileController::class, 'similar']);
 Route::get('/availability-slots', [AvailabilitySlotController::class, 'index']);
 Route::get('/reviews', [ReviewController::class, 'index']);
 Route::get('/subscription-plans', [SubscriptionPlanController::class, 'index']);

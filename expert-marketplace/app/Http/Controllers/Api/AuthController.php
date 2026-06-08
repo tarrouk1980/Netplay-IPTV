@@ -71,8 +71,9 @@ class AuthController extends Controller
         $user = $request->user();
 
         $data = $request->validate([
-            'name' => ['sometimes', 'string', 'max:255'],
+            'name'       => ['sometimes', 'string', 'max:255'],
             'avatar_url' => ['sometimes', 'nullable', 'string', 'url', 'max:2048'],
+            'phone'      => ['sometimes', 'nullable', 'string', 'max:30'],
         ]);
 
         $user->update($data);

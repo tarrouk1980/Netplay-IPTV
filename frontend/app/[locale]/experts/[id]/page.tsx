@@ -3,7 +3,7 @@
 import {use, useState} from 'react';
 import {useTranslations} from 'next-intl';
 import {useQuery, useMutation, useQueryClient} from '@tanstack/react-query';
-import {useRouter} from '@/i18n/navigation';
+import {useRouter, Link} from '@/i18n/navigation';
 import {api, type ExpertProfile, type AvailabilitySlot} from '@/lib/api';
 import {useAuth} from '@/lib/auth-context';
 import {ReviewList} from '@/components/review-list';
@@ -186,6 +186,7 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
         )}
 
         <ReviewList expertId={expert.id} />
+        <SimilarExperts expertId={expert.id} />
       </div>
 
       <aside className="rounded-xl border border-neutral-200 bg-white p-6">
@@ -242,5 +243,41 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
         </form>
       </aside>
     </div>
+  );
+}
+
+function SimilarExperts({expertId}: {expertId: number}) {
+  const t = useTranslations('experts');
+
+  const {data} = useQuery({
+    queryKey: ['similar', expertId],
+    queryFn: async () => {
+      const {data} = await api.get<import('@/lib/api').ExpertProfile[]>(`/experts/${expertId}/similar`);
+      return data;
+    },
+  });
+
+  if (!data || data.length === 0) return null;
+
+  return (
+    <section className="mt-8">
+      <h2 className="mb-4 font-semibold">{t('similarExperts')}</h2>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {data.map((expert) => (
+          <Link
+            key={expert.id}
+            href={`/experts/${expert.id}`}
+            className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-4 hover:border-indigo-300 hover:shadow-sm transition"
+          >
+            <Avatar name={expert.user.name} url={expert.user.avatar_url} size="sm" />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium">{expert.user.name}</p>
+              <p className="truncate text-xs text-neutral-500">{expert.category.name}</p>
+              <p className="text-xs text-indigo-600">{expert.hourly_rate} {expert.currency}{t('perHour')}</p>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }

@@ -54,7 +54,8 @@
     "lastSeenHours": "آخر ظهور منذ {count} ساعة",
     "lastSeenDays": "آخر ظهور منذ {count} يوم",
     "portfolioTitle": "المشاريع والإنجازات",
-    "portfolioView": "عرض"
+    "portfolioView": "عرض",
+    "similarExperts": "خبراء مشابهون"
   },
   "auth": {
     "name": "الاسم الكامل",
@@ -258,5 +259,13 @@
     "expertReplyLabel": "رد الخبير",
     "replyPlaceholder": "اكتب ردًا عامًا على هذا التقييم...",
     "replySubmit": "نشر الرد"
+  },
+  "profile": {
+    "title": "ملفي الشخصي",
+    "name": "الاسم الكامل",
+    "phone": "الهاتف",
+    "phonePlaceholder": "+216 XX XXX XXX",
+    "save": "حفظ",
+    "success": "تم تحديث الملف الشخصي."
   }
 }

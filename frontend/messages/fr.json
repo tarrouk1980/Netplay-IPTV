@@ -54,7 +54,8 @@
     "lastSeenHours": "Vu il y a {count}h",
     "lastSeenDays": "Vu il y a {count}j",
     "portfolioTitle": "Portfolio",
-    "portfolioView": "Voir"
+    "portfolioView": "Voir",
+    "similarExperts": "Experts similaires"
   },
   "auth": {
     "name": "Nom complet",
@@ -258,5 +259,13 @@
     "expertReplyLabel": "Réponse de l'expert",
     "replyPlaceholder": "Écrivez une réponse publique à cet avis...",
     "replySubmit": "Publier la réponse"
+  },
+  "profile": {
+    "title": "Mon profil",
+    "name": "Nom complet",
+    "phone": "Téléphone",
+    "phonePlaceholder": "+216 XX XXX XXX",
+    "save": "Enregistrer",
+    "success": "Profil mis à jour."
   }
 }

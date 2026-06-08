@@ -8,6 +8,7 @@ import {api, type Booking, type Paginated} from '@/lib/api';
 import {useAuth} from '@/lib/auth-context';
 import {AvatarSettings} from '@/components/avatar-settings';
 import {ChangePasswordForm} from '@/components/change-password-form';
+import {ClientProfileForm} from '@/components/client-profile-form';
 
 export default function DashboardPage() {
   const t = useTranslations('dashboard');
@@ -41,6 +42,7 @@ export default function DashboardPage() {
   return (
     <div>
       <div className="mb-6 space-y-4">
+        <ClientProfileForm />
         <AvatarSettings />
         <ChangePasswordForm />
       </div>

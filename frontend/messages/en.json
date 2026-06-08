@@ -54,7 +54,8 @@
     "lastSeenHours": "Last seen {count}h ago",
     "lastSeenDays": "Last seen {count}d ago",
     "portfolioTitle": "Portfolio",
-    "portfolioView": "View"
+    "portfolioView": "View",
+    "similarExperts": "Similar experts"
   },
   "auth": {
     "name": "Full name",
@@ -258,5 +259,13 @@
     "expertReplyLabel": "Reply from the expert",
     "replyPlaceholder": "Write a public reply to this review...",
     "replySubmit": "Post reply"
+  },
+  "profile": {
+    "title": "My profile",
+    "name": "Full name",
+    "phone": "Phone",
+    "phonePlaceholder": "+1 555 000 0000",
+    "save": "Save",
+    "success": "Profile updated."
   }
 }
