@@ -6,6 +6,7 @@ import {useQuery} from '@tanstack/react-query';
 import {Link, useRouter} from '@/i18n/navigation';
 import {api, type Booking, type Paginated} from '@/lib/api';
 import {useAuth} from '@/lib/auth-context';
+import {AvatarSettings} from '@/components/avatar-settings';
 
 export default function DashboardPage() {
   const t = useTranslations('dashboard');
@@ -38,6 +39,10 @@ export default function DashboardPage() {
 
   return (
     <div>
+      <div className="mb-6">
+        <AvatarSettings />
+      </div>
+
       <h1 className="mb-6 text-2xl font-semibold">{t('myBookings')}</h1>
 
       {data && data.data.length === 0 && <p className="text-neutral-500">{t('noBookings')}</p>}

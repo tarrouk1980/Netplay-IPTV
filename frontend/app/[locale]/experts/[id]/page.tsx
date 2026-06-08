@@ -8,6 +8,7 @@ import {api, type ExpertProfile, type AvailabilitySlot} from '@/lib/api';
 import {useAuth} from '@/lib/auth-context';
 import {ReviewList} from '@/components/review-list';
 import {RegulatoryNotice, CredentialBadge} from '@/components/regulatory-notice';
+import {Avatar} from '@/components/avatar';
 
 function nextSlotOccurrences(slot: AvailabilitySlot, count: number): Date[] {
   const [hours, minutes] = slot.start_time.split(':').map(Number);
@@ -120,9 +121,7 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
     <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
       <div className="md:col-span-2">
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-indigo-100 text-xl font-semibold text-indigo-600">
-            {expert.user.name.charAt(0)}
-          </div>
+          <Avatar name={expert.user.name} url={expert.user.avatar_url} size="lg" />
           <div>
             <h1 className="text-2xl font-semibold">{expert.user.name}</h1>
             <p className="text-sm text-neutral-500">{expert.category.name}</p>

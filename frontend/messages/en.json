@@ -129,6 +129,7 @@
   },
   "common": {
     "loading": "Loading...",
+    "avatarUrl": "Profile photo URL",
     "save": "Save",
     "cancel": "Cancel",
     "back": "Back"

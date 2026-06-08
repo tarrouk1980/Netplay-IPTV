@@ -6,6 +6,7 @@ import {useQuery, useMutation, useQueryClient} from '@tanstack/react-query';
 import {useRouter} from '@/i18n/navigation';
 import {api, type Category, type AvailabilitySlot, type Booking, type Paginated} from '@/lib/api';
 import {useAuth} from '@/lib/auth-context';
+import {AvatarSettings} from '@/components/avatar-settings';
 
 export default function ExpertDashboardPage() {
   const router = useRouter();
@@ -188,6 +189,8 @@ function ExpertWorkspace() {
 
   return (
     <div className="space-y-10">
+      <AvatarSettings />
+
       {profile.status !== 'approved' && (
         <div
           className={`rounded-lg p-4 text-sm ${

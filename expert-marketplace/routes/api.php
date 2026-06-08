@@ -33,6 +33,7 @@ Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+    Route::patch('/me', [AuthController::class, 'updateProfile']);
 
     Route::post('/experts', [ExpertProfileController::class, 'store']);
     Route::patch('/experts/{expertProfile}', [ExpertProfileController::class, 'update']);

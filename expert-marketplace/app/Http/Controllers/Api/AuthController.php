@@ -64,4 +64,18 @@ class AuthController extends Controller
     {
         return response()->json($request->user()->load('expertProfile'));
     }
+
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+
+        $data = $request->validate([
+            'name' => ['sometimes', 'string', 'max:255'],
+            'avatar_url' => ['sometimes', 'nullable', 'string', 'url', 'max:2048'],
+        ]);
+
+        $user->update($data);
+
+        return response()->json($user);
+    }
 }

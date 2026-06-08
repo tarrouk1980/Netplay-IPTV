@@ -129,6 +129,7 @@
   },
   "common": {
     "loading": "Chargement...",
+    "avatarUrl": "URL de la photo de profil",
     "save": "Enregistrer",
     "cancel": "Annuler",
     "back": "Retour"

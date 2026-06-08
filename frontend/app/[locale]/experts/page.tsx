@@ -6,6 +6,7 @@ import {useSearchParams} from 'next/navigation';
 import {useQuery} from '@tanstack/react-query';
 import {Link} from '@/i18n/navigation';
 import {api, type Category, type ExpertProfile, type Paginated} from '@/lib/api';
+import {Avatar} from '@/components/avatar';
 
 export default function ExpertsPage() {
   const t = useTranslations('experts');
@@ -128,9 +129,7 @@ export default function ExpertsPage() {
               className="rounded-xl border border-neutral-200 bg-white p-5 transition hover:border-indigo-300 hover:shadow-sm"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 font-semibold">
-                  {expert.user.name.charAt(0)}
-                </div>
+                <Avatar name={expert.user.name} url={expert.user.avatar_url} size="sm" />
                 <div>
                   <p className="font-medium">{expert.user.name}</p>
                   <p className="text-xs text-neutral-500">{expert.category.name}</p>
