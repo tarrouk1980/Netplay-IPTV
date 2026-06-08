@@ -62,6 +62,18 @@ export default function HomePage() {
           </div>
         </div>
       )}
+
+      <div className="mt-16 grid w-full max-w-4xl grid-cols-1 gap-6 sm:grid-cols-3">
+        {(['step1', 'step2', 'step3'] as const).map((step, index) => (
+          <div key={step} className="rounded-xl border border-neutral-200 bg-white p-6 text-left">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-sm font-semibold text-white">
+              {index + 1}
+            </div>
+            <h3 className="mt-3 font-semibold text-neutral-900">{t(`${step}Title`)}</h3>
+            <p className="mt-1 text-sm text-neutral-600">{t(`${step}Body`)}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

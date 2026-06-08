@@ -16,7 +16,13 @@
     "subtitle": "Book a session with verified coaches and mentors, in any field.",
     "searchPlaceholder": "Search an expert, a specialty...",
     "cta": "Search",
-    "browseCategories": "Browse by field"
+    "browseCategories": "Browse by field",
+    "step1Title": "1. Find your expert",
+    "step1Body": "Browse profiles by field, price and rating to find the right match for you.",
+    "step2Title": "2. Book a slot",
+    "step2Body": "Pick an available time, pay securely online and get instant confirmation.",
+    "step3Title": "3. Connect with confidence",
+    "step3Body": "Chat through the built-in messaging, attend your session and leave a review to help the community."
   },
   "experts": {
     "title": "Available experts",

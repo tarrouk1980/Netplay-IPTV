@@ -16,7 +16,13 @@
     "subtitle": "Réservez une session avec des coachs et mentors vérifiés, dans tous les domaines.",
     "searchPlaceholder": "Rechercher un expert, une spécialité...",
     "cta": "Rechercher",
-    "browseCategories": "Parcourir par domaine"
+    "browseCategories": "Parcourir par domaine",
+    "step1Title": "1. Trouvez votre expert",
+    "step1Body": "Parcourez les profils par domaine, prix et note pour trouver la personne qui vous correspond.",
+    "step2Title": "2. Réservez un créneau",
+    "step2Body": "Choisissez une disponibilité, réglez en ligne en toute sécurité et recevez votre confirmation immédiatement.",
+    "step3Title": "3. Échangez en confiance",
+    "step3Body": "Discutez via la messagerie intégrée, suivez votre session et laissez un avis pour aider la communauté."
   },
   "experts": {
     "title": "Experts disponibles",
