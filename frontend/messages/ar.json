@@ -27,6 +27,8 @@
   "experts": {
     "title": "الخبراء المتاحون",
     "filters": "التصفية",
+    "search": "بحث",
+    "searchPlaceholder": "الاسم، النبذة، التخصص...",
     "category": "المجال",
     "minPrice": "أقل سعر",
     "maxPrice": "أعلى سعر",

@@ -27,6 +27,8 @@
   "experts": {
     "title": "Experts disponibles",
     "filters": "Filtres",
+    "search": "Recherche",
+    "searchPlaceholder": "Nom, bio, spécialité...",
     "category": "Domaine",
     "minPrice": "Prix min",
     "maxPrice": "Prix max",

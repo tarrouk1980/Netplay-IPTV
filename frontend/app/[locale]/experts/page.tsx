@@ -1,6 +1,6 @@
 'use client';
 
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import {useTranslations} from 'next-intl';
 import {useSearchParams} from 'next/navigation';
 import {useQuery} from '@tanstack/react-query';
@@ -18,6 +18,14 @@ export default function ExpertsPage() {
     min_rating: '',
     page: '1',
   });
+  const [searchInput, setSearchInput] = useState(filters.q);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setFilters((f) => (f.q === searchInput ? f : {...f, q: searchInput, page: '1'}));
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [searchInput]);
 
   const {data: categories} = useQuery({
     queryKey: ['categories'],
@@ -40,6 +48,17 @@ export default function ExpertsPage() {
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
       <aside className="space-y-4 lg:col-span-1">
         <h2 className="font-semibold">{t('filters')}</h2>
+
+        <div>
+          <label className="mb-1 block text-xs text-neutral-500">{t('search')}</label>
+          <input
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder={t('searchPlaceholder')}
+            className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+          />
+        </div>
 
         <div>
           <label className="mb-1 block text-xs text-neutral-500">{t('category')}</label>
