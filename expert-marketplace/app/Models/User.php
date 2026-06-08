@@ -33,6 +33,14 @@ class User extends Authenticatable
         return $this->role === 'admin';
     }
 
+    public function sendPasswordResetNotification($token): void
+    {
+        $url = rtrim(config('app.frontend_url', env('FRONTEND_URL', 'http://localhost:3000')), '/')
+            .'/reset-password?token='.$token.'&email='.urlencode($this->email);
+
+        $this->notify(new \App\Notifications\ResetPasswordNotification($url));
+    }
+
     public function expertProfile(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
         return $this->hasOne(ExpertProfile::class);

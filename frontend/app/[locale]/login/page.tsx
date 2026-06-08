@@ -74,6 +74,11 @@ export default function LoginPage() {
           {t('switchToRegister')}
         </Link>
       </p>
+      <p className="mt-2 text-center text-sm">
+        <Link href="/forgot-password" className="text-indigo-600 hover:underline">
+          {t('forgotPassword')}
+        </Link>
+      </p>
     </div>
   );
 }

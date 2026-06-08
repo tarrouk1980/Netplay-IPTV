@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password as PasswordBroker;
 use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
@@ -77,5 +78,37 @@ class AuthController extends Controller
         $user->update($data);
 
         return response()->json($user);
+    }
+
+    public function forgotPassword(Request $request)
+    {
+        $request->validate(['email' => ['required', 'email']]);
+
+        $status = PasswordBroker::sendResetLink($request->only('email'));
+
+        if ($status !== PasswordBroker::RESET_LINK_SENT) {
+            return response()->json(['message' => __($status)], 422);
+        }
+
+        return response()->json(['message' => __($status)]);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $data = $request->validate([
+            'token' => ['required', 'string'],
+            'email' => ['required', 'email'],
+            'password' => ['required', 'confirmed', Password::defaults()],
+        ]);
+
+        $status = PasswordBroker::reset($data, function (User $user, string $password) {
+            $user->forceFill(['password' => Hash::make($password)])->save();
+        });
+
+        if ($status !== PasswordBroker::PASSWORD_RESET) {
+            return response()->json(['message' => __($status)], 422);
+        }
+
+        return response()->json(['message' => __($status)]);
     }
 }

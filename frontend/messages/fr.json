@@ -61,7 +61,15 @@
     "registerTitle": "Créer un compte",
     "switchToRegister": "Pas encore de compte ? Inscrivez-vous",
     "switchToLogin": "Déjà un compte ? Connectez-vous",
-    "error": "Identifiants invalides ou erreur de validation."
+    "error": "Identifiants invalides ou erreur de validation.",
+    "forgotPassword": "Mot de passe oublié ?",
+    "forgotPasswordTitle": "Réinitialiser votre mot de passe",
+    "forgotPasswordSubtitle": "Indiquez votre adresse e-mail et nous vous enverrons un lien pour réinitialiser votre mot de passe.",
+    "forgotPasswordSubmit": "Envoyer le lien de réinitialisation",
+    "forgotPasswordSent": "Si un compte existe pour cet e-mail, un lien de réinitialisation a été envoyé.",
+    "resetPasswordTitle": "Choisissez un nouveau mot de passe",
+    "resetPasswordSubmit": "Réinitialiser le mot de passe",
+    "resetPasswordSuccess": "Votre mot de passe a été réinitialisé. Redirection vers la connexion..."
   },
   "booking": {
     "selectSlot": "Choisissez un créneau",

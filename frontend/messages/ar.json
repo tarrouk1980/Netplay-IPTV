@@ -61,7 +61,15 @@
     "registerTitle": "إنشاء حساب",
     "switchToRegister": "ليس لديك حساب؟ سجل الآن",
     "switchToLogin": "لديك حساب بالفعل؟ سجل الدخول",
-    "error": "بيانات الدخول غير صحيحة أو خطأ في التحقق."
+    "error": "بيانات الدخول غير صحيحة أو خطأ في التحقق.",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "forgotPasswordTitle": "إعادة تعيين كلمة المرور",
+    "forgotPasswordSubtitle": "أدخل بريدك الإلكتروني وسنرسل لك رابطًا لإعادة تعيين كلمة المرور.",
+    "forgotPasswordSubmit": "إرسال رابط إعادة التعيين",
+    "forgotPasswordSent": "إذا كان هناك حساب مرتبط بهذا البريد، فقد تم إرسال رابط إعادة التعيين إليه.",
+    "resetPasswordTitle": "اختر كلمة مرور جديدة",
+    "resetPasswordSubmit": "إعادة تعيين كلمة المرور",
+    "resetPasswordSuccess": "تمت إعادة تعيين كلمة المرور. جارٍ التحويل إلى صفحة الدخول..."
   },
   "booking": {
     "selectSlot": "اختر موعدًا",

@@ -61,7 +61,15 @@
     "registerTitle": "Create an account",
     "switchToRegister": "No account yet? Sign up",
     "switchToLogin": "Already have an account? Log in",
-    "error": "Invalid credentials or validation error."
+    "error": "Invalid credentials or validation error.",
+    "forgotPassword": "Forgot your password?",
+    "forgotPasswordTitle": "Reset your password",
+    "forgotPasswordSubtitle": "Enter your email address and we'll send you a link to reset your password.",
+    "forgotPasswordSubmit": "Send reset link",
+    "forgotPasswordSent": "If an account exists for this email, a reset link has been sent.",
+    "resetPasswordTitle": "Choose a new password",
+    "resetPasswordSubmit": "Reset password",
+    "resetPasswordSuccess": "Your password has been reset. Redirecting to login..."
   },
   "booking": {
     "selectSlot": "Choose a time slot",
