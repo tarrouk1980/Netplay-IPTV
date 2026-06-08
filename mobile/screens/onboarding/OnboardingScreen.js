@@ -119,6 +119,12 @@ export default function OnboardingScreen({ navigation }) {
                 <Text style={{ color: '#FFFFFF', fontSize: 28, fontWeight: '900', letterSpacing: 2 }}>EASY</Text>
                 <Text style={{ color: '#D32F2F', fontSize: 28, fontWeight: '900', letterSpacing: 2 }}>WAY</Text>
               </View>
+            ) : s.key === '3' ? (
+              <View style={[styles.emojiCircle, { backgroundColor: s.color + '20', borderColor: s.color + '50', flexDirection: 'row', gap: 6 }]}>
+                <Text style={{ fontSize: 34 }}>🛵</Text>
+                <Text style={{ fontSize: 34 }}>🚐</Text>
+                <Text style={{ fontSize: 34 }}>📦</Text>
+              </View>
             ) : (
               <View style={[styles.emojiCircle, { backgroundColor: s.color + '20', borderColor: s.color + '50' }]}>
                 <Text style={styles.emojiText}>{s.emoji}</Text>

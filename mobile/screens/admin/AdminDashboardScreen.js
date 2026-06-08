@@ -84,7 +84,7 @@ export default function AdminDashboardScreen({ navigation }) {
 
       <View style={styles.header}>
         <View>
-          <Text style={styles.headerTitle}>⚡ EASYWAY Admin</Text>
+          <Text style={styles.headerTitle}>EASYWAY Admin</Text>
           <Text style={styles.headerSub}>Tableau de bord</Text>
         </View>
         <View style={styles.headerActions}>
