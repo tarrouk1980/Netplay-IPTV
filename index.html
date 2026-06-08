@@ -974,6 +974,23 @@
 // ════════════════════════════════════════════════════════════
 const STATIONS = [
   {
+    id: 1,
+    name: 'منير المظفر أبو عبدالله التونسي',
+    country: 'تونس',
+    flag: '🇹🇳',
+    emoji: '🎤',
+    freq: '100.1',
+    quality: 'قالون عن نافع · MP3',
+    type: 'playlist',
+    baseUrl: 'https://archive.org/download/Abu-Abdullah-Munir-Al-Tounsi/',
+    fallbackBase: 'https://archive.org/download/www.elahmad.com_96/',
+    urls: [
+      'https://archive.org/download/Abu-Abdullah-Munir-Al-Tounsi/001.mp3',
+      'https://archive.org/download/www.elahmad.com_96/001.mp3',
+      'https://qurango.net/radio/tarateel'
+    ]
+  },
+  {
     id: 2,
     name: 'خالد الجليل',
     country: 'المملكة العربية السعودية',
@@ -1599,9 +1616,10 @@ document.getElementById('sbToggleBtn').addEventListener('click', () => {
 // ════════════════════════════════════════════════════════════
 function selectStation(idx) {
   if (idx < 0 || idx >= STATIONS.length) return;
-  currentStation = idx;
-  urlIndex       = 0;
-  reconnectCount = 0;
+  currentStation    = idx;
+  urlIndex          = 0;
+  reconnectCount    = 0;
+  playlistSurahIndex = 0;
 
   const s = STATIONS[idx];
 
@@ -1750,6 +1768,29 @@ audio.addEventListener('stalled', () => {
       if (reconnectCount <= MAX_RECONNECT) loadStream();
     }, 5000);
   }
+});
+
+// Playlist support — advance to next surah when current one ends
+let playlistSurahIndex = 0;
+audio.addEventListener('ended', () => {
+  const s = STATIONS[currentStation];
+  if (!s || s.type !== 'playlist') return;
+  playlistSurahIndex = (playlistSurahIndex + 1) % 114;
+  const surahNum = String(playlistSurahIndex + 1).padStart(3, '0');
+  const url1 = s.baseUrl + surahNum + '.mp3';
+  const url2 = s.fallbackBase ? s.fallbackBase + surahNum + '.mp3' : null;
+  setStatus(`جارٍ تشغيل السورة ${playlistSurahIndex + 1} / 114…`, '');
+  audio.src = url1;
+  audio.load();
+  audio.play().catch(() => {
+    if (url2) {
+      audio.src = url2;
+      audio.load();
+      audio.play().catch(() => {
+        setStatus('تعذّر تحميل السورة التالية.', 'error');
+      });
+    }
+  });
 });
 
 // ════════════════════════════════════════════════════════════
