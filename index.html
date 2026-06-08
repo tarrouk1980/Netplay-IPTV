@@ -623,6 +623,91 @@
     .fade-in:nth-child(15) { animation-delay: 0.75s }
 
     /* ═══════════════════════════════════════════
+       ISLAMIC SERVICES (PRAYER TIMES & QIBLA)
+    ═══════════════════════════════════════════ */
+    .islamic-services {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+    .service-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 18px;
+      padding: 18px 20px;
+      text-align: center;
+    }
+    .service-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--gold);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .prayer-times {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(85px, 1fr));
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .prayer-item {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(212,175,55,0.12);
+      border-radius: 12px;
+      padding: 10px 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .prayer-name { font-size: 0.78rem; color: var(--text-muted); }
+    .prayer-time { font-size: 1rem; font-weight: 700; color: var(--green-light); font-family: 'Cairo', sans-serif; }
+    .service-note { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px; line-height: 1.6; }
+    .service-btn {
+      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      border: none;
+      border-radius: 50px;
+      color: var(--bg-deep);
+      font-weight: 700;
+      font-family: 'Cairo', sans-serif;
+      font-size: 0.85rem;
+      padding: 9px 22px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .service-btn:hover { transform: scale(1.04); box-shadow: var(--shadow-gold); }
+    .service-btn:active { transform: scale(0.97); }
+
+    .qibla-compass-wrap { display: flex; justify-content: center; margin-bottom: 12px; }
+    .qibla-compass {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      border: 2px solid rgba(212,175,55,0.3);
+      background: radial-gradient(circle, rgba(212,175,55,0.06), transparent 70%);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .qibla-compass::before {
+      content: 'N';
+      position: absolute;
+      top: 8px;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+    .qibla-needle {
+      font-size: 2.2rem;
+      transform-origin: center center;
+      transition: transform 0.6s ease;
+      filter: drop-shadow(0 0 8px rgba(212,175,55,0.5));
+    }
+
+    /* ═══════════════════════════════════════════
        SCHEDULE BANNER
     ═══════════════════════════════════════════ */
     .schedule-banner {
@@ -761,6 +846,32 @@
     </div>
   </div>
 
+  <!-- ISLAMIC SERVICES: PRAYER TIMES & QIBLA -->
+  <div class="islamic-services fade-in">
+    <div class="service-card" id="prayerCard">
+      <div class="service-title"><i class="fa-solid fa-mosque"></i> مواقيت الصلاة</div>
+      <div class="prayer-times" id="prayerTimes">
+        <div class="prayer-item"><span class="prayer-name">الفجر</span><span class="prayer-time" id="ptFajr">—</span></div>
+        <div class="prayer-item"><span class="prayer-name">الظهر</span><span class="prayer-time" id="ptDhuhr">—</span></div>
+        <div class="prayer-item"><span class="prayer-name">العصر</span><span class="prayer-time" id="ptAsr">—</span></div>
+        <div class="prayer-item"><span class="prayer-name">المغرب</span><span class="prayer-time" id="ptMaghrib">—</span></div>
+        <div class="prayer-item"><span class="prayer-name">العشاء</span><span class="prayer-time" id="ptIsha">—</span></div>
+      </div>
+      <div class="service-note" id="prayerNote">قم بتفعيل الموقع لعرض المواقيت بدقة لمدينتك</div>
+      <button class="service-btn" id="btnLocate"><i class="fa-solid fa-location-crosshairs"></i> تحديد موقعي</button>
+    </div>
+
+    <div class="service-card" id="qiblaCard">
+      <div class="service-title"><i class="fa-solid fa-kaaba"></i> اتجاه القبلة</div>
+      <div class="qibla-compass-wrap">
+        <div class="qibla-compass" id="qiblaCompass">
+          <div class="qibla-needle" id="qiblaNeedle">🕋</div>
+        </div>
+      </div>
+      <div class="service-note" id="qiblaNote">حدد موقعك لمعرفة اتجاه القبلة من مكانك</div>
+    </div>
+  </div>
+
   <!-- PLAYER CARD -->
   <div class="player-card fade-in">
 
@@ -862,20 +973,6 @@
 //  Each station has multiple fallback URLs.
 // ════════════════════════════════════════════════════════════
 const STATIONS = [
-  {
-    id: 1,
-    name: 'منير المظفر أبو عبدالله',
-    country: 'تونس',
-    flag: '🇹🇳',
-    emoji: '🎤',
-    freq: '100.1',
-    quality: 'MP3 · 128kbps',
-    urls: [
-      'https://qurango.net/radio/mix',
-      'https://qurango.net/radio/tarateel',
-      'https://qurango.net/radio/sakeenah'
-    ]
-  },
   {
     id: 2,
     name: 'خالد الجليل',
@@ -1197,20 +1294,6 @@ const STATIONS = [
       'https://qurango.net/radio/mix',
       'https://qurango.net/radio/tarateel'
     ]
-  },
-  {
-    id: 25,
-    name: 'راشد إفريقي',
-    country: 'ليبيا',
-    flag: '🇱🇾',
-    emoji: '📿',
-    freq: '83.9',
-    quality: 'MP3 · 128kbps',
-    urls: [
-      'https://qurango.net/radio/mix',
-      'https://qurango.net/radio/tarateel',
-      'https://qurango.net/radio/sakeenah'
-    ]
   }
 ];
 
@@ -1423,6 +1506,71 @@ function buildStations() {
     stationsGrid.appendChild(card);
   });
 }
+// ════════════════════════════════════════════════════════════
+//  ISLAMIC SERVICES — PRAYER TIMES (Aladhan API, free, no ads)
+//  & QIBLA DIRECTION (computed from coordinates toward Makkah)
+// ════════════════════════════════════════════════════════════
+const KAABA_LAT = 21.4225;
+const KAABA_LNG = 39.8262;
+
+function computeQiblaAngle(lat, lng) {
+  const φ1 = lat * Math.PI / 180;
+  const φ2 = KAABA_LAT * Math.PI / 180;
+  const Δλ = (KAABA_LNG - lng) * Math.PI / 180;
+  const y = Math.sin(Δλ) * Math.cos(φ2);
+  const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+  let angle = Math.atan2(y, x) * 180 / Math.PI;
+  return (angle + 360) % 360;
+}
+
+function fmtTime(t) {
+  return (t || '—').split(' ')[0];
+}
+
+async function fetchPrayerTimes(lat, lng) {
+  try {
+    const res = await fetch(`https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lng}&method=4`);
+    const data = await res.json();
+    const tm = data?.data?.timings;
+    if (!tm) throw new Error('no timings');
+    document.getElementById('ptFajr').textContent    = fmtTime(tm.Fajr);
+    document.getElementById('ptDhuhr').textContent   = fmtTime(tm.Dhuhr);
+    document.getElementById('ptAsr').textContent     = fmtTime(tm.Asr);
+    document.getElementById('ptMaghrib').textContent = fmtTime(tm.Maghrib);
+    document.getElementById('ptIsha').textContent    = fmtTime(tm.Isha);
+    document.getElementById('prayerNote').textContent = '✦ المواقيت محسوبة حسب موقعك الحالي';
+  } catch (e) {
+    document.getElementById('prayerNote').textContent = 'تعذّر جلب المواقيت. تحقق من الاتصال بالإنترنت.';
+  }
+}
+
+function updateQiblaDisplay(lat, lng) {
+  const angle = computeQiblaAngle(lat, lng);
+  document.getElementById('qiblaNeedle').style.transform = `rotate(${angle}deg)`;
+  document.getElementById('qiblaNote').textContent =
+    `اتجاه القبلة من موقعك: ${angle.toFixed(1)}° من الشمال`;
+}
+
+document.getElementById('btnLocate').addEventListener('click', () => {
+  const note = document.getElementById('prayerNote');
+  if (!navigator.geolocation) {
+    note.textContent = 'متصفحك لا يدعم تحديد الموقع.';
+    return;
+  }
+  note.textContent = 'جارٍ تحديد موقعك...';
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const { latitude, longitude } = pos.coords;
+      fetchPrayerTimes(latitude, longitude);
+      updateQiblaDisplay(latitude, longitude);
+    },
+    () => {
+      note.textContent = 'تعذّر الوصول إلى موقعك. يرجى السماح بالوصول للموقع من إعدادات المتصفح.';
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+});
+
 buildStations();
 
 // ════════════════════════════════════════════════════════════
