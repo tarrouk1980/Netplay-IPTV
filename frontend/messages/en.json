@@ -11,7 +11,8 @@
     "title": "Find the expert you need",
     "subtitle": "Book a session with verified coaches and mentors, in any field.",
     "searchPlaceholder": "Search an expert, a specialty...",
-    "cta": "Search"
+    "cta": "Search",
+    "browseCategories": "Browse by field"
   },
   "experts": {
     "title": "Available experts",

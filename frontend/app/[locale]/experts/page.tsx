@@ -12,6 +12,7 @@ export default function ExpertsPage() {
   const searchParams = useSearchParams();
   const [filters, setFilters] = useState({
     q: searchParams.get('q') ?? '',
+    category_id: searchParams.get('category_id') ?? '',
     min_price: '',
     max_price: '',
     min_rating: '',

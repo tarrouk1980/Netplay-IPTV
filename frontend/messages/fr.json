@@ -11,7 +11,8 @@
     "title": "Trouvez l'expert qu'il vous faut",
     "subtitle": "Réservez une session avec des coachs et mentors vérifiés, dans tous les domaines.",
     "searchPlaceholder": "Rechercher un expert, une spécialité...",
-    "cta": "Rechercher"
+    "cta": "Rechercher",
+    "browseCategories": "Parcourir par domaine"
   },
   "experts": {
     "title": "Experts disponibles",
