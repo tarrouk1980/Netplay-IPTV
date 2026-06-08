@@ -6,7 +6,7 @@ export function Logo({className = ''}: {className?: string}) {
         <circle cx="11" cy="11" r="4.5" fill="white" />
         <circle cx="17.5" cy="17.5" r="3" fill="white" fillOpacity="0.85" />
       </svg>
-      <span className="text-lg font-semibold text-indigo-600">SideKick</span>
+      <span className="text-lg font-semibold text-indigo-600">SKOLZ</span>
     </span>
   );
 }

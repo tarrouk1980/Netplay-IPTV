@@ -10,7 +10,7 @@ export function Footer() {
         <Logo />
         <p className="max-w-md text-sm text-neutral-500">{t('tagline')}</p>
         <p className="text-xs text-neutral-400">
-          © {new Date().getFullYear()} SideKick — {t('rights')}
+          © {new Date().getFullYear()} SKOLZ — {t('rights')}
         </p>
       </div>
     </footer>

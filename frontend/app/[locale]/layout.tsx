@@ -9,8 +9,8 @@ import {Footer} from '@/components/footer';
 import '../globals.css';
 
 export const metadata: Metadata = {
-  title: 'SideKick — Trouvez votre expert',
-  description: 'La marketplace qui connecte experts, coachs et influenceurs avec ceux qui ont besoin de leurs conseils.',
+  title: 'SKOLZ — Trouvez votre expert',
+  description: 'SKOLZ — La plateforme qui connecte experts, coachs, avocats et médecins avec ceux qui ont besoin de leurs conseils.',
 };
 
 export function generateStaticParams() {
