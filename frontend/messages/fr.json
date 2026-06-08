@@ -119,7 +119,8 @@
     "medicalNotice": "Ce pré-diagnostic est fourni à titre informatif et ne remplace pas une consultation médicale en personne. Consultez un professionnel de santé pour tout diagnostic ou traitement.",
     "credentialReference": "Numéro / référence de licence professionnelle",
     "credentialReferencePlaceholder": "Ex. : Barreau de Tunis n°1234 / Ordre des médecins n°5678",
-    "credentialReferenceHelp": "Requis pour les domaines réglementés (juridique, médical) afin de vérifier votre habilitation."
+    "credentialReferenceHelp": "Requis pour les domaines réglementés (juridique, médical) afin de vérifier votre habilitation.",
+    "credentialVerified": "Licence professionnelle vérifiée"
   },
   "common": {
     "loading": "Chargement...",

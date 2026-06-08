@@ -33,6 +33,7 @@ export type ExpertProfile = {
   currency: string;
   rating_avg: number;
   total_sessions: number;
+  status?: string;
 };
 
 export type Category = {

@@ -7,7 +7,7 @@ import {useRouter} from '@/i18n/navigation';
 import {api, type ExpertProfile} from '@/lib/api';
 import {useAuth} from '@/lib/auth-context';
 import {ReviewList} from '@/components/review-list';
-import {RegulatoryNotice} from '@/components/regulatory-notice';
+import {RegulatoryNotice, CredentialBadge} from '@/components/regulatory-notice';
 
 export default function ExpertProfilePage({params}: {params: Promise<{id: string}>}) {
   const {id} = use(params);
@@ -81,6 +81,13 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
             <p className="text-sm text-amber-500">
               ★ {expert.rating_avg.toFixed(1)} · {expert.total_sessions} sessions
             </p>
+            <div className="mt-1">
+              <CredentialBadge
+                categorySlug={expert.category.slug}
+                credentialReference={expert.credential_reference}
+                status={expert.status ?? 'approved'}
+              />
+            </div>
           </div>
         </div>
 

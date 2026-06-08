@@ -119,7 +119,8 @@
     "medicalNotice": "This pre-diagnosis is provided for informational purposes and does not replace an in-person medical consultation. Consult a healthcare professional for any diagnosis or treatment.",
     "credentialReference": "Professional license number / reference",
     "credentialReferencePlaceholder": "E.g. Tunis Bar Association #1234 / Medical Board #5678",
-    "credentialReferenceHelp": "Required for regulated fields (legal, medical) to verify your qualification."
+    "credentialReferenceHelp": "Required for regulated fields (legal, medical) to verify your qualification.",
+    "credentialVerified": "Verified professional license"
   },
   "common": {
     "loading": "Loading...",
