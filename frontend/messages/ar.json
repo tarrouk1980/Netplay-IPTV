@@ -55,7 +55,8 @@
     "lastSeenDays": "آخر ظهور منذ {count} يوم",
     "portfolioTitle": "المشاريع والإنجازات",
     "portfolioView": "عرض",
-    "similarExperts": "خبراء مشابهون"
+    "similarExperts": "خبراء مشابهون",
+    "shareProfile": "مشاركة الملف"
   },
   "auth": {
     "name": "الاسم الكامل",
@@ -106,7 +107,19 @@
       "confirmed": "مؤكد",
       "completed": "منتهٍ",
       "cancelled": "ملغى"
-    }
+    },
+    "cancelTitle": "إلغاء الحجز",
+    "cancelReasonHint": "لماذا تريد الإلغاء؟ (اختياري)",
+    "cancelReasonLabel": "سبب الإلغاء",
+    "cancelReasons": [
+      "تعارض في المواعيد",
+      "وجدت خبيراً آخر",
+      "مشكلة في السعر",
+      "طارئ شخصي",
+      "أخرى"
+    ],
+    "cancelConfirmBtn": "تأكيد الإلغاء",
+    "cancelAbort": "الاحتفاظ بالحجز"
   },
   "dashboard": {
     "myBookings": "حجوزاتي",

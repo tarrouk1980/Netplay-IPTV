@@ -67,6 +67,7 @@ export type FullExpertProfile = ExpertProfile & {
 export type Booking = {
   id: number;
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  cancellation_reason?: string | null;
   slot_datetime_start: string;
   slot_datetime_end: string;
   price: number;

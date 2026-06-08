@@ -127,7 +127,11 @@ class BookingController extends Controller
             abort(409, 'Cette réservation ne peut plus être annulée.');
         }
 
-        $booking->update(['status' => 'cancelled']);
+        $data = $request->validate([
+            'cancellation_reason' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $booking->update(['status' => 'cancelled', 'cancellation_reason' => $data['cancellation_reason'] ?? null]);
 
         $other = $booking->client_id === $user->id ? $booking->expert->user : $booking->client;
         $other->notify(new BookingStatusChanged($booking, 'cancelled'));

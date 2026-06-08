@@ -129,6 +129,20 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-semibold">{expert.user.name}</h1>
               <FavoriteButton expertId={expert.id} isFavorited={favoriteIds.has(expert.id)} />
+              <button
+                onClick={async () => {
+                  const url = window.location.href;
+                  if (navigator.share) {
+                    await navigator.share({title: expert.user.name, url});
+                  } else {
+                    await navigator.clipboard.writeText(url);
+                  }
+                }}
+                className="rounded-full border border-neutral-200 p-1.5 text-neutral-400 hover:text-indigo-600"
+                title={t('shareProfile')}
+              >
+                ↗
+              </button>
             </div>
             <p className="text-sm text-neutral-500">{expert.category.name}</p>
             <OnlineBadge lastSeenAt={expert.last_seen_at} />

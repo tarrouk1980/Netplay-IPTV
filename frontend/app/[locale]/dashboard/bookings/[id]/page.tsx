@@ -12,6 +12,8 @@ export default function BookingDetailPage({params}: {params: Promise<{id: string
   const {id} = use(params);
   const t = useTranslations('booking');
   const [showReschedule, setShowReschedule] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
 
   const {data: booking, refetch} = useQuery({
     queryKey: ['booking', id],
@@ -32,20 +34,16 @@ export default function BookingDetailPage({params}: {params: Promise<{id: string
   });
 
   const cancelMutation = useMutation({
-    mutationFn: async () => {
-      const {data} = await api.post(`/bookings/${id}/cancel`);
+    mutationFn: async (reason: string) => {
+      const {data} = await api.post(`/bookings/${id}/cancel`, {cancellation_reason: reason || null});
       return data;
     },
     onSuccess: () => {
+      setShowCancelModal(false);
+      setCancelReason('');
       refetch();
     },
   });
-
-  function handleCancel() {
-    if (window.confirm(t('cancelConfirm'))) {
-      cancelMutation.mutate();
-    }
-  }
 
   if (!booking) {
     return null;
@@ -113,9 +111,15 @@ export default function BookingDetailPage({params}: {params: Promise<{id: string
         </button>
       )}
 
+      {booking.status === 'cancelled' && booking.cancellation_reason && (
+        <p className="mt-3 rounded-lg bg-neutral-50 p-3 text-sm text-neutral-600">
+          <span className="font-medium">{t('cancelReasonLabel')}:</span> {booking.cancellation_reason}
+        </p>
+      )}
+
       {(booking.status === 'pending' || booking.status === 'confirmed') && (
         <button
-          onClick={handleCancel}
+          onClick={() => setShowCancelModal(true)}
           disabled={cancelMutation.isPending}
           className="mt-3 w-full rounded-full border border-red-300 px-6 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
         >
@@ -136,6 +140,45 @@ export default function BookingDetailPage({params}: {params: Promise<{id: string
     )}
 
     {booking.status === 'completed' && <ReviewForm bookingId={id} />}
+
+    {showCancelModal && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+          <h2 className="font-semibold">{t('cancelTitle')}</h2>
+          <p className="mt-1 text-sm text-neutral-500">{t('cancelReasonHint')}</p>
+          <div className="mt-4 space-y-2">
+            {(t.raw('cancelReasons') as string[]).map((reason) => (
+              <label key={reason} className="flex cursor-pointer items-center gap-2 rounded-lg border border-neutral-200 px-3 py-2 hover:bg-neutral-50">
+                <input
+                  type="radio"
+                  name="reason"
+                  value={reason}
+                  checked={cancelReason === reason}
+                  onChange={() => setCancelReason(reason)}
+                  className="accent-indigo-600"
+                />
+                <span className="text-sm">{reason}</span>
+              </label>
+            ))}
+          </div>
+          <div className="mt-4 flex gap-2">
+            <button
+              onClick={() => cancelMutation.mutate(cancelReason)}
+              disabled={cancelMutation.isPending}
+              className="flex-1 rounded-full bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+            >
+              {t('cancelConfirmBtn')}
+            </button>
+            <button
+              onClick={() => { setShowCancelModal(false); setCancelReason(''); }}
+              className="flex-1 rounded-full border border-neutral-300 py-2 text-sm hover:bg-neutral-50"
+            >
+              {t('cancelAbort')}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
 
     {showReschedule && booking.expert && (
       <RescheduleModal

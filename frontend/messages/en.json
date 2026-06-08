@@ -55,7 +55,8 @@
     "lastSeenDays": "Last seen {count}d ago",
     "portfolioTitle": "Portfolio",
     "portfolioView": "View",
-    "similarExperts": "Similar experts"
+    "similarExperts": "Similar experts",
+    "shareProfile": "Share profile"
   },
   "auth": {
     "name": "Full name",
@@ -106,7 +107,19 @@
       "confirmed": "Confirmed",
       "completed": "Completed",
       "cancelled": "Cancelled"
-    }
+    },
+    "cancelTitle": "Cancel booking",
+    "cancelReasonHint": "Why do you want to cancel? (optional)",
+    "cancelReasonLabel": "Cancellation reason",
+    "cancelReasons": [
+      "Schedule conflict",
+      "Found another expert",
+      "Price concern",
+      "Personal emergency",
+      "Other"
+    ],
+    "cancelConfirmBtn": "Confirm cancellation",
+    "cancelAbort": "Keep booking"
   },
   "dashboard": {
     "myBookings": "My bookings",

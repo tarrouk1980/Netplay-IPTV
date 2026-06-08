@@ -55,7 +55,8 @@
     "lastSeenDays": "Vu il y a {count}j",
     "portfolioTitle": "Portfolio",
     "portfolioView": "Voir",
-    "similarExperts": "Experts similaires"
+    "similarExperts": "Experts similaires",
+    "shareProfile": "Partager le profil"
   },
   "auth": {
     "name": "Nom complet",
@@ -106,7 +107,19 @@
       "confirmed": "Confirmée",
       "completed": "Terminée",
       "cancelled": "Annulée"
-    }
+    },
+    "cancelTitle": "Annuler la réservation",
+    "cancelReasonHint": "Pourquoi souhaitez-vous annuler ? (optionnel)",
+    "cancelReasonLabel": "Raison de l'annulation",
+    "cancelReasons": [
+      "Conflit d'agenda",
+      "J'ai trouvé un autre expert",
+      "Problème de prix",
+      "Urgence personnelle",
+      "Autre"
+    ],
+    "cancelConfirmBtn": "Confirmer l'annulation",
+    "cancelAbort": "Garder la réservation"
   },
   "dashboard": {
     "myBookings": "Mes réservations",

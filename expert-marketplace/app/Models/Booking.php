@@ -10,7 +10,7 @@ class Booking extends Model
 {
     protected $fillable = [
         'client_id', 'expert_id', 'slot_datetime_start', 'slot_datetime_end',
-        'status', 'price', 'commission_amount', 'expert_payout', 'meeting_link',
+        'status', 'cancellation_reason', 'price', 'commission_amount', 'expert_payout', 'meeting_link',
     ];
 
     protected function casts(): array
