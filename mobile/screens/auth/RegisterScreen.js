@@ -615,7 +615,7 @@ export default function RegisterScreen({ navigation }) {
       // 1. Create user account
       const regRes = await api.post('/api/auth/register', {
         name: name.trim(),
-        phone: phone.trim(),
+        phone: `${selectedCountry.code}${phone.trim()}`,
         password,
         role,
       });
