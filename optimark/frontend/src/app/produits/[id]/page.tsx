@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
 import api from "@/lib/api";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -23,7 +24,10 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const [qty, setQty] = useState(1);
   const [activeImg, setActiveImg] = useState(0);
   const [added, setAdded] = useState(false);
+  const [favorited, setFavorited] = useState(false);
+  const [favLoading, setFavLoading] = useState(false);
   const { addItem } = useCart();
+  const { user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -36,10 +40,12 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     Promise.all([
       api.get(`/products/${id}`).catch(() => null),
       api.get(`/recommendations/similar/${id}?limit=4`).catch(() => null),
-    ]).then(([pRes, sRes]) => {
+      user ? api.get(`/favorites/${id}/status`).catch(() => null) : Promise.resolve(null),
+    ]).then(([pRes, sRes, fRes]) => {
       if (!mounted) return;
       setProduct(pRes?.data?.data || null);
       setSimilar(sRes?.data?.data || []);
+      setFavorited(fRes?.data?.favorited || false);
       setLoading(false);
     });
 
@@ -94,6 +100,17 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const handleBuyNow = () => {
     addItem({ id: product.id, title: product.title, price: product.price, seller, image: images[0] });
     router.push("/panier");
+  };
+
+  const handleToggleFavorite = async () => {
+    if (!user) { router.push("/auth/connexion"); return; }
+    setFavLoading(true);
+    try {
+      const res = await api.post(`/favorites/${product.id}/toggle`);
+      setFavorited(res.data?.favorited ?? !favorited);
+    } finally {
+      setFavLoading(false);
+    }
   };
 
   return (
@@ -185,6 +202,14 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               </button>
               <button onClick={handleAddToCart} className="flex-1 border-2 border-rose-800 text-rose-800 font-bold py-3 rounded-xl hover:bg-rose-50 transition">
                 {added ? "✓ Ajouté au panier" : "Ajouter au panier"}
+              </button>
+              <button
+                onClick={handleToggleFavorite}
+                disabled={favLoading}
+                className={`w-12 h-12 rounded-xl border-2 flex items-center justify-center text-xl transition shrink-0 ${favorited ? "bg-rose-50 border-rose-800 text-rose-800" : "border-slate-300 text-slate-400 hover:border-rose-300 hover:text-rose-500"}`}
+                title={favorited ? "Retirer des favoris" : "Ajouter aux favoris"}
+              >
+                {favorited ? "♥" : "♡"}
               </button>
             </div>
 

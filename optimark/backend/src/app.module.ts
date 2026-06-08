@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { FavoritesModule } from './favorites/favorites.module';
 import { AuthModule } from './auth/auth.module';
 import { LiveModule } from './live/live.module';
 import { OrdersModule } from './orders/orders.module';
@@ -26,6 +27,7 @@ import { VendorsModule } from './vendors/vendors.module';
     SearchModule,
     AnalyticsModule,
     LiveModule,
+    FavoritesModule,
   ],
 })
 export class AppModule {}
