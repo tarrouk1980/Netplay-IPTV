@@ -63,6 +63,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/bookings/{booking}/review', [ReviewController::class, 'store']);
     Route::post('/reviews/{review}/reply', [ReviewController::class, 'reply']);
     Route::post('/bookings/{booking}/complete', [BookingController::class, 'complete']);
+    Route::patch('/bookings/{booking}/meeting-link', [BookingController::class, 'setMeetingLink']);
 
     Route::get('/bookings/{booking}/messages', [MessageController::class, 'index']);
     Route::post('/bookings/{booking}/messages', [MessageController::class, 'store']);

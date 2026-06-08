@@ -119,7 +119,10 @@
       "أخرى"
     ],
     "cancelConfirmBtn": "تأكيد الإلغاء",
-    "cancelAbort": "الاحتفاظ بالحجز"
+    "cancelAbort": "الاحتفاظ بالحجز",
+    "joinMeeting": "الانضمام إلى الاجتماع",
+    "meetingLinkPlaceholder": "https://meet.google.com/...",
+    "meetingLinkSave": "حفظ"
   },
   "dashboard": {
     "myBookings": "حجوزاتي",
@@ -239,7 +242,9 @@
     "statsPendingExperts": "قيد الانتظار",
     "statsCompletedBookings": "حجوزات منتهية",
     "statsConfirmedBookings": "مؤكدة",
-    "statsRevenue": "إيرادات المنصة"
+    "statsRevenue": "إيرادات المنصة",
+    "feature": "تمييز",
+    "unfeature": "إلغاء التمييز"
   },
   "messaging": {
     "title": "الرسائل",

@@ -22,7 +22,8 @@ class ExpertProfileModerationController extends Controller
     public function update(Request $request, ExpertProfile $expertProfile)
     {
         $data = $request->validate([
-            'status' => ['required', 'in:pending,approved,rejected'],
+            'status'   => ['sometimes', 'in:pending,approved,rejected'],
+            'featured' => ['sometimes', 'boolean'],
         ]);
 
         $expertProfile->update($data);

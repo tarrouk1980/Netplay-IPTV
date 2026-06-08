@@ -11,7 +11,7 @@ class ExpertProfile extends Model
     protected $fillable = [
         'user_id', 'category_id', 'bio', 'years_experience', 'credential_reference', 'hourly_rate',
         'currency', 'status', 'commission_rate', 'rating_avg', 'total_sessions',
-        'stripe_account_id', 'stripe_onboarded', 'languages', 'last_seen_at',
+        'stripe_account_id', 'stripe_onboarded', 'languages', 'last_seen_at', 'featured',
     ];
 
     protected function casts(): array

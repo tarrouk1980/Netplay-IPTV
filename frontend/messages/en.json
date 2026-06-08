@@ -119,7 +119,10 @@
       "Other"
     ],
     "cancelConfirmBtn": "Confirm cancellation",
-    "cancelAbort": "Keep booking"
+    "cancelAbort": "Keep booking",
+    "joinMeeting": "Join meeting",
+    "meetingLinkPlaceholder": "https://meet.google.com/...",
+    "meetingLinkSave": "Save"
   },
   "dashboard": {
     "myBookings": "My bookings",
@@ -239,7 +242,9 @@
     "statsPendingExperts": "Pending",
     "statsCompletedBookings": "Completed bookings",
     "statsConfirmedBookings": "Confirmed",
-    "statsRevenue": "Platform revenue"
+    "statsRevenue": "Platform revenue",
+    "feature": "Feature",
+    "unfeature": "Unfeature"
   },
   "messaging": {
     "title": "Messages",

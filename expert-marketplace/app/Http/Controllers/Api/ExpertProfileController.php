@@ -12,7 +12,8 @@ class ExpertProfileController extends Controller
     {
         $query = ExpertProfile::query()
             ->where('status', 'approved')
-            ->with(['user:id,name,avatar_url', 'category']);
+            ->with(['user:id,name,avatar_url', 'category'])
+            ->orderByDesc('featured');
 
         if ($request->filled('category_id')) {
             $query->where('category_id', $request->integer('category_id'));

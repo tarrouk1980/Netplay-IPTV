@@ -37,6 +37,7 @@ export type ExpertProfile = {
   total_sessions: number;
   status?: string;
   last_seen_at?: string | null;
+  featured?: boolean;
   portfolio_items?: PortfolioItem[];
 };
 
@@ -68,6 +69,7 @@ export type Booking = {
   id: number;
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
   cancellation_reason?: string | null;
+  meeting_link?: string | null;
   slot_datetime_start: string;
   slot_datetime_end: string;
   price: number;

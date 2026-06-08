@@ -170,7 +170,12 @@ export default function ExpertsPage() {
                 <div className="flex items-center gap-3">
                   <Avatar name={expert.user.name} url={expert.user.avatar_url} size="sm" />
                   <div>
-                    <p className="font-medium">{expert.user.name}</p>
+                    <div className="flex items-center gap-1">
+                      <p className="font-medium">{expert.user.name}</p>
+                      {expert.featured && (
+                        <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">★</span>
+                      )}
+                    </div>
                     <p className="text-xs text-neutral-500">{expert.category.name}</p>
                   </div>
                 </div>

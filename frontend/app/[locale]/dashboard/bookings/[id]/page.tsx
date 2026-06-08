@@ -4,6 +4,7 @@ import {use, useState} from 'react';
 import {useTranslations} from 'next-intl';
 import {useQuery, useMutation} from '@tanstack/react-query';
 import {api, type Booking} from '@/lib/api';
+import {useAuth} from '@/lib/auth-context';
 import {BookingChat} from '@/components/booking-chat';
 import {ReviewForm} from '@/components/review-form';
 import {RescheduleModal} from '@/components/reschedule-modal';
@@ -14,6 +15,8 @@ export default function BookingDetailPage({params}: {params: Promise<{id: string
   const [showReschedule, setShowReschedule] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
+  const [meetingLink, setMeetingLink] = useState('');
+  const {user} = useAuth();
 
   const {data: booking, refetch} = useQuery({
     queryKey: ['booking', id],
@@ -30,6 +33,17 @@ export default function BookingDetailPage({params}: {params: Promise<{id: string
     },
     onSuccess: ({checkout_url}) => {
       window.location.href = checkout_url;
+    },
+  });
+
+  const meetingLinkMutation = useMutation({
+    mutationFn: async () => {
+      const {data} = await api.patch(`/bookings/${id}/meeting-link`, {meeting_link: meetingLink});
+      return data;
+    },
+    onSuccess: () => {
+      setMeetingLink('');
+      refetch();
     },
   });
 
@@ -74,6 +88,40 @@ export default function BookingDetailPage({params}: {params: Promise<{id: string
           <dd>{booking.commission_amount}</dd>
         </div>
       </dl>
+
+      {booking.status === 'confirmed' && booking.meeting_link && (
+        <a
+          href={booking.meeting_link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-indigo-50 px-4 py-3 text-sm font-medium text-indigo-700 hover:bg-indigo-100"
+        >
+          📹 {t('joinMeeting')}
+        </a>
+      )}
+
+      {booking.status === 'confirmed' && user?.role === 'expert' && (
+        <form
+          className="mt-4 flex gap-2"
+          onSubmit={(e) => { e.preventDefault(); meetingLinkMutation.mutate(); }}
+        >
+          <input
+            type="url"
+            value={meetingLink}
+            onChange={(e) => setMeetingLink(e.target.value)}
+            placeholder={booking.meeting_link ?? t('meetingLinkPlaceholder')}
+            className="flex-1 rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+            required
+          />
+          <button
+            type="submit"
+            disabled={meetingLinkMutation.isPending}
+            className="rounded-lg bg-indigo-600 px-3 py-2 text-sm text-white hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {t('meetingLinkSave')}
+          </button>
+        </form>
+      )}
 
       {(booking.status === 'pending' || booking.status === 'confirmed') && (
         <button

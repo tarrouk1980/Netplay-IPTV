@@ -112,6 +112,13 @@ function ExpertProfileModeration() {
     onSuccess: () => queryClient.invalidateQueries({queryKey: ['admin', 'expert-profiles']}),
   });
 
+  const toggleFeatured = useMutation({
+    mutationFn: async ({id, featured}: {id: number; featured: boolean}) => {
+      await api.patch(`/admin/expert-profiles/${id}`, {featured});
+    },
+    onSuccess: () => queryClient.invalidateQueries({queryKey: ['admin', 'expert-profiles']}),
+  });
+
   return (
     <section className="rounded-xl border border-neutral-200 bg-white p-6">
       <div className="mb-4 flex items-center justify-between">
@@ -164,6 +171,12 @@ function ExpertProfileModeration() {
                 className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-40"
               >
                 {t('reject')}
+              </button>
+              <button
+                onClick={() => toggleFeatured.mutate({id: profile.id, featured: !(profile as any).featured})}
+                className={`rounded-full px-3 py-1.5 text-xs font-medium ${(profile as any).featured ? 'bg-amber-500 text-white' : 'border border-amber-400 text-amber-600 hover:bg-amber-50'}`}
+              >
+                ★ {(profile as any).featured ? t('unfeature') : t('feature')}
               </button>
             </div>
           </div>

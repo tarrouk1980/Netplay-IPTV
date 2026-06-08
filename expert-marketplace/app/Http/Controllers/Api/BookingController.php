@@ -196,4 +196,25 @@ class BookingController extends Controller
 
         return $booking;
     }
+
+    public function setMeetingLink(Request $request, Booking $booking)
+    {
+        $user = $request->user();
+
+        if ($booking->expert_id !== $user->expertProfile?->id) {
+            abort(403);
+        }
+
+        if ($booking->status !== 'confirmed') {
+            abort(409, 'Le lien ne peut être défini que pour une réservation confirmée.');
+        }
+
+        $data = $request->validate([
+            'meeting_link' => ['required', 'url', 'max:2048'],
+        ]);
+
+        $booking->update($data);
+
+        return $booking;
+    }
 }
