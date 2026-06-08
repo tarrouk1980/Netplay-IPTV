@@ -90,3 +90,11 @@ export type AppNotification = {
   read_at: string | null;
   created_at: string;
 };
+
+export type Review = {
+  id: number;
+  rating: number;
+  comment: string | null;
+  client: {id: number; name: string; avatar_url: string | null};
+  created_at: string;
+};

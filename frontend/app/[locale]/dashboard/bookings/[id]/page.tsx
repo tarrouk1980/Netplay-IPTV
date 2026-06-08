@@ -5,6 +5,7 @@ import {useTranslations} from 'next-intl';
 import {useQuery, useMutation} from '@tanstack/react-query';
 import {api, type Booking} from '@/lib/api';
 import {BookingChat} from '@/components/booking-chat';
+import {ReviewForm} from '@/components/review-form';
 
 export default function BookingDetailPage({params}: {params: Promise<{id: string}>}) {
   const {id} = use(params);
@@ -79,6 +80,8 @@ export default function BookingDetailPage({params}: {params: Promise<{id: string
     {(booking.status === 'confirmed' || booking.status === 'completed') && (
       <BookingChat bookingId={id} />
     )}
+
+    {booking.status === 'completed' && <ReviewForm bookingId={id} />}
     </div>
   );
 }

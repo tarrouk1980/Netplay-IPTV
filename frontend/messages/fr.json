@@ -149,5 +149,16 @@
     "title": "Notifications",
     "empty": "Aucune notification.",
     "markAllRead": "Tout marquer comme lu"
+  },
+  "review": {
+    "title": "Avis",
+    "noReviews": "Aucun avis pour le moment.",
+    "leaveReview": "Laisser un avis",
+    "rating": "Note",
+    "comment": "Commentaire (optionnel)",
+    "commentPlaceholder": "Partagez votre expérience...",
+    "submit": "Envoyer mon avis",
+    "thanks": "Merci pour votre avis !",
+    "alreadyReviewed": "Vous avez déjà laissé un avis pour cette réservation."
   }
 }

@@ -149,5 +149,16 @@
     "title": "Notifications",
     "empty": "No notifications.",
     "markAllRead": "Mark all as read"
+  },
+  "review": {
+    "title": "Reviews",
+    "noReviews": "No reviews yet.",
+    "leaveReview": "Leave a review",
+    "rating": "Rating",
+    "comment": "Comment (optional)",
+    "commentPlaceholder": "Share your experience...",
+    "submit": "Submit my review",
+    "thanks": "Thanks for your review!",
+    "alreadyReviewed": "You already left a review for this booking."
   }
 }
