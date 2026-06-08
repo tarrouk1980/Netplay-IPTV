@@ -19,6 +19,7 @@ export default function ExpertsPage() {
     min_price: '',
     max_price: '',
     min_rating: '',
+    language: '',
     sort: '',
     direction: '',
     page: '1',
@@ -132,6 +133,20 @@ export default function ExpertsPage() {
                 {r}+
               </option>
             ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="mb-1 block text-xs text-neutral-500">{t('language')}</label>
+          <select
+            value={filters.language}
+            onChange={(e) => setFilters((f) => ({...f, language: e.target.value, page: '1'}))}
+            className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+          >
+            <option value="">—</option>
+            <option value="fr">{t('languageFr')}</option>
+            <option value="ar">{t('languageAr')}</option>
+            <option value="en">{t('languageEn')}</option>
           </select>
         </div>
       </aside>

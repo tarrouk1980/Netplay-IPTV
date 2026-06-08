@@ -38,7 +38,11 @@ class ExpertProfileController extends Controller
             $query->where('rating_avg', '>=', $request->float('min_rating'));
         }
 
-        $sort = $request->string('sort', 'rating_avg');
+        if ($request->filled('language')) {
+            $query->whereJsonContains('languages', $request->string('language')->value());
+        }
+
+        $sort =$request->string('sort', 'rating_avg');
         $direction = $request->string('direction', 'desc');
 
         if (in_array($sort->value(), ['hourly_rate', 'rating_avg', 'total_sessions'], true)) {
@@ -75,6 +79,8 @@ class ExpertProfileController extends Controller
             'credential_reference' => [$requiresCredential ? 'required' : 'nullable', 'string', 'max:255'],
             'hourly_rate' => ['required', 'numeric', 'min:0'],
             'currency' => ['required', 'string', 'size:3'],
+            'languages' => ['nullable', 'array'],
+            'languages.*' => ['string', 'in:fr,ar,en'],
         ]);
 
         $profile = $user->expertProfile()->create([
@@ -98,6 +104,8 @@ class ExpertProfileController extends Controller
             'credential_reference' => ['sometimes', 'nullable', 'string', 'max:255'],
             'hourly_rate' => ['sometimes', 'numeric', 'min:0'],
             'currency' => ['sometimes', 'string', 'size:3'],
+            'languages' => ['sometimes', 'nullable', 'array'],
+            'languages.*' => ['string', 'in:fr,ar,en'],
         ]);
 
         $expertProfile->update($data);

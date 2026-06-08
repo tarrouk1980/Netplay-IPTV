@@ -195,7 +195,13 @@ function EditProfileForm() {
     years_experience: profile.years_experience != null ? String(profile.years_experience) : '',
     credential_reference: profile.credential_reference ?? '',
   });
+  const [languages, setLanguages] = useState<string[]>(profile.languages ?? []);
   const [success, setSuccess] = useState(false);
+
+  function toggleLanguage(code: string) {
+    setSuccess(false);
+    setLanguages((ls) => (ls.includes(code) ? ls.filter((l) => l !== code) : [...ls, code]));
+  }
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -205,6 +211,7 @@ function EditProfileForm() {
         currency: form.currency,
         ...(form.years_experience ? {years_experience: Number(form.years_experience)} : {}),
         credential_reference: form.credential_reference || null,
+        languages,
       });
       return data;
     },
@@ -285,6 +292,22 @@ function EditProfileForm() {
             onChange={update('credential_reference')}
             className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
           />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-xs text-neutral-500">{t('languagesSpoken')}</label>
+          <div className="flex flex-wrap gap-3">
+            {['fr', 'ar', 'en'].map((code) => (
+              <label key={code} className="flex items-center gap-1.5 text-sm">
+                <input
+                  type="checkbox"
+                  checked={languages.includes(code)}
+                  onChange={() => toggleLanguage(code)}
+                />
+                {t(`language${code.charAt(0).toUpperCase()}${code.slice(1)}`)}
+              </label>
+            ))}
+          </div>
         </div>
 
         {success && <p className="text-sm text-emerald-600">{t('editProfileSuccess')}</p>}

@@ -138,6 +138,18 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
                 {t('yearsExperience', {count: expert.years_experience})}
               </p>
             )}
+            {!!expert.languages?.length && (
+              <div className="mt-1 flex flex-wrap gap-1">
+                {expert.languages.map((lang) => (
+                  <span
+                    key={lang}
+                    className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600"
+                  >
+                    {t(`language${lang.charAt(0).toUpperCase()}${lang.slice(1)}`)}
+                  </span>
+                ))}
+              </div>
+            )}
             <div className="mt-1">
               <CredentialBadge
                 categorySlug={expert.category.slug}
