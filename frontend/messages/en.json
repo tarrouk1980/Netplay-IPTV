@@ -60,6 +60,8 @@
     "price": "Price",
     "commission": "Platform commission",
     "payNow": "Pay now",
+    "cancel": "Cancel booking",
+    "cancelConfirm": "Are you sure you want to cancel this booking?",
     "status": {
       "pending": "Awaiting payment",
       "confirmed": "Confirmed",

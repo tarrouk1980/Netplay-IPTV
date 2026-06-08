@@ -60,6 +60,8 @@
     "price": "Prix",
     "commission": "Commission plateforme",
     "payNow": "Payer maintenant",
+    "cancel": "Annuler la réservation",
+    "cancelConfirm": "Êtes-vous sûr de vouloir annuler cette réservation ?",
     "status": {
       "pending": "En attente de paiement",
       "confirmed": "Confirmée",

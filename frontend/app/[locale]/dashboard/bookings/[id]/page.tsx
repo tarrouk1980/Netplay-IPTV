@@ -29,6 +29,22 @@ export default function BookingDetailPage({params}: {params: Promise<{id: string
     },
   });
 
+  const cancelMutation = useMutation({
+    mutationFn: async () => {
+      const {data} = await api.post(`/bookings/${id}/cancel`);
+      return data;
+    },
+    onSuccess: () => {
+      refetch();
+    },
+  });
+
+  function handleCancel() {
+    if (window.confirm(t('cancelConfirm'))) {
+      cancelMutation.mutate();
+    }
+  }
+
   if (!booking) {
     return null;
   }
@@ -66,6 +82,16 @@ export default function BookingDetailPage({params}: {params: Promise<{id: string
           className="mt-6 w-full rounded-full bg-indigo-600 px-6 py-3 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
         >
           {t('payNow')}
+        </button>
+      )}
+
+      {(booking.status === 'pending' || booking.status === 'confirmed') && (
+        <button
+          onClick={handleCancel}
+          disabled={cancelMutation.isPending}
+          className="mt-3 w-full rounded-full border border-red-300 px-6 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+        >
+          {t('cancel')}
         </button>
       )}
 

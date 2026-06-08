@@ -60,6 +60,8 @@
     "price": "السعر",
     "commission": "عمولة المنصة",
     "payNow": "ادفع الآن",
+    "cancel": "إلغاء الحجز",
+    "cancelConfirm": "هل أنت متأكد أنك تريد إلغاء هذا الحجز؟",
     "status": {
       "pending": "بانتظار الدفع",
       "confirmed": "مؤكد",
