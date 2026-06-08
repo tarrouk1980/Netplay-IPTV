@@ -37,6 +37,7 @@ function CreateProfile() {
     hourly_rate: '',
     currency: 'EUR',
     years_experience: '',
+    credential_reference: '',
   });
   const [error, setError] = useState<string | null>(null);
 
@@ -48,6 +49,10 @@ function CreateProfile() {
     },
   });
 
+  const REGULATED_SLUGS = ['conseil-juridique', 'pre-diagnostic-medical'];
+  const selectedCategory = categories?.find((c) => c.id === Number(form.category_id));
+  const requiresCredential = !!selectedCategory && REGULATED_SLUGS.includes(selectedCategory.slug);
+
   const mutation = useMutation({
     mutationFn: async () => {
       const {data} = await api.post('/experts', {
@@ -55,6 +60,7 @@ function CreateProfile() {
         category_id: Number(form.category_id),
         hourly_rate: Number(form.hourly_rate),
         years_experience: form.years_experience ? Number(form.years_experience) : undefined,
+        credential_reference: form.credential_reference || undefined,
       });
       return data;
     },
@@ -146,6 +152,20 @@ function CreateProfile() {
             className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
           />
         </div>
+
+        {requiresCredential && (
+          <div>
+            <label className="mb-1 block text-xs text-neutral-500">{t('credentialReference')}</label>
+            <input
+              required
+              placeholder={t('credentialReferencePlaceholder')}
+              value={form.credential_reference}
+              onChange={update('credential_reference')}
+              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+            />
+            <p className="mt-1 text-xs text-neutral-500">{t('credentialReferenceHelp')}</p>
+          </div>
+        )}
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 

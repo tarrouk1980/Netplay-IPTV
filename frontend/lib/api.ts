@@ -28,6 +28,7 @@ export type ExpertProfile = {
   user: {id: number; name: string; avatar_url: string | null};
   category: {id: number; name: string; slug: string};
   bio: string;
+  credential_reference?: string | null;
   hourly_rate: number;
   currency: string;
   rating_avg: number;

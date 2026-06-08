@@ -65,10 +65,14 @@ class ExpertProfileController extends Controller
             abort(409, 'Un profil expert existe déjà pour cet utilisateur.');
         }
 
+        $regulatedCategoryIds = \App\Models\Category::whereIn('slug', ['conseil-juridique', 'pre-diagnostic-medical'])->pluck('id');
+        $requiresCredential = $regulatedCategoryIds->contains((int) $request->input('category_id'));
+
         $data = $request->validate([
             'category_id' => ['required', 'exists:categories,id'],
             'bio' => ['required', 'string'],
             'years_experience' => ['nullable', 'integer', 'min:0'],
+            'credential_reference' => [$requiresCredential ? 'required' : 'nullable', 'string', 'max:255'],
             'hourly_rate' => ['required', 'numeric', 'min:0'],
             'currency' => ['required', 'string', 'size:3'],
         ]);
@@ -91,6 +95,7 @@ class ExpertProfileController extends Controller
         $data = $request->validate([
             'bio' => ['sometimes', 'string'],
             'years_experience' => ['sometimes', 'integer', 'min:0'],
+            'credential_reference' => ['sometimes', 'nullable', 'string', 'max:255'],
             'hourly_rate' => ['sometimes', 'numeric', 'min:0'],
             'currency' => ['sometimes', 'string', 'size:3'],
         ]);

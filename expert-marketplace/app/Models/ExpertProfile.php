@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class ExpertProfile extends Model
 {
     protected $fillable = [
-        'user_id', 'category_id', 'bio', 'years_experience', 'hourly_rate',
+        'user_id', 'category_id', 'bio', 'years_experience', 'credential_reference', 'hourly_rate',
         'currency', 'status', 'commission_rate', 'rating_avg', 'total_sessions',
         'stripe_account_id', 'stripe_onboarded',
     ];

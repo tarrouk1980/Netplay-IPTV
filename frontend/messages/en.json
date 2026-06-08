@@ -116,7 +116,10 @@
     "markComplete": "Mark as completed",
     "incomingBookings": "Incoming bookings",
     "legalNotice": "This legal consultation service is provided for informational purposes and does not constitute formal legal advice. For important decisions, consult a licensed attorney.",
-    "medicalNotice": "This pre-diagnosis is provided for informational purposes and does not replace an in-person medical consultation. Consult a healthcare professional for any diagnosis or treatment."
+    "medicalNotice": "This pre-diagnosis is provided for informational purposes and does not replace an in-person medical consultation. Consult a healthcare professional for any diagnosis or treatment.",
+    "credentialReference": "Professional license number / reference",
+    "credentialReferencePlaceholder": "E.g. Tunis Bar Association #1234 / Medical Board #5678",
+    "credentialReferenceHelp": "Required for regulated fields (legal, medical) to verify your qualification."
   },
   "common": {
     "loading": "Loading...",
@@ -152,7 +155,8 @@
     "noPlans": "No plans yet.",
     "noProfiles": "No profiles yet.",
     "categoryNamePlaceholder": "Category name",
-    "planNamePlaceholder": "Plan name"
+    "planNamePlaceholder": "Plan name",
+    "credentialReference": "Professional license number / reference"
   },
   "messaging": {
     "title": "Messages",

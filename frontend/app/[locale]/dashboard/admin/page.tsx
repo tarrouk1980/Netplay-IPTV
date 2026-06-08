@@ -91,6 +91,11 @@ function ExpertProfileModeration() {
               <p className="text-sm text-neutral-500">
                 {profile.category.name} · {profile.hourly_rate} {profile.currency}
               </p>
+              {profile.credential_reference && (
+                <p className="mt-1 text-xs text-neutral-500">
+                  {t('credentialReference')}: {profile.credential_reference}
+                </p>
+              )}
               <span className="mt-1 inline-block rounded-full bg-neutral-100 px-2 py-0.5 text-xs">
                 {t(profile.status)}
               </span>
