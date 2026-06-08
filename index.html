@@ -1329,8 +1329,8 @@
           <option value="ar.husary">محمود خليل الحصري</option>
           <option value="ar.minshawi">محمد صديق المنشاوي</option>
           <option value="ar.abdulbasitmurattal">عبد الباسط عبد الصمد</option>
-          <option value="ar.alafasy">مشاري العفاسي</option>
           <option value="ar.mahermuaiqly">ماهر المعيقلي</option>
+          <option value="ar.muhammadayyub">محمد أيوب</option>
         </select>
       </div>
     </div>
@@ -1377,12 +1377,12 @@
     <div class="tajweed-legend">
       <div class="tajweed-title">🎨 ألوان التجويد</div>
       <div class="tajweed-items">
-        <span class="tj" style="color:#f00">الغنة</span>
-        <span class="tj" style="color:#0a0">الإدغام</span>
-        <span class="tj" style="color:#00f">الإخفاء</span>
-        <span class="tj" style="color:#a60">الإقلاب</span>
-        <span class="tj" style="color:#909">القلقلة</span>
-        <span class="tj" style="color:#069">المد</span>
+        <span class="tj" style="color:#ff6b6b">الغنة</span>
+        <span class="tj" style="color:#51cf66">الإدغام</span>
+        <span class="tj" style="color:#74c0fc">الإخفاء</span>
+        <span class="tj" style="color:#ffa94d">الإقلاب</span>
+        <span class="tj" style="color:#cc5de8">القلقلة</span>
+        <span class="tj" style="color:#22d3ee">المد</span>
       </div>
     </div>
 
@@ -2228,6 +2228,32 @@ function learnAudioUrl() {
   return `https://cdn.islamic.network/quran/audio/128/${reciter}/${globalAyah}.mp3`;
 }
 
+// Tajweed class → bright color map
+const TAJWEED_COLORS = {
+  'ham_wasl':   '#aaaaaa', 'laam_shamsiyya': '#aaaaaa',
+  'madda_normal':'#22d3ee','madda_permissible':'#22d3ee',
+  'madda_necessary':'#0ea5e9','madda_obligatory':'#0ea5e9',
+  'ikhafa_shafawi':'#74c0fc','ikhafa':'#74c0fc',
+  'idgham_shafawi':'#51cf66','idgham_wo_ghunnah':'#86efac',
+  'idgham_w_ghunnah':'#51cf66','idgham_mutajanisayn':'#6ee7b7',
+  'idgham_mutaqaribayn':'#34d399',
+  'qalaqah':    '#cc5de8', 'ghunnah':'#ff6b6b',
+  'iqlab':      '#ffa94d', 'ikhafa_heavy':'#74c0fc',
+  'madd_6':     '#0ea5e9', 'madd_2':'#22d3ee',
+};
+
+function applyTajweedColors(html) {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  div.querySelectorAll('[class]').forEach(el => {
+    const cls = el.className;
+    const color = TAJWEED_COLORS[cls];
+    if (color) el.style.color = color;
+    else el.style.color = 'inherit';
+  });
+  return div.innerHTML;
+}
+
 async function loadAyahText() {
   const arabicEl  = document.getElementById('ayahArabic');
   const loadingEl = document.getElementById('ayahLoading');
@@ -2238,10 +2264,21 @@ async function loadAyahText() {
   try {
     const surahN = learnSurahIdx + 1;
     const ayahN  = learnAyahIdx + 1;
-    const res  = await fetch(`https://api.alquran.cloud/v1/ayah/${surahN}:${ayahN}`);
-    const data = await res.json();
-    const text = data?.data?.text || '';
-    arabicEl.textContent = text + ' ﴿' + ayahN + '﴾';
+    // Fetch tajweed edition (includes color tags)
+    const [resTaj, resPlain] = await Promise.all([
+      fetch(`https://api.alquran.cloud/v1/ayah/${surahN}:${ayahN}/quran-tajweed`),
+      fetch(`https://api.alquran.cloud/v1/ayah/${surahN}:${ayahN}`)
+    ]);
+    const dataTaj   = await resTaj.json();
+    const dataPlain = await resPlain.json();
+    const tajText   = dataTaj?.data?.text || '';
+    const plainText = dataPlain?.data?.text || '';
+    // Use tajweed HTML if available, fallback to plain
+    if (tajText) {
+      arabicEl.innerHTML = applyTajweedColors(tajText) + ' <span style="color:var(--gold)">﴿' + ayahN + '﴾</span>';
+    } else {
+      arabicEl.textContent = plainText + ' ﴿' + ayahN + '﴾';
+    }
     arabicEl.style.display = 'block';
     loadingEl.style.display = 'none';
     infoEl.textContent = SURAHS_META[learnSurahIdx][1] + ' · الآية ' + ayahN + ' من ' + SURAHS_META[learnSurahIdx][2];
@@ -2546,21 +2583,25 @@ setInterval(() => {
 }, 60000);
 
 // Toggle schedule panel
-document.getElementById('sbToggleBtn').addEventListener('click', () => {
-  const panel = document.getElementById('schedulePanel');
+(function() {
   const btn   = document.getElementById('sbToggleBtn');
-  const isOpen = panel.classList.contains('open');
-  if (isOpen) {
-    panel.classList.remove('open');
-    panel.style.display = 'none';
-    btn.innerHTML = '<i class="fa-solid fa-calendar-days"></i> البرنامج اليومي';
-  } else {
-    panel.style.display = 'block';
-    panel.classList.add('open');
-    btn.innerHTML = '<i class="fa-solid fa-xmark"></i> إغلاق البرنامج';
-    buildScheduleGrid();
-  }
-});
+  const panel = document.getElementById('schedulePanel');
+  if (!btn || !panel) return;
+  btn.addEventListener('click', () => {
+    const visible = panel.getAttribute('data-open') === '1';
+    if (visible) {
+      panel.setAttribute('data-open', '0');
+      panel.style.cssText = 'display:none';
+      btn.innerHTML = '<i class="fa-solid fa-calendar-days"></i> البرنامج اليومي';
+    } else {
+      panel.setAttribute('data-open', '1');
+      panel.style.cssText = 'display:block !important; visibility:visible !important; opacity:1 !important;';
+      btn.innerHTML = '<i class="fa-solid fa-xmark"></i> إغلاق البرنامج';
+      buildScheduleGrid();
+      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+})();
 
 // ════════════════════════════════════════════════════════════
 //  SELECT & LOAD STATION
