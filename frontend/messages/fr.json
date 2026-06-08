@@ -1,4 +1,8 @@
 {
+  "footer": {
+    "tagline": "La marketplace qui connecte experts, coachs, avocats et médecins avec ceux qui ont besoin de leurs conseils.",
+    "rights": "Tous droits réservés."
+  },
   "nav": {
     "home": "Accueil",
     "experts": "Experts",

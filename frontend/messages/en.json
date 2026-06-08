@@ -1,4 +1,8 @@
 {
+  "footer": {
+    "tagline": "The marketplace connecting experts, coaches, lawyers and doctors with people who need their advice.",
+    "rights": "All rights reserved."
+  },
   "nav": {
     "home": "Home",
     "experts": "Experts",

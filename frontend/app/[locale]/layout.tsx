@@ -5,6 +5,7 @@ import {notFound} from 'next/navigation';
 import {routing} from '@/i18n/routing';
 import {Providers} from './providers';
 import {Header} from '@/components/header';
+import {Footer} from '@/components/footer';
 import '../globals.css';
 
 export const metadata: Metadata = {
@@ -36,8 +37,11 @@ export default async function LocaleLayout({
       <body className="min-h-screen bg-neutral-50 text-neutral-900 antialiased">
         <NextIntlClientProvider>
           <Providers>
-            <Header />
-            <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
+            <div className="flex min-h-screen flex-col">
+              <Header />
+              <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
+              <Footer />
+            </div>
           </Providers>
         </NextIntlClientProvider>
       </body>
