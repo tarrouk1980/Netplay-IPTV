@@ -17,6 +17,8 @@ export default function ExpertsPage() {
     min_price: '',
     max_price: '',
     min_rating: '',
+    sort: '',
+    direction: '',
     page: '1',
   });
   const [searchInput, setSearchInput] = useState(filters.q);
@@ -59,6 +61,24 @@ export default function ExpertsPage() {
             placeholder={t('searchPlaceholder')}
             className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
           />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-xs text-neutral-500">{t('sortBy')}</label>
+          <select
+            value={filters.sort ? `${filters.sort}:${filters.direction || 'desc'}` : ''}
+            onChange={(e) => {
+              const [sort, direction] = e.target.value ? e.target.value.split(':') : ['', ''];
+              setFilters((f) => ({...f, sort, direction, page: '1'}));
+            }}
+            className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+          >
+            <option value="">{t('sortDefault')}</option>
+            <option value="rating_avg:desc">{t('sortTopRated')}</option>
+            <option value="hourly_rate:asc">{t('sortPriceAsc')}</option>
+            <option value="hourly_rate:desc">{t('sortPriceDesc')}</option>
+            <option value="total_sessions:desc">{t('sortMostExperienced')}</option>
+          </select>
         </div>
 
         <div>
