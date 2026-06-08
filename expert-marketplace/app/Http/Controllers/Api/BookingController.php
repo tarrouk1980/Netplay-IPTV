@@ -76,6 +76,45 @@ class BookingController extends Controller
         return $booking->load(['client:id,name,avatar_url', 'expert.user:id,name,avatar_url', 'payment']);
     }
 
+    public function downloadIcs(Request $request, Booking $booking)
+    {
+        $user = $request->user();
+
+        if ($booking->client_id !== $user->id && $booking->expert_id !== $user->expertProfile?->id) {
+            abort(403);
+        }
+
+        $booking->loadMissing(['client:id,name', 'expert.user:id,name']);
+
+        $start = $booking->slot_datetime_start->utc()->format('Ymd\THis\Z');
+        $end = $booking->slot_datetime_end->utc()->format('Ymd\THis\Z');
+        $stamp = now()->utc()->format('Ymd\THis\Z');
+        $summary = 'Session avec '.$booking->expert->user->name;
+        $description = 'Réservation #'.$booking->id.' sur SideKick avec '.$booking->expert->user->name;
+
+        $lines = [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'PRODID:-//SideKick//Booking//FR',
+            'BEGIN:VEVENT',
+            'UID:booking-'.$booking->id.'@sidekick',
+            'DTSTAMP:'.$stamp,
+            'DTSTART:'.$start,
+            'DTEND:'.$end,
+            'SUMMARY:'.$summary,
+            'DESCRIPTION:'.$description,
+            'END:VEVENT',
+            'END:VCALENDAR',
+        ];
+
+        $ics = implode("\r\n", $lines)."\r\n";
+
+        return response($ics, 200, [
+            'Content-Type' => 'text/calendar; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="booking-'.$booking->id.'.ics"',
+        ]);
+    }
+
     public function cancel(Request $request, Booking $booking)
     {
         $user = $request->user();

@@ -90,6 +90,7 @@
     "rescheduleSuccess": "Votre réservation a été replanifiée.",
     "rescheduleError": "Impossible de replanifier cette réservation. Le créneau est peut-être déjà pris.",
     "selectNewSlot": "Aucun créneau à venir disponible pour cet expert.",
+    "addToCalendar": "Ajouter au calendrier (.ics)",
     "status": {
       "pending": "En attente de paiement",
       "confirmed": "Confirmée",

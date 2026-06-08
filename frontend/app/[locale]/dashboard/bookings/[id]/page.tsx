@@ -77,6 +77,23 @@ export default function BookingDetailPage({params}: {params: Promise<{id: string
         </div>
       </dl>
 
+      {(booking.status === 'pending' || booking.status === 'confirmed') && (
+        <button
+          onClick={async () => {
+            const res = await api.get(`/bookings/${id}/ics`, {responseType: 'blob'});
+            const url = window.URL.createObjectURL(new Blob([res.data]));
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `booking-${id}.ics`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+          }}
+          className="mt-3 w-full rounded-full border border-neutral-300 px-6 py-2 text-sm font-medium text-neutral-700 hover:border-indigo-300"
+        >
+          {t('addToCalendar')}
+        </button>
+      )}
+
       {booking.status === 'pending' && (
         <button
           onClick={() => checkoutMutation.mutate()}

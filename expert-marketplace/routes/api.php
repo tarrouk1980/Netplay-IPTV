@@ -70,6 +70,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/bookings', [BookingController::class, 'index']);
     Route::get('/bookings/{booking}', [BookingController::class, 'show']);
+    Route::get('/bookings/{booking}/ics', [BookingController::class, 'downloadIcs']);
     Route::post('/bookings', [BookingController::class, 'store']);
     Route::post('/bookings/{booking}/cancel', [BookingController::class, 'cancel']);
     Route::post('/bookings/{booking}/reschedule', [BookingController::class, 'reschedule']);

@@ -90,6 +90,7 @@
     "rescheduleSuccess": "تمت إعادة جدولة حجزك.",
     "rescheduleError": "تعذّرت إعادة جدولة هذا الحجز. ربما تم حجز هذا الموعد بالفعل.",
     "selectNewSlot": "لا توجد مواعيد قادمة متاحة لهذا الخبير.",
+    "addToCalendar": "إضافة إلى التقويم (.ics)",
     "status": {
       "pending": "بانتظار الدفع",
       "confirmed": "مؤكد",
