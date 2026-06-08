@@ -27,6 +27,13 @@ export function NotificationBell() {
     onSuccess: () => queryClient.invalidateQueries({queryKey: ['notifications']}),
   });
 
+  const markAllRead = useMutation({
+    mutationFn: async () => {
+      await api.post('/notifications/read-all');
+    },
+    onSuccess: () => queryClient.invalidateQueries({queryKey: ['notifications']}),
+  });
+
   const unreadCount = data?.data.filter((n) => !n.read_at).length ?? 0;
 
   return (
@@ -46,7 +53,18 @@ export function NotificationBell() {
 
       {open && (
         <div className="absolute right-0 z-10 mt-2 w-80 rounded-xl border border-neutral-200 bg-white p-3 shadow-lg">
-          <h3 className="mb-2 text-sm font-semibold">{t('title')}</h3>
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-sm font-semibold">{t('title')}</h3>
+            {unreadCount > 0 && (
+              <button
+                onClick={() => markAllRead.mutate()}
+                disabled={markAllRead.isPending}
+                className="text-xs text-indigo-600 hover:underline disabled:opacity-50"
+              >
+                {t('markAllRead')}
+              </button>
+            )}
+          </div>
 
           {data && data.data.length === 0 && <p className="text-xs text-neutral-500">{t('empty')}</p>}
 
