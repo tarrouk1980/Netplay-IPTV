@@ -166,6 +166,25 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
 
         <RegulatoryNotice categorySlug={expert.category.slug} />
 
+        {!!expert.portfolio_items?.length && (
+          <section>
+            <h2 className="mb-3 font-semibold">{t('portfolioTitle')}</h2>
+            <div className="space-y-3">
+              {expert.portfolio_items.map((item) => (
+                <div key={item.id} className="rounded-xl border border-neutral-200 bg-white p-4">
+                  <p className="font-medium">{item.title}</p>
+                  {item.description && <p className="mt-1 text-sm text-neutral-600">{item.description}</p>}
+                  {item.url && (
+                    <a href={item.url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-sm text-indigo-600 hover:underline">
+                      {t('portfolioView')} →
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         <ReviewList expertId={expert.id} />
       </div>
 

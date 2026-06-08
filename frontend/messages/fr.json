@@ -52,7 +52,9 @@
     "next": "Suivant",
     "online": "En ligne",
     "lastSeenHours": "Vu il y a {count}h",
-    "lastSeenDays": "Vu il y a {count}j"
+    "lastSeenDays": "Vu il y a {count}j",
+    "portfolioTitle": "Portfolio",
+    "portfolioView": "Voir"
   },
   "auth": {
     "name": "Nom complet",
@@ -170,7 +172,15 @@
     "statsTotalEarnings": "Revenus totaux",
     "statsUpcoming": "Sessions à venir",
     "statsCompleted": "Sessions terminées",
-    "statsAvgRating": "Note moyenne"
+    "statsAvgRating": "Note moyenne",
+    "portfolioTitle": "Portfolio",
+    "portfolioAdd": "Ajouter",
+    "portfolioTitlePlaceholder": "Titre du projet ou réalisation",
+    "portfolioDescriptionPlaceholder": "Description (optionnel)",
+    "portfolioUrlPlaceholder": "Lien (https://...)",
+    "portfolioSave": "Enregistrer",
+    "portfolioCancel": "Annuler",
+    "portfolioEmpty": "Aucune réalisation ajoutée pour l'instant."
   },
   "common": {
     "loading": "Chargement...",

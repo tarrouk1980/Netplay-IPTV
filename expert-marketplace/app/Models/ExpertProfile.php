@@ -56,4 +56,9 @@ class ExpertProfile extends Model
     {
         return $this->hasMany(Favorite::class);
     }
+
+    public function portfolioItems(): HasMany
+    {
+        return $this->hasMany(ExpertPortfolioItem::class);
+    }
 }

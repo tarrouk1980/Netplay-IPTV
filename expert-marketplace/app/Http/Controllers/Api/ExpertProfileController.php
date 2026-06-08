@@ -54,7 +54,7 @@ class ExpertProfileController extends Controller
 
     public function show(ExpertProfile $expertProfile)
     {
-        return $expertProfile->load(['user:id,name,avatar_url,country', 'category', 'reviews']);
+        return $expertProfile->load(['user:id,name,avatar_url,country', 'category', 'reviews', 'portfolioItems']);
     }
 
     public function store(Request $request)

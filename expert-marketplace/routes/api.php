@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\AvailabilitySlotController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ExpertProfileController;
+use App\Http\Controllers\Api\ExpertPortfolioItemController;
 use App\Http\Controllers\Api\FavoriteController;
 use App\Http\Controllers\Api\MessageController;
 use App\Http\Controllers\Api\NotificationController;
@@ -27,6 +28,7 @@ Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/experts', [ExpertProfileController::class, 'index']);
 Route::get('/experts/{expertProfile}', [ExpertProfileController::class, 'show']);
+Route::get('/experts/{expertProfile}/portfolio', [ExpertPortfolioItemController::class, 'index']);
 Route::get('/availability-slots', [AvailabilitySlotController::class, 'index']);
 Route::get('/reviews', [ReviewController::class, 'index']);
 Route::get('/subscription-plans', [SubscriptionPlanController::class, 'index']);
@@ -52,6 +54,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/stripe/connect/onboard', [StripeConnectController::class, 'onboard']);
         Route::get('/stripe/connect/status', [StripeConnectController::class, 'status']);
         Route::get('/expert/stats', [ExpertProfileController::class, 'stats']);
+        Route::post('/expert/portfolio', [ExpertPortfolioItemController::class, 'store']);
+        Route::delete('/expert/portfolio/{expertPortfolioItem}', [ExpertPortfolioItemController::class, 'destroy']);
     });
 
     Route::post('/bookings/{booking}/checkout', [PaymentController::class, 'checkout']);

@@ -37,6 +37,7 @@ export type ExpertProfile = {
   total_sessions: number;
   status?: string;
   last_seen_at?: string | null;
+  portfolio_items?: PortfolioItem[];
 };
 
 export type Category = {
@@ -94,6 +95,14 @@ export type AppNotification = {
   data: {booking_id: number; status: string; message: string};
   read_at: string | null;
   created_at: string;
+};
+
+export type PortfolioItem = {
+  id: number;
+  title: string;
+  description: string | null;
+  url: string | null;
+  position: number;
 };
 
 export type ExpertStats = {

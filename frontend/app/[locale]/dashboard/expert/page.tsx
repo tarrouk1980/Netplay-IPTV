@@ -382,10 +382,136 @@ function ExpertWorkspace() {
       )}
 
       <EditProfileForm />
+      <PortfolioManager />
       <StripeConnectCard />
       <AvailabilityManager />
       <IncomingBookings />
     </div>
+  );
+}
+
+function PortfolioManager() {
+  const t = useTranslations('expert');
+  const queryClient = useQueryClient();
+  const {user} = useAuth();
+  const profileId = user?.expert_profile?.id;
+
+  const [form, setForm] = useState({title: '', description: '', url: ''});
+  const [showForm, setShowForm] = useState(false);
+
+  const {data: items} = useQuery({
+    queryKey: ['portfolio', profileId],
+    queryFn: async () => {
+      const {data} = await api.get<import('@/lib/api').PortfolioItem[]>(`/experts/${profileId}/portfolio`);
+      return data;
+    },
+    enabled: !!profileId,
+  });
+
+  const addItem = useMutation({
+    mutationFn: async () => {
+      await api.post('/expert/portfolio', form);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: ['portfolio', profileId]});
+      setForm({title: '', description: '', url: ''});
+      setShowForm(false);
+    },
+  });
+
+  const deleteItem = useMutation({
+    mutationFn: async (id: number) => {
+      await api.delete(`/expert/portfolio/${id}`);
+    },
+    onSuccess: () => queryClient.invalidateQueries({queryKey: ['portfolio', profileId]}),
+  });
+
+  return (
+    <section className="rounded-xl border border-neutral-200 bg-white p-6">
+      <div className="flex items-center justify-between">
+        <h2 className="font-semibold">{t('portfolioTitle')}</h2>
+        <button
+          onClick={() => setShowForm((v) => !v)}
+          className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700"
+        >
+          + {t('portfolioAdd')}
+        </button>
+      </div>
+
+      {showForm && (
+        <form
+          className="mt-4 space-y-3 rounded-lg border border-neutral-100 bg-neutral-50 p-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            addItem.mutate();
+          }}
+        >
+          <input
+            className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+            placeholder={t('portfolioTitlePlaceholder')}
+            value={form.title}
+            onChange={(e) => setForm((f) => ({...f, title: e.target.value}))}
+            required
+          />
+          <textarea
+            className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+            rows={3}
+            placeholder={t('portfolioDescriptionPlaceholder')}
+            value={form.description}
+            onChange={(e) => setForm((f) => ({...f, description: e.target.value}))}
+          />
+          <input
+            type="url"
+            className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+            placeholder={t('portfolioUrlPlaceholder')}
+            value={form.url}
+            onChange={(e) => setForm((f) => ({...f, url: e.target.value}))}
+          />
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={addItem.isPending}
+              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 disabled:opacity-50"
+            >
+              {t('portfolioSave')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowForm(false)}
+              className="rounded-lg border border-neutral-300 px-4 py-2 text-sm hover:bg-neutral-50"
+            >
+              {t('portfolioCancel')}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {items && items.length === 0 && !showForm && (
+        <p className="mt-4 text-sm text-neutral-500">{t('portfolioEmpty')}</p>
+      )}
+
+      <div className="mt-4 space-y-3">
+        {items?.map((item) => (
+          <div key={item.id} className="flex items-start justify-between rounded-lg border border-neutral-100 p-3">
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-sm">{item.title}</p>
+              {item.description && <p className="mt-0.5 text-xs text-neutral-500 line-clamp-2">{item.description}</p>}
+              {item.url && (
+                <a href={item.url} target="_blank" rel="noopener noreferrer" className="mt-1 block text-xs text-indigo-600 hover:underline truncate">
+                  {item.url}
+                </a>
+              )}
+            </div>
+            <button
+              onClick={() => deleteItem.mutate(item.id)}
+              className="ml-3 text-xs text-red-500 hover:text-red-700 shrink-0"
+            >
+              {t('delete')}
+            </button>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 

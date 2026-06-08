@@ -52,7 +52,9 @@
     "next": "التالي",
     "online": "متصل الآن",
     "lastSeenHours": "آخر ظهور منذ {count} ساعة",
-    "lastSeenDays": "آخر ظهور منذ {count} يوم"
+    "lastSeenDays": "آخر ظهور منذ {count} يوم",
+    "portfolioTitle": "المشاريع والإنجازات",
+    "portfolioView": "عرض"
   },
   "auth": {
     "name": "الاسم الكامل",
@@ -170,7 +172,15 @@
     "statsTotalEarnings": "إجمالي الأرباح",
     "statsUpcoming": "الجلسات القادمة",
     "statsCompleted": "الجلسات المنتهية",
-    "statsAvgRating": "متوسط التقييم"
+    "statsAvgRating": "متوسط التقييم",
+    "portfolioTitle": "المشاريع والإنجازات",
+    "portfolioAdd": "إضافة",
+    "portfolioTitlePlaceholder": "عنوان المشروع أو الإنجاز",
+    "portfolioDescriptionPlaceholder": "وصف (اختياري)",
+    "portfolioUrlPlaceholder": "رابط (https://...)",
+    "portfolioSave": "حفظ",
+    "portfolioCancel": "إلغاء",
+    "portfolioEmpty": "لم يتم إضافة أي مشاريع بعد."
   },
   "common": {
     "loading": "جارٍ التحميل...",

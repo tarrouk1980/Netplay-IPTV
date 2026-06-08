@@ -52,7 +52,9 @@
     "next": "Next",
     "online": "Online",
     "lastSeenHours": "Last seen {count}h ago",
-    "lastSeenDays": "Last seen {count}d ago"
+    "lastSeenDays": "Last seen {count}d ago",
+    "portfolioTitle": "Portfolio",
+    "portfolioView": "View"
   },
   "auth": {
     "name": "Full name",
@@ -170,7 +172,15 @@
     "statsTotalEarnings": "Total earnings",
     "statsUpcoming": "Upcoming sessions",
     "statsCompleted": "Completed sessions",
-    "statsAvgRating": "Average rating"
+    "statsAvgRating": "Average rating",
+    "portfolioTitle": "Portfolio",
+    "portfolioAdd": "Add",
+    "portfolioTitlePlaceholder": "Project or achievement title",
+    "portfolioDescriptionPlaceholder": "Description (optional)",
+    "portfolioUrlPlaceholder": "Link (https://...)",
+    "portfolioSave": "Save",
+    "portfolioCancel": "Cancel",
+    "portfolioEmpty": "No portfolio items yet."
   },
   "common": {
     "loading": "Loading...",
