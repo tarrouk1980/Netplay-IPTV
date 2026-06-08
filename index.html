@@ -1326,11 +1326,20 @@
       <div class="learn-select-wrap">
         <label>القارئ</label>
         <select id="learnReciter">
-          <option value="ar.husary">محمود خليل الحصري</option>
-          <option value="ar.minshawi">محمد صديق المنشاوي</option>
-          <option value="ar.abdulbasitmurattal">عبد الباسط عبد الصمد</option>
-          <option value="ar.mahermuaiqly">ماهر المعيقلي</option>
-          <option value="ar.muhammadayyub">محمد أيوب</option>
+          <option value="ar.husary">🇪🇬 محمود خليل الحصري</option>
+          <option value="ar.minshawi">🇪🇬 محمد صديق المنشاوي</option>
+          <option value="ar.abdulbasitmurattal">🇪🇬 عبد الباسط عبد الصمد</option>
+          <option value="ar.muhammadayyub">🇸🇦 محمد أيوب</option>
+          <option value="ar.mahermuaiqly">🇸🇦 ماهر المعيقلي</option>
+          <option value="ar.saoodshuraym">🇸🇦 سعود الشريم</option>
+          <option value="ar.shaatree">🇸🇦 أبو بكر الشاطري</option>
+          <option value="ar.hanirifai">🇸🇦 هاني الرفاعي</option>
+          <option value="ar.abdullahbasfar">🇸🇦 عبد الله بصفر</option>
+          <option value="ar.yasseraldosari">🇸🇦 ياسر الدوسري</option>
+          <option value="ar.khaledaljileel">🇸🇦 خالد الجليل</option>
+          <option value="ar.nasser_alqatami">🇰🇼 ناصر القطامي</option>
+          <option value="ar.fares_abbad">🇩🇿 فارس عباد</option>
+          <option value="ar.omar_alqazabri">🇲🇦 عمر القزابري</option>
         </select>
       </div>
     </div>
@@ -1802,6 +1811,34 @@ const STATIONS = [
     quality: 'MP3 · 128kbps',
     urls: [
       'https://qurango.net/radio/nasser_alqatami',
+      'https://qurango.net/radio/mix',
+      'https://qurango.net/radio/tarateel'
+    ]
+  },
+  {
+    id: 25,
+    name: 'محمد جبريل',
+    country: 'مصر',
+    flag: '🇪🇬',
+    emoji: '🎵',
+    freq: '84.3',
+    quality: 'MP3 · 128kbps',
+    urls: [
+      'https://qurango.net/radio/mohammed_jibreel',
+      'https://qurango.net/radio/mix',
+      'https://qurango.net/radio/tarateel'
+    ]
+  },
+  {
+    id: 26,
+    name: 'سعود الشريم',
+    country: 'المملكة العربية السعودية',
+    flag: '🇸🇦',
+    emoji: '🕌',
+    freq: '83.1',
+    quality: 'MP3 · 128kbps',
+    urls: [
+      'https://qurango.net/radio/saud_alshuraim',
       'https://qurango.net/radio/mix',
       'https://qurango.net/radio/tarateel'
     ]
@@ -2617,7 +2654,7 @@ function selectStation(idx) {
 
   // Update UI info
   reciterName.textContent   = s.name;
-  countryText.textContent   = s.country;
+  countryText.textContent   = s.flag + ' ' + s.country;
   reciterAvatar.textContent = s.emoji;
   fmFreq.innerHTML          = `${s.freq} <span>MHz</span>`;
   streamQuality.textContent = s.quality;
