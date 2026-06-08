@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Models\Review;
 use Illuminate\Http\Request;
 
 class ReviewController extends Controller
@@ -51,5 +52,26 @@ class ReviewController extends Controller
         ]);
 
         return response()->json($review, 201);
+    }
+
+    public function reply(Request $request, Review $review)
+    {
+        $user = $request->user();
+        $expertProfile = $user->expertProfile;
+
+        if (! $expertProfile || $review->expert_id !== $expertProfile->id) {
+            abort(403);
+        }
+
+        $data = $request->validate([
+            'expert_reply' => ['required', 'string', 'max:2000'],
+        ]);
+
+        $review->update([
+            'expert_reply' => $data['expert_reply'],
+            'expert_reply_at' => now(),
+        ]);
+
+        return response()->json($review);
     }
 }

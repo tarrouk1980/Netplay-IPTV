@@ -180,6 +180,9 @@
     "commentPlaceholder": "Partagez votre expérience...",
     "submit": "Envoyer mon avis",
     "thanks": "Merci pour votre avis !",
-    "alreadyReviewed": "Vous avez déjà laissé un avis pour cette réservation."
+    "alreadyReviewed": "Vous avez déjà laissé un avis pour cette réservation.",
+    "expertReplyLabel": "Réponse de l'expert",
+    "replyPlaceholder": "Écrivez une réponse publique à cet avis...",
+    "replySubmit": "Publier la réponse"
   }
 }

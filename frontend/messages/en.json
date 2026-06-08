@@ -180,6 +180,9 @@
     "commentPlaceholder": "Share your experience...",
     "submit": "Submit my review",
     "thanks": "Thanks for your review!",
-    "alreadyReviewed": "You already left a review for this booking."
+    "alreadyReviewed": "You already left a review for this booking.",
+    "expertReplyLabel": "Reply from the expert",
+    "replyPlaceholder": "Write a public reply to this review...",
+    "replySubmit": "Post reply"
   }
 }

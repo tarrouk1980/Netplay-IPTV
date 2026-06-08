@@ -7,7 +7,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Review extends Model
 {
-    protected $fillable = ['booking_id', 'client_id', 'expert_id', 'rating', 'comment'];
+    protected $fillable = ['booking_id', 'client_id', 'expert_id', 'rating', 'comment', 'expert_reply', 'expert_reply_at'];
+
+    protected $casts = [
+        'expert_reply_at' => 'datetime',
+    ];
 
     public function booking(): BelongsTo
     {

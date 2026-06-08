@@ -180,6 +180,9 @@
     "commentPlaceholder": "شارك تجربتك...",
     "submit": "إرسال تقييمي",
     "thanks": "شكرًا على تقييمك!",
-    "alreadyReviewed": "لقد تركت بالفعل تقييمًا لهذا الحجز."
+    "alreadyReviewed": "لقد تركت بالفعل تقييمًا لهذا الحجز.",
+    "expertReplyLabel": "رد الخبير",
+    "replyPlaceholder": "اكتب ردًا عامًا على هذا التقييم...",
+    "replySubmit": "نشر الرد"
   }
 }

@@ -46,6 +46,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/bookings/{booking}/checkout', [PaymentController::class, 'checkout']);
     Route::post('/bookings/{booking}/review', [ReviewController::class, 'store']);
+    Route::post('/reviews/{review}/reply', [ReviewController::class, 'reply']);
     Route::post('/bookings/{booking}/complete', [BookingController::class, 'complete']);
 
     Route::get('/bookings/{booking}/messages', [MessageController::class, 'index']);

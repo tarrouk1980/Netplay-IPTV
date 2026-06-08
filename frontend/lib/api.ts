@@ -97,6 +97,8 @@ export type Review = {
   id: number;
   rating: number;
   comment: string | null;
+  expert_reply: string | null;
+  expert_reply_at: string | null;
   client: {id: number; name: string; avatar_url: string | null};
   created_at: string;
 };
