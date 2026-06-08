@@ -1,3 +1,4 @@
+import type {Metadata} from 'next';
 import type {ReactNode} from 'react';
 import {NextIntlClientProvider, hasLocale} from 'next-intl';
 import {notFound} from 'next/navigation';
@@ -5,6 +6,11 @@ import {routing} from '@/i18n/routing';
 import {Providers} from './providers';
 import {Header} from '@/components/header';
 import '../globals.css';
+
+export const metadata: Metadata = {
+  title: 'SideKick — Trouvez votre expert',
+  description: 'La marketplace qui connecte experts, coachs et influenceurs avec ceux qui ont besoin de leurs conseils.',
+};
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({locale}));
