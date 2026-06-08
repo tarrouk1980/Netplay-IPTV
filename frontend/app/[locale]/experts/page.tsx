@@ -5,7 +5,7 @@ import {useTranslations} from 'next-intl';
 import {useSearchParams} from 'next/navigation';
 import {useQuery} from '@tanstack/react-query';
 import {Link} from '@/i18n/navigation';
-import {api, type ExpertProfile, type Paginated} from '@/lib/api';
+import {api, type Category, type ExpertProfile, type Paginated} from '@/lib/api';
 
 export default function ExpertsPage() {
   const t = useTranslations('experts');
@@ -16,6 +16,14 @@ export default function ExpertsPage() {
     min_price: '',
     max_price: '',
     min_rating: '',
+  });
+
+  const {data: categories} = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const {data} = await api.get<Category[]>('/categories');
+      return data;
+    },
   });
 
   const {data, isLoading} = useQuery({
@@ -31,6 +39,22 @@ export default function ExpertsPage() {
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
       <aside className="space-y-4 lg:col-span-1">
         <h2 className="font-semibold">{t('filters')}</h2>
+
+        <div>
+          <label className="mb-1 block text-xs text-neutral-500">{t('category')}</label>
+          <select
+            value={filters.category_id}
+            onChange={(e) => setFilters((f) => ({...f, category_id: e.target.value}))}
+            className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+          >
+            <option value="">—</option>
+            {categories?.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+        </div>
 
         <div>
           <label className="mb-1 block text-xs text-neutral-500">{t('minPrice')}</label>

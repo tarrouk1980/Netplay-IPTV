@@ -17,6 +17,7 @@
   "experts": {
     "title": "الخبراء المتاحون",
     "filters": "التصفية",
+    "category": "المجال",
     "minPrice": "أقل سعر",
     "maxPrice": "أعلى سعر",
     "minRating": "أدنى تقييم",

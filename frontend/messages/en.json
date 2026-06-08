@@ -17,6 +17,7 @@
   "experts": {
     "title": "Available experts",
     "filters": "Filters",
+    "category": "Category",
     "minPrice": "Min price",
     "maxPrice": "Max price",
     "minRating": "Minimum rating",

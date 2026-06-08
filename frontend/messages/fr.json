@@ -17,6 +17,7 @@
   "experts": {
     "title": "Experts disponibles",
     "filters": "Filtres",
+    "category": "Domaine",
     "minPrice": "Prix min",
     "maxPrice": "Prix max",
     "minRating": "Note minimale",
