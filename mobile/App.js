@@ -699,10 +699,11 @@ Notifications.setNotificationHandler({
 
 function AuthStack({ onboardingDone }) {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {onboardingDone === false && (
-        <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ headerShown: false }} />
-      )}
+    <Stack.Navigator
+      screenOptions={{ headerShown: false }}
+      initialRouteName={onboardingDone === false ? 'Onboarding' : 'Login'}
+    >
+      <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="OTP" component={OTPScreen} />
