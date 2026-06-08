@@ -7,9 +7,11 @@ import {useQuery} from '@tanstack/react-query';
 import {Link} from '@/i18n/navigation';
 import {api, type Category, type ExpertProfile, type Paginated} from '@/lib/api';
 import {Avatar} from '@/components/avatar';
+import {FavoriteButton, useFavoriteIds} from '@/components/favorite-button';
 
 export default function ExpertsPage() {
   const t = useTranslations('experts');
+  const favoriteIds = useFavoriteIds();
   const searchParams = useSearchParams();
   const [filters, setFilters] = useState({
     q: searchParams.get('q') ?? '',
@@ -148,12 +150,15 @@ export default function ExpertsPage() {
               href={`/experts/${expert.id}`}
               className="rounded-xl border border-neutral-200 bg-white p-5 transition hover:border-indigo-300 hover:shadow-sm"
             >
-              <div className="flex items-center gap-3">
-                <Avatar name={expert.user.name} url={expert.user.avatar_url} size="sm" />
-                <div>
-                  <p className="font-medium">{expert.user.name}</p>
-                  <p className="text-xs text-neutral-500">{expert.category.name}</p>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <Avatar name={expert.user.name} url={expert.user.avatar_url} size="sm" />
+                  <div>
+                    <p className="font-medium">{expert.user.name}</p>
+                    <p className="text-xs text-neutral-500">{expert.category.name}</p>
+                  </div>
                 </div>
+                <FavoriteButton expertId={expert.id} isFavorited={favoriteIds.has(expert.id)} />
               </div>
               <p className="mt-3 line-clamp-2 text-sm text-neutral-600">{expert.bio}</p>
               <div className="mt-3 flex items-center justify-between text-sm">

@@ -43,4 +43,9 @@ class ExpertProfile extends Model
     {
         return $this->hasMany(Payout::class, 'expert_id');
     }
+
+    public function favoritedBy(): HasMany
+    {
+        return $this->hasMany(Favorite::class);
+    }
 }

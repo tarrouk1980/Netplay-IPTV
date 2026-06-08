@@ -91,7 +91,8 @@
     "myProfile": "My expert profile",
     "availability": "My time slots",
     "payments": "Payments",
-    "noBookings": "You have no bookings yet."
+    "noBookings": "You have no bookings yet.",
+    "myFavorites": "My favorites"
   },
   "expert": {
     "createProfileTitle": "Create my expert profile",
@@ -190,6 +191,12 @@
     "title": "Notifications",
     "empty": "No notifications.",
     "markAllRead": "Mark all as read"
+  },
+  "favorites": {
+    "title": "My favorites",
+    "empty": "You haven't saved any experts yet.",
+    "add": "Add to favorites",
+    "remove": "Remove from favorites"
   },
   "review": {
     "title": "Reviews",

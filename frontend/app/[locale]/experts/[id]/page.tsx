@@ -9,6 +9,7 @@ import {useAuth} from '@/lib/auth-context';
 import {ReviewList} from '@/components/review-list';
 import {RegulatoryNotice, CredentialBadge} from '@/components/regulatory-notice';
 import {Avatar} from '@/components/avatar';
+import {FavoriteButton, useFavoriteIds} from '@/components/favorite-button';
 
 function nextSlotOccurrences(slot: AvailabilitySlot, count: number): Date[] {
   const [hours, minutes] = slot.start_time.split(':').map(Number);
@@ -44,6 +45,7 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
   const tb = useTranslations('booking');
   const router = useRouter();
   const {user} = useAuth();
+  const favoriteIds = useFavoriteIds();
   const queryClient = useQueryClient();
   const [start, setStart] = useState('');
   const [selectedSlot, setSelectedSlot] = useState<Date | null>(null);
@@ -122,8 +124,11 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
       <div className="md:col-span-2">
         <div className="flex items-center gap-4">
           <Avatar name={expert.user.name} url={expert.user.avatar_url} size="lg" />
-          <div>
-            <h1 className="text-2xl font-semibold">{expert.user.name}</h1>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-semibold">{expert.user.name}</h1>
+              <FavoriteButton expertId={expert.id} isFavorited={favoriteIds.has(expert.id)} />
+            </div>
             <p className="text-sm text-neutral-500">{expert.category.name}</p>
             <p className="text-sm text-amber-500">
               ★ {expert.rating_avg.toFixed(1)} · {expert.total_sessions} sessions

@@ -43,7 +43,12 @@ export default function DashboardPage() {
         <AvatarSettings />
       </div>
 
-      <h1 className="mb-6 text-2xl font-semibold">{t('myBookings')}</h1>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">{t('myBookings')}</h1>
+        <Link href="/dashboard/favorites" className="text-sm text-indigo-600 hover:underline">
+          {t('myFavorites')}
+        </Link>
+      </div>
 
       {data && data.data.length === 0 && <p className="text-neutral-500">{t('noBookings')}</p>}
 

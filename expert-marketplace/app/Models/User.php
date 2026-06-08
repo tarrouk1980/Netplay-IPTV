@@ -56,6 +56,11 @@ class User extends Authenticatable
         return $this->hasMany(Subscription::class, 'client_id');
     }
 
+    public function favorites(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Favorite::class);
+    }
+
     /**
      * Get the attributes that should be cast.
      *

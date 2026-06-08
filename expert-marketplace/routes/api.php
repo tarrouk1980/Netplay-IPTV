@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\AvailabilitySlotController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ExpertProfileController;
+use App\Http\Controllers\Api\FavoriteController;
 use App\Http\Controllers\Api\MessageController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PaymentController;
@@ -39,6 +40,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/experts', [ExpertProfileController::class, 'store']);
     Route::patch('/experts/{expertProfile}', [ExpertProfileController::class, 'update']);
+
+    Route::get('/favorites', [FavoriteController::class, 'index']);
+    Route::post('/experts/{expertProfile}/favorite', [FavoriteController::class, 'store']);
+    Route::delete('/experts/{expertProfile}/favorite', [FavoriteController::class, 'destroy']);
 
     Route::middleware('role:expert')->group(function () {
         Route::post('/availability-slots', [AvailabilitySlotController::class, 'store']);
