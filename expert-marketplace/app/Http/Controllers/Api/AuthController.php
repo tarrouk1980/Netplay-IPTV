@@ -80,6 +80,24 @@ class AuthController extends Controller
         return response()->json($user);
     }
 
+    public function changePassword(Request $request)
+    {
+        $user = $request->user();
+
+        $data = $request->validate([
+            'current_password' => ['required', 'string'],
+            'password' => ['required', 'confirmed', Password::defaults()],
+        ]);
+
+        if (! Hash::check($data['current_password'], $user->password)) {
+            return response()->json(['message' => 'current_password_incorrect'], 422);
+        }
+
+        $user->forceFill(['password' => Hash::make($data['password'])])->save();
+
+        return response()->json(['message' => 'password_changed']);
+    }
+
     public function forgotPassword(Request $request)
     {
         $request->validate(['email' => ['required', 'email']]);

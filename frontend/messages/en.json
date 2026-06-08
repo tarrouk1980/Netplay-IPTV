@@ -69,7 +69,12 @@
     "forgotPasswordSent": "If an account exists for this email, a reset link has been sent.",
     "resetPasswordTitle": "Choose a new password",
     "resetPasswordSubmit": "Reset password",
-    "resetPasswordSuccess": "Your password has been reset. Redirecting to login..."
+    "resetPasswordSuccess": "Your password has been reset. Redirecting to login...",
+    "changePasswordTitle": "Change password",
+    "currentPassword": "Current password",
+    "changePasswordSubmit": "Update password",
+    "changePasswordSuccess": "Your password has been updated.",
+    "currentPasswordIncorrect": "Your current password is incorrect."
   },
   "booking": {
     "selectSlot": "Choose a time slot",

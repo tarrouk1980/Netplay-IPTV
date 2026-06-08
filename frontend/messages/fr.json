@@ -69,7 +69,12 @@
     "forgotPasswordSent": "Si un compte existe pour cet e-mail, un lien de réinitialisation a été envoyé.",
     "resetPasswordTitle": "Choisissez un nouveau mot de passe",
     "resetPasswordSubmit": "Réinitialiser le mot de passe",
-    "resetPasswordSuccess": "Votre mot de passe a été réinitialisé. Redirection vers la connexion..."
+    "resetPasswordSuccess": "Votre mot de passe a été réinitialisé. Redirection vers la connexion...",
+    "changePasswordTitle": "Changer le mot de passe",
+    "currentPassword": "Mot de passe actuel",
+    "changePasswordSubmit": "Mettre à jour le mot de passe",
+    "changePasswordSuccess": "Votre mot de passe a été mis à jour.",
+    "currentPasswordIncorrect": "Votre mot de passe actuel est incorrect."
   },
   "booking": {
     "selectSlot": "Choisissez un créneau",

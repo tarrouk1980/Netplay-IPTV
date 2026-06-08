@@ -7,6 +7,7 @@ import {Link, useRouter} from '@/i18n/navigation';
 import {api, type Booking, type Paginated} from '@/lib/api';
 import {useAuth} from '@/lib/auth-context';
 import {AvatarSettings} from '@/components/avatar-settings';
+import {ChangePasswordForm} from '@/components/change-password-form';
 
 export default function DashboardPage() {
   const t = useTranslations('dashboard');
@@ -39,8 +40,9 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <div className="mb-6">
+      <div className="mb-6 space-y-4">
         <AvatarSettings />
+        <ChangePasswordForm />
       </div>
 
       <div className="mb-6 flex items-center justify-between">

@@ -7,6 +7,7 @@ import {useRouter} from '@/i18n/navigation';
 import {api, type Category, type AvailabilitySlot, type Booking, type Paginated} from '@/lib/api';
 import {useAuth} from '@/lib/auth-context';
 import {AvatarSettings} from '@/components/avatar-settings';
+import {ChangePasswordForm} from '@/components/change-password-form';
 
 export default function ExpertDashboardPage() {
   const router = useRouter();
@@ -190,6 +191,7 @@ function ExpertWorkspace() {
   return (
     <div className="space-y-10">
       <AvatarSettings />
+      <ChangePasswordForm />
 
       {profile.status !== 'approved' && (
         <div

@@ -69,7 +69,12 @@
     "forgotPasswordSent": "إذا كان هناك حساب مرتبط بهذا البريد، فقد تم إرسال رابط إعادة التعيين إليه.",
     "resetPasswordTitle": "اختر كلمة مرور جديدة",
     "resetPasswordSubmit": "إعادة تعيين كلمة المرور",
-    "resetPasswordSuccess": "تمت إعادة تعيين كلمة المرور. جارٍ التحويل إلى صفحة الدخول..."
+    "resetPasswordSuccess": "تمت إعادة تعيين كلمة المرور. جارٍ التحويل إلى صفحة الدخول...",
+    "changePasswordTitle": "تغيير كلمة المرور",
+    "currentPassword": "كلمة المرور الحالية",
+    "changePasswordSubmit": "تحديث كلمة المرور",
+    "changePasswordSuccess": "تم تحديث كلمة المرور بنجاح.",
+    "currentPasswordIncorrect": "كلمة المرور الحالية غير صحيحة."
   },
   "booking": {
     "selectSlot": "اختر موعدًا",
