@@ -8,6 +8,7 @@ import {Link} from '@/i18n/navigation';
 import {api, type Category, type ExpertProfile, type Paginated} from '@/lib/api';
 import {Avatar} from '@/components/avatar';
 import {FavoriteButton, useFavoriteIds} from '@/components/favorite-button';
+import {OnlineBadge} from '@/components/online-badge';
 
 export default function ExpertsPage() {
   const t = useTranslations('experts');
@@ -175,7 +176,10 @@ export default function ExpertsPage() {
                 </div>
                 <FavoriteButton expertId={expert.id} isFavorited={favoriteIds.has(expert.id)} />
               </div>
-              <p className="mt-3 line-clamp-2 text-sm text-neutral-600">{expert.bio}</p>
+              <div className="mt-2">
+                <OnlineBadge lastSeenAt={expert.last_seen_at} />
+              </div>
+              <p className="mt-2 line-clamp-2 text-sm text-neutral-600">{expert.bio}</p>
               <div className="mt-3 flex items-center justify-between text-sm">
                 <span className="font-semibold text-indigo-600">
                   {expert.hourly_rate} {expert.currency}

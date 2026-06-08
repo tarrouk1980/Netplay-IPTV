@@ -10,6 +10,7 @@ import {ReviewList} from '@/components/review-list';
 import {RegulatoryNotice, CredentialBadge} from '@/components/regulatory-notice';
 import {Avatar} from '@/components/avatar';
 import {FavoriteButton, useFavoriteIds} from '@/components/favorite-button';
+import {OnlineBadge} from '@/components/online-badge';
 
 function nextSlotOccurrences(slot: AvailabilitySlot, count: number): Date[] {
   const [hours, minutes] = slot.start_time.split(':').map(Number);
@@ -130,6 +131,7 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
               <FavoriteButton expertId={expert.id} isFavorited={favoriteIds.has(expert.id)} />
             </div>
             <p className="text-sm text-neutral-500">{expert.category.name}</p>
+            <OnlineBadge lastSeenAt={expert.last_seen_at} />
             <p className="text-sm text-amber-500">
               ★ {expert.rating_avg.toFixed(1)} · {expert.total_sessions} sessions
             </p>

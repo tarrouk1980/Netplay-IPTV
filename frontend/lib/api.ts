@@ -36,6 +36,7 @@ export type ExpertProfile = {
   rating_avg: number;
   total_sessions: number;
   status?: string;
+  last_seen_at?: string | null;
 };
 
 export type Category = {

@@ -49,7 +49,10 @@
     "viewProfile": "View profile",
     "bookSession": "Book a session",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "online": "Online",
+    "lastSeenHours": "Last seen {count}h ago",
+    "lastSeenDays": "Last seen {count}d ago"
   },
   "auth": {
     "name": "Full name",

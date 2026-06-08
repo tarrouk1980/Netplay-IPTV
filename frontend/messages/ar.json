@@ -49,7 +49,10 @@
     "viewProfile": "عرض الملف الشخصي",
     "bookSession": "احجز جلسة",
     "previous": "السابق",
-    "next": "التالي"
+    "next": "التالي",
+    "online": "متصل الآن",
+    "lastSeenHours": "آخر ظهور منذ {count} ساعة",
+    "lastSeenDays": "آخر ظهور منذ {count} يوم"
   },
   "auth": {
     "name": "الاسم الكامل",
