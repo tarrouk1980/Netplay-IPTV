@@ -1,15 +1,17 @@
 'use client';
 
-import {use} from 'react';
+import {use, useState} from 'react';
 import {useTranslations} from 'next-intl';
 import {useQuery, useMutation} from '@tanstack/react-query';
 import {api, type Booking} from '@/lib/api';
 import {BookingChat} from '@/components/booking-chat';
 import {ReviewForm} from '@/components/review-form';
+import {RescheduleModal} from '@/components/reschedule-modal';
 
 export default function BookingDetailPage({params}: {params: Promise<{id: string}>}) {
   const {id} = use(params);
   const t = useTranslations('booking');
+  const [showReschedule, setShowReschedule] = useState(false);
 
   const {data: booking, refetch} = useQuery({
     queryKey: ['booking', id],
@@ -87,6 +89,15 @@ export default function BookingDetailPage({params}: {params: Promise<{id: string
 
       {(booking.status === 'pending' || booking.status === 'confirmed') && (
         <button
+          onClick={() => setShowReschedule(true)}
+          className="mt-3 w-full rounded-full border border-neutral-300 px-6 py-2 text-sm font-medium text-neutral-700 hover:border-indigo-300"
+        >
+          {t('reschedule')}
+        </button>
+      )}
+
+      {(booking.status === 'pending' || booking.status === 'confirmed') && (
+        <button
           onClick={handleCancel}
           disabled={cancelMutation.isPending}
           className="mt-3 w-full rounded-full border border-red-300 px-6 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
@@ -108,6 +119,18 @@ export default function BookingDetailPage({params}: {params: Promise<{id: string
     )}
 
     {booking.status === 'completed' && <ReviewForm bookingId={id} />}
+
+    {showReschedule && booking.expert && (
+      <RescheduleModal
+        bookingId={id}
+        expertId={booking.expert.id}
+        durationMs={
+          new Date(booking.slot_datetime_end).getTime() - new Date(booking.slot_datetime_start).getTime()
+        }
+        onClose={() => setShowReschedule(false)}
+        onSuccess={() => refetch()}
+      />
+    )}
     </div>
   );
 }

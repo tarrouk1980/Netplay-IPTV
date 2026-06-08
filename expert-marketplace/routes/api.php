@@ -72,6 +72,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/bookings/{booking}', [BookingController::class, 'show']);
     Route::post('/bookings', [BookingController::class, 'store']);
     Route::post('/bookings/{booking}/cancel', [BookingController::class, 'cancel']);
+    Route::post('/bookings/{booking}/reschedule', [BookingController::class, 'reschedule']);
 
     Route::middleware('role:admin')->prefix('admin')->group(function () {
         Route::get('/expert-profiles', [ExpertProfileModerationController::class, 'index']);

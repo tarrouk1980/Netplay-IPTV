@@ -84,6 +84,12 @@
     "payNow": "Payer maintenant",
     "cancel": "Annuler la réservation",
     "cancelConfirm": "Êtes-vous sûr de vouloir annuler cette réservation ?",
+    "reschedule": "Replanifier",
+    "rescheduleTitle": "Choisissez un nouveau créneau",
+    "rescheduleConfirm": "Confirmer le nouveau créneau",
+    "rescheduleSuccess": "Votre réservation a été replanifiée.",
+    "rescheduleError": "Impossible de replanifier cette réservation. Le créneau est peut-être déjà pris.",
+    "selectNewSlot": "Aucun créneau à venir disponible pour cet expert.",
     "status": {
       "pending": "En attente de paiement",
       "confirmed": "Confirmée",

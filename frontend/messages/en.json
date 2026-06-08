@@ -84,6 +84,12 @@
     "payNow": "Pay now",
     "cancel": "Cancel booking",
     "cancelConfirm": "Are you sure you want to cancel this booking?",
+    "reschedule": "Reschedule",
+    "rescheduleTitle": "Choose a new time slot",
+    "rescheduleConfirm": "Confirm new slot",
+    "rescheduleSuccess": "Your booking has been rescheduled.",
+    "rescheduleError": "Could not reschedule this booking. The slot may already be taken.",
+    "selectNewSlot": "No upcoming slots available for this expert.",
     "status": {
       "pending": "Awaiting payment",
       "confirmed": "Confirmed",

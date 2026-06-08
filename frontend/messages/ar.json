@@ -84,6 +84,12 @@
     "payNow": "ادفع الآن",
     "cancel": "إلغاء الحجز",
     "cancelConfirm": "هل أنت متأكد أنك تريد إلغاء هذا الحجز؟",
+    "reschedule": "إعادة جدولة",
+    "rescheduleTitle": "اختر موعدًا جديدًا",
+    "rescheduleConfirm": "تأكيد الموعد الجديد",
+    "rescheduleSuccess": "تمت إعادة جدولة حجزك.",
+    "rescheduleError": "تعذّرت إعادة جدولة هذا الحجز. ربما تم حجز هذا الموعد بالفعل.",
+    "selectNewSlot": "لا توجد مواعيد قادمة متاحة لهذا الخبير.",
     "status": {
       "pending": "بانتظار الدفع",
       "confirmed": "مؤكد",

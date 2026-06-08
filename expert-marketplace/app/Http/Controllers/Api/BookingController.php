@@ -96,6 +96,45 @@ class BookingController extends Controller
         return $booking;
     }
 
+    public function reschedule(Request $request, Booking $booking)
+    {
+        $user = $request->user();
+
+        if ($booking->client_id !== $user->id && $booking->expert_id !== $user->expertProfile?->id) {
+            abort(403);
+        }
+
+        if (! in_array($booking->status, ['pending', 'confirmed'], true)) {
+            abort(409, 'Cette réservation ne peut plus être déplacée.');
+        }
+
+        $data = $request->validate([
+            'slot_datetime_start' => ['required', 'date', 'after:now'],
+            'slot_datetime_end' => ['required', 'date', 'after:slot_datetime_start'],
+        ]);
+
+        $overlaps = Booking::where('expert_id', $booking->expert_id)
+            ->where('id', '!=', $booking->id)
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->where('slot_datetime_start', '<', $data['slot_datetime_end'])
+            ->where('slot_datetime_end', '>', $data['slot_datetime_start'])
+            ->exists();
+
+        if ($overlaps) {
+            abort(409, 'Ce créneau est déjà réservé.');
+        }
+
+        $booking->update([
+            'slot_datetime_start' => $data['slot_datetime_start'],
+            'slot_datetime_end' => $data['slot_datetime_end'],
+        ]);
+
+        $other = $booking->client_id === $user->id ? $booking->expert->user : $booking->client;
+        $other->notify(new BookingStatusChanged($booking, 'rescheduled'));
+
+        return $booking;
+    }
+
     public function complete(Request $request, Booking $booking)
     {
         $user = $request->user();
