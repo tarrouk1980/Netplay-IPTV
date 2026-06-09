@@ -462,8 +462,10 @@
     "error": "خطأ.",
     "history": "سجل المدفوعات",
     "noPayouts": "لا مدفوعات بعد.",
-    "status.pending": "في الانتظار",
-    "status.paid": "مدفوع"
+    "status": {
+      "pending": "في الانتظار",
+      "paid": "مدفوع"
+    }
   },
   "support": {
     "title": "الدعم والنزاعات",
@@ -476,10 +478,12 @@
     "myTickets": "تذاكري",
     "noTickets": "لا توجد تذاكر.",
     "adminReply": "رد الدعم",
-    "status.open": "مفتوح",
-    "status.in_progress": "قيد المعالجة",
-    "status.resolved": "محلول",
-    "status.closed": "مغلق"
+    "status": {
+      "open": "مفتوح",
+      "in_progress": "قيد المعالجة",
+      "resolved": "محلول",
+      "closed": "مغلق"
+    }
   },
   "gifts": {
     "title": "جلسات الهدايا",

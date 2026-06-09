@@ -462,8 +462,10 @@
     "error": "Error.",
     "history": "Payout history",
     "noPayouts": "No payouts yet.",
-    "status.pending": "Pending",
-    "status.paid": "Paid"
+    "status": {
+      "pending": "Pending",
+      "paid": "Paid"
+    }
   },
   "support": {
     "title": "Support & Disputes",
@@ -476,10 +478,12 @@
     "myTickets": "My tickets",
     "noTickets": "No tickets.",
     "adminReply": "Support reply",
-    "status.open": "Open",
-    "status.in_progress": "In progress",
-    "status.resolved": "Resolved",
-    "status.closed": "Closed"
+    "status": {
+      "open": "Open",
+      "in_progress": "In progress",
+      "resolved": "Resolved",
+      "closed": "Closed"
+    }
   },
   "gifts": {
     "title": "Gift sessions",

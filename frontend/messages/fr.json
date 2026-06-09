@@ -462,8 +462,10 @@
     "error": "Erreur.",
     "history": "Historique des virements",
     "noPayouts": "Aucun virement pour le moment.",
-    "status.pending": "En attente",
-    "status.paid": "Payé"
+    "status": {
+      "pending": "En attente",
+      "paid": "Payé"
+    }
   },
   "support": {
     "title": "Support & Litiges",
@@ -476,10 +478,12 @@
     "myTickets": "Mes tickets",
     "noTickets": "Aucun ticket.",
     "adminReply": "Réponse du support",
-    "status.open": "Ouvert",
-    "status.in_progress": "En cours",
-    "status.resolved": "Résolu",
-    "status.closed": "Fermé"
+    "status": {
+      "open": "Ouvert",
+      "in_progress": "En cours",
+      "resolved": "Résolu",
+      "closed": "Fermé"
+    }
   },
   "gifts": {
     "title": "Sessions cadeaux",
