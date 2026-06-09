@@ -25,15 +25,11 @@ function nextSlotOccurrences(slot: AvailabilitySlot, count: number): Date[] {
     return occurrences;
   }
 
-  if (slot.day_of_week === null || !slot.is_recurring) {
-    return occurrences;
-  }
+  if (slot.day_of_week === null || !slot.is_recurring) return occurrences;
 
   const d = new Date(now);
   d.setHours(hours, minutes, 0, 0);
-  while (d.getDay() !== slot.day_of_week || d <= now) {
-    d.setDate(d.getDate() + 1);
-  }
+  while (d.getDay() !== slot.day_of_week || d <= now) d.setDate(d.getDate() + 1);
   for (let i = 0; i < count; i++) {
     occurrences.push(new Date(d));
     d.setDate(d.getDate() + 7);
@@ -74,9 +70,7 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
   const {data: slots} = useQuery({
     queryKey: ['availability-slots', id],
     queryFn: async () => {
-      const {data} = await api.get<AvailabilitySlot[]>('/availability-slots', {
-        params: {expert_id: id},
-      });
+      const {data} = await api.get<AvailabilitySlot[]>('/availability-slots', {params: {expert_id: id}});
       return data;
     },
   });
@@ -90,14 +84,12 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
     mutationFn: async () => {
       const startDate = selectedSlot ?? new Date(start);
       const endDate = new Date(startDate.getTime() + durationHours * 60 * 60 * 1000);
-
       const {data} = await api.post('/bookings', {
         expert_id: Number(id),
         slot_datetime_start: startDate.toISOString().slice(0, 19).replace('T', ' '),
         slot_datetime_end: endDate.toISOString().slice(0, 19).replace('T', ' '),
         coupon_code: coupon?.code ?? undefined,
       });
-
       return data as {id: number};
     },
     onSuccess: (booking) => {
@@ -105,9 +97,7 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
       router.push(`/dashboard/bookings/${booking.id}`);
     },
     onError: (err: unknown) => {
-      const message =
-        (err as {response?: {data?: {message?: string}}})?.response?.data?.message ??
-        'Une erreur est survenue.';
+      const message = (err as {response?: {data?: {message?: string}}})?.response?.data?.message ?? 'Une erreur est survenue.';
       setError(message);
     },
   });
@@ -115,331 +105,283 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
   function handleBook(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-
-    if (!selectedSlot && !start) {
-      return;
-    }
-
+    if (!user) { router.push('/login'); return; }
+    if (!selectedSlot && !start) return;
     bookMutation.mutate();
   }
 
   if (!expert) {
-    return null;
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="animate-pulse space-y-4 w-full max-w-4xl px-4">
+          <div className="h-48 bg-neutral-200 rounded-2xl" />
+          <div className="h-8 bg-neutral-200 rounded w-1/3" />
+        </div>
+      </div>
+    );
   }
 
+  const totalPrice = expert.hourly_rate * durationHours;
+  const discountedPrice = coupon
+    ? coupon.type === 'percent'
+      ? totalPrice * (1 - coupon.value / 100)
+      : totalPrice - coupon.value
+    : totalPrice;
+
   return (
-    <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-      <div className="md:col-span-2">
-        <div className="flex items-center gap-4">
-          <Avatar name={expert.user.name} url={expert.user.avatar_url} size="lg" />
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-semibold">{expert.user.name}</h1>
+    <div className="min-h-screen bg-slate-50">
+      {/* Hero banner */}
+      <div className="relative bg-gradient-to-r from-indigo-900 via-indigo-800 to-purple-900 overflow-hidden">
+        <div className="pointer-events-none absolute -top-20 -right-20 w-80 h-80 bg-purple-600/20 rounded-full blur-3xl" />
+        <div className="mx-auto max-w-6xl px-4 py-10 flex flex-col sm:flex-row items-start sm:items-end gap-6">
+          {/* Avatar */}
+          <div className="relative flex-shrink-0">
+            <Avatar name={expert.user.name} url={expert.user.avatar_url} size="lg" />
+            {expert.status === 'approved' && (
+              <span className="absolute bottom-1 right-1 bg-cyan-500 rounded-full p-1.5 shadow-lg">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+              </span>
+            )}
+          </div>
+
+          {/* Info */}
+          <div className="flex-1 text-white">
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="text-3xl font-extrabold">{expert.user.name}</h1>
               <FavoriteButton expertId={expert.id} isFavorited={favoriteIds.has(expert.id)} />
               <button
-                onClick={async () => {
-                  const url = window.location.href;
-                  if (navigator.share) {
-                    await navigator.share({title: expert.user.name, url});
-                  } else {
-                    await navigator.clipboard.writeText(url);
-                  }
-                }}
-                className="rounded-full border border-neutral-200 p-1.5 text-neutral-400 hover:text-indigo-600"
+                onClick={async () => { const url = window.location.href; if (navigator.share) { await navigator.share({title: expert.user.name, url}); } else { await navigator.clipboard.writeText(url); } }}
+                className="rounded-full border border-white/30 p-1.5 text-white/70 hover:text-white hover:border-white/60 transition"
                 title={t('shareProfile')}
-              >
-                ↗
-              </button>
+              >↗</button>
               {user && user.role === 'client' && (
-                <button
-                  onClick={() => setShowReportModal(true)}
-                  className="rounded-full border border-neutral-200 p-1.5 text-neutral-400 hover:text-red-500"
-                  title={t('reportExpert')}
-                >
-                  ⚑
-                </button>
+                <button onClick={() => setShowReportModal(true)} className="rounded-full border border-white/30 p-1.5 text-white/70 hover:text-red-400 transition" title={t('reportExpert')}>⚑</button>
               )}
             </div>
-            <p className="text-sm text-neutral-500">{expert.category.name}</p>
-            {expert.headline && <p className="mt-0.5 text-sm font-medium text-neutral-700">{expert.headline}</p>}
-            <OnlineBadge lastSeenAt={expert.last_seen_at} />
-            <p className="text-sm text-amber-500">
-              ★ {expert.rating_avg.toFixed(1)} · {expert.total_sessions} sessions
-              {(expert as any).view_count > 0 && (
-                <span className="ml-2 text-neutral-400">· {(expert as any).view_count} {t('views')}</span>
-              )}
-            </p>
-            {!!expert.years_experience && (
-              <p className="text-sm text-neutral-500">
-                {t('yearsExperience', {count: expert.years_experience})}
-              </p>
-            )}
+            {expert.headline && <p className="mt-1 text-indigo-200 text-lg">{expert.headline}</p>}
+            <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
+              <span className="bg-white/10 text-white px-3 py-1 rounded-full font-medium">{expert.category.name}</span>
+              <OnlineBadge lastSeenAt={expert.last_seen_at} />
+              <span className="text-amber-300">★ {expert.rating_avg.toFixed(1)} · {expert.total_sessions} sessions</span>
+              {(expert as any).view_count > 0 && <span className="text-indigo-300">· {(expert as any).view_count} {t('views')}</span>}
+            </div>
+            {!!expert.years_experience && <p className="mt-1 text-sm text-indigo-300">{t('yearsExperience', {count: expert.years_experience})}</p>}
             {!!expert.languages?.length && (
               <div className="mt-1 flex flex-wrap gap-1">
-                {expert.languages.map((lang) => (
-                  <span
-                    key={lang}
-                    className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600"
-                  >
-                    {t(`language${lang.charAt(0).toUpperCase()}${lang.slice(1)}`)}
-                  </span>
-                ))}
+                {expert.languages.map((lang) => (<span key={lang} className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-indigo-200">{t(`language${lang.charAt(0).toUpperCase()}${lang.slice(1)}`)}</span>))}
               </div>
             )}
-            <div className="mt-1">
-              <CredentialBadge
-                categorySlug={expert.category.slug}
-                credentialReference={expert.credential_reference}
-                status={expert.status ?? 'approved'}
-              />
+            <div className="mt-2">
+              <CredentialBadge categorySlug={expert.category.slug} credentialReference={expert.credential_reference} status={expert.status ?? 'approved'} />
             </div>
           </div>
+
+          {/* Stats */}
+          <div className="flex gap-5 text-white text-center">
+            <div><p className="text-2xl font-extrabold">{expert.total_sessions}</p><p className="text-xs text-indigo-300 mt-0.5">Sessions</p></div>
+            <div className="w-px bg-white/20 self-stretch" />
+            <div><p className="text-2xl font-extrabold">{expert.rating_avg.toFixed(1)}</p><p className="text-xs text-indigo-300 mt-0.5">Note</p></div>
+            <div className="w-px bg-white/20 self-stretch" />
+            <div><p className="text-2xl font-extrabold">{expert.hourly_rate}</p><p className="text-xs text-indigo-300 mt-0.5">{expert.currency}/h</p></div>
+          </div>
         </div>
+      </div>
 
-        <p className="mt-6 whitespace-pre-line text-neutral-700">{expert.bio}</p>
+      {/* Content */}
+      <div className="mx-auto max-w-6xl px-4 py-10">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+          {/* Main content */}
+          <div className="md:col-span-2 space-y-6">
+            {/* Bio */}
+            <div className="bg-white rounded-2xl shadow-md p-6">
+              <h2 className="text-xl font-bold text-indigo-950 mb-4">À propos</h2>
+              <p className="whitespace-pre-line text-neutral-700 leading-relaxed">{expert.bio}</p>
 
-        {!!expert.specializations?.length && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {expert.specializations.map((s) => (
-              <span key={s} className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs text-indigo-700">
-                {s}
-              </span>
-            ))}
-          </div>
-        )}
+              {!!expert.specializations?.length && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {expert.specializations.map((s) => (
+                    <span key={s} className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs text-indigo-700">{s}</span>
+                  ))}
+                </div>
+              )}
 
-        {(expert.website_url || expert.linkedin_url) && (
-          <div className="mt-3 flex gap-3">
-            {expert.website_url && (
-              <a href={expert.website_url} target="_blank" rel="noopener noreferrer" className="text-sm text-indigo-600 hover:underline">
-                🌐 {t('website')}
-              </a>
+              {(expert.website_url || expert.linkedin_url) && (
+                <div className="mt-4 flex gap-3">
+                  {expert.website_url && <a href={expert.website_url} target="_blank" rel="noopener noreferrer" className="text-sm text-indigo-600 hover:underline">🌐 {t('website')}</a>}
+                  {expert.linkedin_url && <a href={expert.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-sm text-indigo-600 hover:underline">🔗 LinkedIn</a>}
+                </div>
+              )}
+            </div>
+
+            <RegulatoryNotice categorySlug={expert.category.slug} />
+
+            {/* Portfolio */}
+            {!!expert.portfolio_items?.length && (
+              <div className="bg-white rounded-2xl shadow-md p-6">
+                <h2 className="text-xl font-bold text-indigo-950 mb-4">{t('portfolioTitle')}</h2>
+                <div className="space-y-3">
+                  {expert.portfolio_items.map((item) => (
+                    <div key={item.id} className="rounded-xl border border-neutral-100 bg-slate-50 p-4">
+                      <p className="font-medium text-neutral-900">{item.title}</p>
+                      {item.description && <p className="mt-1 text-sm text-neutral-600">{item.description}</p>}
+                      {item.url && (<a href={item.url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-sm text-indigo-600 hover:underline">{t('portfolioView')} →</a>)}
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
-            {expert.linkedin_url && (
-              <a href={expert.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-sm text-indigo-600 hover:underline">
-                🔗 LinkedIn
-              </a>
-            )}
+
+            {/* Reviews */}
+            <div className="bg-white rounded-2xl shadow-md p-6">
+              <h2 className="text-xl font-bold text-indigo-950 mb-4">Avis clients</h2>
+              <ReviewList expertId={expert.id} />
+            </div>
+
+            <SimilarExperts expertId={expert.id} />
           </div>
-        )}
 
-        <RegulatoryNotice categorySlug={expert.category.slug} />
+          {/* Booking widget */}
+          <aside>
+            <div className="sticky top-24 bg-white rounded-2xl shadow-xl border border-neutral-100 overflow-hidden">
+              <div className="bg-indigo-50 px-6 py-5 border-b border-indigo-100">
+                <p className="text-3xl font-extrabold text-indigo-600">
+                  {expert.hourly_rate} {expert.currency}
+                  <span className="text-base font-normal text-neutral-500 ml-1">/h</span>
+                </p>
+                <div className="mt-1 flex items-center gap-2 text-sm text-neutral-500">
+                  <span className="text-amber-400">★</span>
+                  <span>{expert.rating_avg.toFixed(1)}</span>
+                  <span>· {expert.total_sessions} sessions</span>
+                </div>
+              </div>
 
-        {!!expert.portfolio_items?.length && (
-          <section>
-            <h2 className="mb-3 font-semibold">{t('portfolioTitle')}</h2>
-            <div className="space-y-3">
-              {expert.portfolio_items.map((item) => (
-                <div key={item.id} className="rounded-xl border border-neutral-200 bg-white p-4">
-                  <p className="font-medium">{item.title}</p>
-                  {item.description && <p className="mt-1 text-sm text-neutral-600">{item.description}</p>}
-                  {item.url && (
-                    <a href={item.url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-sm text-indigo-600 hover:underline">
-                      {t('portfolioView')} →
-                    </a>
+              <form onSubmit={handleBook} className="p-6 space-y-4">
+                {/* Slot selection */}
+                <div>
+                  <label className="block text-sm font-semibold text-neutral-700 mb-2">{tb('selectSlot')}</label>
+                  {upcomingSlots.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      {upcomingSlots.map((occurrence) => (
+                        <button key={occurrence.toISOString()} type="button" onClick={() => setSelectedSlot(occurrence)}
+                          className={`rounded-xl border px-3 py-2 text-left text-xs transition-all ${selectedSlot?.getTime() === occurrence.getTime() ? 'border-indigo-600 bg-indigo-50 text-indigo-700 font-medium' : 'border-neutral-200 text-neutral-700 hover:border-indigo-300'}`}
+                        >
+                          <span className="block font-medium">{occurrence.toLocaleDateString(undefined, {weekday: 'short', day: 'numeric', month: 'short'})}</span>
+                          <span className="block text-neutral-500">{occurrence.toLocaleTimeString(undefined, {hour: '2-digit', minute: '2-digit'})}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <input type="datetime-local" required value={start} onChange={(e) => setStart(e.target.value)}
+                      className="w-full rounded-xl border border-neutral-200 px-4 py-2.5 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100" />
                   )}
                 </div>
-              ))}
-            </div>
-          </section>
-        )}
 
-        <ReviewList expertId={expert.id} />
-        <SimilarExperts expertId={expert.id} />
-      </div>
-
-      <aside className="rounded-xl border border-neutral-200 bg-white p-6">
-        <p className="text-2xl font-semibold text-indigo-600">
-          {expert.hourly_rate} {expert.currency}
-          <span className="text-sm font-normal text-neutral-500"> {t('perHour')}</span>
-        </p>
-
-        <form onSubmit={handleBook} className="mt-6 space-y-4">
-          <div>
-            <label className="mb-1 block text-xs text-neutral-500">{tb('selectSlot')}</label>
-            {upcomingSlots.length > 0 ? (
-              <div className="grid grid-cols-2 gap-2">
-                {upcomingSlots.map((occurrence) => (
-                  <button
-                    key={occurrence.toISOString()}
-                    type="button"
-                    onClick={() => setSelectedSlot(occurrence)}
-                    className={`rounded border px-3 py-2 text-left text-xs ${
-                      selectedSlot?.getTime() === occurrence.getTime()
-                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                        : 'border-neutral-300 text-neutral-700 hover:border-indigo-300'
-                    }`}
+                {/* Duration */}
+                <div>
+                  <label className="block text-sm font-semibold text-neutral-700 mb-2">{tb('duration')}</label>
+                  <select value={durationHours} onChange={(e) => setDurationHours(Number(e.target.value))}
+                    className="w-full rounded-xl border border-neutral-200 px-4 py-2.5 text-sm focus:border-indigo-400 focus:outline-none"
                   >
-                    <span className="block font-medium">
-                      {occurrence.toLocaleDateString(undefined, {weekday: 'short', day: 'numeric', month: 'short'})}
-                    </span>
-                    <span className="block text-neutral-500">
-                      {occurrence.toLocaleTimeString(undefined, {hour: '2-digit', minute: '2-digit'})}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <input
-                type="datetime-local"
-                required
-                value={start}
-                onChange={(e) => setStart(e.target.value)}
-                className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
-              />
-            )}
-          </div>
+                    <option value={0.5}>30 min — {(expert.hourly_rate * 0.5).toFixed(0)} {expert.currency}</option>
+                    <option value={1}>1h — {expert.hourly_rate} {expert.currency}</option>
+                    <option value={1.5}>1h30 — {(expert.hourly_rate * 1.5).toFixed(0)} {expert.currency}</option>
+                    <option value={2}>2h — {(expert.hourly_rate * 2).toFixed(0)} {expert.currency}</option>
+                  </select>
+                </div>
 
-          <div>
-            <label className="mb-1 block text-xs text-neutral-500">{tb('duration')}</label>
-            <select
-              value={durationHours}
-              onChange={(e) => setDurationHours(Number(e.target.value))}
-              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
-            >
-              <option value={0.5}>30 min — {(expert.hourly_rate * 0.5).toFixed(0)} {expert.currency}</option>
-              <option value={1}>1h — {expert.hourly_rate} {expert.currency}</option>
-              <option value={1.5}>1h30 — {(expert.hourly_rate * 1.5).toFixed(0)} {expert.currency}</option>
-              <option value={2}>2h — {(expert.hourly_rate * 2).toFixed(0)} {expert.currency}</option>
-            </select>
-          </div>
+                {/* Coupon */}
+                <div>
+                  <label className="block text-sm font-semibold text-neutral-700 mb-2">{t('couponCode')}</label>
+                  <div className="flex gap-2">
+                    <input type="text" value={couponInput} onChange={(e) => setCouponInput(e.target.value.toUpperCase())} placeholder={t('couponPlaceholder')}
+                      className="flex-1 rounded-xl border border-neutral-200 px-3 py-2 text-sm uppercase focus:border-indigo-400 focus:outline-none" />
+                    <button type="button"
+                      onClick={async () => { setCouponError(null); try { const {data} = await api.post('/coupons/validate', {code: couponInput}); setCoupon(data); } catch { setCoupon(null); setCouponError(t('couponInvalid')); } }}
+                      className="rounded-xl border border-neutral-200 px-3 py-2 text-sm hover:border-indigo-400 transition"
+                    >{t('couponApply')}</button>
+                  </div>
+                  {coupon && <p className="mt-1 text-xs text-emerald-600">{t('couponApplied')}: -{coupon.type === 'percent' ? `${coupon.value}%` : `${coupon.value} ${expert.currency}`}</p>}
+                  {couponError && <p className="mt-1 text-xs text-red-600">{couponError}</p>}
+                </div>
 
-          <div>
-            <label className="mb-1 block text-xs text-neutral-500">{t('couponCode')}</label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={couponInput}
-                onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-                placeholder={t('couponPlaceholder')}
-                className="flex-1 rounded border border-neutral-300 px-3 py-2 text-sm uppercase"
-              />
-              <button
-                type="button"
-                onClick={async () => {
-                  setCouponError(null);
-                  try {
-                    const {data} = await api.post('/coupons/validate', {code: couponInput});
-                    setCoupon(data);
-                  } catch {
-                    setCoupon(null);
-                    setCouponError(t('couponInvalid'));
-                  }
-                }}
-                className="rounded border border-neutral-300 px-3 py-2 text-sm hover:border-indigo-300"
-              >
-                {t('couponApply')}
-              </button>
+                {/* Price summary */}
+                <div className="bg-slate-50 rounded-xl p-4 space-y-2 text-sm">
+                  <div className="flex justify-between text-neutral-600">
+                    <span>{durationHours}h × {expert.hourly_rate} {expert.currency}</span>
+                    <span>{totalPrice.toFixed(0)} {expert.currency}</span>
+                  </div>
+                  {coupon && (
+                    <div className="flex justify-between text-emerald-600">
+                      <span>Réduction</span>
+                      <span>-{(totalPrice - discountedPrice).toFixed(0)} {expert.currency}</span>
+                    </div>
+                  )}
+                  <div className="border-t pt-2 flex justify-between font-bold text-neutral-900">
+                    <span>Total</span>
+                    <span className="text-indigo-600">{discountedPrice.toFixed(0)} {expert.currency}</span>
+                  </div>
+                </div>
+
+                {error && <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-600">{error}</div>}
+
+                <button type="submit" disabled={bookMutation.isPending}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-full px-6 py-3.5 font-bold shadow-md hover:shadow-lg transition-all disabled:opacity-50"
+                >
+                  {bookMutation.isPending ? '...' : t('bookSession')}
+                </button>
+              </form>
+
+              {user && (
+                <div className="px-6 pb-6 space-y-2">
+                  <Link href={`/dashboard/messages?partnerId=${expert.user.id}`}
+                    className="flex w-full items-center justify-center gap-2 rounded-full border border-neutral-200 px-6 py-3 text-sm font-medium text-neutral-700 hover:border-indigo-300 hover:text-indigo-600 transition"
+                  >💬 {t('contactExpert')}</Link>
+                  {!waitlisted ? (
+                    <button type="button" onClick={async () => { await api.post(`/experts/${expert.id}/waitlist`); setWaitlisted(true); }}
+                      className="w-full text-center text-xs text-neutral-400 hover:text-indigo-600 hover:underline py-1"
+                    >{t('joinWaitlist')}</button>
+                  ) : (
+                    <p className="text-center text-xs text-emerald-600 py-1">{t('waitlistJoined')}</p>
+                  )}
+                </div>
+              )}
             </div>
-            {coupon && (
-              <p className="mt-1 text-xs text-green-600">
-                {t('couponApplied')}: -{coupon.type === 'percent' ? `${coupon.value}%` : `${coupon.value} ${expert.currency}`}
-              </p>
-            )}
-            {couponError && <p className="mt-1 text-xs text-red-600">{couponError}</p>}
-          </div>
-
-          {error && <p className="text-sm text-red-600">{error}</p>}
-
-          <button
-            type="submit"
-            disabled={bookMutation.isPending}
-            className="w-full rounded-full bg-indigo-600 px-6 py-3 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {t('bookSession')}
-          </button>
-        </form>
-
-        {user && (
-          <Link
-            href={`/dashboard/messages?partnerId=${expert.user.id}`}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-full border border-neutral-300 px-6 py-3 text-sm font-medium text-neutral-700 hover:border-indigo-300 hover:text-indigo-600"
-          >
-            💬 {t('contactExpert')}
-          </Link>
-        )}
-
-        {user && !waitlisted && (
-          <button
-            type="button"
-            onClick={async () => {
-              await api.post(`/experts/${expert.id}/waitlist`);
-              setWaitlisted(true);
-            }}
-            className="mt-2 w-full text-center text-xs text-neutral-400 hover:text-indigo-600 hover:underline"
-          >
-            {t('joinWaitlist')}
-          </button>
-        )}
-        {waitlisted && (
-          <p className="mt-2 text-center text-xs text-green-600">{t('waitlistJoined')}</p>
-        )}
-      </aside>
-    {showReportModal && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-        <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
-          <h2 className="font-semibold">{t('reportExpert')}</h2>
-          {reportSuccess ? (
-            <p className="mt-3 text-sm text-green-600">{t('reportSent')}</p>
-          ) : (
-            <form
-              className="mt-4 space-y-3"
-              onSubmit={async (e) => {
-                e.preventDefault();
-                try {
-                  await api.post(`/experts/${expert.id}/report`, {reason: reportReason, details: reportDetails});
-                  setReportSuccess(true);
-                } catch {/* ignore */}
-              }}
-            >
-              <select
-                required
-                value={reportReason}
-                onChange={(e) => setReportReason(e.target.value)}
-                className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
-              >
-                <option value="">{t('reportReasonSelect')}</option>
-                {(t.raw('reportReasons') as string[]).map((r) => (
-                  <option key={r} value={r}>{r}</option>
-                ))}
-              </select>
-              <textarea
-                value={reportDetails}
-                onChange={(e) => setReportDetails(e.target.value)}
-                placeholder={t('reportDetails')}
-                rows={3}
-                className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
-              />
-              <div className="flex gap-2">
-                <button type="submit" className="flex-1 rounded-full bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700">
-                  {t('reportSubmit')}
-                </button>
-                <button type="button" onClick={() => setShowReportModal(false)} className="flex-1 rounded-full border border-neutral-300 py-2 text-sm hover:bg-neutral-50">
-                  {t('reportCancel')}
-                </button>
-              </div>
-            </form>
-          )}
-          {reportSuccess && (
-            <button onClick={() => setShowReportModal(false)} className="mt-3 w-full rounded-full border border-neutral-300 py-2 text-sm hover:bg-neutral-50">
-              Fermer
-            </button>
-          )}
+          </aside>
         </div>
       </div>
-    )}
+
+      {/* Report modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+            <h2 className="font-semibold text-indigo-950">{t('reportExpert')}</h2>
+            {reportSuccess ? (
+              <>
+                <p className="mt-3 text-sm text-emerald-600">{t('reportSent')}</p>
+                <button onClick={() => setShowReportModal(false)} className="mt-4 w-full rounded-full border border-neutral-200 py-2 text-sm hover:bg-neutral-50">Fermer</button>
+              </>
+            ) : (
+              <form className="mt-4 space-y-3" onSubmit={async (e) => { e.preventDefault(); try { await api.post(`/experts/${expert.id}/report`, {reason: reportReason, details: reportDetails}); setReportSuccess(true); } catch {/* ignore */} }}>
+                <select required value={reportReason} onChange={(e) => setReportReason(e.target.value)} className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none">
+                  <option value="">{t('reportReasonSelect')}</option>
+                  {(t.raw('reportReasons') as string[]).map((r) => (<option key={r} value={r}>{r}</option>))}
+                </select>
+                <textarea value={reportDetails} onChange={(e) => setReportDetails(e.target.value)} placeholder={t('reportDetails')} rows={3} className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none" />
+                <div className="flex gap-2">
+                  <button type="submit" className="flex-1 rounded-full bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-700">{t('reportSubmit')}</button>
+                  <button type="button" onClick={() => setShowReportModal(false)} className="flex-1 rounded-full border border-neutral-200 py-2.5 text-sm hover:bg-neutral-50">{t('reportCancel')}</button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 function SimilarExperts({expertId}: {expertId: number}) {
   const t = useTranslations('experts');
-
   const {data} = useQuery({
     queryKey: ['similar', expertId],
     queryFn: async () => {
@@ -451,24 +393,22 @@ function SimilarExperts({expertId}: {expertId: number}) {
   if (!data || data.length === 0) return null;
 
   return (
-    <section className="mt-8">
-      <h2 className="mb-4 font-semibold">{t('similarExperts')}</h2>
+    <div className="bg-white rounded-2xl shadow-md p-6">
+      <h2 className="text-xl font-bold text-indigo-950 mb-4">{t('similarExperts')}</h2>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {data.map((expert) => (
-          <Link
-            key={expert.id}
-            href={`/experts/${expert.id}`}
-            className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-4 hover:border-indigo-300 hover:shadow-sm transition"
+          <Link key={expert.id} href={`/experts/${expert.id}`}
+            className="flex items-center gap-3 rounded-xl border border-neutral-100 bg-slate-50 p-4 hover:border-indigo-300 hover:shadow-sm transition"
           >
             <Avatar name={expert.user.name} url={expert.user.avatar_url} size="sm" />
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium">{expert.user.name}</p>
+              <p className="truncate text-sm font-semibold text-indigo-950">{expert.user.name}</p>
               <p className="truncate text-xs text-neutral-500">{expert.category.name}</p>
-              <p className="text-xs text-indigo-600">{expert.hourly_rate} {expert.currency}{t('perHour')}</p>
+              <p className="text-xs text-indigo-600 font-medium">{expert.hourly_rate} {expert.currency}/h</p>
             </div>
           </Link>
         ))}
       </div>
-    </section>
+    </div>
   );
 }

@@ -25,7 +25,7 @@ export function Header() {
     user?.role === 'admin' ? '/dashboard/admin' : user?.role === 'expert' ? '/dashboard/expert' : '/dashboard';
 
   return (
-    <header className="border-b border-neutral-200 bg-white">
+    <header className="sticky top-0 z-50 backdrop-blur-md bg-white/80 border-b border-neutral-100 shadow-sm">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
         <Link href="/" onClick={() => setMobileOpen(false)}>
           <Logo />
@@ -44,8 +44,8 @@ export function Header() {
             </>
           ) : (
             <>
-              <Link href="/login" className="hover:text-indigo-600">{t('login')}</Link>
-              <Link href="/register" className="rounded-full bg-indigo-600 px-4 py-1.5 text-white hover:bg-indigo-700">{t('register')}</Link>
+              <Link href="/login" className="border border-neutral-300 rounded-full px-4 py-1.5 hover:border-indigo-400 hover:text-indigo-600 transition-all">{t('login')}</Link>
+              <Link href="/register" className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full px-5 py-1.5 font-semibold shadow-md hover:shadow-lg transition-all">{t('register')}</Link>
             </>
           )}
 

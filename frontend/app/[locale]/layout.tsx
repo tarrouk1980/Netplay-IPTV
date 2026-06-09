@@ -49,13 +49,13 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale} dir={dir}>
-      <body className="min-h-screen bg-neutral-50 text-neutral-900 antialiased">
+      <body className="min-h-screen bg-white text-neutral-900 antialiased">
         <NextIntlClientProvider>
           <Providers>
             <div className="flex min-h-screen flex-col">
               <AnnouncementBanner />
               <Header />
-              <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
+              <main className="flex-1">{children}</main>
               <Footer />
               <ScrollToTop />
             </div>
