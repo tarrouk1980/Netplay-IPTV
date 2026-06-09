@@ -268,4 +268,21 @@ class BookingController extends Controller
 
         return response()->json(['message' => 'Invitation envoyée.']);
     }
+
+    public function updateNotes(Request $request, Booking $booking)
+    {
+        $user = $request->user();
+
+        if ($booking->expert_id !== $user->expertProfile?->id) {
+            abort(403);
+        }
+
+        $data = $request->validate([
+            'expert_notes' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        $booking->update($data);
+
+        return response()->json(['message' => 'Notes enregistrées.']);
+    }
 }

@@ -112,6 +112,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/bookings/{booking}/cancel', [BookingController::class, 'cancel']);
     Route::post('/bookings/{booking}/send-invite', [BookingController::class, 'sendInvite']);
     Route::post('/bookings/{booking}/reschedule', [BookingController::class, 'reschedule']);
+    Route::patch('/bookings/{booking}/notes', [BookingController::class, 'updateNotes']);
 
     Route::middleware('role:admin')->prefix('admin')->group(function () {
         Route::get('/stats', [\App\Http\Controllers\Api\Admin\StatsController::class, 'index']);

@@ -1,6 +1,6 @@
 'use client';
 
-import {use, useState} from 'react';
+import {use, useState, useEffect} from 'react';
 import {useTranslations} from 'next-intl';
 import {useQuery, useMutation} from '@tanstack/react-query';
 import {Link} from '@/i18n/navigation';
@@ -48,6 +48,16 @@ export default function BookingDetailPage({params}: {params: Promise<{id: string
     },
   });
 
+  const [notes, setNotes] = useState('');
+  const [notesSaved, setNotesSaved] = useState(false);
+
+  const saveNotesMutation = useMutation({
+    mutationFn: async () => {
+      await api.patch(`/bookings/${id}/notes`, {expert_notes: notes});
+    },
+    onSuccess: () => setNotesSaved(true),
+  });
+
   const sendInviteMutation = useMutation({
     mutationFn: async () => {
       await api.post(`/bookings/${id}/send-invite`);
@@ -65,6 +75,12 @@ export default function BookingDetailPage({params}: {params: Promise<{id: string
       refetch();
     },
   });
+
+  useEffect(() => {
+    if (booking && (booking as any).expert_notes != null) {
+      setNotes((booking as any).expert_notes ?? '');
+    }
+  }, [booking]);
 
   if (!booking) {
     return null;
@@ -213,6 +229,29 @@ export default function BookingDetailPage({params}: {params: Promise<{id: string
         ↻
       </button>
     </div>
+
+    {user?.role === 'expert' && (
+      <div className="mt-4 rounded-xl border border-neutral-200 bg-white p-4">
+        <h3 className="mb-2 text-sm font-semibold">{t('expertNotes')}</h3>
+        <textarea
+          rows={4}
+          value={notes}
+          onChange={(e) => { setNotes(e.target.value); setNotesSaved(false); }}
+          placeholder={t('expertNotesPlaceholder')}
+          className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+        />
+        <div className="mt-2 flex items-center gap-3">
+          <button
+            onClick={() => saveNotesMutation.mutate()}
+            disabled={saveNotesMutation.isPending}
+            className="rounded-full bg-indigo-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {t('saveNotes')}
+          </button>
+          {notesSaved && <span className="text-xs text-emerald-600">{t('notesSaved')}</span>}
+        </div>
+      </div>
+    )}
 
     {(booking.status === 'confirmed' || booking.status === 'completed') && (
       <BookingChat bookingId={id} />

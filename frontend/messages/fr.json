@@ -13,7 +13,8 @@
     "legal": "Légal",
     "terms": "CGU",
     "privacy": "Politique de confidentialité",
-    "plans": "Formules"
+    "plans": "Formules",
+    "faq": "FAQ"
   },
   "nav": {
     "home": "Accueil",
@@ -169,7 +170,11 @@
     "duration": "Durée de la session",
     "sendInvite": "Envoyer l'invitation au client",
     "inviteSent": "Invitation envoyée ✓",
-    "allStatuses": "Tous les statuts"
+    "allStatuses": "Tous les statuts",
+    "expertNotes": "Notes privées",
+    "expertNotesPlaceholder": "Notes internes visibles uniquement par vous...",
+    "saveNotes": "Enregistrer",
+    "notesSaved": "Enregistré ✓"
   },
   "dashboard": {
     "myBookings": "Mes réservations",
@@ -507,5 +512,24 @@
     "perk6Body": "Mettez en avant vos spécialisations, portfolio et liens professionnels.",
     "finalCta": "Prêt à démarrer ?",
     "finalCtaBody": "Rejoignez SKOLZ aujourd'hui et commencez à recevoir vos premières réservations."
+  },
+  "faq": {
+    "title": "Questions fréquentes",
+    "q1Q": "Comment fonctionne SKOLZ ?",
+    "q1A": "SKOLZ connecte des experts qualifiés avec des clients qui ont besoin de conseils. Parcourez les profils, choisissez un expert, réservez un créneau et payez en ligne. La session se déroule via lien visio.",
+    "q2Q": "Comment devenir expert sur SKOLZ ?",
+    "q2A": "Inscrivez-vous avec le rôle \"Expert\", créez votre profil et définissez vos disponibilités. Notre équipe examine votre candidature avant de l'approuver.",
+    "q3Q": "Comment sont calculés les tarifs ?",
+    "q3A": "Chaque expert fixe son propre tarif horaire. Le prix final dépend de la durée de session choisie. Des réductions peuvent s'appliquer via codes promo ou cartes cadeaux.",
+    "q4Q": "Comment se déroule le paiement ?",
+    "q4A": "Les paiements sont traités de manière sécurisée via Stripe. Vous payez à la réservation, et l'expert reçoit son paiement après la session.",
+    "q5Q": "Puis-je annuler une réservation ?",
+    "q5A": "Oui, vous pouvez annuler une réservation depuis votre tableau de bord. Consultez notre politique de remboursement pour les conditions applicables.",
+    "q6Q": "Les experts sont-ils vérifiés ?",
+    "q6A": "Tous les profils experts sont examinés par notre équipe avant activation. Pour les domaines réglementés (droit, médecine), une référence de licence professionnelle est requise.",
+    "q7Q": "Comment laisser un avis ?",
+    "q7A": "Après une session complétée, vous pouvez laisser un avis noté sur 5 étoiles avec un commentaire depuis la page de votre réservation.",
+    "q8Q": "Comment contacter le support ?",
+    "q8A": "Rendez-vous dans votre tableau de bord > Support pour ouvrir un ticket. Notre équipe vous répond dans les 24 à 48 heures."
   }
 }
