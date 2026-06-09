@@ -161,7 +161,8 @@
     "joinMeeting": "Rejoindre la réunion",
     "meetingLinkPlaceholder": "https://meet.google.com/...",
     "meetingLinkSave": "Enregistrer",
-    "backToDashboard": "Mes réservations"
+    "backToDashboard": "Mes réservations",
+    "duration": "Durée de la session"
   },
   "dashboard": {
     "myBookings": "Mes réservations",

@@ -51,6 +51,7 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
   const queryClient = useQueryClient();
   const [start, setStart] = useState('');
   const [selectedSlot, setSelectedSlot] = useState<Date | null>(null);
+  const [durationHours, setDurationHours] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [couponInput, setCouponInput] = useState('');
   const [coupon, setCoupon] = useState<{code: string; type: string; value: number} | null>(null);
@@ -87,7 +88,7 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
   const bookMutation = useMutation({
     mutationFn: async () => {
       const startDate = selectedSlot ?? new Date(start);
-      const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+      const endDate = new Date(startDate.getTime() + durationHours * 60 * 60 * 1000);
 
       const {data} = await api.post('/bookings', {
         expert_id: Number(id),
@@ -262,6 +263,20 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
                 className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
               />
             )}
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs text-neutral-500">{tb('duration')}</label>
+            <select
+              value={durationHours}
+              onChange={(e) => setDurationHours(Number(e.target.value))}
+              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+            >
+              <option value={0.5}>30 min — {(expert.hourly_rate * 0.5).toFixed(0)} {expert.currency}</option>
+              <option value={1}>1h — {expert.hourly_rate} {expert.currency}</option>
+              <option value={1.5}>1h30 — {(expert.hourly_rate * 1.5).toFixed(0)} {expert.currency}</option>
+              <option value={2}>2h — {(expert.hourly_rate * 2).toFixed(0)} {expert.currency}</option>
+            </select>
           </div>
 
           <div>

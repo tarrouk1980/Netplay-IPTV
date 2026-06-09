@@ -161,7 +161,8 @@
     "joinMeeting": "الانضمام إلى الاجتماع",
     "meetingLinkPlaceholder": "https://meet.google.com/...",
     "meetingLinkSave": "حفظ",
-    "backToDashboard": "حجوزاتي"
+    "backToDashboard": "حجوزاتي",
+    "duration": "مدة الجلسة"
   },
   "dashboard": {
     "myBookings": "حجوزاتي",
