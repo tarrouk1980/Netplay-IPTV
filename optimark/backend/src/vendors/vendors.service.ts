@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -12,9 +12,7 @@ export class VendorsService {
         where: { items: { some: { product: { sellerId: userId } } } },
         include: { items: { include: { product: true } } },
       }),
-      this.prisma.review.findMany({
-        where: { product: { sellerId: userId } },
-      }),
+      this.prisma.review.findMany({ where: { product: { sellerId: userId } } }),
     ]);
 
     const now = new Date();
@@ -29,12 +27,17 @@ export class VendorsService {
       ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
       : 0;
 
+    const lowStockCount = products.filter(p => p.stock > 0 && p.stock <= p.stockAlert).length;
+    const outOfStockCount = products.filter(p => p.stock === 0).length;
+
     return {
       data: {
         totalProducts: products.length,
         totalOrders: orders.length,
         monthRevenue: parseFloat(monthRevenue.toFixed(2)),
         avgRating: parseFloat(avgRating.toFixed(1)),
+        lowStockCount,
+        outOfStockCount,
       },
       message: 'Dashboard récupéré',
       success: true,
@@ -59,6 +62,47 @@ export class VendorsService {
       orderBy: { createdAt: 'desc' },
     });
     return { data: orders, message: 'Commandes récupérées', success: true };
+  }
+
+  async updateOrderStatus(orderId: string, status: string, sellerId: string) {
+    const order = await this.prisma.order.findFirst({
+      where: { id: orderId, items: { some: { product: { sellerId } } } },
+    });
+    if (!order) throw new NotFoundException('Commande introuvable');
+    const updated = await this.prisma.order.update({
+      where: { id: orderId },
+      data: { status: status as any },
+    });
+    return { data: updated, message: 'Statut mis à jour', success: true };
+  }
+
+  async getStore(sellerId: string) {
+    const store = await this.prisma.store.findUnique({
+      where: { sellerId },
+      include: { seller: { select: { name: true, isVerified: true, createdAt: true } } },
+    });
+    return { data: store, success: true };
+  }
+
+  async upsertStore(sellerId: string, dto: any) {
+    const store = await this.prisma.store.upsert({
+      where: { sellerId },
+      update: { ...dto },
+      create: { sellerId, name: dto.name || 'Ma Boutique', ...dto },
+    });
+    return { data: store, message: 'Boutique mise à jour', success: true };
+  }
+
+  async getPublicStore(sellerId: string) {
+    const store = await this.prisma.store.findUnique({
+      where: { sellerId },
+      include: { seller: { select: { name: true, isVerified: true } } },
+    });
+    const products = await this.prisma.product.findMany({
+      where: { sellerId, isActive: true },
+      orderBy: [{ isBestSeller: 'desc' }, { createdAt: 'desc' }],
+    });
+    return { data: { store, products }, success: true };
   }
 
   async requestVerification(userId: string) {
