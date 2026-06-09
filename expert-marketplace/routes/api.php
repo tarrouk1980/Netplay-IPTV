@@ -86,6 +86,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/support-tickets', [\App\Http\Controllers\Api\SupportTicketController::class, 'index']);
     Route::post('/support-tickets', [\App\Http\Controllers\Api\SupportTicketController::class, 'store']);
 
+    Route::get('/gift-codes', [\App\Http\Controllers\Api\GiftCodeController::class, 'mine']);
+    Route::post('/gift-codes', [\App\Http\Controllers\Api\GiftCodeController::class, 'create']);
+    Route::post('/gift-codes/redeem', [\App\Http\Controllers\Api\GiftCodeController::class, 'redeem']);
+
     Route::get('/dm/conversations', [\App\Http\Controllers\Api\DirectMessageController::class, 'conversations']);
     Route::get('/dm/{user}', [\App\Http\Controllers\Api\DirectMessageController::class, 'thread']);
     Route::post('/dm/{user}', [\App\Http\Controllers\Api\DirectMessageController::class, 'send']);

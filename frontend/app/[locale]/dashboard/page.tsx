@@ -65,6 +65,9 @@ export default function DashboardPage() {
           <Link href="/dashboard/support" className="text-sm text-indigo-600 hover:underline">
             {t('support')}
           </Link>
+          <Link href="/dashboard/gifts" className="text-sm text-indigo-600 hover:underline">
+            {t('gifts')}
+          </Link>
         </div>
       </div>
 

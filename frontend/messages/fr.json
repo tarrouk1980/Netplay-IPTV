@@ -176,7 +176,8 @@
     "myReferrals": "Mes parrainages",
     "notifSettings": "Notifications",
     "messages": "Messages",
-    "support": "Support"
+    "support": "Support",
+    "gifts": "Cadeaux"
   },
   "expert": {
     "createProfileTitle": "Créer mon profil expert",
@@ -429,5 +430,25 @@
     "status.in_progress": "En cours",
     "status.resolved": "Résolu",
     "status.closed": "Fermé"
+  },
+  "gifts": {
+    "title": "Sessions cadeaux",
+    "back": "Tableau de bord",
+    "tab_create": "Offrir",
+    "tab_redeem": "Utiliser",
+    "tab_mine": "Mes cadeaux",
+    "amount": "Montant",
+    "recipientEmail": "Email du destinataire",
+    "recipientName": "Nom du destinataire",
+    "giftMessage": "Message (optionnel)",
+    "createGift": "Créer le code cadeau",
+    "giftCreated": "Code cadeau créé !",
+    "copy": "Copier",
+    "enterCode": "Saisir le code",
+    "redeem": "Utiliser",
+    "redeemError": "Code invalide.",
+    "noGifts": "Aucun cadeau.",
+    "redeemed": "Utilisé",
+    "notRedeemed": "Non utilisé"
   }
 }

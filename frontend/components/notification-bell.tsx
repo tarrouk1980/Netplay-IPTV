@@ -34,7 +34,8 @@ export function NotificationBell() {
     onSuccess: () => queryClient.invalidateQueries({queryKey: ['notifications']}),
   });
 
-  const unreadCount = data?.data.filter((n) => !n.read_at).length ?? 0;
+  const unreadNotifications = data?.data.filter((n) => !n.read_at).length ?? 0;
+  const unreadCount = unreadNotifications;
 
   return (
     <div className="relative">

@@ -176,7 +176,8 @@
     "myReferrals": "My referrals",
     "notifSettings": "Notifications",
     "messages": "Messages",
-    "support": "Support"
+    "support": "Support",
+    "gifts": "Gifts"
   },
   "expert": {
     "createProfileTitle": "Create my expert profile",
@@ -429,5 +430,25 @@
     "status.in_progress": "In progress",
     "status.resolved": "Resolved",
     "status.closed": "Closed"
+  },
+  "gifts": {
+    "title": "Gift sessions",
+    "back": "Dashboard",
+    "tab_create": "Gift",
+    "tab_redeem": "Redeem",
+    "tab_mine": "My gifts",
+    "amount": "Amount",
+    "recipientEmail": "Recipient email",
+    "recipientName": "Recipient name",
+    "giftMessage": "Message (optional)",
+    "createGift": "Create gift code",
+    "giftCreated": "Gift code created!",
+    "copy": "Copy",
+    "enterCode": "Enter code",
+    "redeem": "Redeem",
+    "redeemError": "Invalid code.",
+    "noGifts": "No gifts.",
+    "redeemed": "Redeemed",
+    "notRedeemed": "Not redeemed"
   }
 }

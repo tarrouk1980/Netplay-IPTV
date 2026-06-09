@@ -176,7 +176,8 @@
     "myReferrals": "إحالاتي",
     "notifSettings": "الإشعارات",
     "messages": "الرسائل",
-    "support": "الدعم"
+    "support": "الدعم",
+    "gifts": "الهدايا"
   },
   "expert": {
     "createProfileTitle": "إنشاء ملفي كخبير",
@@ -429,5 +430,25 @@
     "status.in_progress": "قيد المعالجة",
     "status.resolved": "محلول",
     "status.closed": "مغلق"
+  },
+  "gifts": {
+    "title": "جلسات الهدايا",
+    "back": "لوحة التحكم",
+    "tab_create": "إهداء",
+    "tab_redeem": "استخدام",
+    "tab_mine": "هداياي",
+    "amount": "المبلغ",
+    "recipientEmail": "بريد المستلم",
+    "recipientName": "اسم المستلم",
+    "giftMessage": "رسالة (اختياري)",
+    "createGift": "إنشاء كود هدية",
+    "giftCreated": "تم إنشاء كود الهدية!",
+    "copy": "نسخ",
+    "enterCode": "أدخل الكود",
+    "redeem": "استخدام",
+    "redeemError": "كود غير صالح.",
+    "noGifts": "لا هدايا.",
+    "redeemed": "مستخدم",
+    "notRedeemed": "غير مستخدم"
   }
 }
