@@ -187,7 +187,9 @@
     "notifSettings": "Notifications",
     "messages": "Messages",
     "support": "Support",
-    "gifts": "Cadeaux"
+    "gifts": "Cadeaux",
+    "nextSession": "Prochaine session",
+    "joinNow": "Rejoindre"
   },
   "expert": {
     "createProfileTitle": "Créer mon profil expert",

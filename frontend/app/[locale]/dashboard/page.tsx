@@ -84,6 +84,37 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {(() => {
+        const upcoming = data?.data.find(
+          (b) => b.status === 'confirmed' && new Date(b.slot_datetime_start) > new Date()
+        );
+        if (!upcoming) return null;
+        return (
+          <Link
+            href={`/dashboard/bookings/${upcoming.id}`}
+            className="mb-4 flex items-center gap-4 rounded-xl border border-indigo-200 bg-indigo-50 p-4 hover:border-indigo-400"
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-600 text-white text-lg">📅</div>
+            <div>
+              <p className="text-xs font-medium text-indigo-600">{t('nextSession')}</p>
+              <p className="font-semibold">{upcoming.expert?.user.name}</p>
+              <p className="text-sm text-indigo-700">{new Date(upcoming.slot_datetime_start).toLocaleString()}</p>
+            </div>
+            {upcoming.meeting_link && (
+              <a
+                href={upcoming.meeting_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="ml-auto rounded-full bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+              >
+                {t('joinNow')}
+              </a>
+            )}
+          </Link>
+        );
+      })()}
+
       {data && data.data.length === 0 && <p className="text-neutral-500">{t('noBookings')}</p>}
 
       <div className="space-y-3">

@@ -187,7 +187,9 @@
     "notifSettings": "الإشعارات",
     "messages": "الرسائل",
     "support": "الدعم",
-    "gifts": "الهدايا"
+    "gifts": "الهدايا",
+    "nextSession": "الجلسة القادمة",
+    "joinNow": "انضم الآن"
   },
   "expert": {
     "createProfileTitle": "إنشاء ملفي كخبير",
