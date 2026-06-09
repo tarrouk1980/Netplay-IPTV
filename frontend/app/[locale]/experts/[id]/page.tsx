@@ -162,7 +162,7 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
             <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
               <span className="bg-white/10 text-white px-3 py-1 rounded-full font-medium">{expert.category.name}</span>
               <OnlineBadge lastSeenAt={expert.last_seen_at} />
-              <span className="text-amber-300">★ {expert.rating_avg.toFixed(1)} · {expert.total_sessions} sessions</span>
+              <span className="text-amber-300">★ {Number(expert.rating_avg ?? 0).toFixed(1)} · {expert.total_sessions} sessions</span>
               {(expert as any).view_count > 0 && <span className="text-indigo-300">· {(expert as any).view_count} {t('views')}</span>}
             </div>
             {!!expert.years_experience && <p className="mt-1 text-sm text-indigo-300">{t('yearsExperience', {count: expert.years_experience})}</p>}
@@ -180,7 +180,7 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
           <div className="flex gap-5 text-white text-center">
             <div><p className="text-2xl font-extrabold">{expert.total_sessions}</p><p className="text-xs text-indigo-300 mt-0.5">Sessions</p></div>
             <div className="w-px bg-white/20 self-stretch" />
-            <div><p className="text-2xl font-extrabold">{expert.rating_avg.toFixed(1)}</p><p className="text-xs text-indigo-300 mt-0.5">Note</p></div>
+            <div><p className="text-2xl font-extrabold">{Number(expert.rating_avg ?? 0).toFixed(1)}</p><p className="text-xs text-indigo-300 mt-0.5">Note</p></div>
             <div className="w-px bg-white/20 self-stretch" />
             <div><p className="text-2xl font-extrabold">{expert.hourly_rate}</p><p className="text-xs text-indigo-300 mt-0.5">{expert.currency}/h</p></div>
           </div>

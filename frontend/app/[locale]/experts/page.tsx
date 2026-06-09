@@ -113,9 +113,6 @@ export default function ExpertsPage() {
                 </div>
               )}
             </div>
-          </div>
-        </div>
-      </div>
 
       <div className="mx-auto max-w-6xl px-4 py-8">
         <div className="flex gap-8 flex-col lg:flex-row">
@@ -268,7 +265,7 @@ export default function ExpertsPage() {
 
                     <div className="mt-3 flex items-center justify-between text-sm">
                       <span className="font-bold text-indigo-600">{expert.hourly_rate} {expert.currency}<span className="font-normal text-neutral-400 text-xs"> /h</span></span>
-                      <span className="text-amber-500 font-medium">★ {expert.rating_avg.toFixed(1)} <span className="text-xs text-neutral-400">({expert.total_sessions})</span></span>
+                      <span className="text-amber-500 font-medium">★ {Number(expert.rating_avg ?? 0).toFixed(1)} <span className="text-xs text-neutral-400">({expert.total_sessions})</span></span>
                     </div>
                   </Link>
                 ))}
