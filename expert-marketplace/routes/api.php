@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Admin\SubscriptionPlanController as AdminSubscripti
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AvailabilitySlotController;
 use App\Http\Controllers\Api\BookingController;
+use App\Http\Controllers\Api\VideoRoomController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ExpertProfileController;
 use App\Http\Controllers\Api\ExpertBlockedDateController;
@@ -118,6 +119,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/bookings/{booking}/send-invite', [BookingController::class, 'sendInvite']);
     Route::post('/bookings/{booking}/reschedule', [BookingController::class, 'reschedule']);
     Route::patch('/bookings/{booking}/notes', [BookingController::class, 'updateNotes']);
+    Route::post('/bookings/{booking}/video-room', [VideoRoomController::class, 'create']);
+    Route::get('/bookings/{booking}/video-room', [VideoRoomController::class, 'show']);
 
     Route::middleware('role:admin')->prefix('admin')->group(function () {
         Route::patch('/announcement', [\App\Http\Controllers\Api\AnnouncementController::class, 'update']);
