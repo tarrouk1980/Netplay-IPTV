@@ -19,4 +19,16 @@ class UserAdminController extends Controller
 
         return response()->json($query->paginate(20));
     }
+
+    public function ban(User $user): JsonResponse
+    {
+        $user->update(['banned_at' => now()]);
+        return response()->json(['message' => 'Utilisateur suspendu.']);
+    }
+
+    public function unban(User $user): JsonResponse
+    {
+        $user->update(['banned_at' => null]);
+        return response()->json(['message' => 'Utilisateur réactivé.']);
+    }
 }

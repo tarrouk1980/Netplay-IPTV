@@ -131,6 +131,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('/support-tickets/{supportTicket}', [\App\Http\Controllers\Api\Admin\SupportTicketAdminController::class, 'update']);
         Route::patch('/payouts/{payout}', [\App\Http\Controllers\Api\Admin\PayoutAdminController::class, 'update']);
         Route::get('/users', [\App\Http\Controllers\Api\Admin\UserAdminController::class, 'index']);
+        Route::post('/users/{user}/ban', [\App\Http\Controllers\Api\Admin\UserAdminController::class, 'ban']);
+        Route::post('/users/{user}/unban', [\App\Http\Controllers\Api\Admin\UserAdminController::class, 'unban']);
         Route::get('/reports', [\App\Http\Controllers\Api\Admin\ExpertReportAdminController::class, 'index']);
         Route::patch('/reports/{expertReport}', [\App\Http\Controllers\Api\Admin\ExpertReportAdminController::class, 'update']);
 

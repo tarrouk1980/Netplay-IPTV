@@ -50,6 +50,7 @@ export default function AdminDashboardPage() {
       <AdminBookingsPanel />
       <AdminPayoutsPanel />
       <SupportTicketsPanel />
+      <AdminUsersPanel />
       <CategoryManagement />
       <SubscriptionPlanManagement />
       <CouponManagement />
@@ -674,6 +675,92 @@ function SupportTicketsPanel() {
             </div>
           </div>
         ))}
+      </div>
+    </section>
+  );
+}
+
+function AdminUsersPanel() {
+  const t = useTranslations('admin');
+  const qc = useQueryClient();
+  const [roleFilter, setRoleFilter] = useState('');
+
+  const {data} = useQuery({
+    queryKey: ['admin-users', roleFilter],
+    queryFn: async () => {
+      const params = roleFilter ? {role: roleFilter} : {};
+      const {data} = await api.get<{data: Array<{id: number; name: string; email: string; role: string; banned_at: string | null; created_at: string}>}>('/admin/users', {params});
+      return data;
+    },
+  });
+
+  const banMutation = useMutation({
+    mutationFn: async ({id, banned}: {id: number; banned: boolean}) => {
+      await api.post(`/admin/users/${id}/${banned ? 'unban' : 'ban'}`);
+    },
+    onSuccess: () => qc.invalidateQueries({queryKey: ['admin-users']}),
+  });
+
+  return (
+    <section>
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="font-semibold">{t('users')}</h2>
+        <select
+          value={roleFilter}
+          onChange={(e) => setRoleFilter(e.target.value)}
+          className="rounded border border-neutral-300 px-2 py-1 text-xs"
+        >
+          <option value="">{t('allRoles')}</option>
+          <option value="client">{t('roleClient')}</option>
+          <option value="expert">{t('roleExpert')}</option>
+          <option value="admin">{t('roleAdmin')}</option>
+        </select>
+      </div>
+      <div className="overflow-x-auto rounded-xl border border-neutral-200">
+        <table className="w-full text-sm">
+          <thead className="bg-neutral-50 text-xs text-neutral-500">
+            <tr>
+              <th className="px-4 py-2 text-left">#</th>
+              <th className="px-4 py-2 text-left">{t('name')}</th>
+              <th className="px-4 py-2 text-left">{t('email')}</th>
+              <th className="px-4 py-2 text-left">{t('role')}</th>
+              <th className="px-4 py-2 text-left">{t('status')}</th>
+              <th className="px-4 py-2 text-left">{t('actions')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data?.data.map((u) => (
+              <tr key={u.id} className="border-t border-neutral-200">
+                <td className="px-4 py-2 text-neutral-400">#{u.id}</td>
+                <td className="px-4 py-2 font-medium">{u.name}</td>
+                <td className="px-4 py-2 text-neutral-500">{u.email}</td>
+                <td className="px-4 py-2">
+                  <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs">{u.role}</span>
+                </td>
+                <td className="px-4 py-2">
+                  {u.banned_at ? (
+                    <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-700">{t('banned')}</span>
+                  ) : (
+                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700">{t('active')}</span>
+                  )}
+                </td>
+                <td className="px-4 py-2">
+                  <button
+                    onClick={() => banMutation.mutate({id: u.id, banned: !!u.banned_at})}
+                    disabled={banMutation.isPending}
+                    className={`rounded-full px-3 py-1 text-xs font-medium disabled:opacity-50 ${
+                      u.banned_at
+                        ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                        : 'border border-red-400 text-red-600 hover:bg-red-50'
+                    }`}
+                  >
+                    {u.banned_at ? t('unban') : t('ban')}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </section>
   );

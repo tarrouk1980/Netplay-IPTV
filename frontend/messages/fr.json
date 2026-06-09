@@ -335,7 +335,19 @@
     "markPaid": "Marquer payé",
     "supportTickets": "Tickets de support",
     "replyPlaceholder": "Votre réponse...",
-    "reply": "Répondre"
+    "reply": "Répondre",
+    "users": "Utilisateurs",
+    "allRoles": "Tous les rôles",
+    "roleClient": "Client",
+    "roleExpert": "Expert",
+    "roleAdmin": "Admin",
+    "banned": "Suspendu",
+    "active": "Actif",
+    "ban": "Suspendre",
+    "unban": "Réactiver",
+    "email": "Email",
+    "role": "Rôle",
+    "actions": "Actions"
   },
   "messaging": {
     "title": "Messages",

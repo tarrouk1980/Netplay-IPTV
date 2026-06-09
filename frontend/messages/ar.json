@@ -335,7 +335,19 @@
     "markPaid": "تحديد كمدفوع",
     "supportTickets": "تذاكر الدعم",
     "replyPlaceholder": "ردك...",
-    "reply": "رد"
+    "reply": "رد",
+    "users": "المستخدمون",
+    "allRoles": "جميع الأدوار",
+    "roleClient": "عميل",
+    "roleExpert": "خبير",
+    "roleAdmin": "مسؤول",
+    "banned": "محظور",
+    "active": "نشط",
+    "ban": "حظر",
+    "unban": "إلغاء الحظر",
+    "email": "البريد الإلكتروني",
+    "role": "الدور",
+    "actions": "الإجراءات"
   },
   "messaging": {
     "title": "الرسائل",
