@@ -1491,7 +1491,8 @@ const STATIONS = [
     freq: '100.1',
     quality: 'قالون عن نافع · MP3',
     type: 'playlist',
-    baseUrl: 'https://archive.org/download/Abu-Abdullah-Munir-Al-Tounsi/',
+    baseUrl: 'https://download.quranicaudio.com/quran/qalon/',
+    fallbackBase: 'https://archive.org/download/Abu-Abdullah-Munir-Al-Tounsi/',
     fallbackBase: 'https://archive.org/download/www.elahmad.com_96/',
     urls: [
       'https://archive.org/download/Abu-Abdullah-Munir-Al-Tounsi/001.mp3',
@@ -2658,7 +2659,17 @@ function loadStream() {
     setStatus('اضغط ▶ للبدء', '');
     return;
   }
-  const s   = STATIONS[currentStation];
+  const s = STATIONS[currentStation];
+
+  // Playlist type (e.g. منير المظفر — surah by surah from audio files)
+  if (s.type === 'playlist') {
+    audio.pause();
+    setLoading(false);
+    setPlaying(true);
+    playPlaylistSurah(s, playlistSurahIndex);
+    return;
+  }
+
   const url = s.urls[urlIndex % s.urls.length];
 
   setStatus('جارٍ الاتصال بالبث…', '');
@@ -2795,25 +2806,55 @@ audio.addEventListener('stalled', () => {
 
 // Playlist support — advance to next surah when current one ends
 let playlistSurahIndex = 0;
+
+function playPlaylistSurah(s, idx) {
+  const surahNum = String(idx + 1).padStart(3, '0');
+  const urls = [
+    s.baseUrl + surahNum + '.mp3',
+    s.fallbackBase ? s.fallbackBase + surahNum + '.mp3' : null
+  ].filter(Boolean);
+
+  let attempt = 0;
+  function tryUrl() {
+    if (attempt >= urls.length) {
+      // This surah failed — auto-skip to next after 1s
+      setStatus(`السورة ${idx + 1} غير متوفرة، جارٍ التخطي…`, 'error');
+      setTimeout(() => {
+        if (STATIONS[currentStation]?.type === 'playlist') {
+          playlistSurahIndex = (idx + 1) % 114;
+          playPlaylistSurah(STATIONS[currentStation], playlistSurahIndex);
+        }
+      }, 1500);
+      return;
+    }
+    audio.src = urls[attempt];
+    audio.load();
+    setStatus(`السورة ${idx + 1} / 114 — منير المظفر`, 'success');
+    audio.play().catch(() => {
+      attempt++;
+      tryUrl();
+    });
+  }
+  tryUrl();
+}
+
 audio.addEventListener('ended', () => {
   const s = STATIONS[currentStation];
   if (!s || s.type !== 'playlist') return;
   playlistSurahIndex = (playlistSurahIndex + 1) % 114;
-  const surahNum = String(playlistSurahIndex + 1).padStart(3, '0');
-  const url1 = s.baseUrl + surahNum + '.mp3';
-  const url2 = s.fallbackBase ? s.fallbackBase + surahNum + '.mp3' : null;
-  setStatus(`جارٍ تشغيل السورة ${playlistSurahIndex + 1} / 114…`, '');
-  audio.src = url1;
-  audio.load();
-  audio.play().catch(() => {
-    if (url2) {
-      audio.src = url2;
-      audio.load();
-      audio.play().catch(() => {
-        setStatus('تعذّر تحميل السورة التالية.', 'error');
-      });
+  playPlaylistSurah(s, playlistSurahIndex);
+});
+
+audio.addEventListener('error', () => {
+  const s = STATIONS[currentStation];
+  if (!s || s.type !== 'playlist') return;
+  // Auto-skip broken surah
+  setTimeout(() => {
+    if (STATIONS[currentStation]?.type === 'playlist') {
+      playlistSurahIndex = (playlistSurahIndex + 1) % 114;
+      playPlaylistSurah(STATIONS[currentStation], playlistSurahIndex);
     }
-  });
+  }, 2000);
 });
 
 // ════════════════════════════════════════════════════════════
