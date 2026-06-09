@@ -1408,7 +1408,7 @@
 
     <div class="daily-card" id="verseOfDayCard">
       <div class="daily-card-title"><i class="fa-solid fa-star-and-crescent"></i> آية اليوم
-        <button onclick="speakText(document.getElementById('verseOfDayText').textContent)" title="استمع" style="background:none;border:none;color:var(--gold);cursor:pointer;font-size:1rem;margin-right:6px"><i class="fa-solid fa-volume-high"></i></button>
+        <button onclick="playVerseAudio()" title="استمع للآية" style="background:none;border:none;color:var(--gold);cursor:pointer;font-size:1rem;margin-right:6px"><i class="fa-solid fa-volume-high"></i></button>
       </div>
       <div class="daily-card-body" id="verseOfDayText">جارٍ التحميل…</div>
       <div class="daily-card-sub" id="verseOfDayRef"></div>
@@ -2578,6 +2578,8 @@ async function loadVerseOfDay() {
     document.getElementById('verseOfDayText').textContent = a.text;
     document.getElementById('verseOfDayRef').textContent  =
       '﴿ ' + a.surah.name + ' : الآية ' + a.numberInSurah + ' ﴾';
+    // Store audio key for play button
+    window._verseAudioKey = a.surah.number + ':' + a.numberInSurah;
   } catch(e) { document.getElementById('verseOfDayText').textContent = '﴿ وَنُنَزِّلُ مِنَ الْقُرْآنِ مَا هُوَ شِفَاءٌ وَرَحْمَةٌ ﴾'; }
 }
 loadVerseOfDay();
@@ -3101,31 +3103,58 @@ document.addEventListener('keydown', e => {
 });
 
 // ════════════════════════════════════════════════════════════
-//  TEXT-TO-SPEECH — for آية اليوم, حديث, أذكار
+//  AUDIO FOR ISLAMIC SERVICES
 // ════════════════════════════════════════════════════════════
-let _ttsUtterance = null;
-function speakText(text) {
-  if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  if (_ttsUtterance && _ttsUtterance._text === text) {
-    _ttsUtterance = null;
-    return; // toggle off
+const serviceAudio = new Audio();
+serviceAudio.crossOrigin = 'anonymous';
+let _serviceAudioPlaying = false;
+
+// Play actual Quran recitation for آية اليوم
+function playVerseAudio() {
+  const key = window._verseAudioKey;
+  if (!key) return;
+  if (_serviceAudioPlaying) {
+    serviceAudio.pause();
+    _serviceAudioPlaying = false;
+    return;
   }
-  const u = new SpeechSynthesisUtterance(text.replace(/[﴿﴾]/g, ''));
-  u.lang = 'ar-SA';
-  u.rate = 0.85;
-  u.pitch = 1;
-  // Prefer Arabic voice if available
-  const voices = window.speechSynthesis.getVoices();
-  const arVoice = voices.find(v => v.lang.startsWith('ar'));
-  if (arVoice) u.voice = arVoice;
-  u._text = text;
-  _ttsUtterance = u;
-  window.speechSynthesis.speak(u);
+  // Use Husary recitation from alquran.cloud CDN
+  serviceAudio.src = `https://cdn.alquran.cloud/media/audio/ayah/ar.husary/${key}`;
+  serviceAudio.play().catch(() => {
+    // fallback: everyayah.com
+    const [s, a] = key.split(':');
+    serviceAudio.src = `https://everyayah.com/data/Husary_128kbps/${String(s).padStart(3,'0')}${String(a).padStart(3,'0')}.mp3`;
+    serviceAudio.play().catch(()=>{});
+  });
+  _serviceAudioPlaying = true;
 }
-// Pre-load voices
-window.speechSynthesis.getVoices();
-window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+serviceAudio.addEventListener('ended', () => { _serviceAudioPlaying = false; });
+
+// Text-to-speech for أذكار & حديث using browser TTS
+function speakText(text) {
+  if (!window.speechSynthesis) { speakGoogleTTS(text); return; }
+  if (speechSynthesis.speaking) { speechSynthesis.cancel(); return; }
+  const u = new SpeechSynthesisUtterance(text.replace(/[﴿﴾]/g,'').trim());
+  u.lang = 'ar';
+  u.rate = 0.85;
+  const voices = speechSynthesis.getVoices();
+  const arVoice = voices.find(v => /^ar/i.test(v.lang));
+  if (arVoice) u.voice = arVoice;
+  u.onerror = () => speakGoogleTTS(text);
+  speechSynthesis.speak(u);
+}
+
+function speakGoogleTTS(text) {
+  const url = 'https://translate.google.com/translate_tts?ie=UTF-8&tl=ar&client=tw-ob&q='
+    + encodeURIComponent(text.replace(/[﴿﴾]/g,'').trim().slice(0,200));
+  serviceAudio.src = url;
+  serviceAudio.play().catch(()=>{});
+}
+
+if (window.speechSynthesis) {
+  speechSynthesis.getVoices();
+  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+}
 
 // Pre-select first station UI (no audio play — browser blocks autoplay)
 // User must click play button or a station card to start audio
