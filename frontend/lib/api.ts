@@ -140,3 +140,57 @@ export type Review = {
   client: {id: number; name: string; avatar_url: string | null};
   created_at: string;
 };
+
+export type Payout = {
+  id: number;
+  expert_id: number;
+  amount: number;
+  currency: string;
+  status: 'pending' | 'paid' | 'failed';
+  period_start: string;
+  period_end: string;
+  stripe_transfer_id: string | null;
+  created_at: string;
+};
+
+export type GiftCode = {
+  id: number;
+  code: string;
+  amount: number;
+  currency: string;
+  sender_id: number;
+  recipient_email: string | null;
+  redeemed_by: number | null;
+  redeemed_at: string | null;
+  expires_at: string | null;
+  created_at: string;
+};
+
+export type DirectMessage = {
+  id: number;
+  sender_id: number;
+  receiver_id: number;
+  body: string;
+  read_at: string | null;
+  created_at: string;
+  sender?: {id: number; name: string; avatar_url: string | null};
+};
+
+export type SupportTicket = {
+  id: number;
+  user_id: number;
+  subject: string;
+  body: string;
+  status: 'open' | 'closed';
+  admin_reply: string | null;
+  replied_at: string | null;
+  created_at: string;
+};
+
+export type NotificationPreference = {
+  id: number;
+  user_id: number;
+  email_booking: boolean;
+  email_messages: boolean;
+  email_promotions: boolean;
+};
