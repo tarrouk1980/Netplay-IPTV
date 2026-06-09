@@ -273,7 +273,9 @@
     "specializationsPlaceholder": "E.g.: Tax law, VAT, Litigation (comma-separated)",
     "website": "Website",
     "linkedin": "LinkedIn profile",
-    "profileUpdated": "Profile updated successfully."
+    "profileUpdated": "Profile updated successfully.",
+    "profileCompletion": "Profile completion",
+    "profileCompletionHint": "Complete your profile to attract more clients (headline, specializations, languages, links)."
   },
   "common": {
     "loading": "Loading...",
@@ -349,7 +351,11 @@
     "unban": "Unban",
     "email": "Email",
     "role": "Role",
-    "actions": "Actions"
+    "actions": "Actions",
+    "month": "Month",
+    "sessions": "Sessions",
+    "gmv": "Gross volume",
+    "commission": "Commission"
   },
   "messaging": {
     "title": "Messages",

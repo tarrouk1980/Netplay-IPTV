@@ -7,6 +7,7 @@ use App\Models\Booking;
 use App\Models\ExpertProfile;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class StatsController extends Controller
 {
@@ -22,5 +23,22 @@ class StatsController extends Controller
             'completed_bookings'    => Booking::where('status', 'completed')->count(),
             'total_revenue'         => (float) Booking::where('status', 'completed')->sum('commission_amount'),
         ]);
+    }
+
+    public function monthly(Request $request)
+    {
+        $months = Booking::where('status', 'completed')
+            ->select(
+                DB::raw("DATE_FORMAT(slot_datetime_start, '%Y-%m') as month"),
+                DB::raw('COUNT(*) as sessions'),
+                DB::raw('SUM(commission_amount) as revenue'),
+                DB::raw('SUM(price) as gmv')
+            )
+            ->groupBy('month')
+            ->orderBy('month')
+            ->limit(12)
+            ->get();
+
+        return response()->json($months);
     }
 }

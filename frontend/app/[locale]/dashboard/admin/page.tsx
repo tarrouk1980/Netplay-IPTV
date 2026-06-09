@@ -80,6 +80,14 @@ function AdminStatsPanel() {
     {label: t('statsRevenue'), value: `${data.total_revenue.toFixed(2)} €`, icon: '💶'},
   ];
 
+  const {data: monthly} = useQuery({
+    queryKey: ['admin', 'stats-monthly'],
+    queryFn: async () => {
+      const {data} = await api.get<Array<{month: string; sessions: number; revenue: number; gmv: number}>>('/admin/stats/monthly');
+      return data;
+    },
+  });
+
   return (
     <section>
       <h2 className="mb-3 font-semibold">{t('statsTitle')}</h2>
@@ -92,6 +100,31 @@ function AdminStatsPanel() {
           </div>
         ))}
       </div>
+
+      {monthly && monthly.length > 0 && (
+        <div className="mt-6 overflow-x-auto rounded-xl border border-neutral-200 bg-white">
+          <table className="w-full text-sm">
+            <thead className="bg-neutral-50 text-xs text-neutral-500">
+              <tr>
+                <th className="px-4 py-2 text-left">{t('month')}</th>
+                <th className="px-4 py-2 text-right">{t('sessions')}</th>
+                <th className="px-4 py-2 text-right">{t('gmv')}</th>
+                <th className="px-4 py-2 text-right">{t('commission')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {monthly.map((row) => (
+                <tr key={row.month} className="border-t border-neutral-200">
+                  <td className="px-4 py-2 font-medium">{row.month}</td>
+                  <td className="px-4 py-2 text-right">{row.sessions}</td>
+                  <td className="px-4 py-2 text-right">{Number(row.gmv).toFixed(2)} €</td>
+                  <td className="px-4 py-2 text-right text-indigo-600">{Number(row.revenue).toFixed(2)} €</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </section>
   );
 }

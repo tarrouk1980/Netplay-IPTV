@@ -431,8 +431,30 @@ function ExpertWorkspace() {
   const {user} = useAuth();
   const profile = user!.expert_profile!;
 
+  const completionFields = [
+    !!profile.bio,
+    !!profile.headline,
+    (profile.specializations ?? []).length > 0,
+    (profile.languages ?? []).length > 0,
+    !!profile.website_url,
+    !!profile.linkedin_url,
+    !!profile.credential_reference,
+  ];
+  const completionPct = Math.round((completionFields.filter(Boolean).length / completionFields.length) * 100);
+
   return (
     <div className="space-y-10">
+      {completionPct < 100 && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-sm font-medium text-amber-800">{t('profileCompletion')}: {completionPct}%</p>
+          </div>
+          <div className="h-2 rounded-full bg-amber-200">
+            <div className="h-2 rounded-full bg-amber-500" style={{width: `${completionPct}%`}} />
+          </div>
+          <p className="mt-2 text-xs text-amber-700">{t('profileCompletionHint')}</p>
+        </div>
+      )}
       <StatsCards />
       <div className="flex gap-3">
         <Link href="/dashboard/expert/earnings" className="inline-flex items-center gap-1 rounded-full border border-indigo-300 px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50">

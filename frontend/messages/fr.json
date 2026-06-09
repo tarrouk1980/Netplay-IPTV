@@ -273,7 +273,9 @@
     "specializationsPlaceholder": "Ex. : Droit fiscal, TVA, Contentieux (séparés par virgule)",
     "website": "Site web",
     "linkedin": "Profil LinkedIn",
-    "profileUpdated": "Profil mis à jour avec succès."
+    "profileUpdated": "Profil mis à jour avec succès.",
+    "profileCompletion": "Complétion du profil",
+    "profileCompletionHint": "Complétez votre profil pour attirer plus de clients (titre, spécialisations, langues, liens)."
   },
   "common": {
     "loading": "Chargement...",
@@ -349,7 +351,11 @@
     "unban": "Réactiver",
     "email": "Email",
     "role": "Rôle",
-    "actions": "Actions"
+    "actions": "Actions",
+    "month": "Mois",
+    "sessions": "Sessions",
+    "gmv": "Volume brut",
+    "commission": "Commission"
   },
   "messaging": {
     "title": "Messages",
