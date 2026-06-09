@@ -22,7 +22,12 @@
     "step2Title": "2. Réservez un créneau",
     "step2Body": "Choisissez une disponibilité, réglez en ligne en toute sécurité et recevez votre confirmation immédiatement.",
     "step3Title": "3. Échangez en confiance",
-    "step3Body": "Discutez via la messagerie intégrée, suivez votre session et laissez un avis pour aider la communauté."
+    "step3Body": "Discutez via la messagerie intégrée, suivez votre session et laissez un avis pour aider la communauté.",
+    "topExperts": "Nos meilleurs experts",
+    "viewAll": "Voir tous",
+    "statsExperts": "Experts vérifiés",
+    "statsSessions": "Sessions réalisées",
+    "statsRating": "Note moyenne"
   },
   "experts": {
     "title": "Experts disponibles",
