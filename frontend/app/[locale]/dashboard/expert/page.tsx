@@ -3,7 +3,7 @@
 import {useEffect, useState} from 'react';
 import {useTranslations} from 'next-intl';
 import {useQuery, useMutation, useQueryClient} from '@tanstack/react-query';
-import {useRouter} from '@/i18n/navigation';
+import {useRouter, Link} from '@/i18n/navigation';
 import {api, type Category, type AvailabilitySlot, type Booking, type Paginated, type ExpertStats} from '@/lib/api';
 import {useAuth} from '@/lib/auth-context';
 import {AvatarSettings} from '@/components/avatar-settings';
@@ -368,6 +368,11 @@ function ExpertWorkspace() {
   return (
     <div className="space-y-10">
       <StatsCards />
+      <div>
+        <Link href="/dashboard/expert/earnings" className="inline-flex items-center gap-1 rounded-full border border-indigo-300 px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50">
+          💰 {t('viewEarnings')}
+        </Link>
+      </div>
       <AvatarSettings />
       <ChangePasswordForm />
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Models\Coupon;
 use App\Models\ExpertProfile;
 use App\Notifications\BookingStatusChanged;
 use Illuminate\Http\Request;
@@ -33,6 +34,7 @@ class BookingController extends Controller
             'expert_id' => ['required', 'exists:expert_profiles,id'],
             'slot_datetime_start' => ['required', 'date', 'after:now'],
             'slot_datetime_end' => ['required', 'date', 'after:slot_datetime_start'],
+            'coupon_code' => ['sometimes', 'nullable', 'string'],
         ]);
 
         $expert = ExpertProfile::findOrFail($data['expert_id']);
@@ -54,7 +56,20 @@ class BookingController extends Controller
 
         $hours = (strtotime($data['slot_datetime_end']) - strtotime($data['slot_datetime_start'])) / 3600;
         $price = round($expert->hourly_rate * $hours, 2);
-        $commission = round($price * $expert->commission_rate / 100, 2);
+
+        $discount = 0;
+        $couponCode = null;
+        if (!empty($data['coupon_code'])) {
+            $coupon = Coupon::where('code', strtoupper($data['coupon_code']))->first();
+            if ($coupon && $coupon->isValid()) {
+                $discount = $coupon->applyTo($price);
+                $couponCode = $coupon->code;
+                $coupon->increment('used_count');
+            }
+        }
+
+        $finalPrice = max(0, $price - $discount);
+        $commission = round($finalPrice * $expert->commission_rate / 100, 2);
 
         $booking = Booking::create([
             'client_id' => $user->id,
@@ -62,9 +77,11 @@ class BookingController extends Controller
             'slot_datetime_start' => $data['slot_datetime_start'],
             'slot_datetime_end' => $data['slot_datetime_end'],
             'status' => 'pending',
-            'price' => $price,
+            'price' => $finalPrice,
             'commission_amount' => $commission,
-            'expert_payout' => $price - $commission,
+            'expert_payout' => $finalPrice - $commission,
+            'coupon_code' => $couponCode,
+            'discount_amount' => $discount,
         ]);
 
         return response()->json($booking, 201);

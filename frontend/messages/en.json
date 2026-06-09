@@ -56,7 +56,25 @@
     "portfolioTitle": "Portfolio",
     "portfolioView": "View",
     "similarExperts": "Similar experts",
-    "shareProfile": "Share profile"
+    "shareProfile": "Share profile",
+    "expertsFound": "experts found",
+    "couponCode": "Promo code",
+    "couponPlaceholder": "E.g. SKOLZ20",
+    "couponApply": "Apply",
+    "couponApplied": "Discount applied",
+    "couponInvalid": "Invalid or expired code",
+    "reportExpert": "Report this expert",
+    "reportReasonSelect": "-- Select a reason --",
+    "reportReasons": [
+      "Fake profile",
+      "Inappropriate behavior",
+      "Misleading information",
+      "Other"
+    ],
+    "reportDetails": "Additional details (optional)",
+    "reportSubmit": "Submit report",
+    "reportCancel": "Cancel",
+    "reportSent": "Report submitted. Thank you!"
   },
   "auth": {
     "name": "Full name",
@@ -122,7 +140,8 @@
     "cancelAbort": "Keep booking",
     "joinMeeting": "Join meeting",
     "meetingLinkPlaceholder": "https://meet.google.com/...",
-    "meetingLinkSave": "Save"
+    "meetingLinkSave": "Save",
+    "backToDashboard": "My bookings"
   },
   "dashboard": {
     "myBookings": "My bookings",
@@ -202,7 +221,8 @@
     "blockedDatesHint": "Block full days for vacation or unavailability.",
     "blockedReasonPlaceholder": "Reason (optional)",
     "blockedAdd": "Block",
-    "blockedEmpty": "No blocked days."
+    "blockedEmpty": "No blocked days.",
+    "viewEarnings": "View my earnings"
   },
   "common": {
     "loading": "Loading...",
@@ -249,7 +269,12 @@
     "statsConfirmedBookings": "Confirmed",
     "statsRevenue": "Platform revenue",
     "feature": "Feature",
-    "unfeature": "Unfeature"
+    "unfeature": "Unfeature",
+    "coupons": "Promo codes",
+    "couponCode": "Code",
+    "couponValue": "Value",
+    "maxUses": "Max uses",
+    "fixed": "Fixed"
   },
   "messaging": {
     "title": "Messages",
@@ -290,5 +315,15 @@
     "phonePlaceholder": "+1 555 000 0000",
     "save": "Save",
     "success": "Profile updated."
+  },
+  "earnings": {
+    "title": "My earnings",
+    "back": "Dashboard",
+    "totalEarnings": "Total earned",
+    "afterCommission": "After commission deduction",
+    "noEarnings": "No earnings yet.",
+    "loading": "Loading...",
+    "brut": "Gross",
+    "commission": "Commission"
   }
 }

@@ -56,7 +56,25 @@
     "portfolioTitle": "Portfolio",
     "portfolioView": "Voir",
     "similarExperts": "Experts similaires",
-    "shareProfile": "Partager le profil"
+    "shareProfile": "Partager le profil",
+    "expertsFound": "experts trouvés",
+    "couponCode": "Code promo",
+    "couponPlaceholder": "Ex: SKOLZ20",
+    "couponApply": "Appliquer",
+    "couponApplied": "Réduction appliquée",
+    "couponInvalid": "Code invalide ou expiré",
+    "reportExpert": "Signaler cet expert",
+    "reportReasonSelect": "-- Choisir une raison --",
+    "reportReasons": [
+      "Faux profil",
+      "Comportement inapproprié",
+      "Informations trompeuses",
+      "Autre"
+    ],
+    "reportDetails": "Détails supplémentaires (optionnel)",
+    "reportSubmit": "Envoyer le signalement",
+    "reportCancel": "Annuler",
+    "reportSent": "Signalement envoyé. Merci !"
   },
   "auth": {
     "name": "Nom complet",
@@ -122,7 +140,8 @@
     "cancelAbort": "Garder la réservation",
     "joinMeeting": "Rejoindre la réunion",
     "meetingLinkPlaceholder": "https://meet.google.com/...",
-    "meetingLinkSave": "Enregistrer"
+    "meetingLinkSave": "Enregistrer",
+    "backToDashboard": "Mes réservations"
   },
   "dashboard": {
     "myBookings": "Mes réservations",
@@ -202,7 +221,8 @@
     "blockedDatesHint": "Bloquez des journées entières pour vos congés ou indisponibilités.",
     "blockedReasonPlaceholder": "Raison (optionnel)",
     "blockedAdd": "Bloquer",
-    "blockedEmpty": "Aucun jour bloqué."
+    "blockedEmpty": "Aucun jour bloqué.",
+    "viewEarnings": "Voir mes revenus"
   },
   "common": {
     "loading": "Chargement...",
@@ -249,7 +269,12 @@
     "statsConfirmedBookings": "Confirmées",
     "statsRevenue": "Revenus plateforme",
     "feature": "Mettre en avant",
-    "unfeature": "Retirer"
+    "unfeature": "Retirer",
+    "coupons": "Codes promo",
+    "couponCode": "Code",
+    "couponValue": "Valeur",
+    "maxUses": "Max utilisations",
+    "fixed": "Fixe"
   },
   "messaging": {
     "title": "Messages",
@@ -290,5 +315,15 @@
     "phonePlaceholder": "+216 XX XXX XXX",
     "save": "Enregistrer",
     "success": "Profil mis à jour."
+  },
+  "earnings": {
+    "title": "Mes revenus",
+    "back": "Tableau de bord",
+    "totalEarnings": "Total encaissé",
+    "afterCommission": "Après déduction de la commission",
+    "noEarnings": "Aucun revenu pour le moment.",
+    "loading": "Chargement...",
+    "brut": "Brut",
+    "commission": "Commission"
   }
 }

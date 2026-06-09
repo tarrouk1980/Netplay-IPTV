@@ -155,4 +155,25 @@ class ExpertProfileController extends Controller
             'total_reviews'     => $totalReviews,
         ]);
     }
+
+    public function earnings(Request $request)
+    {
+        $profile = $request->user()->expertProfile;
+
+        if (! $profile) {
+            return response()->json(['message' => 'No expert profile found.'], 404);
+        }
+
+        $bookings = $profile->bookings()
+            ->where('status', 'completed')
+            ->with('client:id,name,avatar_url')
+            ->orderByDesc('slot_datetime_start')
+            ->get(['id', 'client_id', 'slot_datetime_start', 'price', 'commission_amount', 'expert_payout', 'coupon_code', 'discount_amount']);
+
+        return response()->json([
+            'currency' => $profile->currency ?? 'EUR',
+            'total' => (float) $bookings->sum('expert_payout'),
+            'bookings' => $bookings,
+        ]);
+    }
 }

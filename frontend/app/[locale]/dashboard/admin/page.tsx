@@ -48,6 +48,7 @@ export default function AdminDashboardPage() {
       <ExpertProfileModeration />
       <CategoryManagement />
       <SubscriptionPlanManagement />
+      <CouponManagement />
     </div>
   );
 }
@@ -374,6 +375,69 @@ function SubscriptionPlanManagement() {
             >
               {t('delete')}
             </button>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function CouponManagement() {
+  const t = useTranslations('admin');
+  const qc = useQueryClient();
+  const [form, setForm] = useState({code: '', type: 'percent', value: '', max_uses: '', expires_at: ''});
+
+  const {data: coupons} = useQuery({
+    queryKey: ['admin-coupons'],
+    queryFn: async () => {
+      const {data} = await api.get<Array<{id: number; code: string; type: string; value: number; max_uses: number | null; used_count: number; expires_at: string | null; active: boolean}>>('/admin/coupons');
+      return data;
+    },
+  });
+
+  const createCoupon = useMutation({
+    mutationFn: async () => {
+      const payload: Record<string, unknown> = {code: form.code, type: form.type, value: Number(form.value)};
+      if (form.max_uses) payload.max_uses = Number(form.max_uses);
+      if (form.expires_at) payload.expires_at = form.expires_at;
+      const {data} = await api.post('/admin/coupons', payload);
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({queryKey: ['admin-coupons']});
+      setForm({code: '', type: 'percent', value: '', max_uses: '', expires_at: ''});
+    },
+  });
+
+  const deleteCoupon = useMutation({
+    mutationFn: async (id: number) => api.delete(`/admin/coupons/${id}`),
+    onSuccess: () => qc.invalidateQueries({queryKey: ['admin-coupons']}),
+  });
+
+  return (
+    <section>
+      <h2 className="mb-4 font-semibold">{t('coupons')}</h2>
+      <form
+        className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-5"
+        onSubmit={(e) => { e.preventDefault(); createCoupon.mutate(); }}
+      >
+        <input required placeholder={t('couponCode')} value={form.code} onChange={(e) => setForm(f => ({...f, code: e.target.value.toUpperCase()}))} className="rounded border border-neutral-300 px-3 py-2 text-sm uppercase" />
+        <select value={form.type} onChange={(e) => setForm(f => ({...f, type: e.target.value}))} className="rounded border border-neutral-300 px-3 py-2 text-sm">
+          <option value="percent">%</option>
+          <option value="fixed">{t('fixed')}</option>
+        </select>
+        <input required type="number" min="0" placeholder={t('couponValue')} value={form.value} onChange={(e) => setForm(f => ({...f, value: e.target.value}))} className="rounded border border-neutral-300 px-3 py-2 text-sm" />
+        <input type="number" min="1" placeholder={t('maxUses')} value={form.max_uses} onChange={(e) => setForm(f => ({...f, max_uses: e.target.value}))} className="rounded border border-neutral-300 px-3 py-2 text-sm" />
+        <button type="submit" disabled={createCoupon.isPending} className="rounded bg-indigo-600 px-3 py-2 text-sm text-white hover:bg-indigo-700 disabled:opacity-50">
+          {t('create')}
+        </button>
+      </form>
+      <div className="space-y-2">
+        {coupons?.map((c) => (
+          <div key={c.id} className="flex items-center justify-between rounded-lg border border-neutral-200 bg-white px-4 py-2 text-sm">
+            <span className="font-mono font-semibold">{c.code}</span>
+            <span className="text-neutral-500">{c.type === 'percent' ? `${c.value}%` : `${c.value} (fixed)`} · {c.used_count}/{c.max_uses ?? '∞'}</span>
+            <button onClick={() => deleteCoupon.mutate(c.id)} className="text-xs text-red-500 hover:underline">{t('delete')}</button>
           </div>
         ))}
       </div>

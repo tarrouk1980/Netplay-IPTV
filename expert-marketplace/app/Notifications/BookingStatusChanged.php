@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\Booking;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class BookingStatusChanged extends Notification
@@ -14,7 +15,26 @@ class BookingStatusChanged extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'mail'];
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        $message = $this->toDatabase($notifiable)['message'];
+        $start = $this->booking->slot_datetime_start->format('d/m/Y H:i');
+
+        return (new MailMessage)
+            ->subject('[SKOLZ] ' . match ($this->status) {
+                'confirmed' => 'Réservation confirmée',
+                'cancelled' => 'Réservation annulée',
+                'completed' => 'Session terminée',
+                default => 'Mise à jour de réservation',
+            })
+            ->greeting('Bonjour ' . $notifiable->name . ',')
+            ->line($message)
+            ->line('Créneau : ' . $start)
+            ->action('Voir ma réservation', url('/dashboard/bookings/' . $this->booking->id))
+            ->line('Merci d\'utiliser SKOLZ.');
     }
 
     public function toDatabase(object $notifiable): array

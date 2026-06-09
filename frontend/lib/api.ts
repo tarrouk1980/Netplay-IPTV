@@ -75,6 +75,8 @@ export type Booking = {
   price: number;
   commission_amount: number;
   expert_payout: number;
+  coupon_code?: string | null;
+  discount_amount?: number;
   expert?: ExpertProfile;
 };
 

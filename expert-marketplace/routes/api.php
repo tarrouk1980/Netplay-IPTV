@@ -17,6 +17,8 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\StripeConnectController;
 use App\Http\Controllers\Api\SubscriptionController;
+use App\Http\Controllers\Api\CouponController;
+use App\Http\Controllers\Api\ExpertReportController;
 use App\Http\Controllers\Api\SubscriptionPlanController;
 use App\Http\Controllers\Api\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
@@ -37,6 +39,7 @@ Route::get('/reviews', [ReviewController::class, 'index']);
 Route::get('/subscription-plans', [SubscriptionPlanController::class, 'index']);
 
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle']);
+Route::post('/coupons/validate', [CouponController::class, 'validate']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -57,6 +60,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/stripe/connect/onboard', [StripeConnectController::class, 'onboard']);
         Route::get('/stripe/connect/status', [StripeConnectController::class, 'status']);
         Route::get('/expert/stats', [ExpertProfileController::class, 'stats']);
+        Route::get('/expert/earnings', [ExpertProfileController::class, 'earnings']);
         Route::post('/expert/portfolio', [ExpertPortfolioItemController::class, 'store']);
         Route::delete('/expert/portfolio/{expertPortfolioItem}', [ExpertPortfolioItemController::class, 'destroy']);
         Route::post('/expert/blocked-dates', [ExpertBlockedDateController::class, 'store']);
@@ -71,6 +75,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/bookings/{booking}/messages', [MessageController::class, 'index']);
     Route::post('/bookings/{booking}/messages', [MessageController::class, 'store']);
+
+    Route::post('/experts/{expertProfile}/report', [ExpertReportController::class, 'store']);
 
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
@@ -96,6 +102,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/categories', [AdminCategoryController::class, 'store']);
         Route::patch('/categories/{category}', [AdminCategoryController::class, 'update']);
         Route::delete('/categories/{category}', [AdminCategoryController::class, 'destroy']);
+
+        Route::get('/coupons', [\App\Http\Controllers\Api\Admin\CouponAdminController::class, 'index']);
+        Route::post('/coupons', [\App\Http\Controllers\Api\Admin\CouponAdminController::class, 'store']);
+        Route::delete('/coupons/{coupon}', [\App\Http\Controllers\Api\Admin\CouponAdminController::class, 'destroy']);
 
         Route::post('/subscription-plans', [AdminSubscriptionPlanController::class, 'store']);
         Route::patch('/subscription-plans/{subscriptionPlan}', [AdminSubscriptionPlanController::class, 'update']);

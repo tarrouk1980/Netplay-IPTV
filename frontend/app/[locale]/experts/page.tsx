@@ -153,7 +153,14 @@ export default function ExpertsPage() {
       </aside>
 
       <section className="lg:col-span-3">
-        <h1 className="mb-6 text-2xl font-semibold">{t('title')}</h1>
+        <div className="mb-6 flex items-baseline gap-3">
+          <h1 className="text-2xl font-semibold">{t('title')}</h1>
+          {data && (
+            <span className="text-sm text-neutral-500">
+              {data.data.length} {t('expertsFound')}
+            </span>
+          )}
+        </div>
 
         {isLoading && <p className="text-neutral-500">{t('noResults')}</p>}
 

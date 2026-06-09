@@ -66,4 +66,9 @@ class ExpertProfile extends Model
     {
         return $this->hasMany(ExpertBlockedDate::class);
     }
+
+    public function reports(): HasMany
+    {
+        return $this->hasMany(ExpertReport::class);
+    }
 }

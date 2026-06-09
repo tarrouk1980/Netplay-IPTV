@@ -51,6 +51,13 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
   const [start, setStart] = useState('');
   const [selectedSlot, setSelectedSlot] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [couponInput, setCouponInput] = useState('');
+  const [coupon, setCoupon] = useState<{code: string; type: string; value: number} | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportDetails, setReportDetails] = useState('');
+  const [reportSuccess, setReportSuccess] = useState(false);
 
   const {data: expert} = useQuery({
     queryKey: ['expert', id],
@@ -84,6 +91,7 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
         expert_id: Number(id),
         slot_datetime_start: startDate.toISOString().slice(0, 19).replace('T', ' '),
         slot_datetime_end: endDate.toISOString().slice(0, 19).replace('T', ' '),
+        coupon_code: coupon?.code ?? undefined,
       });
 
       return data as {id: number};
@@ -143,6 +151,15 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
               >
                 ↗
               </button>
+              {user && user.role === 'client' && (
+                <button
+                  onClick={() => setShowReportModal(true)}
+                  className="rounded-full border border-neutral-200 p-1.5 text-neutral-400 hover:text-red-500"
+                  title={t('reportExpert')}
+                >
+                  ⚑
+                </button>
+              )}
             </div>
             <p className="text-sm text-neutral-500">{expert.category.name}</p>
             <OnlineBadge lastSeenAt={expert.last_seen_at} />
@@ -245,6 +262,41 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
             )}
           </div>
 
+          <div>
+            <label className="mb-1 block text-xs text-neutral-500">{t('couponCode')}</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={couponInput}
+                onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                placeholder={t('couponPlaceholder')}
+                className="flex-1 rounded border border-neutral-300 px-3 py-2 text-sm uppercase"
+              />
+              <button
+                type="button"
+                onClick={async () => {
+                  setCouponError(null);
+                  try {
+                    const {data} = await api.post('/coupons/validate', {code: couponInput});
+                    setCoupon(data);
+                  } catch {
+                    setCoupon(null);
+                    setCouponError(t('couponInvalid'));
+                  }
+                }}
+                className="rounded border border-neutral-300 px-3 py-2 text-sm hover:border-indigo-300"
+              >
+                {t('couponApply')}
+              </button>
+            </div>
+            {coupon && (
+              <p className="mt-1 text-xs text-green-600">
+                {t('couponApplied')}: -{coupon.type === 'percent' ? `${coupon.value}%` : `${coupon.value} ${expert.currency}`}
+              </p>
+            )}
+            {couponError && <p className="mt-1 text-xs text-red-600">{couponError}</p>}
+          </div>
+
           {error && <p className="text-sm text-red-600">{error}</p>}
 
           <button
@@ -256,6 +308,59 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
           </button>
         </form>
       </aside>
+    {showReportModal && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+          <h2 className="font-semibold">{t('reportExpert')}</h2>
+          {reportSuccess ? (
+            <p className="mt-3 text-sm text-green-600">{t('reportSent')}</p>
+          ) : (
+            <form
+              className="mt-4 space-y-3"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                try {
+                  await api.post(`/experts/${expert.id}/report`, {reason: reportReason, details: reportDetails});
+                  setReportSuccess(true);
+                } catch {/* ignore */}
+              }}
+            >
+              <select
+                required
+                value={reportReason}
+                onChange={(e) => setReportReason(e.target.value)}
+                className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+              >
+                <option value="">{t('reportReasonSelect')}</option>
+                {(t.raw('reportReasons') as string[]).map((r) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
+              <textarea
+                value={reportDetails}
+                onChange={(e) => setReportDetails(e.target.value)}
+                placeholder={t('reportDetails')}
+                rows={3}
+                className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+              />
+              <div className="flex gap-2">
+                <button type="submit" className="flex-1 rounded-full bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700">
+                  {t('reportSubmit')}
+                </button>
+                <button type="button" onClick={() => setShowReportModal(false)} className="flex-1 rounded-full border border-neutral-300 py-2 text-sm hover:bg-neutral-50">
+                  {t('reportCancel')}
+                </button>
+              </div>
+            </form>
+          )}
+          {reportSuccess && (
+            <button onClick={() => setShowReportModal(false)} className="mt-3 w-full rounded-full border border-neutral-300 py-2 text-sm hover:bg-neutral-50">
+              Fermer
+            </button>
+          )}
+        </div>
+      </div>
+    )}
     </div>
   );
 }

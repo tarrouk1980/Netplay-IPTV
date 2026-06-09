@@ -3,6 +3,7 @@
 import {use, useState} from 'react';
 import {useTranslations} from 'next-intl';
 import {useQuery, useMutation} from '@tanstack/react-query';
+import {Link} from '@/i18n/navigation';
 import {api, type Booking} from '@/lib/api';
 import {useAuth} from '@/lib/auth-context';
 import {BookingChat} from '@/components/booking-chat';
@@ -63,8 +64,15 @@ export default function BookingDetailPage({params}: {params: Promise<{id: string
     return null;
   }
 
+  const durationHours =
+    (new Date(booking.slot_datetime_end).getTime() - new Date(booking.slot_datetime_start).getTime()) /
+    3600000;
+
   return (
     <div className="mx-auto max-w-lg">
+    <Link href="/dashboard" className="mb-4 inline-flex items-center gap-1 text-sm text-neutral-500 hover:text-indigo-600">
+      ← {t('backToDashboard')}
+    </Link>
     <div className="rounded-xl border border-neutral-200 bg-white p-6">
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-xl font-semibold">{booking.expert?.user.name}</h1>
@@ -81,7 +89,14 @@ export default function BookingDetailPage({params}: {params: Promise<{id: string
       <dl className="mt-6 space-y-2 text-sm">
         <div className="flex justify-between">
           <dt className="text-neutral-500">{t('price')}</dt>
-          <dd className="font-medium">{booking.price}</dd>
+          <dd className="font-medium">
+            {booking.price}
+            {booking.expert && durationHours > 0 && (
+              <span className="ml-1 text-xs font-normal text-neutral-400">
+                ({durationHours}h × {booking.expert.hourly_rate} {booking.expert.currency})
+              </span>
+            )}
+          </dd>
         </div>
         <div className="flex justify-between">
           <dt className="text-neutral-500">{t('commission')}</dt>

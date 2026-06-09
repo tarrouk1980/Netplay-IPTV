@@ -56,7 +56,25 @@
     "portfolioTitle": "المشاريع والإنجازات",
     "portfolioView": "عرض",
     "similarExperts": "خبراء مشابهون",
-    "shareProfile": "مشاركة الملف"
+    "shareProfile": "مشاركة الملف",
+    "expertsFound": "خبير موجود",
+    "couponCode": "كود الخصم",
+    "couponPlaceholder": "مثال: SKOLZ20",
+    "couponApply": "تطبيق",
+    "couponApplied": "تم تطبيق الخصم",
+    "couponInvalid": "كود غير صالح أو منتهي",
+    "reportExpert": "الإبلاغ عن هذا الخبير",
+    "reportReasonSelect": "-- اختر سببًا --",
+    "reportReasons": [
+      "ملف مزيف",
+      "سلوك غير لائق",
+      "معلومات مضللة",
+      "أخرى"
+    ],
+    "reportDetails": "تفاصيل إضافية (اختياري)",
+    "reportSubmit": "إرسال البلاغ",
+    "reportCancel": "إلغاء",
+    "reportSent": "تم إرسال البلاغ. شكراً!"
   },
   "auth": {
     "name": "الاسم الكامل",
@@ -122,7 +140,8 @@
     "cancelAbort": "الاحتفاظ بالحجز",
     "joinMeeting": "الانضمام إلى الاجتماع",
     "meetingLinkPlaceholder": "https://meet.google.com/...",
-    "meetingLinkSave": "حفظ"
+    "meetingLinkSave": "حفظ",
+    "backToDashboard": "حجوزاتي"
   },
   "dashboard": {
     "myBookings": "حجوزاتي",
@@ -202,7 +221,8 @@
     "blockedDatesHint": "أضف أياماً لا تكون متاحاً فيها (إجازات، ارتباطات).",
     "blockedReasonPlaceholder": "السبب (اختياري)",
     "blockedAdd": "حظر",
-    "blockedEmpty": "لا توجد أيام محظورة."
+    "blockedEmpty": "لا توجد أيام محظورة.",
+    "viewEarnings": "عرض أرباحي"
   },
   "common": {
     "loading": "جارٍ التحميل...",
@@ -249,7 +269,12 @@
     "statsConfirmedBookings": "مؤكدة",
     "statsRevenue": "إيرادات المنصة",
     "feature": "تمييز",
-    "unfeature": "إلغاء التمييز"
+    "unfeature": "إلغاء التمييز",
+    "coupons": "رموز الخصم",
+    "couponCode": "الكود",
+    "couponValue": "القيمة",
+    "maxUses": "الاستخدام الأقصى",
+    "fixed": "ثابت"
   },
   "messaging": {
     "title": "الرسائل",
@@ -290,5 +315,15 @@
     "phonePlaceholder": "+216 XX XXX XXX",
     "save": "حفظ",
     "success": "تم تحديث الملف الشخصي."
+  },
+  "earnings": {
+    "title": "أرباحي",
+    "back": "لوحة التحكم",
+    "totalEarnings": "إجمالي الأرباح",
+    "afterCommission": "بعد خصم العمولة",
+    "noEarnings": "لا أرباح حتى الآن.",
+    "loading": "جار التحميل...",
+    "brut": "إجمالي",
+    "commission": "عمولة"
   }
 }
