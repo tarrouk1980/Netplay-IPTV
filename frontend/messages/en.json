@@ -168,7 +168,8 @@
     "backToDashboard": "My bookings",
     "duration": "Session duration",
     "sendInvite": "Send invite to client",
-    "inviteSent": "Invite sent ✓"
+    "inviteSent": "Invite sent ✓",
+    "allStatuses": "All statuses"
   },
   "dashboard": {
     "myBookings": "My bookings",

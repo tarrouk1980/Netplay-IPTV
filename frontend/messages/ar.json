@@ -168,7 +168,8 @@
     "backToDashboard": "حجوزاتي",
     "duration": "مدة الجلسة",
     "sendInvite": "إرسال الدعوة للعميل",
-    "inviteSent": "تم إرسال الدعوة ✓"
+    "inviteSent": "تم إرسال الدعوة ✓",
+    "allStatuses": "جميع الحالات"
   },
   "dashboard": {
     "myBookings": "حجوزاتي",

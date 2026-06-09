@@ -1,6 +1,6 @@
 'use client';
 
-import {useEffect} from 'react';
+import {useEffect, useState} from 'react';
 import {useTranslations} from 'next-intl';
 import {useQuery} from '@tanstack/react-query';
 import {Link, useRouter} from '@/i18n/navigation';
@@ -15,6 +15,7 @@ export default function DashboardPage() {
   const tb = useTranslations('booking');
   const router = useRouter();
   const {user, loading} = useAuth();
+  const [statusFilter, setStatusFilter] = useState('');
 
   useEffect(() => {
     if (!loading && !user) {
@@ -27,9 +28,10 @@ export default function DashboardPage() {
   }, [loading, user, router]);
 
   const {data} = useQuery({
-    queryKey: ['bookings'],
+    queryKey: ['bookings', statusFilter],
     queryFn: async () => {
-      const {data} = await api.get<Paginated<Booking>>('/bookings');
+      const params = statusFilter ? {status: statusFilter} : {};
+      const {data} = await api.get<Paginated<Booking>>('/bookings', {params});
       return data;
     },
     enabled: !!user,
@@ -47,8 +49,19 @@ export default function DashboardPage() {
         <ChangePasswordForm />
       </div>
 
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">{t('myBookings')}</h1>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="rounded-full border border-neutral-300 bg-white px-3 py-1.5 text-sm"
+        >
+          <option value="">{tb('allStatuses')}</option>
+          <option value="pending">{tb('status.pending')}</option>
+          <option value="confirmed">{tb('status.confirmed')}</option>
+          <option value="completed">{tb('status.completed')}</option>
+          <option value="cancelled">{tb('status.cancelled')}</option>
+        </select>
         <div className="flex gap-3">
           <Link href="/dashboard/referrals" className="text-sm text-indigo-600 hover:underline">
             {t('myReferrals')}

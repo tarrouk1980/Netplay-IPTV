@@ -15,11 +15,22 @@ class BookingController extends Controller
     {
         $user = $request->user();
 
+        $status = $request->string('status')->value();
+        $validStatuses = ['pending', 'confirmed', 'completed', 'cancelled'];
+
         if ($user->isExpert() && $user->expertProfile) {
-            return $user->expertProfile->bookings()->with('client:id,name,avatar_url')->latest('slot_datetime_start')->paginate(15);
+            $q = $user->expertProfile->bookings()->with('client:id,name,avatar_url')->latest('slot_datetime_start');
+            if ($status && in_array($status, $validStatuses, true)) {
+                $q->where('status', $status);
+            }
+            return $q->paginate(15);
         }
 
-        return $user->bookings()->with('expert.user:id,name,avatar_url')->latest('slot_datetime_start')->paginate(15);
+        $q = $user->bookings()->with('expert.user:id,name,avatar_url')->latest('slot_datetime_start');
+        if ($status && in_array($status, $validStatuses, true)) {
+            $q->where('status', $status);
+        }
+        return $q->paginate(15);
     }
 
     public function store(Request $request)

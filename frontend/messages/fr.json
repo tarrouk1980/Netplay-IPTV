@@ -168,7 +168,8 @@
     "backToDashboard": "Mes réservations",
     "duration": "Durée de la session",
     "sendInvite": "Envoyer l'invitation au client",
-    "inviteSent": "Invitation envoyée ✓"
+    "inviteSent": "Invitation envoyée ✓",
+    "allStatuses": "Tous les statuts"
   },
   "dashboard": {
     "myBookings": "Mes réservations",

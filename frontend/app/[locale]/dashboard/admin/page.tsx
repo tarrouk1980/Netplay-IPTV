@@ -526,9 +526,20 @@ function AdminBookingsPanel() {
     },
   });
 
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api';
+
   return (
     <section>
-      <h2 className="mb-4 font-semibold">{t('allBookings')}</h2>
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="font-semibold">{t('allBookings')}</h2>
+        <a
+          href={`${apiBase}/admin/bookings/export`}
+          className="rounded-full border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-600 hover:bg-neutral-50"
+          download
+        >
+          ↓ CSV
+        </a>
+      </div>
       <div className="overflow-x-auto rounded-xl border border-neutral-200">
         <table className="w-full text-sm">
           <thead className="bg-neutral-50 text-xs text-neutral-500">

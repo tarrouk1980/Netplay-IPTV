@@ -124,6 +124,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/categories/{category}', [AdminCategoryController::class, 'destroy']);
 
         Route::get('/bookings', [\App\Http\Controllers\Api\Admin\BookingAdminController::class, 'index']);
+        Route::get('/bookings/export', [\App\Http\Controllers\Api\Admin\BookingAdminController::class, 'export']);
         Route::get('/payouts', [\App\Http\Controllers\Api\Admin\PayoutAdminController::class, 'index']);
         Route::get('/support-tickets', [\App\Http\Controllers\Api\Admin\SupportTicketAdminController::class, 'index']);
         Route::patch('/support-tickets/{supportTicket}', [\App\Http\Controllers\Api\Admin\SupportTicketAdminController::class, 'update']);
