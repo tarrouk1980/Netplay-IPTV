@@ -26,12 +26,26 @@ export default function ExpertsPage() {
     page: '1',
   });
   const [searchInput, setSearchInput] = useState(filters.q);
+  const [suggestions, setSuggestions] = useState<Array<{type: string; id: number; label: string}>>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
       setFilters((f) => (f.q === searchInput ? f : {...f, q: searchInput, page: '1'}));
     }, 300);
     return () => clearTimeout(timeout);
+  }, [searchInput]);
+
+  useEffect(() => {
+    if (searchInput.length < 2) { setSuggestions([]); return; }
+    const t2 = setTimeout(async () => {
+      try {
+        const {data} = await api.get('/search/suggestions', {params: {q: searchInput}});
+        setSuggestions(data);
+        setShowSuggestions(true);
+      } catch { setSuggestions([]); }
+    }, 200);
+    return () => clearTimeout(t2);
   }, [searchInput]);
 
   const {data: categories} = useQuery({
@@ -56,15 +70,39 @@ export default function ExpertsPage() {
       <aside className="space-y-4 lg:col-span-1">
         <h2 className="font-semibold">{t('filters')}</h2>
 
-        <div>
+        <div className="relative">
           <label className="mb-1 block text-xs text-neutral-500">{t('search')}</label>
           <input
             type="text"
             value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
+            onChange={(e) => { setSearchInput(e.target.value); setShowSuggestions(true); }}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
             placeholder={t('searchPlaceholder')}
             className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
           />
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="absolute z-10 mt-1 w-full rounded-lg border border-neutral-200 bg-white shadow-md">
+              {suggestions.map((s) => (
+                <button
+                  key={`${s.type}-${s.id}`}
+                  type="button"
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-neutral-50"
+                  onMouseDown={() => {
+                    if (s.type === 'expert') {
+                      window.location.href = `/experts/${s.id}`;
+                    } else {
+                      setFilters((f) => ({...f, category_id: String(s.id), q: '', page: '1'}));
+                      setSearchInput('');
+                    }
+                    setShowSuggestions(false);
+                  }}
+                >
+                  <span className="text-xs text-neutral-400">{s.type === 'expert' ? '👤' : '🏷'}</span>
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div>

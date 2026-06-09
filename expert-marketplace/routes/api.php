@@ -38,6 +38,7 @@ Route::get('/experts/{expertProfile}/similar', [ExpertProfileController::class, 
 Route::get('/experts/{expertProfile}/blocked-dates', [ExpertBlockedDateController::class, 'index']);
 Route::get('/availability-slots', [AvailabilitySlotController::class, 'index']);
 Route::get('/reviews', [ReviewController::class, 'index']);
+Route::get('/search/suggestions', [\App\Http\Controllers\Api\SearchController::class, 'suggestions']);
 Route::get('/subscription-plans', [SubscriptionPlanController::class, 'index']);
 
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle']);

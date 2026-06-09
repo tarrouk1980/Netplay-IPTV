@@ -170,6 +170,9 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
             <OnlineBadge lastSeenAt={expert.last_seen_at} />
             <p className="text-sm text-amber-500">
               ★ {expert.rating_avg.toFixed(1)} · {expert.total_sessions} sessions
+              {(expert as any).view_count > 0 && (
+                <span className="ml-2 text-neutral-400">· {(expert as any).view_count} {t('views')}</span>
+              )}
             </p>
             {!!expert.years_experience && (
               <p className="text-sm text-neutral-500">

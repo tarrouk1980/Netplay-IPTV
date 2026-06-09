@@ -275,7 +275,8 @@
     "linkedin": "Profil LinkedIn",
     "profileUpdated": "Profil mis à jour avec succès.",
     "profileCompletion": "Complétion du profil",
-    "profileCompletionHint": "Complétez votre profil pour attirer plus de clients (titre, spécialisations, langues, liens)."
+    "profileCompletionHint": "Complétez votre profil pour attirer plus de clients (titre, spécialisations, langues, liens).",
+    "views": "vues"
   },
   "common": {
     "loading": "Chargement...",
