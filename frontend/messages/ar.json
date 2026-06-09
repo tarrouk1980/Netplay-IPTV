@@ -254,7 +254,14 @@
     "viewPayouts": "المدفوعات",
     "viewMessages": "الرسائل",
     "sendInvite": "إرسال دعوة",
-    "statsViews": "مشاهدات الملف"
+    "statsViews": "مشاهدات الملف",
+    "headline": "العنوان المهني",
+    "headlinePlaceholder": "مثال: خبير في الضرائب الدولية",
+    "specializations": "التخصصات",
+    "specializationsPlaceholder": "مثال: القانون الضريبي، ضريبة القيمة المضافة (مفصولة بفاصلة)",
+    "website": "الموقع الإلكتروني",
+    "linkedin": "ملف LinkedIn",
+    "profileUpdated": "تم تحديث الملف الشخصي بنجاح."
   },
   "common": {
     "loading": "جارٍ التحميل...",

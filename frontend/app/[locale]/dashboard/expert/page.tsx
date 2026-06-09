@@ -190,12 +190,18 @@ function EditProfileForm() {
   const profile = user!.expert_profile!;
   const [form, setForm] = useState({
     bio: profile.bio,
+    headline: profile.headline ?? '',
     hourly_rate: String(profile.hourly_rate),
     currency: profile.currency,
     years_experience: profile.years_experience != null ? String(profile.years_experience) : '',
     credential_reference: profile.credential_reference ?? '',
+    website_url: profile.website_url ?? '',
+    linkedin_url: profile.linkedin_url ?? '',
   });
   const [languages, setLanguages] = useState<string[]>(profile.languages ?? []);
+  const [specializationsInput, setSpecializationsInput] = useState<string>(
+    (profile.specializations ?? []).join(', ')
+  );
   const [success, setSuccess] = useState(false);
 
   function toggleLanguage(code: string) {
@@ -207,11 +213,17 @@ function EditProfileForm() {
     mutationFn: async () => {
       const {data} = await api.patch(`/experts/${profile.id}`, {
         bio: form.bio,
+        headline: form.headline || null,
         hourly_rate: Number(form.hourly_rate),
         currency: form.currency,
         ...(form.years_experience ? {years_experience: Number(form.years_experience)} : {}),
         credential_reference: form.credential_reference || null,
         languages,
+        specializations: specializationsInput
+          ? specializationsInput.split(',').map((s) => s.trim()).filter(Boolean)
+          : [],
+        website_url: form.website_url || null,
+        linkedin_url: form.linkedin_url || null,
       });
       return data;
     },
@@ -245,6 +257,27 @@ function EditProfileForm() {
             rows={4}
             value={form.bio}
             onChange={update('bio')}
+            className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-xs text-neutral-500">{t('headline')}</label>
+          <input
+            placeholder={t('headlinePlaceholder')}
+            value={form.headline}
+            onChange={update('headline')}
+            maxLength={120}
+            className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-xs text-neutral-500">{t('specializations')}</label>
+          <input
+            placeholder={t('specializationsPlaceholder')}
+            value={specializationsInput}
+            onChange={(e) => { setSuccess(false); setSpecializationsInput(e.target.value); }}
             className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
           />
         </div>
@@ -292,6 +325,29 @@ function EditProfileForm() {
             onChange={update('credential_reference')}
             className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
           />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="mb-1 block text-xs text-neutral-500">{t('website')}</label>
+            <input
+              type="url"
+              placeholder="https://..."
+              value={form.website_url}
+              onChange={update('website_url')}
+              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-neutral-500">{t('linkedin')}</label>
+            <input
+              type="url"
+              placeholder="https://linkedin.com/in/..."
+              value={form.linkedin_url}
+              onChange={update('linkedin_url')}
+              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+            />
+          </div>
         </div>
 
         <div>

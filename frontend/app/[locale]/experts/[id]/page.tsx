@@ -166,6 +166,7 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
               )}
             </div>
             <p className="text-sm text-neutral-500">{expert.category.name}</p>
+            {expert.headline && <p className="mt-0.5 text-sm font-medium text-neutral-700">{expert.headline}</p>}
             <OnlineBadge lastSeenAt={expert.last_seen_at} />
             <p className="text-sm text-amber-500">
               ★ {expert.rating_avg.toFixed(1)} · {expert.total_sessions} sessions
@@ -198,6 +199,31 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
         </div>
 
         <p className="mt-6 whitespace-pre-line text-neutral-700">{expert.bio}</p>
+
+        {!!expert.specializations?.length && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {expert.specializations.map((s) => (
+              <span key={s} className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs text-indigo-700">
+                {s}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {(expert.website_url || expert.linkedin_url) && (
+          <div className="mt-3 flex gap-3">
+            {expert.website_url && (
+              <a href={expert.website_url} target="_blank" rel="noopener noreferrer" className="text-sm text-indigo-600 hover:underline">
+                🌐 {t('website')}
+              </a>
+            )}
+            {expert.linkedin_url && (
+              <a href={expert.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-sm text-indigo-600 hover:underline">
+                🔗 LinkedIn
+              </a>
+            )}
+          </div>
+        )}
 
         <RegulatoryNotice categorySlug={expert.category.slug} />
 

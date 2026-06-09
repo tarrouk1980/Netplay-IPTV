@@ -115,12 +115,17 @@ class ExpertProfileController extends Controller
 
         $data = $request->validate([
             'bio' => ['sometimes', 'string'],
+            'headline' => ['sometimes', 'nullable', 'string', 'max:120'],
             'years_experience' => ['sometimes', 'integer', 'min:0'],
             'credential_reference' => ['sometimes', 'nullable', 'string', 'max:255'],
             'hourly_rate' => ['sometimes', 'numeric', 'min:0'],
             'currency' => ['sometimes', 'string', 'size:3'],
             'languages' => ['sometimes', 'nullable', 'array'],
             'languages.*' => ['string', 'in:fr,ar,en'],
+            'specializations' => ['sometimes', 'nullable', 'array'],
+            'specializations.*' => ['string', 'max:50'],
+            'website_url' => ['sometimes', 'nullable', 'url', 'max:255'],
+            'linkedin_url' => ['sometimes', 'nullable', 'url', 'max:255'],
         ]);
 
         $expertProfile->update($data);

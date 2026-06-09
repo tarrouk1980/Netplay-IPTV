@@ -254,7 +254,14 @@
     "viewPayouts": "Payouts",
     "viewMessages": "Messages",
     "sendInvite": "Send invite",
-    "statsViews": "Profile views"
+    "statsViews": "Profile views",
+    "headline": "Professional tagline",
+    "headlinePlaceholder": "E.g.: International tax expert",
+    "specializations": "Specializations",
+    "specializationsPlaceholder": "E.g.: Tax law, VAT, Litigation (comma-separated)",
+    "website": "Website",
+    "linkedin": "LinkedIn profile",
+    "profileUpdated": "Profile updated successfully."
   },
   "common": {
     "loading": "Loading...",

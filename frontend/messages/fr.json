@@ -254,7 +254,14 @@
     "viewPayouts": "Virements",
     "viewMessages": "Messages",
     "sendInvite": "Envoyer invitation",
-    "statsViews": "Vues du profil"
+    "statsViews": "Vues du profil",
+    "headline": "Accroche professionnelle",
+    "headlinePlaceholder": "Ex. : Expert en fiscalité internationale",
+    "specializations": "Spécialisations",
+    "specializationsPlaceholder": "Ex. : Droit fiscal, TVA, Contentieux (séparés par virgule)",
+    "website": "Site web",
+    "linkedin": "Profil LinkedIn",
+    "profileUpdated": "Profil mis à jour avec succès."
   },
   "common": {
     "loading": "Chargement...",
