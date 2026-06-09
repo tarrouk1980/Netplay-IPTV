@@ -230,7 +230,8 @@
     "blockedEmpty": "Aucun jour bloqué.",
     "viewEarnings": "Voir mes revenus",
     "viewPayouts": "Virements",
-    "viewMessages": "Messages"
+    "viewMessages": "Messages",
+    "sendInvite": "Envoyer invitation"
   },
   "common": {
     "loading": "Chargement...",

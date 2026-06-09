@@ -101,6 +101,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/bookings/{booking}/ics', [BookingController::class, 'downloadIcs']);
     Route::post('/bookings', [BookingController::class, 'store']);
     Route::post('/bookings/{booking}/cancel', [BookingController::class, 'cancel']);
+    Route::post('/bookings/{booking}/send-invite', [BookingController::class, 'sendInvite']);
     Route::post('/bookings/{booking}/reschedule', [BookingController::class, 'reschedule']);
 
     Route::middleware('role:admin')->prefix('admin')->group(function () {

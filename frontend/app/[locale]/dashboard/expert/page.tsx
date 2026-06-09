@@ -835,6 +835,10 @@ function IncomingBookings() {
     onSuccess: () => queryClient.invalidateQueries({queryKey: ['bookings']}),
   });
 
+  const sendInviteMutation = useMutation({
+    mutationFn: (id: number) => api.post(`/bookings/${id}/send-invite`),
+  });
+
   return (
     <section className="rounded-xl border border-neutral-200 bg-white p-6">
       <h2 className="font-semibold">{t('incomingBookings')}</h2>
@@ -853,13 +857,22 @@ function IncomingBookings() {
             </div>
 
             {booking.status === 'confirmed' && (
-              <button
-                onClick={() => completeMutation.mutate(booking.id)}
-                disabled={completeMutation.isPending}
-                className="rounded-full bg-indigo-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-              >
-                {t('markComplete')}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => sendInviteMutation.mutate(booking.id)}
+                  disabled={sendInviteMutation.isPending}
+                  className="rounded-full border border-indigo-300 px-3 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 disabled:opacity-50"
+                >
+                  ✉ {t('sendInvite')}
+                </button>
+                <button
+                  onClick={() => completeMutation.mutate(booking.id)}
+                  disabled={completeMutation.isPending}
+                  className="rounded-full bg-indigo-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  {t('markComplete')}
+                </button>
+              </div>
             )}
           </div>
         ))}

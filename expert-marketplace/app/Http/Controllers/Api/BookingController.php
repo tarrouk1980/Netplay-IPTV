@@ -239,4 +239,22 @@ class BookingController extends Controller
 
         return $booking;
     }
+
+    public function sendInvite(Request $request, Booking $booking)
+    {
+        $user = $request->user();
+
+        if ($booking->expert_id !== $user->expertProfile?->id) {
+            abort(403);
+        }
+
+        if ($booking->status !== 'confirmed') {
+            abort(409, 'Seules les réservations confirmées peuvent recevoir une invitation.');
+        }
+
+        $booking->load('client');
+        $booking->client->notify(new \App\Notifications\BookingInviteSent($booking));
+
+        return response()->json(['message' => 'Invitation envoyée.']);
+    }
 }

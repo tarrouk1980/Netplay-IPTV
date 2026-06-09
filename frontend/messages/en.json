@@ -230,7 +230,8 @@
     "blockedEmpty": "No blocked days.",
     "viewEarnings": "View my earnings",
     "viewPayouts": "Payouts",
-    "viewMessages": "Messages"
+    "viewMessages": "Messages",
+    "sendInvite": "Send invite"
   },
   "common": {
     "loading": "Loading...",

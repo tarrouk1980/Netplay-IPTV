@@ -230,7 +230,8 @@
     "blockedEmpty": "لا توجد أيام محظورة.",
     "viewEarnings": "عرض أرباحي",
     "viewPayouts": "المدفوعات",
-    "viewMessages": "الرسائل"
+    "viewMessages": "الرسائل",
+    "sendInvite": "إرسال دعوة"
   },
   "common": {
     "loading": "جارٍ التحميل...",
