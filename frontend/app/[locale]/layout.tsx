@@ -1,4 +1,4 @@
-import type {Metadata} from 'next';
+import type {Metadata, Viewport} from 'next';
 import type {ReactNode} from 'react';
 import {NextIntlClientProvider, hasLocale} from 'next-intl';
 import {notFound} from 'next/navigation';
@@ -10,11 +10,14 @@ import {ScrollToTop} from '@/components/scroll-to-top';
 import {AnnouncementBanner} from '@/components/announcement-banner';
 import '../globals.css';
 
+export const viewport: Viewport = {
+  themeColor: '#4f46e5',
+};
+
 export const metadata: Metadata = {
   title: 'SKOLZ — Trouvez votre expert',
   description: 'SKOLZ — La plateforme qui connecte experts, coachs, avocats et médecins avec ceux qui ont besoin de leurs conseils.',
   manifest: '/manifest.json',
-  themeColor: '#4f46e5',
   appleWebApp: {
     capable: true,
     title: 'SKOLZ',
