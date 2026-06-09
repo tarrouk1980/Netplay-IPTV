@@ -1,7 +1,18 @@
 {
   "footer": {
     "tagline": "The marketplace connecting experts, coaches, lawyers and doctors with people who need their advice.",
-    "rights": "All rights reserved."
+    "rights": "All rights reserved.",
+    "platform": "Platform",
+    "browseExperts": "Find an expert",
+    "becomeExpert": "Become an expert",
+    "login": "Log in",
+    "account": "My account",
+    "dashboard": "Dashboard",
+    "support": "Support",
+    "referrals": "Referrals",
+    "legal": "Legal",
+    "terms": "Terms of use",
+    "privacy": "Privacy policy"
   },
   "nav": {
     "home": "Home",

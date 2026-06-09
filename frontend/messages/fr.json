@@ -1,7 +1,18 @@
 {
   "footer": {
     "tagline": "La marketplace qui connecte experts, coachs, avocats et médecins avec ceux qui ont besoin de leurs conseils.",
-    "rights": "Tous droits réservés."
+    "rights": "Tous droits réservés.",
+    "platform": "Plateforme",
+    "browseExperts": "Trouver un expert",
+    "becomeExpert": "Devenir expert",
+    "login": "Se connecter",
+    "account": "Mon compte",
+    "dashboard": "Tableau de bord",
+    "support": "Support",
+    "referrals": "Parrainages",
+    "legal": "Légal",
+    "terms": "CGU",
+    "privacy": "Politique de confidentialité"
   },
   "nav": {
     "home": "Accueil",
