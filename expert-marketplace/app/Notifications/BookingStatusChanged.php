@@ -25,9 +25,11 @@ class BookingStatusChanged extends Notification
 
         return (new MailMessage)
             ->subject('[SKOLZ] ' . match ($this->status) {
+                'new' => 'Nouvelle réservation reçue',
                 'confirmed' => 'Réservation confirmée',
                 'cancelled' => 'Réservation annulée',
                 'completed' => 'Session terminée',
+                'rescheduled' => 'Réservation reprogrammée',
                 default => 'Mise à jour de réservation',
             })
             ->greeting('Bonjour ' . $notifiable->name . ',')
@@ -43,9 +45,11 @@ class BookingStatusChanged extends Notification
             'booking_id' => $this->booking->id,
             'status' => $this->status,
             'message' => match ($this->status) {
+                'new' => 'Vous avez reçu une nouvelle réservation.',
                 'confirmed' => 'Votre réservation a été confirmée.',
                 'cancelled' => 'Une réservation a été annulée.',
                 'completed' => 'Une session est terminée. Pensez à laisser un avis.',
+                'rescheduled' => 'Une réservation a été reprogrammée.',
                 default => 'Le statut de votre réservation a changé : '.$this->status,
             },
         ];

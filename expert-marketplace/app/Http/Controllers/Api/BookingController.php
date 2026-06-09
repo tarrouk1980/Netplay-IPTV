@@ -95,6 +95,9 @@ class BookingController extends Controller
             'discount_amount' => $discount,
         ]);
 
+        // Notify expert of new booking
+        $expert->user->notify(new BookingStatusChanged($booking, 'new'));
+
         return response()->json($booking, 201);
     }
 
