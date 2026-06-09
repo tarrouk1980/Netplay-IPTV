@@ -274,7 +274,14 @@
     "couponCode": "Code",
     "couponValue": "Value",
     "maxUses": "Max uses",
-    "fixed": "Fixed"
+    "fixed": "Fixed",
+    "reports": "Reports",
+    "reviewed": "Reviewed",
+    "dismiss": "Dismiss",
+    "allBookings": "All bookings",
+    "client": "Client",
+    "expert": "Expert",
+    "date": "Date"
   },
   "messaging": {
     "title": "Messages",

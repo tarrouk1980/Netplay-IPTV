@@ -236,7 +236,7 @@
     "expertProfiles": "ملفات الخبراء",
     "categories": "الفئات",
     "subscriptionPlans": "خطط الاشتراك",
-    "status": "الحالة",
+    "status": "حالة",
     "all": "الكل",
     "pending": "قيد الانتظار",
     "approved": "مقبول",
@@ -250,7 +250,7 @@
     "edit": "تعديل",
     "save": "حفظ",
     "cancel": "إلغاء",
-    "price": "السعر",
+    "price": "سعر",
     "billingInterval": "فترة الفوترة",
     "monthly": "شهري",
     "yearly": "سنوي",
@@ -274,7 +274,14 @@
     "couponCode": "الكود",
     "couponValue": "القيمة",
     "maxUses": "الاستخدام الأقصى",
-    "fixed": "ثابت"
+    "fixed": "ثابت",
+    "reports": "البلاغات",
+    "reviewed": "تمت المراجعة",
+    "dismiss": "تجاهل",
+    "allBookings": "كل الحجوزات",
+    "client": "عميل",
+    "expert": "خبير",
+    "date": "تاريخ"
   },
   "messaging": {
     "title": "الرسائل",

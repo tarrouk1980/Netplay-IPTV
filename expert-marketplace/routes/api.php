@@ -103,6 +103,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('/categories/{category}', [AdminCategoryController::class, 'update']);
         Route::delete('/categories/{category}', [AdminCategoryController::class, 'destroy']);
 
+        Route::get('/bookings', [\App\Http\Controllers\Api\Admin\BookingAdminController::class, 'index']);
+        Route::get('/users', [\App\Http\Controllers\Api\Admin\UserAdminController::class, 'index']);
+        Route::get('/reports', [\App\Http\Controllers\Api\Admin\ExpertReportAdminController::class, 'index']);
+        Route::patch('/reports/{expertReport}', [\App\Http\Controllers\Api\Admin\ExpertReportAdminController::class, 'update']);
+
         Route::get('/coupons', [\App\Http\Controllers\Api\Admin\CouponAdminController::class, 'index']);
         Route::post('/coupons', [\App\Http\Controllers\Api\Admin\CouponAdminController::class, 'store']);
         Route::delete('/coupons/{coupon}', [\App\Http\Controllers\Api\Admin\CouponAdminController::class, 'destroy']);

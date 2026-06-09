@@ -46,6 +46,8 @@ export default function AdminDashboardPage() {
       <h1 className="text-2xl font-semibold">{t('title')}</h1>
       <AdminStatsPanel />
       <ExpertProfileModeration />
+      <ReportsPanel />
+      <AdminBookingsPanel />
       <CategoryManagement />
       <SubscriptionPlanManagement />
       <CouponManagement />
@@ -440,6 +442,118 @@ function CouponManagement() {
             <button onClick={() => deleteCoupon.mutate(c.id)} className="text-xs text-red-500 hover:underline">{t('delete')}</button>
           </div>
         ))}
+      </div>
+    </section>
+  );
+}
+
+function ReportsPanel() {
+  const t = useTranslations('admin');
+  const qc = useQueryClient();
+
+  const {data: reports} = useQuery({
+    queryKey: ['admin-reports'],
+    queryFn: async () => {
+      const {data} = await api.get<Array<{
+        id: number;
+        reason: string;
+        details: string | null;
+        status: string;
+        created_at: string;
+        expert_profile: {id: number; user: {name: string}};
+        reporter: {id: number; name: string};
+      }>>('/admin/reports');
+      return data;
+    },
+  });
+
+  const updateReport = useMutation({
+    mutationFn: async ({id, status}: {id: number; status: string}) =>
+      api.patch(`/admin/reports/${id}`, {status}),
+    onSuccess: () => qc.invalidateQueries({queryKey: ['admin-reports']}),
+  });
+
+  const pending = reports?.filter((r) => r.status === 'pending') ?? [];
+
+  if (pending.length === 0) return null;
+
+  return (
+    <section>
+      <h2 className="mb-4 font-semibold">{t('reports')} ({pending.length})</h2>
+      <div className="space-y-2">
+        {pending.map((report) => (
+          <div key={report.id} className="flex items-start justify-between gap-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm">
+            <div>
+              <p>
+                <span className="font-medium">{report.reporter.name}</span>
+                {' → '}
+                <span className="font-medium">{report.expert_profile.user.name}</span>
+              </p>
+              <p className="text-neutral-600">{report.reason}</p>
+              {report.details && <p className="text-xs text-neutral-500">{report.details}</p>}
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <button
+                onClick={() => updateReport.mutate({id: report.id, status: 'reviewed'})}
+                className="rounded-full bg-green-600 px-3 py-1 text-xs text-white hover:bg-green-700"
+              >
+                {t('reviewed')}
+              </button>
+              <button
+                onClick={() => updateReport.mutate({id: report.id, status: 'dismissed'})}
+                className="rounded-full border border-neutral-300 px-3 py-1 text-xs hover:bg-neutral-100"
+              >
+                {t('dismiss')}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function AdminBookingsPanel() {
+  const t = useTranslations('admin');
+
+  const {data} = useQuery({
+    queryKey: ['admin-bookings'],
+    queryFn: async () => {
+      const {data} = await api.get<{data: Array<{id: number; status: string; slot_datetime_start: string; price: number; client: {name: string}; expert: {user: {name: string}}}>}>('/admin/bookings');
+      return data;
+    },
+  });
+
+  return (
+    <section>
+      <h2 className="mb-4 font-semibold">{t('allBookings')}</h2>
+      <div className="overflow-x-auto rounded-xl border border-neutral-200">
+        <table className="w-full text-sm">
+          <thead className="bg-neutral-50 text-xs text-neutral-500">
+            <tr>
+              <th className="px-4 py-2 text-left">#</th>
+              <th className="px-4 py-2 text-left">{t('client')}</th>
+              <th className="px-4 py-2 text-left">{t('expert')}</th>
+              <th className="px-4 py-2 text-left">{t('date')}</th>
+              <th className="px-4 py-2 text-left">{t('price')}</th>
+              <th className="px-4 py-2 text-left">{t('status')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data?.data.map((b) => (
+              <tr key={b.id} className="border-t border-neutral-200">
+                <td className="px-4 py-2 text-neutral-400">#{b.id}</td>
+                <td className="px-4 py-2">{b.client?.name ?? '—'}</td>
+                <td className="px-4 py-2">{b.expert?.user?.name ?? '—'}</td>
+                <td className="px-4 py-2">{new Date(b.slot_datetime_start).toLocaleDateString()}</td>
+                <td className="px-4 py-2 font-medium">{b.price}</td>
+                <td className="px-4 py-2">
+                  <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs">{b.status}</span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </section>
   );
