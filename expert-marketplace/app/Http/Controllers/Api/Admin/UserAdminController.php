@@ -20,6 +20,28 @@ class UserAdminController extends Controller
         return response()->json($query->paginate(20));
     }
 
+    public function export(): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $users = User::orderByDesc('created_at')->get();
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="users-' . now()->format('Y-m-d') . '.csv"',
+        ];
+
+        return response()->stream(function () use ($users) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, ['ID', 'Name', 'Email', 'Role', 'Banned', 'Created']);
+            foreach ($users as $u) {
+                fputcsv($handle, [
+                    $u->id, $u->name, $u->email, $u->role,
+                    $u->banned_at ? 'yes' : 'no', $u->created_at,
+                ]);
+            }
+            fclose($handle);
+        }, 200, $headers);
+    }
+
     public function ban(User $user): JsonResponse
     {
         $user->update(['banned_at' => now()]);

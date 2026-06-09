@@ -754,16 +754,25 @@ function AdminUsersPanel() {
     <section>
       <div className="mb-4 flex items-center justify-between">
         <h2 className="font-semibold">{t('users')}</h2>
-        <select
-          value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value)}
-          className="rounded border border-neutral-300 px-2 py-1 text-xs"
-        >
-          <option value="">{t('allRoles')}</option>
-          <option value="client">{t('roleClient')}</option>
-          <option value="expert">{t('roleExpert')}</option>
-          <option value="admin">{t('roleAdmin')}</option>
-        </select>
+        <div className="flex items-center gap-2">
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="rounded border border-neutral-300 px-2 py-1 text-xs"
+          >
+            <option value="">{t('allRoles')}</option>
+            <option value="client">{t('roleClient')}</option>
+            <option value="expert">{t('roleExpert')}</option>
+            <option value="admin">{t('roleAdmin')}</option>
+          </select>
+          <a
+            href={`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api'}/admin/users/export`}
+            className="rounded-full border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-600 hover:bg-neutral-50"
+            download
+          >
+            ↓ CSV
+          </a>
+        </div>
       </div>
       <div className="overflow-x-auto rounded-xl border border-neutral-200">
         <table className="w-full text-sm">
