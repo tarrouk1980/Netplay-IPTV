@@ -49,6 +49,7 @@ export default function AdminDashboardPage() {
       <ReportsPanel />
       <AdminBookingsPanel />
       <AdminPayoutsPanel />
+      <SupportTicketsPanel />
       <CategoryManagement />
       <SubscriptionPlanManagement />
       <CouponManagement />
@@ -598,6 +599,68 @@ function AdminPayoutsPanel() {
             >
               {t('markPaid')}
             </button>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function SupportTicketsPanel() {
+  const t = useTranslations('admin');
+  const qc = useQueryClient();
+  const [replyText, setReplyText] = useState<Record<number, string>>({});
+
+  const {data: tickets} = useQuery({
+    queryKey: ['admin-support-tickets'],
+    queryFn: async () => {
+      const {data} = await api.get<Array<{id: number; subject: string; body: string; status: string; user: {name: string; email: string}; admin_reply: string | null; created_at: string}>>('/admin/support-tickets');
+      return data;
+    },
+  });
+
+  const replyMutation = useMutation({
+    mutationFn: async ({id, reply}: {id: number; reply: string}) =>
+      api.patch(`/admin/support-tickets/${id}`, {admin_reply: reply, status: 'resolved'}),
+    onSuccess: () => {
+      qc.invalidateQueries({queryKey: ['admin-support-tickets']});
+      setReplyText({});
+    },
+  });
+
+  const open = tickets?.filter((t) => t.status === 'open' || t.status === 'in_progress') ?? [];
+
+  if (open.length === 0) return null;
+
+  return (
+    <section>
+      <h2 className="mb-4 font-semibold">{t('supportTickets')} ({open.length})</h2>
+      <div className="space-y-3">
+        {open.map((ticket) => (
+          <div key={ticket.id} className="rounded-xl border border-neutral-200 bg-white p-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="font-medium text-sm">{ticket.subject}</p>
+                <p className="text-xs text-neutral-500">{ticket.user.name} · {ticket.user.email}</p>
+              </div>
+              <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">{ticket.status}</span>
+            </div>
+            <p className="mt-2 text-sm text-neutral-700 line-clamp-2">{ticket.body}</p>
+            <div className="mt-3 flex gap-2">
+              <input
+                value={replyText[ticket.id] ?? ''}
+                onChange={(e) => setReplyText((r) => ({...r, [ticket.id]: e.target.value}))}
+                placeholder={t('replyPlaceholder')}
+                className="flex-1 rounded border border-neutral-300 px-3 py-1.5 text-sm"
+              />
+              <button
+                onClick={() => replyMutation.mutate({id: ticket.id, reply: replyText[ticket.id] ?? ''})}
+                disabled={replyMutation.isPending || !replyText[ticket.id]?.trim()}
+                className="rounded bg-indigo-600 px-3 py-1.5 text-xs text-white hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {t('reply')}
+              </button>
+            </div>
           </div>
         ))}
       </div>

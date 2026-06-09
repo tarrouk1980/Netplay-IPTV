@@ -160,7 +160,8 @@
     "myFavorites": "المفضلة",
     "myReferrals": "إحالاتي",
     "notifSettings": "الإشعارات",
-    "messages": "الرسائل"
+    "messages": "الرسائل",
+    "support": "الدعم"
   },
   "expert": {
     "createProfileTitle": "إنشاء ملفي كخبير",
@@ -297,7 +298,10 @@
     "expert": "خبير",
     "date": "تاريخ",
     "pendingPayouts": "المدفوعات المعلقة",
-    "markPaid": "تحديد كمدفوع"
+    "markPaid": "تحديد كمدفوع",
+    "supportTickets": "تذاكر الدعم",
+    "replyPlaceholder": "ردك...",
+    "reply": "رد"
   },
   "messaging": {
     "title": "الرسائل",
@@ -393,5 +397,21 @@
     "noPayouts": "لا مدفوعات بعد.",
     "status.pending": "في الانتظار",
     "status.paid": "مدفوع"
+  },
+  "support": {
+    "title": "الدعم والنزاعات",
+    "back": "لوحة التحكم",
+    "newTicket": "تذكرة جديدة",
+    "subjectPlaceholder": "موضوع التذكرة",
+    "bodyPlaceholder": "صف مشكلتك...",
+    "submit": "إرسال",
+    "ticketSent": "تم إرسال التذكرة!",
+    "myTickets": "تذاكري",
+    "noTickets": "لا توجد تذاكر.",
+    "adminReply": "رد الدعم",
+    "status.open": "مفتوح",
+    "status.in_progress": "قيد المعالجة",
+    "status.resolved": "محلول",
+    "status.closed": "مغلق"
   }
 }

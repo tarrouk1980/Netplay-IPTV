@@ -160,7 +160,8 @@
     "myFavorites": "Mes favoris",
     "myReferrals": "Mes parrainages",
     "notifSettings": "Notifications",
-    "messages": "Messages"
+    "messages": "Messages",
+    "support": "Support"
   },
   "expert": {
     "createProfileTitle": "Créer mon profil expert",
@@ -297,7 +298,10 @@
     "expert": "Expert",
     "date": "Date",
     "pendingPayouts": "Virements en attente",
-    "markPaid": "Marquer payé"
+    "markPaid": "Marquer payé",
+    "supportTickets": "Tickets de support",
+    "replyPlaceholder": "Votre réponse...",
+    "reply": "Répondre"
   },
   "messaging": {
     "title": "Messages",
@@ -393,5 +397,21 @@
     "noPayouts": "Aucun virement pour le moment.",
     "status.pending": "En attente",
     "status.paid": "Payé"
+  },
+  "support": {
+    "title": "Support & Litiges",
+    "back": "Tableau de bord",
+    "newTicket": "Nouveau ticket",
+    "subjectPlaceholder": "Sujet du ticket",
+    "bodyPlaceholder": "Décrivez votre problème...",
+    "submit": "Envoyer",
+    "ticketSent": "Ticket envoyé !",
+    "myTickets": "Mes tickets",
+    "noTickets": "Aucun ticket.",
+    "adminReply": "Réponse du support",
+    "status.open": "Ouvert",
+    "status.in_progress": "En cours",
+    "status.resolved": "Résolu",
+    "status.closed": "Fermé"
   }
 }

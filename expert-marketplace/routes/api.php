@@ -81,6 +81,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/experts/{expertProfile}/report', [ExpertReportController::class, 'store']);
 
+    Route::get('/support-tickets', [\App\Http\Controllers\Api\SupportTicketController::class, 'index']);
+    Route::post('/support-tickets', [\App\Http\Controllers\Api\SupportTicketController::class, 'store']);
+
     Route::get('/dm/conversations', [\App\Http\Controllers\Api\DirectMessageController::class, 'conversations']);
     Route::get('/dm/{user}', [\App\Http\Controllers\Api\DirectMessageController::class, 'thread']);
     Route::post('/dm/{user}', [\App\Http\Controllers\Api\DirectMessageController::class, 'send']);
@@ -116,6 +119,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('/bookings', [\App\Http\Controllers\Api\Admin\BookingAdminController::class, 'index']);
         Route::get('/payouts', [\App\Http\Controllers\Api\Admin\PayoutAdminController::class, 'index']);
+        Route::get('/support-tickets', [\App\Http\Controllers\Api\Admin\SupportTicketAdminController::class, 'index']);
+        Route::patch('/support-tickets/{supportTicket}', [\App\Http\Controllers\Api\Admin\SupportTicketAdminController::class, 'update']);
         Route::patch('/payouts/{payout}', [\App\Http\Controllers\Api\Admin\PayoutAdminController::class, 'update']);
         Route::get('/users', [\App\Http\Controllers\Api\Admin\UserAdminController::class, 'index']);
         Route::get('/reports', [\App\Http\Controllers\Api\Admin\ExpertReportAdminController::class, 'index']);

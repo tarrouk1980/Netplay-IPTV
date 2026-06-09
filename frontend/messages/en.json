@@ -160,7 +160,8 @@
     "myFavorites": "My favorites",
     "myReferrals": "My referrals",
     "notifSettings": "Notifications",
-    "messages": "Messages"
+    "messages": "Messages",
+    "support": "Support"
   },
   "expert": {
     "createProfileTitle": "Create my expert profile",
@@ -297,7 +298,10 @@
     "expert": "Expert",
     "date": "Date",
     "pendingPayouts": "Pending payouts",
-    "markPaid": "Mark as paid"
+    "markPaid": "Mark as paid",
+    "supportTickets": "Support tickets",
+    "replyPlaceholder": "Your reply...",
+    "reply": "Reply"
   },
   "messaging": {
     "title": "Messages",
@@ -393,5 +397,21 @@
     "noPayouts": "No payouts yet.",
     "status.pending": "Pending",
     "status.paid": "Paid"
+  },
+  "support": {
+    "title": "Support & Disputes",
+    "back": "Dashboard",
+    "newTicket": "New ticket",
+    "subjectPlaceholder": "Ticket subject",
+    "bodyPlaceholder": "Describe your issue...",
+    "submit": "Submit",
+    "ticketSent": "Ticket submitted!",
+    "myTickets": "My tickets",
+    "noTickets": "No tickets.",
+    "adminReply": "Support reply",
+    "status.open": "Open",
+    "status.in_progress": "In progress",
+    "status.resolved": "Resolved",
+    "status.closed": "Closed"
   }
 }
