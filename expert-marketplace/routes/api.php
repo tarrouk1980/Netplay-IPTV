@@ -79,6 +79,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/experts/{expertProfile}/report', [ExpertReportController::class, 'store']);
 
+    Route::get('/dm/conversations', [\App\Http\Controllers\Api\DirectMessageController::class, 'conversations']);
+    Route::get('/dm/{user}', [\App\Http\Controllers\Api\DirectMessageController::class, 'thread']);
+    Route::post('/dm/{user}', [\App\Http\Controllers\Api\DirectMessageController::class, 'send']);
+
+    Route::get('/notification-preferences', [\App\Http\Controllers\Api\NotificationPreferenceController::class, 'show']);
+    Route::patch('/notification-preferences', [\App\Http\Controllers\Api\NotificationPreferenceController::class, 'update']);
+
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead']);

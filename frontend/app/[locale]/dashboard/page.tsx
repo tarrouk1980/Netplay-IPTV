@@ -56,6 +56,12 @@ export default function DashboardPage() {
           <Link href="/dashboard/favorites" className="text-sm text-indigo-600 hover:underline">
             {t('myFavorites')}
           </Link>
+          <Link href="/dashboard/notification-settings" className="text-sm text-indigo-600 hover:underline">
+            {t('notifSettings')}
+          </Link>
+          <Link href="/dashboard/messages" className="text-sm text-indigo-600 hover:underline">
+            {t('messages')}
+          </Link>
         </div>
       </div>
 

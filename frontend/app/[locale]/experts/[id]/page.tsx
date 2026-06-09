@@ -307,6 +307,15 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
             {t('bookSession')}
           </button>
         </form>
+
+        {user && (
+          <Link
+            href={`/dashboard/messages?partnerId=${expert.user.id}`}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-full border border-neutral-300 px-6 py-3 text-sm font-medium text-neutral-700 hover:border-indigo-300 hover:text-indigo-600"
+          >
+            💬 {t('contactExpert')}
+          </Link>
+        )}
       </aside>
     {showReportModal && (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">

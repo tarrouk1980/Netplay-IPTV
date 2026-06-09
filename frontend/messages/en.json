@@ -74,7 +74,8 @@
     "reportDetails": "Additional details (optional)",
     "reportSubmit": "Submit report",
     "reportCancel": "Cancel",
-    "reportSent": "Report submitted. Thank you!"
+    "reportSent": "Report submitted. Thank you!",
+    "contactExpert": "Contact expert"
   },
   "auth": {
     "name": "Full name",
@@ -152,7 +153,9 @@
     "payments": "Payments",
     "noBookings": "You have no bookings yet.",
     "myFavorites": "My favorites",
-    "myReferrals": "My referrals"
+    "myReferrals": "My referrals",
+    "notifSettings": "Notifications",
+    "messages": "Messages"
   },
   "expert": {
     "createProfileTitle": "Create my expert profile",
@@ -345,5 +348,27 @@
     "copied": "Copied!",
     "referredUsers": "Referred users",
     "noReferrals": "No referrals yet."
+  },
+  "notifSettings": {
+    "title": "Email notifications",
+    "back": "Dashboard",
+    "bookingUpdates": "Booking updates",
+    "bookingUpdatesDesc": "Confirmation, cancellation, session completion",
+    "newMessages": "New messages",
+    "newMessagesDesc": "Alerts for messages received in chat",
+    "reviewNotifications": "Reviews and replies",
+    "reviewNotificationsDesc": "Notifications for your reviews and replies",
+    "promotions": "Promotions and news",
+    "promotionsDesc": "Special offers and new SKOLZ features",
+    "save": "Save",
+    "saved": "Saved ✓"
+  },
+  "dm": {
+    "title": "Messages",
+    "back": "Dashboard",
+    "noConversations": "No conversations.",
+    "selectConversation": "Select a conversation.",
+    "typePlaceholder": "Write a message...",
+    "send": "Send"
   }
 }

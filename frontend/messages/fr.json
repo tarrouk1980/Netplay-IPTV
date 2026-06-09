@@ -74,7 +74,8 @@
     "reportDetails": "Détails supplémentaires (optionnel)",
     "reportSubmit": "Envoyer le signalement",
     "reportCancel": "Annuler",
-    "reportSent": "Signalement envoyé. Merci !"
+    "reportSent": "Signalement envoyé. Merci !",
+    "contactExpert": "Contacter l'expert"
   },
   "auth": {
     "name": "Nom complet",
@@ -152,7 +153,9 @@
     "payments": "Paiements",
     "noBookings": "Vous n'avez aucune réservation pour le moment.",
     "myFavorites": "Mes favoris",
-    "myReferrals": "Mes parrainages"
+    "myReferrals": "Mes parrainages",
+    "notifSettings": "Notifications",
+    "messages": "Messages"
   },
   "expert": {
     "createProfileTitle": "Créer mon profil expert",
@@ -345,5 +348,27 @@
     "copied": "Copié !",
     "referredUsers": "Personnes parrainées",
     "noReferrals": "Aucun parrainage pour le moment."
+  },
+  "notifSettings": {
+    "title": "Notifications par email",
+    "back": "Tableau de bord",
+    "bookingUpdates": "Mises à jour de réservation",
+    "bookingUpdatesDesc": "Confirmation, annulation, complétion de séances",
+    "newMessages": "Nouveaux messages",
+    "newMessagesDesc": "Alertes pour les messages reçus dans le chat",
+    "reviewNotifications": "Avis et réponses",
+    "reviewNotificationsDesc": "Notifications pour vos avis et réponses",
+    "promotions": "Promotions et actualités",
+    "promotionsDesc": "Offres spéciales et nouvelles fonctionnalités SKOLZ",
+    "save": "Enregistrer",
+    "saved": "Enregistré ✓"
+  },
+  "dm": {
+    "title": "Messages",
+    "back": "Tableau de bord",
+    "noConversations": "Aucune conversation.",
+    "selectConversation": "Sélectionnez une conversation.",
+    "typePlaceholder": "Écrire un message...",
+    "send": "Envoyer"
   }
 }

@@ -74,7 +74,8 @@
     "reportDetails": "تفاصيل إضافية (اختياري)",
     "reportSubmit": "إرسال البلاغ",
     "reportCancel": "إلغاء",
-    "reportSent": "تم إرسال البلاغ. شكراً!"
+    "reportSent": "تم إرسال البلاغ. شكراً!",
+    "contactExpert": "تواصل مع الخبير"
   },
   "auth": {
     "name": "الاسم الكامل",
@@ -152,7 +153,9 @@
     "payments": "المدفوعات",
     "noBookings": "ليس لديك أي حجوزات حتى الآن.",
     "myFavorites": "المفضلة",
-    "myReferrals": "إحالاتي"
+    "myReferrals": "إحالاتي",
+    "notifSettings": "الإشعارات",
+    "messages": "الرسائل"
   },
   "expert": {
     "createProfileTitle": "إنشاء ملفي كخبير",
@@ -345,5 +348,27 @@
     "copied": "تم النسخ!",
     "referredUsers": "المستخدمون المُحالون",
     "noReferrals": "لا إحالات بعد."
+  },
+  "notifSettings": {
+    "title": "إشعارات البريد الإلكتروني",
+    "back": "لوحة التحكم",
+    "bookingUpdates": "تحديثات الحجز",
+    "bookingUpdatesDesc": "التأكيد والإلغاء وإتمام الجلسات",
+    "newMessages": "الرسائل الجديدة",
+    "newMessagesDesc": "تنبيهات للرسائل المستلمة في الدردشة",
+    "reviewNotifications": "التقييمات والردود",
+    "reviewNotificationsDesc": "إشعارات لتقييماتك وردودك",
+    "promotions": "العروض والأخبار",
+    "promotionsDesc": "العروض الخاصة وميزات SKOLZ الجديدة",
+    "save": "حفظ",
+    "saved": "تم الحفظ ✓"
+  },
+  "dm": {
+    "title": "الرسائل",
+    "back": "لوحة التحكم",
+    "noConversations": "لا توجد محادثات.",
+    "selectConversation": "اختر محادثة.",
+    "typePlaceholder": "اكتب رسالة...",
+    "send": "إرسال"
   }
 }
