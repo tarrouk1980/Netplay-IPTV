@@ -290,7 +290,9 @@
     "allBookings": "All bookings",
     "client": "Client",
     "expert": "Expert",
-    "date": "Date"
+    "date": "Date",
+    "pendingPayouts": "Pending payouts",
+    "markPaid": "Mark as paid"
   },
   "messaging": {
     "title": "Messages",

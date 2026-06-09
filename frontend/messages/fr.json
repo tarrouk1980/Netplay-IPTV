@@ -290,7 +290,9 @@
     "allBookings": "Toutes les réservations",
     "client": "Client",
     "expert": "Expert",
-    "date": "Date"
+    "date": "Date",
+    "pendingPayouts": "Virements en attente",
+    "markPaid": "Marquer payé"
   },
   "messaging": {
     "title": "Messages",

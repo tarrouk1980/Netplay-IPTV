@@ -48,6 +48,7 @@ export default function AdminDashboardPage() {
       <ExpertProfileModeration />
       <ReportsPanel />
       <AdminBookingsPanel />
+      <AdminPayoutsPanel />
       <CategoryManagement />
       <SubscriptionPlanManagement />
       <CouponManagement />
@@ -554,6 +555,51 @@ function AdminBookingsPanel() {
             ))}
           </tbody>
         </table>
+      </div>
+    </section>
+  );
+}
+
+function AdminPayoutsPanel() {
+  const t = useTranslations('admin');
+  const qc = useQueryClient();
+
+  const {data: payouts} = useQuery({
+    queryKey: ['admin-payouts'],
+    queryFn: async () => {
+      const {data} = await api.get<Array<{id: number; amount: number; status: string; period_start: string; period_end: string; expert: {user: {name: string}}; created_at: string}>>('/admin/payouts');
+      return data;
+    },
+  });
+
+  const markPaid = useMutation({
+    mutationFn: async (id: number) => api.patch(`/admin/payouts/${id}`, {status: 'paid'}),
+    onSuccess: () => qc.invalidateQueries({queryKey: ['admin-payouts']}),
+  });
+
+  const pending = payouts?.filter((p) => p.status === 'pending') ?? [];
+
+  if (pending.length === 0) return null;
+
+  return (
+    <section>
+      <h2 className="mb-4 font-semibold">{t('pendingPayouts')} ({pending.length})</h2>
+      <div className="space-y-2">
+        {pending.map((payout) => (
+          <div key={payout.id} className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm">
+            <div>
+              <p className="font-medium">{payout.expert?.user?.name}</p>
+              <p className="text-xs text-neutral-500">{payout.amount.toFixed(2)} EUR · {new Date(payout.created_at).toLocaleDateString()}</p>
+            </div>
+            <button
+              onClick={() => markPaid.mutate(payout.id)}
+              disabled={markPaid.isPending}
+              className="rounded-full bg-green-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+            >
+              {t('markPaid')}
+            </button>
+          </div>
+        ))}
       </div>
     </section>
   );

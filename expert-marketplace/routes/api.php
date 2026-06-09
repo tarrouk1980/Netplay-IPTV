@@ -115,6 +115,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/categories/{category}', [AdminCategoryController::class, 'destroy']);
 
         Route::get('/bookings', [\App\Http\Controllers\Api\Admin\BookingAdminController::class, 'index']);
+        Route::get('/payouts', [\App\Http\Controllers\Api\Admin\PayoutAdminController::class, 'index']);
+        Route::patch('/payouts/{payout}', [\App\Http\Controllers\Api\Admin\PayoutAdminController::class, 'update']);
         Route::get('/users', [\App\Http\Controllers\Api\Admin\UserAdminController::class, 'index']);
         Route::get('/reports', [\App\Http\Controllers\Api\Admin\ExpertReportAdminController::class, 'index']);
         Route::patch('/reports/{expertReport}', [\App\Http\Controllers\Api\Admin\ExpertReportAdminController::class, 'update']);

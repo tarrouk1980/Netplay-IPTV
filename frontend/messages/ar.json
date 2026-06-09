@@ -290,7 +290,9 @@
     "allBookings": "كل الحجوزات",
     "client": "عميل",
     "expert": "خبير",
-    "date": "تاريخ"
+    "date": "تاريخ",
+    "pendingPayouts": "المدفوعات المعلقة",
+    "markPaid": "تحديد كمدفوع"
   },
   "messaging": {
     "title": "الرسائل",
