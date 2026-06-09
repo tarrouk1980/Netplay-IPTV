@@ -103,7 +103,9 @@
     "currentPassword": "كلمة المرور الحالية",
     "changePasswordSubmit": "تحديث كلمة المرور",
     "changePasswordSuccess": "تم تحديث كلمة المرور بنجاح.",
-    "currentPasswordIncorrect": "كلمة المرور الحالية غير صحيحة."
+    "currentPasswordIncorrect": "كلمة المرور الحالية غير صحيحة.",
+    "referralCode": "كود الإحالة",
+    "referralCodeOptional": "اختياري"
   },
   "booking": {
     "selectSlot": "اختر موعدًا",
@@ -149,7 +151,8 @@
     "availability": "مواعيدي المتاحة",
     "payments": "المدفوعات",
     "noBookings": "ليس لديك أي حجوزات حتى الآن.",
-    "myFavorites": "المفضلة"
+    "myFavorites": "المفضلة",
+    "myReferrals": "إحالاتي"
   },
   "expert": {
     "createProfileTitle": "إنشاء ملفي كخبير",
@@ -332,5 +335,15 @@
     "loading": "جار التحميل...",
     "brut": "إجمالي",
     "commission": "عمولة"
+  },
+  "referrals": {
+    "title": "إحالاتي",
+    "back": "لوحة التحكم",
+    "yourCode": "كود الإحالة الخاص بك",
+    "share": "شارك هذا الرابط لدعوة أصدقائك!",
+    "copy": "نسخ",
+    "copied": "تم النسخ!",
+    "referredUsers": "المستخدمون المُحالون",
+    "noReferrals": "لا إحالات بعد."
   }
 }

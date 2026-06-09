@@ -103,7 +103,9 @@
     "currentPassword": "Current password",
     "changePasswordSubmit": "Update password",
     "changePasswordSuccess": "Your password has been updated.",
-    "currentPasswordIncorrect": "Your current password is incorrect."
+    "currentPasswordIncorrect": "Your current password is incorrect.",
+    "referralCode": "Referral code",
+    "referralCodeOptional": "Optional"
   },
   "booking": {
     "selectSlot": "Choose a time slot",
@@ -149,7 +151,8 @@
     "availability": "My time slots",
     "payments": "Payments",
     "noBookings": "You have no bookings yet.",
-    "myFavorites": "My favorites"
+    "myFavorites": "My favorites",
+    "myReferrals": "My referrals"
   },
   "expert": {
     "createProfileTitle": "Create my expert profile",
@@ -332,5 +335,15 @@
     "loading": "Loading...",
     "brut": "Gross",
     "commission": "Commission"
+  },
+  "referrals": {
+    "title": "My referrals",
+    "back": "Dashboard",
+    "yourCode": "Your referral code",
+    "share": "Share this link to invite your friends!",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "referredUsers": "Referred users",
+    "noReferrals": "No referrals yet."
   }
 }

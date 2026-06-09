@@ -3,11 +3,13 @@
 import {useState} from 'react';
 import {useTranslations} from 'next-intl';
 import {Link, useRouter} from '@/i18n/navigation';
+import {useSearchParams} from 'next/navigation';
 import {useAuth} from '@/lib/auth-context';
 
 export default function RegisterPage() {
   const t = useTranslations('auth');
   const router = useRouter();
+  const searchParams = useSearchParams();
   const {register} = useAuth();
   const [form, setForm] = useState({
     name: '',
@@ -15,6 +17,7 @@ export default function RegisterPage() {
     password: '',
     password_confirmation: '',
     role: 'client',
+    referral_code: searchParams.get('ref') ?? '',
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -103,6 +106,16 @@ export default function RegisterPage() {
             <option value="client">{t('roleClient')}</option>
             <option value="expert">{t('roleExpert')}</option>
           </select>
+        </div>
+
+        <div>
+          <label className="mb-1 block text-xs text-neutral-500">{t('referralCode')}</label>
+          <input
+            value={form.referral_code}
+            onChange={update('referral_code')}
+            placeholder={t('referralCodeOptional')}
+            className="w-full rounded border border-neutral-300 px-3 py-2 text-sm uppercase"
+          />
         </div>
 
         {error && <p className="text-sm text-red-600">{error}</p>}

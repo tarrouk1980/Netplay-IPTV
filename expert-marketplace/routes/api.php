@@ -44,6 +44,7 @@ Route::post('/coupons/validate', [CouponController::class, 'validate']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+    Route::get('/me/referrals', [AuthController::class, 'referrals']);
     Route::patch('/me', [AuthController::class, 'updateProfile']);
     Route::post('/change-password', [AuthController::class, 'changePassword']);
 

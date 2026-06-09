@@ -22,11 +22,20 @@ class AuthController extends Controller
             'phone' => ['nullable', 'string', 'max:30'],
             'country' => ['nullable', 'string', 'max:100'],
             'language' => ['nullable', 'string', 'max:10'],
+            'referral_code' => ['nullable', 'string', 'max:12'],
         ]);
+
+        $referredBy = null;
+        if (!empty($data['referral_code'])) {
+            $referrer = User::where('referral_code', strtoupper($data['referral_code']))->first();
+            $referredBy = $referrer?->id;
+        }
 
         $user = User::create([
             ...$data,
             'password' => Hash::make($data['password']),
+            'referral_code' => strtoupper(substr(md5(uniqid()), 0, 8)),
+            'referred_by' => $referredBy,
         ]);
 
         return response()->json([
@@ -64,6 +73,21 @@ class AuthController extends Controller
     public function me(Request $request)
     {
         return response()->json($request->user()->load('expertProfile'));
+    }
+
+    public function referrals(Request $request)
+    {
+        $user = $request->user();
+        $referred = User::where('referred_by', $user->id)
+            ->select('id', 'name', 'created_at')
+            ->get();
+
+        return response()->json([
+            'referral_code' => $user->referral_code,
+            'referral_url' => config('app.frontend_url', 'http://localhost:3010') . '/register?ref=' . $user->referral_code,
+            'referred_users' => $referred,
+            'total_referrals' => $referred->count(),
+        ]);
     }
 
     public function updateProfile(Request $request)

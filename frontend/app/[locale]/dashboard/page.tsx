@@ -49,9 +49,14 @@ export default function DashboardPage() {
 
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">{t('myBookings')}</h1>
-        <Link href="/dashboard/favorites" className="text-sm text-indigo-600 hover:underline">
-          {t('myFavorites')}
-        </Link>
+        <div className="flex gap-3">
+          <Link href="/dashboard/referrals" className="text-sm text-indigo-600 hover:underline">
+            {t('myReferrals')}
+          </Link>
+          <Link href="/dashboard/favorites" className="text-sm text-indigo-600 hover:underline">
+            {t('myFavorites')}
+          </Link>
+        </div>
       </div>
 
       {data && data.data.length === 0 && <p className="text-neutral-500">{t('noBookings')}</p>}
