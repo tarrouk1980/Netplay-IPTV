@@ -234,13 +234,23 @@ export default function ExpertsPage() {
               <div className="mt-2">
                 <OnlineBadge lastSeenAt={expert.last_seen_at} />
               </div>
+              {expert.headline && (
+                <p className="mt-1 text-xs font-medium text-neutral-700">{expert.headline}</p>
+              )}
               <p className="mt-2 line-clamp-2 text-sm text-neutral-600">{expert.bio}</p>
+              {expert.specializations && expert.specializations.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {expert.specializations.slice(0, 3).map((s) => (
+                    <span key={s} className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] text-indigo-700">{s}</span>
+                  ))}
+                </div>
+              )}
               <div className="mt-3 flex items-center justify-between text-sm">
                 <span className="font-semibold text-indigo-600">
                   {expert.hourly_rate} {expert.currency}
                   <span className="font-normal text-neutral-500"> {t('perHour')}</span>
                 </span>
-                <span className="text-amber-500">★ {expert.rating_avg.toFixed(1)}</span>
+                <span className="text-amber-500">★ {expert.rating_avg.toFixed(1)} <span className="text-xs text-neutral-400">({expert.total_sessions})</span></span>
               </div>
             </Link>
           ))}
