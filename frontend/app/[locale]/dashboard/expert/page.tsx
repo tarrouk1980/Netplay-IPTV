@@ -368,9 +368,15 @@ function ExpertWorkspace() {
   return (
     <div className="space-y-10">
       <StatsCards />
-      <div>
+      <div className="flex gap-3">
         <Link href="/dashboard/expert/earnings" className="inline-flex items-center gap-1 rounded-full border border-indigo-300 px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50">
           💰 {t('viewEarnings')}
+        </Link>
+        <Link href="/dashboard/expert/payouts" className="inline-flex items-center gap-1 rounded-full border border-indigo-300 px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50">
+          🏦 {t('viewPayouts')}
+        </Link>
+        <Link href="/dashboard/messages" className="inline-flex items-center gap-1 rounded-full border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-50">
+          💬 {t('viewMessages')}
         </Link>
       </div>
       <AvatarSettings />

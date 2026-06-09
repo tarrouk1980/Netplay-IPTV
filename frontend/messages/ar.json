@@ -228,7 +228,9 @@
     "blockedReasonPlaceholder": "السبب (اختياري)",
     "blockedAdd": "حظر",
     "blockedEmpty": "لا توجد أيام محظورة.",
-    "viewEarnings": "عرض أرباحي"
+    "viewEarnings": "عرض أرباحي",
+    "viewPayouts": "المدفوعات",
+    "viewMessages": "الرسائل"
   },
   "common": {
     "loading": "جارٍ التحميل...",
@@ -370,5 +372,18 @@
     "selectConversation": "اختر محادثة.",
     "typePlaceholder": "اكتب رسالة...",
     "send": "إرسال"
+  },
+  "payouts": {
+    "title": "مدفوعاتي",
+    "back": "لوحة التحكم",
+    "pendingEarnings": "الأرباح المتاحة",
+    "requestPayout": "طلب دفع",
+    "requesting": "جار المعالجة...",
+    "requestSent": "تم إرسال الطلب!",
+    "error": "خطأ.",
+    "history": "سجل المدفوعات",
+    "noPayouts": "لا مدفوعات بعد.",
+    "status.pending": "في الانتظار",
+    "status.paid": "مدفوع"
   }
 }

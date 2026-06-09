@@ -228,7 +228,9 @@
     "blockedReasonPlaceholder": "Raison (optionnel)",
     "blockedAdd": "Bloquer",
     "blockedEmpty": "Aucun jour bloqué.",
-    "viewEarnings": "Voir mes revenus"
+    "viewEarnings": "Voir mes revenus",
+    "viewPayouts": "Virements",
+    "viewMessages": "Messages"
   },
   "common": {
     "loading": "Chargement...",
@@ -370,5 +372,18 @@
     "selectConversation": "Sélectionnez une conversation.",
     "typePlaceholder": "Écrire un message...",
     "send": "Envoyer"
+  },
+  "payouts": {
+    "title": "Mes virements",
+    "back": "Tableau de bord",
+    "pendingEarnings": "Revenus disponibles",
+    "requestPayout": "Demander un virement",
+    "requesting": "Traitement...",
+    "requestSent": "Demande envoyée !",
+    "error": "Erreur.",
+    "history": "Historique des virements",
+    "noPayouts": "Aucun virement pour le moment.",
+    "status.pending": "En attente",
+    "status.paid": "Payé"
   }
 }

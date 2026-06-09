@@ -228,7 +228,9 @@
     "blockedReasonPlaceholder": "Reason (optional)",
     "blockedAdd": "Block",
     "blockedEmpty": "No blocked days.",
-    "viewEarnings": "View my earnings"
+    "viewEarnings": "View my earnings",
+    "viewPayouts": "Payouts",
+    "viewMessages": "Messages"
   },
   "common": {
     "loading": "Loading...",
@@ -370,5 +372,18 @@
     "selectConversation": "Select a conversation.",
     "typePlaceholder": "Write a message...",
     "send": "Send"
+  },
+  "payouts": {
+    "title": "My payouts",
+    "back": "Dashboard",
+    "pendingEarnings": "Available earnings",
+    "requestPayout": "Request payout",
+    "requesting": "Processing...",
+    "requestSent": "Request sent!",
+    "error": "Error.",
+    "history": "Payout history",
+    "noPayouts": "No payouts yet.",
+    "status.pending": "Pending",
+    "status.paid": "Paid"
   }
 }
