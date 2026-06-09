@@ -12,7 +12,8 @@
     "referrals": "Referrals",
     "legal": "Legal",
     "terms": "Terms of use",
-    "privacy": "Privacy policy"
+    "privacy": "Privacy policy",
+    "plans": "Plans"
   },
   "nav": {
     "home": "Home",
@@ -20,7 +21,8 @@
     "login": "Log in",
     "register": "Sign up",
     "dashboard": "Dashboard",
-    "logout": "Log out"
+    "logout": "Log out",
+    "plans": "Plans"
   },
   "home": {
     "title": "Find the expert you need",
@@ -457,5 +459,16 @@
     "noGifts": "No gifts.",
     "redeemed": "Redeemed",
     "notRedeemed": "Not redeemed"
+  },
+  "plans": {
+    "title": "Our plans",
+    "subtitle": "Choose the plan that fits your needs.",
+    "activePlan": "Active plan: {name} — renews on {date}",
+    "cancelPlan": "Cancel my plan",
+    "currentBadge": "Current",
+    "subscribe": "Subscribe",
+    "month": "month",
+    "year": "year",
+    "noPlans": "No plans available at the moment."
   }
 }

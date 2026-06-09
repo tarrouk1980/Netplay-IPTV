@@ -30,6 +30,9 @@ export function Header() {
           <Link href="/experts" className="hover:text-indigo-600">
             {t('experts')}
           </Link>
+          <Link href="/plans" className="hover:text-indigo-600">
+            {t('plans')}
+          </Link>
 
           {user ? (
             <>

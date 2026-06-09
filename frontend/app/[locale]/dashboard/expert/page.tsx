@@ -8,6 +8,7 @@ import {api, type Category, type AvailabilitySlot, type Booking, type Paginated,
 import {useAuth} from '@/lib/auth-context';
 import {AvatarSettings} from '@/components/avatar-settings';
 import {ChangePasswordForm} from '@/components/change-password-form';
+import {ReviewList} from '@/components/review-list';
 
 export default function ExpertDashboardPage() {
   const router = useRouter();
@@ -455,6 +456,7 @@ function ExpertWorkspace() {
       <AvailabilityManager />
       <BlockedDatesManager />
       <IncomingBookings />
+      <ReviewList expertId={profile.id} />
     </div>
   );
 }

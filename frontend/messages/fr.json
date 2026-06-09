@@ -12,7 +12,8 @@
     "referrals": "Parrainages",
     "legal": "Légal",
     "terms": "CGU",
-    "privacy": "Politique de confidentialité"
+    "privacy": "Politique de confidentialité",
+    "plans": "Formules"
   },
   "nav": {
     "home": "Accueil",
@@ -20,7 +21,8 @@
     "login": "Connexion",
     "register": "Inscription",
     "dashboard": "Tableau de bord",
-    "logout": "Déconnexion"
+    "logout": "Déconnexion",
+    "plans": "Formules"
   },
   "home": {
     "title": "Trouvez l'expert qu'il vous faut",
@@ -457,5 +459,16 @@
     "noGifts": "Aucun cadeau.",
     "redeemed": "Utilisé",
     "notRedeemed": "Non utilisé"
+  },
+  "plans": {
+    "title": "Nos formules",
+    "subtitle": "Choisissez la formule qui correspond à vos besoins.",
+    "activePlan": "Formule active : {name} — renouvellement le {date}",
+    "cancelPlan": "Annuler ma formule",
+    "currentBadge": "Actuel",
+    "subscribe": "Souscrire",
+    "month": "mois",
+    "year": "an",
+    "noPlans": "Aucune formule disponible pour le moment."
   }
 }
