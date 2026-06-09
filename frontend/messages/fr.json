@@ -92,7 +92,9 @@
     "reportSubmit": "Envoyer le signalement",
     "reportCancel": "Annuler",
     "reportSent": "Signalement envoyé. Merci !",
-    "contactExpert": "Contacter l'expert"
+    "contactExpert": "Contacter l'expert",
+    "joinWaitlist": "Me mettre sur liste d'attente",
+    "waitlistJoined": "Vous êtes sur la liste d'attente !"
   },
   "auth": {
     "name": "Nom complet",

@@ -80,6 +80,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/bookings/{booking}/messages', [MessageController::class, 'store']);
 
     Route::post('/experts/{expertProfile}/report', [ExpertReportController::class, 'store']);
+    Route::post('/experts/{expertProfile}/waitlist', [\App\Http\Controllers\Api\WaitlistController::class, 'join']);
+    Route::delete('/experts/{expertProfile}/waitlist', [\App\Http\Controllers\Api\WaitlistController::class, 'leave']);
 
     Route::get('/support-tickets', [\App\Http\Controllers\Api\SupportTicketController::class, 'index']);
     Route::post('/support-tickets', [\App\Http\Controllers\Api\SupportTicketController::class, 'store']);

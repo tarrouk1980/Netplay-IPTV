@@ -92,7 +92,9 @@
     "reportSubmit": "إرسال البلاغ",
     "reportCancel": "إلغاء",
     "reportSent": "تم إرسال البلاغ. شكراً!",
-    "contactExpert": "تواصل مع الخبير"
+    "contactExpert": "تواصل مع الخبير",
+    "joinWaitlist": "الانضمام إلى قائمة الانتظار",
+    "waitlistJoined": "أنت في قائمة الانتظار!"
   },
   "auth": {
     "name": "الاسم الكامل",

@@ -92,7 +92,9 @@
     "reportSubmit": "Submit report",
     "reportCancel": "Cancel",
     "reportSent": "Report submitted. Thank you!",
-    "contactExpert": "Contact expert"
+    "contactExpert": "Contact expert",
+    "joinWaitlist": "Join waitlist",
+    "waitlistJoined": "You're on the waitlist!"
   },
   "auth": {
     "name": "Full name",

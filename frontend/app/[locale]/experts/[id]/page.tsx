@@ -60,6 +60,7 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
   const [reportReason, setReportReason] = useState('');
   const [reportDetails, setReportDetails] = useState('');
   const [reportSuccess, setReportSuccess] = useState(false);
+  const [waitlisted, setWaitlisted] = useState(false);
 
   const {data: expert} = useQuery({
     queryKey: ['expert', id],
@@ -332,6 +333,22 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
           >
             💬 {t('contactExpert')}
           </Link>
+        )}
+
+        {user && !waitlisted && (
+          <button
+            type="button"
+            onClick={async () => {
+              await api.post(`/experts/${expert.id}/waitlist`);
+              setWaitlisted(true);
+            }}
+            className="mt-2 w-full text-center text-xs text-neutral-400 hover:text-indigo-600 hover:underline"
+          >
+            {t('joinWaitlist')}
+          </button>
+        )}
+        {waitlisted && (
+          <p className="mt-2 text-center text-xs text-green-600">{t('waitlistJoined')}</p>
         )}
       </aside>
     {showReportModal && (
