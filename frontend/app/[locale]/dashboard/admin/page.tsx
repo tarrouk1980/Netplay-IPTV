@@ -158,6 +158,13 @@ function ExpertProfileModeration() {
     onSuccess: () => queryClient.invalidateQueries({queryKey: ['admin', 'expert-profiles']}),
   });
 
+  const deleteProfile = useMutation({
+    mutationFn: async (id: number) => {
+      await api.delete(`/admin/expert-profiles/${id}`);
+    },
+    onSuccess: () => queryClient.invalidateQueries({queryKey: ['admin', 'expert-profiles']}),
+  });
+
   return (
     <section className="rounded-xl border border-neutral-200 bg-white p-6">
       <div className="mb-4 flex items-center justify-between">
@@ -216,6 +223,15 @@ function ExpertProfileModeration() {
                 className={`rounded-full px-3 py-1.5 text-xs font-medium ${(profile as any).featured ? 'bg-amber-500 text-white' : 'border border-amber-400 text-amber-600 hover:bg-amber-50'}`}
               >
                 ★ {(profile as any).featured ? t('unfeature') : t('feature')}
+              </button>
+              <button
+                onClick={() => {
+                  if (confirm(t('deleteConfirm'))) deleteProfile.mutate(profile.id);
+                }}
+                disabled={deleteProfile.isPending}
+                className="rounded-full border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+              >
+                🗑
               </button>
             </div>
           </div>

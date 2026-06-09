@@ -276,7 +276,8 @@
     "profileUpdated": "Profile updated successfully.",
     "profileCompletion": "Profile completion",
     "profileCompletionHint": "Complete your profile to attract more clients (headline, specializations, languages, links).",
-    "views": "views"
+    "views": "views",
+    "previewProfile": "Preview my profile"
   },
   "common": {
     "loading": "Loading...",
@@ -356,7 +357,8 @@
     "month": "Month",
     "sessions": "Sessions",
     "gmv": "Gross volume",
-    "commission": "Commission"
+    "commission": "Commission",
+    "deleteConfirm": "Delete this expert profile?"
   },
   "messaging": {
     "title": "Messages",

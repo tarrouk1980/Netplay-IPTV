@@ -466,6 +466,9 @@ function ExpertWorkspace() {
         <Link href="/dashboard/messages" className="inline-flex items-center gap-1 rounded-full border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-50">
           💬 {t('viewMessages')}
         </Link>
+        <Link href={`/experts/${profile.id}`} target="_blank" className="inline-flex items-center gap-1 rounded-full border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-50">
+          👁 {t('previewProfile')}
+        </Link>
       </div>
       <AvatarSettings />
       <ChangePasswordForm />

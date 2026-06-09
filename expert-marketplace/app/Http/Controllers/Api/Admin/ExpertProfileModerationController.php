@@ -30,4 +30,10 @@ class ExpertProfileModerationController extends Controller
 
         return $expertProfile;
     }
+
+    public function destroy(ExpertProfile $expertProfile): \Illuminate\Http\JsonResponse
+    {
+        $expertProfile->delete();
+        return response()->json(['message' => 'Profil supprimé.']);
+    }
 }

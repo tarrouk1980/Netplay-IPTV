@@ -276,7 +276,8 @@
     "profileUpdated": "تم تحديث الملف الشخصي بنجاح.",
     "profileCompletion": "اكتمال الملف الشخصي",
     "profileCompletionHint": "أكمل ملفك الشخصي لجذب المزيد من العملاء (العنوان، التخصصات، اللغات، الروابط).",
-    "views": "مشاهدة"
+    "views": "مشاهدة",
+    "previewProfile": "معاينة ملفي الشخصي"
   },
   "common": {
     "loading": "جارٍ التحميل...",
@@ -356,7 +357,8 @@
     "month": "الشهر",
     "sessions": "الجلسات",
     "gmv": "الحجم الإجمالي",
-    "commission": "العمولة"
+    "commission": "العمولة",
+    "deleteConfirm": "حذف ملف الخبير هذا؟"
   },
   "messaging": {
     "title": "الرسائل",

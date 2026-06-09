@@ -124,6 +124,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('/expert-profiles', [ExpertProfileModerationController::class, 'index']);
         Route::patch('/expert-profiles/{expertProfile}', [ExpertProfileModerationController::class, 'update']);
+        Route::delete('/expert-profiles/{expertProfile}', [ExpertProfileModerationController::class, 'destroy']);
 
         Route::post('/categories', [AdminCategoryController::class, 'store']);
         Route::patch('/categories/{category}', [AdminCategoryController::class, 'update']);

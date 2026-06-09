@@ -9,6 +9,7 @@ import {api, type Category, type ExpertProfile, type Paginated} from '@/lib/api'
 import {Avatar} from '@/components/avatar';
 import {FavoriteButton, useFavoriteIds} from '@/components/favorite-button';
 import {OnlineBadge} from '@/components/online-badge';
+import {ExpertCardSkeleton} from '@/components/expert-card-skeleton';
 
 export default function ExpertsPage() {
   const t = useTranslations('experts');
@@ -200,7 +201,11 @@ export default function ExpertsPage() {
           )}
         </div>
 
-        {isLoading && <p className="text-neutral-500">{t('noResults')}</p>}
+        {isLoading && (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({length: 6}).map((_, i) => <ExpertCardSkeleton key={i} />)}
+          </div>
+        )}
 
         {data && data.data.length === 0 && <p className="text-neutral-500">{t('noResults')}</p>}
 
