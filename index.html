@@ -1493,13 +1493,11 @@ const STATIONS = [
     flag: '🇹🇳', flagCode: 'tn',
     emoji: '🎤',
     freq: '100.1',
-    quality: 'قالون عن نافع · MP3',
-    type: 'playlist',
-    archiveId: 'Abu-Abdullah-Munir-Al-Tounsi',
-    baseUrl: 'https://archive.org/download/Abu-Abdullah-Munir-Al-Tounsi/',
-    fallbackBase: 'https://download.quranicaudio.com/quran/qalon/',
+    quality: 'قالون عن نافع · بث مباشر',
     urls: [
-      'https://archive.org/download/Abu-Abdullah-Munir-Al-Tounsi/001.mp3'
+      'https://qurango.net/radio/qalon',
+      'https://qurango.net/radio/warsh',
+      'https://stream.radiojar.com/0tpy1h0kxtzuv'
     ]
   },
   {
@@ -3106,7 +3104,6 @@ document.addEventListener('keydown', e => {
 //  AUDIO FOR ISLAMIC SERVICES
 // ════════════════════════════════════════════════════════════
 const serviceAudio = new Audio();
-serviceAudio.crossOrigin = 'anonymous';
 let _serviceAudioPlaying = false;
 
 // Play actual Quran recitation for آية اليوم
@@ -3118,41 +3115,35 @@ function playVerseAudio() {
     _serviceAudioPlaying = false;
     return;
   }
-  // Use Husary recitation from alquran.cloud CDN
-  serviceAudio.src = `https://cdn.alquran.cloud/media/audio/ayah/ar.husary/${key}`;
-  serviceAudio.play().catch(() => {
-    // fallback: everyayah.com
-    const [s, a] = key.split(':');
-    serviceAudio.src = `https://everyayah.com/data/Husary_128kbps/${String(s).padStart(3,'0')}${String(a).padStart(3,'0')}.mp3`;
-    serviceAudio.play().catch(()=>{});
-  });
   _serviceAudioPlaying = true;
+  // everyayah.com — no CORS issues, reliable
+  const [s, a] = key.split(':');
+  const fn = `${String(s).padStart(3,'0')}${String(a).padStart(3,'0')}.mp3`;
+  serviceAudio.src = `https://everyayah.com/data/Husary_128kbps/${fn}`;
+  serviceAudio.play().catch(() => {
+    // fallback: alquran.cloud CDN
+    serviceAudio.src = `https://cdn.alquran.cloud/media/audio/ayah/ar.husary/${key}`;
+    serviceAudio.play().catch(() => { _serviceAudioPlaying = false; });
+  });
 }
 serviceAudio.addEventListener('ended', () => { _serviceAudioPlaying = false; });
+serviceAudio.addEventListener('error', () => { _serviceAudioPlaying = false; });
 
 // Text-to-speech for أذكار & حديث using browser TTS
 function speakText(text) {
-  if (!window.speechSynthesis) { speakGoogleTTS(text); return; }
-  if (speechSynthesis.speaking) { speechSynthesis.cancel(); return; }
-  const u = new SpeechSynthesisUtterance(text.replace(/[﴿﴾]/g,'').trim());
+  if (speechSynthesis && speechSynthesis.speaking) { speechSynthesis.cancel(); return; }
+  if (!window.speechSynthesis) return;
+  const clean = text.replace(/[﴿﴾]/g,'').trim();
+  const u = new SpeechSynthesisUtterance(clean);
   u.lang = 'ar';
   u.rate = 0.85;
   const voices = speechSynthesis.getVoices();
   const arVoice = voices.find(v => /^ar/i.test(v.lang));
   if (arVoice) u.voice = arVoice;
-  u.onerror = () => speakGoogleTTS(text);
   speechSynthesis.speak(u);
 }
 
-function speakGoogleTTS(text) {
-  const url = 'https://translate.google.com/translate_tts?ie=UTF-8&tl=ar&client=tw-ob&q='
-    + encodeURIComponent(text.replace(/[﴿﴾]/g,'').trim().slice(0,200));
-  serviceAudio.src = url;
-  serviceAudio.play().catch(()=>{});
-}
-
 if (window.speechSynthesis) {
-  speechSynthesis.getVoices();
   speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
 }
 
