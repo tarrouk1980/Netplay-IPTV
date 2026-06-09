@@ -6,6 +6,7 @@ import {routing} from '@/i18n/routing';
 import {Providers} from './providers';
 import {Header} from '@/components/header';
 import {Footer} from '@/components/footer';
+import {ScrollToTop} from '@/components/scroll-to-top';
 import '../globals.css';
 
 export const metadata: Metadata = {
@@ -54,6 +55,7 @@ export default async function LocaleLayout({
               <Header />
               <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
               <Footer />
+              <ScrollToTop />
             </div>
           </Providers>
         </NextIntlClientProvider>

@@ -552,5 +552,31 @@
     "q7A": "After a completed session, you can leave a 5-star rating with a comment from your booking page.",
     "q8Q": "How do I contact support?",
     "q8A": "Go to your dashboard > Support to open a ticket. Our team responds within 24 to 48 hours."
+  },
+  "terms": {
+    "title": "Terms of Service",
+    "lastUpdated": "Last updated: June 2026",
+    "s1Title": "Purpose",
+    "s1Body": "These terms govern the use of the SKOLZ platform. By registering, you unconditionally accept these terms.",
+    "s2Title": "Registration and account",
+    "s2Body": "You agree to provide accurate information when registering and to maintain the confidentiality of your credentials.",
+    "s3Title": "Platform use",
+    "s3Body": "SKOLZ is a platform connecting clients and experts. We do not guarantee continuous service availability.",
+    "s4Title": "Payments and refunds",
+    "s4Body": "Payments are processed by Stripe. Refunds are subject to our cancellation policy.",
+    "s5Title": "Termination",
+    "s5Body": "We reserve the right to suspend or terminate any account in case of violation of these terms."
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last updated: June 2026",
+    "s1Title": "Data collected",
+    "s1Body": "We collect your name, email, and profile information upon registration. Your payment data is managed by Stripe.",
+    "s2Title": "Data use",
+    "s2Body": "Your data is used for account management, bookings, and platform-related communications.",
+    "s3Title": "Data sharing",
+    "s3Body": "We do not sell your data. It may be shared with technical providers (Stripe, email services) in the context of service delivery.",
+    "s4Title": "Your rights",
+    "s4Body": "You have the right to access, rectify, and delete your data. Contact us through support."
   }
 }

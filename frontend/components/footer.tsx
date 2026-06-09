@@ -34,8 +34,8 @@ export function Footer() {
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-neutral-700">{t('legal')}</h3>
             <ul className="space-y-2 text-sm text-neutral-500">
               <li><Link href="/faq" className="hover:text-indigo-600">{t('faq')}</Link></li>
-              <li><span className="cursor-default">{t('terms')}</span></li>
-              <li><span className="cursor-default">{t('privacy')}</span></li>
+              <li><Link href="/terms" className="hover:text-indigo-600">{t('terms')}</Link></li>
+              <li><Link href="/privacy" className="hover:text-indigo-600">{t('privacy')}</Link></li>
             </ul>
           </div>
         </div>

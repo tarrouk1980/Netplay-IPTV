@@ -552,5 +552,31 @@
     "q7A": "Après une session complétée, vous pouvez laisser un avis noté sur 5 étoiles avec un commentaire depuis la page de votre réservation.",
     "q8Q": "Comment contacter le support ?",
     "q8A": "Rendez-vous dans votre tableau de bord > Support pour ouvrir un ticket. Notre équipe vous répond dans les 24 à 48 heures."
+  },
+  "terms": {
+    "title": "Conditions générales d'utilisation",
+    "lastUpdated": "Dernière mise à jour : juin 2026",
+    "s1Title": "Objet",
+    "s1Body": "Les présentes conditions régissent l'utilisation de la plateforme SKOLZ. En vous inscrivant, vous acceptez sans réserve ces conditions.",
+    "s2Title": "Inscription et compte",
+    "s2Body": "Vous vous engagez à fournir des informations exactes lors de votre inscription et à maintenir la confidentialité de vos identifiants.",
+    "s3Title": "Utilisation de la plateforme",
+    "s3Body": "SKOLZ est une plateforme de mise en relation entre clients et experts. Nous ne garantissons pas la disponibilité continue du service.",
+    "s4Title": "Paiements et remboursements",
+    "s4Body": "Les paiements sont traités par Stripe. Les remboursements sont soumis à notre politique d'annulation.",
+    "s5Title": "Résiliation",
+    "s5Body": "Nous nous réservons le droit de suspendre ou résilier tout compte en cas de violation de ces conditions."
+  },
+  "privacy": {
+    "title": "Politique de confidentialité",
+    "lastUpdated": "Dernière mise à jour : juin 2026",
+    "s1Title": "Données collectées",
+    "s1Body": "Nous collectons votre nom, email, et informations de profil lors de l'inscription. Vos données de paiement sont gérées par Stripe.",
+    "s2Title": "Utilisation des données",
+    "s2Body": "Vos données sont utilisées pour la gestion de votre compte, les réservations et les communications relatives à la plateforme.",
+    "s3Title": "Partage des données",
+    "s3Body": "Nous ne vendons pas vos données. Elles peuvent être partagées avec des prestataires techniques (Stripe, services email) dans le cadre de la fourniture du service.",
+    "s4Title": "Vos droits",
+    "s4Body": "Vous disposez d'un droit d'accès, de rectification et de suppression de vos données. Contactez-nous via le support."
   }
 }
