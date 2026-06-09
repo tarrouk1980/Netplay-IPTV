@@ -54,6 +54,7 @@ export default function AdminDashboardPage() {
       <CategoryManagement />
       <SubscriptionPlanManagement />
       <CouponManagement />
+      <PlatformSettings />
     </div>
   );
 }
@@ -819,6 +820,124 @@ function AdminUsersPanel() {
             ))}
           </tbody>
         </table>
+      </div>
+    </section>
+  );
+}
+
+function PlatformSettings() {
+  const t = useTranslations('admin');
+
+  const {data, refetch} = useQuery({
+    queryKey: ['admin-settings'],
+    queryFn: async () => {
+      const {data} = await api.get<{default_commission_rate: number; maintenance_mode: boolean; registration_enabled: boolean; min_payout_amount: number; platform_email: string}>('/admin/settings');
+      return data;
+    },
+  });
+
+  const [form, setForm] = useState({
+    default_commission_rate: '',
+    min_payout_amount: '',
+    platform_email: '',
+  });
+
+  const [ready, setReady] = useState(false);
+
+  if (data && !ready) {
+    setForm({
+      default_commission_rate: String(data.default_commission_rate),
+      min_payout_amount: String(data.min_payout_amount),
+      platform_email: data.platform_email,
+    });
+    setReady(true);
+  }
+
+  const updateMutation = useMutation({
+    mutationFn: async (patch: object) => {
+      await api.patch('/admin/settings', patch);
+    },
+    onSuccess: () => refetch(),
+  });
+
+  return (
+    <section className="rounded-xl border border-neutral-200 bg-white p-6">
+      <h2 className="mb-4 font-semibold">{t('platformSettings')}</h2>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label className="mb-1 block text-xs text-neutral-500">{t('commissionRate')} (%)</label>
+          <div className="flex gap-2">
+            <input
+              type="number"
+              value={form.default_commission_rate}
+              onChange={(e) => setForm((f) => ({...f, default_commission_rate: e.target.value}))}
+              className="flex-1 rounded border border-neutral-300 px-3 py-2 text-sm"
+            />
+            <button
+              onClick={() => updateMutation.mutate({default_commission_rate: Number(form.default_commission_rate)})}
+              disabled={updateMutation.isPending}
+              className="rounded bg-indigo-600 px-3 py-2 text-xs text-white hover:bg-indigo-700 disabled:opacity-50"
+            >
+              ✓
+            </button>
+          </div>
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-neutral-500">{t('minPayout')}</label>
+          <div className="flex gap-2">
+            <input
+              type="number"
+              value={form.min_payout_amount}
+              onChange={(e) => setForm((f) => ({...f, min_payout_amount: e.target.value}))}
+              className="flex-1 rounded border border-neutral-300 px-3 py-2 text-sm"
+            />
+            <button
+              onClick={() => updateMutation.mutate({min_payout_amount: Number(form.min_payout_amount)})}
+              disabled={updateMutation.isPending}
+              className="rounded bg-indigo-600 px-3 py-2 text-xs text-white hover:bg-indigo-700 disabled:opacity-50"
+            >
+              ✓
+            </button>
+          </div>
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-neutral-500">{t('platformEmail')}</label>
+          <div className="flex gap-2">
+            <input
+              type="email"
+              value={form.platform_email}
+              onChange={(e) => setForm((f) => ({...f, platform_email: e.target.value}))}
+              className="flex-1 rounded border border-neutral-300 px-3 py-2 text-sm"
+            />
+            <button
+              onClick={() => updateMutation.mutate({platform_email: form.platform_email})}
+              disabled={updateMutation.isPending}
+              className="rounded bg-indigo-600 px-3 py-2 text-xs text-white hover:bg-indigo-700 disabled:opacity-50"
+            >
+              ✓
+            </button>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <label className="text-xs text-neutral-500">{t('maintenanceMode')}</label>
+          <button
+            onClick={() => updateMutation.mutate({maintenance_mode: !data?.maintenance_mode})}
+            disabled={updateMutation.isPending}
+            className={`rounded-full px-3 py-1 text-xs font-medium ${data?.maintenance_mode ? 'bg-red-500 text-white' : 'border border-neutral-300 text-neutral-600'}`}
+          >
+            {data?.maintenance_mode ? t('on') : t('off')}
+          </button>
+        </div>
+        <div className="flex items-center gap-3">
+          <label className="text-xs text-neutral-500">{t('registrationEnabled')}</label>
+          <button
+            onClick={() => updateMutation.mutate({registration_enabled: !data?.registration_enabled})}
+            disabled={updateMutation.isPending}
+            className={`rounded-full px-3 py-1 text-xs font-medium ${data?.registration_enabled ? 'bg-emerald-500 text-white' : 'border border-neutral-300 text-neutral-600'}`}
+          >
+            {data?.registration_enabled ? t('on') : t('off')}
+          </button>
+        </div>
       </div>
     </section>
   );

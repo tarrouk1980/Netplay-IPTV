@@ -358,7 +358,15 @@
     "sessions": "Sessions",
     "gmv": "Volume brut",
     "commission": "Commission",
-    "deleteConfirm": "Supprimer ce profil expert ?"
+    "deleteConfirm": "Supprimer ce profil expert ?",
+    "platformSettings": "Paramètres de la plateforme",
+    "commissionRate": "Taux de commission",
+    "minPayout": "Paiement minimum",
+    "platformEmail": "Email de support",
+    "maintenanceMode": "Mode maintenance",
+    "registrationEnabled": "Inscriptions activées",
+    "on": "Activé",
+    "off": "Désactivé"
   },
   "messaging": {
     "title": "Messages",

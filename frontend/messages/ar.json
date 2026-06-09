@@ -358,7 +358,15 @@
     "sessions": "الجلسات",
     "gmv": "الحجم الإجمالي",
     "commission": "العمولة",
-    "deleteConfirm": "حذف ملف الخبير هذا؟"
+    "deleteConfirm": "حذف ملف الخبير هذا؟",
+    "platformSettings": "إعدادات المنصة",
+    "commissionRate": "معدل العمولة",
+    "minPayout": "الحد الأدنى للدفع",
+    "platformEmail": "بريد الدعم",
+    "maintenanceMode": "وضع الصيانة",
+    "registrationEnabled": "التسجيل ممكّن",
+    "on": "مفعّل",
+    "off": "معطّل"
   },
   "messaging": {
     "title": "الرسائل",
