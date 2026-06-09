@@ -48,6 +48,12 @@ export default function BookingDetailPage({params}: {params: Promise<{id: string
     },
   });
 
+  const sendInviteMutation = useMutation({
+    mutationFn: async () => {
+      await api.post(`/bookings/${id}/send-invite`);
+    },
+  });
+
   const cancelMutation = useMutation({
     mutationFn: async (reason: string) => {
       const {data} = await api.post(`/bookings/${id}/cancel`, {cancellation_reason: reason || null});
@@ -113,6 +119,16 @@ export default function BookingDetailPage({params}: {params: Promise<{id: string
         >
           📹 {t('joinMeeting')}
         </a>
+      )}
+
+      {booking.status === 'confirmed' && user?.role === 'expert' && (
+        <button
+          onClick={() => sendInviteMutation.mutate()}
+          disabled={sendInviteMutation.isPending || sendInviteMutation.isSuccess}
+          className="mt-4 w-full rounded-full border border-indigo-300 px-6 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 disabled:opacity-50"
+        >
+          {sendInviteMutation.isSuccess ? t('inviteSent') : t('sendInvite')}
+        </button>
       )}
 
       {booking.status === 'confirmed' && user?.role === 'expert' && (

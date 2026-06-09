@@ -166,7 +166,9 @@
     "meetingLinkPlaceholder": "https://meet.google.com/...",
     "meetingLinkSave": "Enregistrer",
     "backToDashboard": "Mes réservations",
-    "duration": "Durée de la session"
+    "duration": "Durée de la session",
+    "sendInvite": "Envoyer l'invitation au client",
+    "inviteSent": "Invitation envoyée ✓"
   },
   "dashboard": {
     "myBookings": "Mes réservations",
@@ -470,5 +472,39 @@
     "month": "mois",
     "year": "an",
     "noPlans": "Aucune formule disponible pour le moment."
+  },
+  "becomeExpert": {
+    "heroTitle": "Partagez votre expertise, générez des revenus",
+    "heroSubtitle": "Rejoignez des centaines d'experts qui accompagnent leurs clients sur SKOLZ.",
+    "heroCta": "Devenir expert",
+    "howTitle": "Comment ça fonctionne",
+    "step1Title": "Créez votre compte",
+    "step1Body": "Inscrivez-vous et choisissez le rôle \"Expert\".",
+    "step2Title": "Remplissez votre profil",
+    "step2Body": "Décrivez votre expertise, fixez votre tarif et ajoutez vos créneaux de disponibilité.",
+    "step3Title": "Obtenez des réservations",
+    "step3Body": "Les clients trouvent votre profil et réservent des sessions avec vous.",
+    "step4Title": "Recevez vos paiements",
+    "step4Body": "Chaque session est payée directement sur votre compte Stripe.",
+    "perk1Icon": "💰",
+    "perk1Title": "Revenus flexibles",
+    "perk1Body": "Définissez votre propre tarif horaire et gérez votre agenda librement.",
+    "perk2Icon": "🌍",
+    "perk2Title": "Audience mondiale",
+    "perk2Body": "Accédez à des clients au-delà de vos frontières géographiques.",
+    "perk3Icon": "🔒",
+    "perk3Title": "Paiements sécurisés",
+    "perk3Body": "Stripe gère les transactions. Vous recevez vos fonds rapidement.",
+    "perk4Icon": "⭐",
+    "perk4Title": "Construisez votre réputation",
+    "perk4Body": "Les avis clients authentiques valorisent votre expertise.",
+    "perk5Icon": "📅",
+    "perk5Title": "Agenda intégré",
+    "perk5Body": "Gérez vos disponibilités et recevez des rappels automatiques.",
+    "perk6Icon": "🎯",
+    "perk6Title": "Profil professionnel",
+    "perk6Body": "Mettez en avant vos spécialisations, portfolio et liens professionnels.",
+    "finalCta": "Prêt à démarrer ?",
+    "finalCtaBody": "Rejoignez SKOLZ aujourd'hui et commencez à recevoir vos premières réservations."
   }
 }

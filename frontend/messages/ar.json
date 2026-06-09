@@ -166,7 +166,9 @@
     "meetingLinkPlaceholder": "https://meet.google.com/...",
     "meetingLinkSave": "حفظ",
     "backToDashboard": "حجوزاتي",
-    "duration": "مدة الجلسة"
+    "duration": "مدة الجلسة",
+    "sendInvite": "إرسال الدعوة للعميل",
+    "inviteSent": "تم إرسال الدعوة ✓"
   },
   "dashboard": {
     "myBookings": "حجوزاتي",
@@ -470,5 +472,39 @@
     "month": "شهر",
     "year": "سنة",
     "noPlans": "لا توجد خطط متاحة في الوقت الحالي."
+  },
+  "becomeExpert": {
+    "heroTitle": "شارك خبرتك واكسب دخلاً",
+    "heroSubtitle": "انضم إلى مئات الخبراء الذين يساعدون عملاءهم على SKOLZ.",
+    "heroCta": "كن خبيراً",
+    "howTitle": "كيف يعمل",
+    "step1Title": "أنشئ حسابك",
+    "step1Body": "سجّل واختر دور \"خبير\".",
+    "step2Title": "أكمل ملفك الشخصي",
+    "step2Body": "صف خبرتك، حدد سعرك، وأضف مواعيد توافرك.",
+    "step3Title": "احصل على حجوزات",
+    "step3Body": "يكتشف العملاء ملفك ويحجزون جلسات معك.",
+    "step4Title": "استلم مدفوعاتك",
+    "step4Body": "تُدفع كل جلسة مباشرة إلى حساب Stripe الخاص بك.",
+    "perk1Icon": "💰",
+    "perk1Title": "دخل مرن",
+    "perk1Body": "حدد سعرك بالساعة وأدر جدولك بحرية.",
+    "perk2Icon": "🌍",
+    "perk2Title": "جمهور عالمي",
+    "perk2Body": "تواصل مع عملاء خارج حدودك الجغرافية.",
+    "perk3Icon": "🔒",
+    "perk3Title": "مدفوعات آمنة",
+    "perk3Body": "تتولى Stripe إدارة المعاملات. تستلم أموالك بسرعة.",
+    "perk4Icon": "⭐",
+    "perk4Title": "ابنِ سمعتك",
+    "perk4Body": "آراء العملاء الأصيلة تُبرز خبرتك.",
+    "perk5Icon": "📅",
+    "perk5Title": "تقويم متكامل",
+    "perk5Body": "أدر توافرك واستلم تذكيرات تلقائية.",
+    "perk6Icon": "🎯",
+    "perk6Title": "ملف احترافي",
+    "perk6Body": "أبرز تخصصاتك وملف أعمالك وروابطك المهنية.",
+    "finalCta": "مستعد للبدء؟",
+    "finalCtaBody": "انضم إلى SKOLZ اليوم وابدأ في استقبال أول حجوزاتك."
   }
 }

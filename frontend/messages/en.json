@@ -166,7 +166,9 @@
     "meetingLinkPlaceholder": "https://meet.google.com/...",
     "meetingLinkSave": "Save",
     "backToDashboard": "My bookings",
-    "duration": "Session duration"
+    "duration": "Session duration",
+    "sendInvite": "Send invite to client",
+    "inviteSent": "Invite sent ✓"
   },
   "dashboard": {
     "myBookings": "My bookings",
@@ -470,5 +472,39 @@
     "month": "month",
     "year": "year",
     "noPlans": "No plans available at the moment."
+  },
+  "becomeExpert": {
+    "heroTitle": "Share your expertise, earn income",
+    "heroSubtitle": "Join hundreds of experts helping their clients on SKOLZ.",
+    "heroCta": "Become an expert",
+    "howTitle": "How it works",
+    "step1Title": "Create your account",
+    "step1Body": "Sign up and choose the \"Expert\" role.",
+    "step2Title": "Complete your profile",
+    "step2Body": "Describe your expertise, set your rate, and add availability slots.",
+    "step3Title": "Get bookings",
+    "step3Body": "Clients discover your profile and book sessions with you.",
+    "step4Title": "Receive payments",
+    "step4Body": "Every session is paid directly to your Stripe account.",
+    "perk1Icon": "💰",
+    "perk1Title": "Flexible income",
+    "perk1Body": "Set your own hourly rate and manage your schedule freely.",
+    "perk2Icon": "🌍",
+    "perk2Title": "Global audience",
+    "perk2Body": "Reach clients beyond your geographic borders.",
+    "perk3Icon": "🔒",
+    "perk3Title": "Secure payments",
+    "perk3Body": "Stripe handles transactions. You receive your funds quickly.",
+    "perk4Icon": "⭐",
+    "perk4Title": "Build your reputation",
+    "perk4Body": "Authentic client reviews showcase your expertise.",
+    "perk5Icon": "📅",
+    "perk5Title": "Integrated calendar",
+    "perk5Body": "Manage your availability and receive automatic reminders.",
+    "perk6Icon": "🎯",
+    "perk6Title": "Professional profile",
+    "perk6Body": "Highlight your specializations, portfolio, and professional links.",
+    "finalCta": "Ready to get started?",
+    "finalCtaBody": "Join SKOLZ today and start receiving your first bookings."
   }
 }

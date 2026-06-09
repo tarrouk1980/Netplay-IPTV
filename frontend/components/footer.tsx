@@ -17,7 +17,7 @@ export function Footer() {
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-neutral-700">{t('platform')}</h3>
             <ul className="space-y-2 text-sm text-neutral-500">
               <li><Link href="/experts" className="hover:text-indigo-600">{t('browseExperts')}</Link></li>
-              <li><Link href="/register" className="hover:text-indigo-600">{t('becomeExpert')}</Link></li>
+              <li><Link href="/become-expert" className="hover:text-indigo-600">{t('becomeExpert')}</Link></li>
               <li><Link href="/plans" className="hover:text-indigo-600">{t('plans')}</Link></li>
               <li><Link href="/login" className="hover:text-indigo-600">{t('login')}</Link></li>
             </ul>
