@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
+import api from "@/lib/api";
 
 export default function Header() {
   const { count } = useCart();
@@ -12,7 +13,17 @@ export default function Header() {
   const [search, setSearch] = useState("");
   const [lang, setLang] = useState("FR");
   const [currency, setCurrency] = useState("TND");
+  const [unread, setUnread] = useState(0);
   const pathname = usePathname();
+
+  useEffect(() => {
+    if (!user) { setUnread(0); return; }
+    api.get("/notifications").then(res => setUnread(res.data?.unreadCount || 0)).catch(() => {});
+    const interval = setInterval(() => {
+      api.get("/notifications").then(res => setUnread(res.data?.unreadCount || 0)).catch(() => {});
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   const navLinks = [
     { href: "/", label: "Accueil" },
@@ -115,6 +126,16 @@ export default function Header() {
               </Link>
               {user ? (
                 <div className="flex items-center gap-2">
+                  <Link href="/notifications" className="p-2.5 text-slate-500 hover:text-rose-800 transition relative">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    {unread > 0 && (
+                      <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 bg-rose-800 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                        {unread > 9 ? "9+" : unread}
+                      </span>
+                    )}
+                  </Link>
                   <Link
                     href="/compte"
                     className="text-slate-700 font-semibold hover:text-rose-800 transition text-sm px-4 py-2.5 rounded-xl hover:bg-rose-50"

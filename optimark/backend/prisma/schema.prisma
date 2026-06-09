@@ -7,22 +7,33 @@ datasource db {
 }
 
 model User {
-  id                String        @id @default(uuid())
-  email             String        @unique
+  id                String         @id @default(uuid())
+  email             String         @unique
   password          String
   name              String
   phone             String?
-  role              Role          @default(BUYER)
-  isVerified        Boolean       @default(false)
-  subscriptionPlan  String        @default("FREE")
+  role              Role           @default(BUYER)
+  isVerified        Boolean        @default(false)
+  subscriptionPlan  String         @default("FREE")
   subscriptionEnd   DateTime?
-  createdAt         DateTime      @default(now())
+  createdAt         DateTime       @default(now())
   products          Product[]
   services          Service[]
   orders            Order[]
   reviews           Review[]
-  lives             LiveSession[] @relation("VendorLives")
+  lives             LiveSession[]  @relation("VendorLives")
   favorites         Favorite[]
+  notifications     Notification[]
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
 
 model Favorite {

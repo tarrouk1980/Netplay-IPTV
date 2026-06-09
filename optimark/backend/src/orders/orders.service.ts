@@ -1,10 +1,22 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateOrderDto } from './dtos/create-order.dto';
+
+const STATUS_LABELS: Record<string, string> = {
+  PENDING: 'En attente',
+  CONFIRMED: 'Confirmée',
+  SHIPPED: 'Expédiée',
+  DELIVERED: 'Livrée',
+  CANCELLED: 'Annulée',
+};
 
 @Injectable()
 export class OrdersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notifications: NotificationsService,
+  ) {}
 
   async createOrder(dto: CreateOrderDto, buyerId: string) {
     let total = 0;
@@ -26,6 +38,12 @@ export class OrdersService {
       },
       include: { items: { include: { product: true } } },
     });
+
+    await this.notifications.create(
+      buyerId,
+      'ORDER_PLACED',
+      `Votre commande #${order.id.slice(0, 8)} a été passée avec succès (${total.toFixed(2)} TND).`,
+    );
 
     return { data: order, message: 'Commande créée', success: true };
   }
@@ -57,6 +75,13 @@ export class OrdersService {
     if (!order) throw new NotFoundException('Commande introuvable');
 
     const updated = await this.prisma.order.update({ where: { id }, data: { status: status as any } });
+
+    await this.notifications.create(
+      order.buyerId,
+      'ORDER_STATUS',
+      `Votre commande #${id.slice(0, 8)} est maintenant : ${STATUS_LABELS[status] || status}.`,
+    );
+
     return { data: updated, message: 'Statut mis à jour', success: true };
   }
 }
