@@ -29,7 +29,6 @@ export function Footer() {
             <ul className="space-y-2 text-sm text-indigo-300">
               <li><Link href="/experts" className="hover:text-white transition-colors">{t('browseExperts')}</Link></li>
               <li><Link href="/become-expert" className="hover:text-white transition-colors">{t('becomeExpert')}</Link></li>
-              <li><Link href="/plans" className="hover:text-white transition-colors">{t('plans')}</Link></li>
               <li><Link href="/login" className="hover:text-white transition-colors">{t('login')}</Link></li>
             </ul>
           </div>

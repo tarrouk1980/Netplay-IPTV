@@ -34,7 +34,6 @@ export function Header() {
         {/* Desktop nav */}
         <nav className="hidden items-center gap-6 text-sm md:flex">
           <Link href="/experts" className="hover:text-indigo-600">{t('experts')}</Link>
-          <Link href="/plans" className="hover:text-indigo-600">{t('plans')}</Link>
 
           {user ? (
             <>
@@ -77,7 +76,6 @@ export function Header() {
         <nav className="border-t border-neutral-200 bg-white px-4 pb-4 md:hidden">
           <div className="flex flex-col gap-3 pt-3 text-sm">
             <Link href="/experts" onClick={() => setMobileOpen(false)} className="hover:text-indigo-600">{t('experts')}</Link>
-            <Link href="/plans" onClick={() => setMobileOpen(false)} className="hover:text-indigo-600">{t('plans')}</Link>
             {user ? (
               <>
                 <Link href={dashboardHref} onClick={() => setMobileOpen(false)} className="hover:text-indigo-600">{t('dashboard')}</Link>
