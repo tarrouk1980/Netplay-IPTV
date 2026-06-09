@@ -20,6 +20,14 @@ export default function ExpertDashboardPage() {
     }
   }, [loading, user, router]);
 
+  useEffect(() => {
+    if (!user?.expert_profile) return;
+    const ping = () => api.post('/expert/heartbeat').catch(() => {});
+    ping();
+    const interval = setInterval(ping, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [user?.expert_profile]);
+
   if (!user || user.role !== 'expert') {
     return null;
   }

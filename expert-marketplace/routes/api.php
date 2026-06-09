@@ -62,6 +62,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/stripe/connect/status', [StripeConnectController::class, 'status']);
         Route::get('/expert/stats', [ExpertProfileController::class, 'stats']);
         Route::get('/expert/earnings', [ExpertProfileController::class, 'earnings']);
+    Route::post('/expert/heartbeat', [ExpertProfileController::class, 'heartbeat']);
         Route::get('/expert/payouts', [\App\Http\Controllers\Api\PayoutController::class, 'index']);
         Route::post('/expert/payouts/request', [\App\Http\Controllers\Api\PayoutController::class, 'request']);
         Route::post('/expert/portfolio', [ExpertPortfolioItemController::class, 'store']);

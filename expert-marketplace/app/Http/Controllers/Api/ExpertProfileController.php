@@ -183,4 +183,15 @@ class ExpertProfileController extends Controller
             'bookings' => $bookings,
         ]);
     }
+
+    public function heartbeat(Request $request)
+    {
+        $profile = $request->user()->expertProfile;
+
+        if ($profile) {
+            $profile->update(['last_seen_at' => now()]);
+        }
+
+        return response()->json(['ok' => true]);
+    }
 }

@@ -57,6 +57,11 @@ class AuthController extends Controller
 
         $user = User::where('email', $credentials['email'])->firstOrFail();
 
+        if ($user->banned_at !== null) {
+            Auth::logout();
+            return response()->json(['message' => 'Votre compte a été suspendu. Contactez le support.'], 403);
+        }
+
         return response()->json([
             'user' => $user,
             'token' => $user->createToken('api')->plainTextToken,
