@@ -11,6 +11,7 @@ import {RegulatoryNotice, CredentialBadge} from '@/components/regulatory-notice'
 import {Avatar} from '@/components/avatar';
 import {FavoriteButton, useFavoriteIds} from '@/components/favorite-button';
 import {OnlineBadge} from '@/components/online-badge';
+import {trackRecentExpert} from '@/components/recently-viewed';
 
 function nextSlotOccurrences(slot: AvailabilitySlot, count: number): Date[] {
   const [hours, minutes] = slot.start_time.split(':').map(Number);
@@ -63,6 +64,7 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
     queryKey: ['expert', id],
     queryFn: async () => {
       const {data} = await api.get<ExpertProfile>(`/experts/${id}`);
+      trackRecentExpert({id: data.id, name: data.user.name, category: data.category.name, avatar_url: data.user.avatar_url});
       return data;
     },
   });

@@ -55,6 +55,7 @@ class ExpertProfileController extends Controller
 
     public function show(ExpertProfile $expertProfile)
     {
+        $expertProfile->increment('view_count');
         return $expertProfile->load(['user:id,name,avatar_url,country', 'category', 'reviews', 'portfolioItems']);
     }
 
@@ -153,6 +154,7 @@ class ExpertProfileController extends Controller
             'currency'          => $profile->currency ?? 'EUR',
             'avg_rating'        => $avgRating,
             'total_reviews'     => $totalReviews,
+            'view_count'        => $profile->view_count,
         ]);
     }
 

@@ -124,6 +124,7 @@ export type ExpertStats = {
   currency: string;
   avg_rating: number;
   total_reviews: number;
+  view_count: number;
 };
 
 export type Review = {

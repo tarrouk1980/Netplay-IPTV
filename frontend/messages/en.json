@@ -27,7 +27,8 @@
     "viewAll": "View all",
     "statsExperts": "Verified experts",
     "statsSessions": "Sessions completed",
-    "statsRating": "Average rating"
+    "statsRating": "Average rating",
+    "recentlyViewed": "Recently viewed"
   },
   "experts": {
     "title": "Available experts",
@@ -237,7 +238,8 @@
     "viewEarnings": "View my earnings",
     "viewPayouts": "Payouts",
     "viewMessages": "Messages",
-    "sendInvite": "Send invite"
+    "sendInvite": "Send invite",
+    "statsViews": "Profile views"
   },
   "common": {
     "loading": "Loading...",

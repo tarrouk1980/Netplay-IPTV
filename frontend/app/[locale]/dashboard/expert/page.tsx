@@ -345,10 +345,11 @@ function StatsCards() {
     {label: t('statsUpcoming'), value: String(data.upcoming_bookings), icon: '📅'},
     {label: t('statsCompleted'), value: String(data.completed_bookings), icon: '✅'},
     {label: t('statsAvgRating'), value: data.total_reviews > 0 ? `${data.avg_rating} ★ (${data.total_reviews})` : '—', icon: '⭐'},
+    {label: t('statsViews'), value: String(data.view_count ?? 0), icon: '👁'},
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
       {cards.map((c) => (
         <div key={c.label} className="rounded-xl border border-neutral-200 bg-white p-4 text-center">
           <div className="text-2xl">{c.icon}</div>

@@ -6,6 +6,7 @@ import {useQuery} from '@tanstack/react-query';
 import {Link, useRouter} from '@/i18n/navigation';
 import {api, type Category, type ExpertProfile} from '@/lib/api';
 import {Avatar} from '@/components/avatar';
+import {RecentlyViewed} from '@/components/recently-viewed';
 
 export default function HomePage() {
   const t = useTranslations('home');
@@ -71,6 +72,8 @@ export default function HomePage() {
           </div>
         </div>
       )}
+
+      <RecentlyViewed />
 
       {featuredExperts && featuredExperts.length > 0 && (
         <div className="mt-8 w-full max-w-4xl text-left">

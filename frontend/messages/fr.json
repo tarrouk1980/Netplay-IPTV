@@ -27,7 +27,8 @@
     "viewAll": "Voir tous",
     "statsExperts": "Experts vérifiés",
     "statsSessions": "Sessions réalisées",
-    "statsRating": "Note moyenne"
+    "statsRating": "Note moyenne",
+    "recentlyViewed": "Consultés récemment"
   },
   "experts": {
     "title": "Experts disponibles",
@@ -237,7 +238,8 @@
     "viewEarnings": "Voir mes revenus",
     "viewPayouts": "Virements",
     "viewMessages": "Messages",
-    "sendInvite": "Envoyer invitation"
+    "sendInvite": "Envoyer invitation",
+    "statsViews": "Vues du profil"
   },
   "common": {
     "loading": "Chargement...",

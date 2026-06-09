@@ -27,7 +27,8 @@
     "viewAll": "عرض الكل",
     "statsExperts": "خبراء موثقون",
     "statsSessions": "جلسة مكتملة",
-    "statsRating": "متوسط التقييم"
+    "statsRating": "متوسط التقييم",
+    "recentlyViewed": "شوهد مؤخراً"
   },
   "experts": {
     "title": "الخبراء المتاحون",
@@ -237,7 +238,8 @@
     "viewEarnings": "عرض أرباحي",
     "viewPayouts": "المدفوعات",
     "viewMessages": "الرسائل",
-    "sendInvite": "إرسال دعوة"
+    "sendInvite": "إرسال دعوة",
+    "statsViews": "مشاهدات الملف"
   },
   "common": {
     "loading": "جارٍ التحميل...",
