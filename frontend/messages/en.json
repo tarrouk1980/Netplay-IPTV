@@ -368,9 +368,11 @@
     "unavailable": "Messaging is only available for confirmed bookings."
   },
   "notifications": {
-    "title": "Notifications",
+    "title": "All notifications",
     "empty": "No notifications.",
-    "markAllRead": "Mark all as read"
+    "markAllRead": "Mark all as read",
+    "markRead": "Mark as read",
+    "viewAll": "View all"
   },
   "favorites": {
     "title": "My favorites",

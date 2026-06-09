@@ -88,6 +88,13 @@ export function NotificationBell() {
                 </p>
               </Link>
             ))}
+          <Link
+            href="/dashboard/notifications"
+            onClick={() => setOpen(false)}
+            className="mt-2 block text-center text-xs text-indigo-600 hover:underline"
+          >
+            {t('viewAll')}
+          </Link>
           </div>
         </div>
       )}

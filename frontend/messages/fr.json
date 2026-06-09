@@ -368,9 +368,11 @@
     "unavailable": "La messagerie est disponible uniquement pour les réservations confirmées."
   },
   "notifications": {
-    "title": "Notifications",
+    "title": "Toutes mes notifications",
     "empty": "Aucune notification.",
-    "markAllRead": "Tout marquer comme lu"
+    "markAllRead": "Tout marquer comme lu",
+    "markRead": "Marquer comme lu",
+    "viewAll": "Voir tout"
   },
   "favorites": {
     "title": "Mes favoris",
