@@ -888,11 +888,15 @@ function IncomingBookings() {
   const t = useTranslations('expert');
   const tb = useTranslations('booking');
   const queryClient = useQueryClient();
+  const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState('');
 
   const {data} = useQuery({
-    queryKey: ['bookings'],
+    queryKey: ['bookings', page, statusFilter],
     queryFn: async () => {
-      const {data} = await api.get<Paginated<Booking>>('/bookings');
+      const params: Record<string, string | number> = {page};
+      if (statusFilter) params.status = statusFilter;
+      const {data} = await api.get<Paginated<Booking>>('/bookings', {params});
       return data;
     },
   });
@@ -908,7 +912,20 @@ function IncomingBookings() {
 
   return (
     <section className="rounded-xl border border-neutral-200 bg-white p-6">
-      <h2 className="font-semibold">{t('incomingBookings')}</h2>
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="font-semibold">{t('incomingBookings')}</h2>
+        <select
+          value={statusFilter}
+          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+          className="rounded-full border border-neutral-300 bg-white px-3 py-1.5 text-xs"
+        >
+          <option value="">{tb('allStatuses')}</option>
+          <option value="pending">{tb('status.pending')}</option>
+          <option value="confirmed">{tb('status.confirmed')}</option>
+          <option value="completed">{tb('status.completed')}</option>
+          <option value="cancelled">{tb('status.cancelled')}</option>
+        </select>
+      </div>
 
       {data?.data.length === 0 && <p className="mt-2 text-sm text-neutral-500">{t('noBookings')}</p>}
 
@@ -944,6 +961,26 @@ function IncomingBookings() {
           </div>
         ))}
       </div>
+
+      {data && data.last_page > 1 && (
+        <div className="mt-4 flex justify-center gap-2">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="rounded-full border border-neutral-300 px-3 py-1 text-sm disabled:opacity-40"
+          >
+            ←
+          </button>
+          <span className="px-3 py-1 text-sm text-neutral-500">{page} / {data.last_page}</span>
+          <button
+            onClick={() => setPage((p) => Math.min(data.last_page, p + 1))}
+            disabled={page === data.last_page}
+            className="rounded-full border border-neutral-300 px-3 py-1 text-sm disabled:opacity-40"
+          >
+            →
+          </button>
+        </div>
+      )}
     </section>
   );
 }
