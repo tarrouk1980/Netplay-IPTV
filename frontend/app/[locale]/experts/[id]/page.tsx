@@ -250,7 +250,7 @@ export default function ExpertProfilePage({params}: {params: Promise<{id: string
                 </p>
                 <div className="mt-1 flex items-center gap-2 text-sm text-neutral-500">
                   <span className="text-amber-400">★</span>
-                  <span>{expert.rating_avg.toFixed(1)}</span>
+                  <span>{Number(expert.rating_avg ?? 0).toFixed(1)}</span>
                   <span>· {expert.total_sessions} sessions</span>
                 </div>
               </div>

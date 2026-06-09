@@ -60,7 +60,7 @@ export default function FavoritesPage() {
                 {expert.hourly_rate} {expert.currency}
                 <span className="font-normal text-neutral-500"> {te('perHour')}</span>
               </span>
-              <span className="text-amber-500">★ {expert.rating_avg.toFixed(1)}</span>
+              <span className="text-amber-500">★ {Number(expert.rating_avg ?? 0).toFixed(1)}</span>
             </div>
           </Link>
         ))}

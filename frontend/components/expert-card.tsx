@@ -94,7 +94,7 @@ export function ExpertCard({expert}: ExpertCardProps) {
           <div className="flex items-center gap-1.5">
             <StarRating rating={expert.rating_avg || 0} />
             <span className="text-xs text-neutral-500 font-medium">
-              {(expert.rating_avg || 0).toFixed(1)}
+              {Number(expert.rating_avg ?? 0).toFixed(1)}
             </span>
           </div>
           <span className="text-indigo-600 font-semibold text-sm">
