@@ -31,6 +31,7 @@ Route::middleware('throttle:10,1')->group(function () {
 });
 
 Route::get('/categories', [CategoryController::class, 'index']);
+Route::get('/announcement', [\App\Http\Controllers\Api\AnnouncementController::class, 'show']);
 Route::get('/experts', [ExpertProfileController::class, 'index']);
 Route::get('/experts/{expertProfile}', [ExpertProfileController::class, 'show']);
 Route::get('/experts/{expertProfile}/portfolio', [ExpertPortfolioItemController::class, 'index']);
@@ -119,6 +120,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/bookings/{booking}/notes', [BookingController::class, 'updateNotes']);
 
     Route::middleware('role:admin')->prefix('admin')->group(function () {
+        Route::patch('/announcement', [\App\Http\Controllers\Api\AnnouncementController::class, 'update']);
         Route::get('/stats', [\App\Http\Controllers\Api\Admin\StatsController::class, 'index']);
         Route::get('/settings', [\App\Http\Controllers\Api\Admin\SettingsController::class, 'index']);
         Route::patch('/settings', [\App\Http\Controllers\Api\Admin\SettingsController::class, 'update']);

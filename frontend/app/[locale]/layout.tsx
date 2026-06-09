@@ -7,6 +7,7 @@ import {Providers} from './providers';
 import {Header} from '@/components/header';
 import {Footer} from '@/components/footer';
 import {ScrollToTop} from '@/components/scroll-to-top';
+import {AnnouncementBanner} from '@/components/announcement-banner';
 import '../globals.css';
 
 export const metadata: Metadata = {
@@ -52,6 +53,7 @@ export default async function LocaleLayout({
         <NextIntlClientProvider>
           <Providers>
             <div className="flex min-h-screen flex-col">
+              <AnnouncementBanner />
               <Header />
               <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
               <Footer />
