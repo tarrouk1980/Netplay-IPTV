@@ -594,5 +594,17 @@
     "s3Body": "Nous ne vendons pas vos données. Elles peuvent être partagées avec des prestataires techniques (Stripe, services email) dans le cadre de la fourniture du service.",
     "s4Title": "Vos droits",
     "s4Body": "Vous disposez d'un droit d'accès, de rectification et de suppression de vos données. Contactez-nous via le support."
+  },
+  "video": {
+    "join": "Rejoindre la session",
+    "start": "Démarrer la vidéo",
+    "end": "Terminer",
+    "mute": "Muet",
+    "unmute": "Son",
+    "camera": "Caméra",
+    "noCamera": "Caméra off",
+    "share": "Partager l'écran",
+    "connecting": "Connexion...",
+    "joined": "Session en cours"
   }
 }

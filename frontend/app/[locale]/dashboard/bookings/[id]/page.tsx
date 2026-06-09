@@ -9,14 +9,18 @@ import {useAuth} from '@/lib/auth-context';
 import {BookingChat} from '@/components/booking-chat';
 import {ReviewForm} from '@/components/review-form';
 import {RescheduleModal} from '@/components/reschedule-modal';
+import {VideoCall} from '@/components/video-call';
 
 export default function BookingDetailPage({params}: {params: Promise<{id: string}>}) {
   const {id} = use(params);
   const t = useTranslations('booking');
+  const tVideo = useTranslations('video');
   const [showReschedule, setShowReschedule] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [meetingLink, setMeetingLink] = useState('');
+  const [videoRoom, setVideoRoom] = useState<{room_url: string; token: string} | null>(null);
+  const [videoError, setVideoError] = useState('');
   const {user} = useAuth();
 
   const {data: booking, refetch} = useQuery({
@@ -56,6 +60,22 @@ export default function BookingDetailPage({params}: {params: Promise<{id: string
       await api.patch(`/bookings/${id}/notes`, {expert_notes: notes});
     },
     onSuccess: () => setNotesSaved(true),
+  });
+
+  const videoRoomMutation = useMutation({
+    mutationFn: async () => {
+      const {data} = await api.post<{room_url: string; room_name: string; token: string}>(
+        `/bookings/${id}/video-room`,
+      );
+      return data;
+    },
+    onSuccess: (data) => {
+      setVideoRoom({room_url: data.room_url, token: data.token});
+      setVideoError('');
+    },
+    onError: () => {
+      setVideoError('Failed to start video room. Please try again.');
+    },
   });
 
   const sendInviteMutation = useMutation({
@@ -135,6 +155,29 @@ export default function BookingDetailPage({params}: {params: Promise<{id: string
         >
           📹 {t('joinMeeting')}
         </a>
+      )}
+
+      {(booking.status === 'confirmed' || (booking.status as string) === 'in_progress') && (
+        videoRoom ? (
+          <VideoCall
+            roomUrl={videoRoom.room_url}
+            token={videoRoom.token}
+            onLeave={() => setVideoRoom(null)}
+          />
+        ) : (
+          <>
+            <button
+              onClick={() => videoRoomMutation.mutate()}
+              disabled={videoRoomMutation.isPending}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+            >
+              📹 {videoRoomMutation.isPending ? tVideo('connecting') : tVideo('start')}
+            </button>
+            {videoError && (
+              <p className="mt-2 text-center text-xs text-red-600">{videoError}</p>
+            )}
+          </>
+        )
       )}
 
       {booking.status === 'confirmed' && user?.role === 'expert' && (

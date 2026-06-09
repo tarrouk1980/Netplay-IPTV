@@ -594,5 +594,17 @@
     "s3Body": "We do not sell your data. It may be shared with technical providers (Stripe, email services) in the context of service delivery.",
     "s4Title": "Your rights",
     "s4Body": "You have the right to access, rectify, and delete your data. Contact us through support."
+  },
+  "video": {
+    "join": "Join session",
+    "start": "Start video",
+    "end": "End call",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "camera": "Camera",
+    "noCamera": "Camera off",
+    "share": "Share screen",
+    "connecting": "Connecting...",
+    "joined": "Session active"
   }
 }
