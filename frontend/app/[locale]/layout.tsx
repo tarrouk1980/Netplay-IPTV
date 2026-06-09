@@ -11,6 +11,19 @@ import '../globals.css';
 export const metadata: Metadata = {
   title: 'SKOLZ — Trouvez votre expert',
   description: 'SKOLZ — La plateforme qui connecte experts, coachs, avocats et médecins avec ceux qui ont besoin de leurs conseils.',
+  manifest: '/manifest.json',
+  themeColor: '#4f46e5',
+  appleWebApp: {
+    capable: true,
+    title: 'SKOLZ',
+    statusBarStyle: 'default',
+  },
+  openGraph: {
+    title: 'SKOLZ — Expert Marketplace',
+    description: 'Connectez-vous avec des experts qualifiés pour des consultations en ligne.',
+    type: 'website',
+    siteName: 'SKOLZ',
+  },
 };
 
 export function generateStaticParams() {
