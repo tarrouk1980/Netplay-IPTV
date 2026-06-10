@@ -218,6 +218,8 @@ import RevenueAdminScreen from './screens/hotels/RevenueAdminScreen';
 import HotelManagerScreen from './screens/hotels/HotelManagerScreen';
 import MaghrebMapScreen from './screens/hotels/MaghrebMapScreen';
 import CurrencyConverterScreen from './screens/hotels/CurrencyConverterScreen';
+import CulturalFiltersScreen from './screens/hotels/CulturalFiltersScreen';
+import CountrySelectScreen from './screens/hotels/CountrySelectScreen';
 import HotelChatbotScreen from './screens/hotels/HotelChatbotScreen';
 import HotelReferralScreen from './screens/hotels/ReferralScreen';
 import HotelLoyaltyScreen from './screens/hotels/LoyaltyScreen';
@@ -1205,6 +1207,8 @@ function MainStack() {
       <Stack.Screen name="HotelManager" component={HotelManagerScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MaghrebMap" component={MaghrebMapScreen} options={{ headerShown: false }} />
       <Stack.Screen name="CurrencyConverter" component={CurrencyConverterScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="CulturalFilters" component={CulturalFiltersScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="CountrySelect" component={CountrySelectScreen} options={{ headerShown: false }} />
       <Stack.Screen name="HotelChatbot" component={HotelChatbotScreen} options={{ headerShown: false }} />
       <Stack.Screen name="HotelReferral" component={HotelReferralScreen} options={{ headerShown: false }} />
       <Stack.Screen name="HotelLoyalty" component={HotelLoyaltyScreen} options={{ headerShown: false }} />

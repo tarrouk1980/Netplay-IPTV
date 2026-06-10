@@ -254,6 +254,24 @@ export default function HotelSearchScreen({ navigation }) {
               <Ionicons name="chevron-down" size={16} color="#A0AEC0" style={{ marginLeft: 'auto' }} />
             </TouchableOpacity>
 
+            {/* Country + Cultural Filter Buttons Row */}
+            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+              <TouchableOpacity
+                style={{ flex: 1, backgroundColor: '#EBF8FF', borderRadius: 10, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1, borderColor: '#004E89' }}
+                onPress={() => navigation.navigate('CountrySelect', { checkIn, checkOut, guests })}
+              >
+                <Ionicons name="globe-outline" size={16} color="#004E89" />
+                <Text style={{ color: '#004E89', fontWeight: '700', fontSize: 13 }}>Choisir pays</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ flex: 1, backgroundColor: '#FFF5F0', borderRadius: 10, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1, borderColor: '#FF6B35' }}
+                onPress={() => navigation.navigate('CulturalFilters', { checkIn, checkOut, guests })}
+              >
+                <Ionicons name="moon-outline" size={16} color="#FF6B35" />
+                <Text style={{ color: '#FF6B35', fontWeight: '700', fontSize: 13 }}>Filtres halal</Text>
+              </TouchableOpacity>
+            </View>
+
             {/* Search Button */}
             <TouchableOpacity style={styles.searchBtn} onPress={handleSearch} activeOpacity={0.85}>
               <LinearGradient colors={['#FF6B35', '#e85520']} style={styles.searchBtnGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
@@ -296,6 +314,24 @@ export default function HotelSearchScreen({ navigation }) {
             ))}
           </View>
         </View>
+
+        {/* Halal & Family Banner */}
+        <TouchableOpacity
+          style={{ marginHorizontal: 16, marginBottom: 16, borderRadius: 16, overflow: 'hidden' }}
+          onPress={() => navigation.navigate('CulturalFilters', { checkIn, checkOut, guests })}
+          activeOpacity={0.88}
+        >
+          <LinearGradient colors={['#004E89', '#1a6eac', '#FF6B35']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons name="moon" size={24} color="#fff" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15 }}>Filtres Halal & Famille</Text>
+              <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, marginTop: 2 }}>Sans alcool, burkini, salle de prière, Ramadan...</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.8)" />
+          </LinearGradient>
+        </TouchableOpacity>
 
         {/* Featured Hotels */}
         {featured.length > 0 && (
