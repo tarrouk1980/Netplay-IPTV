@@ -49,8 +49,12 @@ router.get('/featured', (req, res) => {
 // GET /api/hotels/search
 router.get('/search', (req, res) => {
   try {
-    const { destination, checkIn, checkOut, guests, minPrice, maxPrice, stars, category, amenities, sortBy, page = 1, limit = 10 } = req.query;
-    const allResults = searchHotels({ destination, stars, category, minPrice, maxPrice, amenities, sortBy, guests: Number(guests) || 2, checkIn, checkOut });
+    const { destination, checkIn, checkOut, guests, minPrice, maxPrice, stars, category, amenities, sortBy, page = 1, limit = 10,
+      isAlcoholFree, isBurkiniAccepted, isHalalCertified, hasRamadanServices, hasPrayerRoom,
+      hasSeparatePool, isFamilyConservative, isMedicalTourism, isHoneymoonPackage, hasAirportShuttle, isBeachfront, country } = req.query;
+    const allResults = searchHotels({ destination, stars, category, minPrice, maxPrice, amenities, sortBy, guests: Number(guests) || 2, checkIn, checkOut,
+      isAlcoholFree, isBurkiniAccepted, isHalalCertified, hasRamadanServices, hasPrayerRoom,
+      hasSeparatePool, isFamilyConservative, isMedicalTourism, isHoneymoonPackage, hasAirportShuttle, isBeachfront, country });
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
     const start = (pageNum - 1) * limitNum;

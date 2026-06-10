@@ -20,6 +20,15 @@ const STAR_OPTIONS = [2, 3, 4, 5];
 const CATEGORY_OPTIONS = ['HOTEL', 'RESORT', 'APARTMENT', 'HOSTEL', 'VILLA'];
 const CATEGORY_LABELS = { HOTEL: 'Hôtel', RESORT: 'Resort', APARTMENT: 'Appartement', HOSTEL: 'Auberge', VILLA: 'Villa' };
 
+const CULTURAL_CHIPS = [
+  { key: 'isHalalCertified', label: 'Halal', icon: 'moon-outline' },
+  { key: 'isAlcoholFree', label: 'Sans Alcool', icon: 'ban-outline' },
+  { key: 'isBurkiniAccepted', label: 'Burkini', icon: 'shirt-outline' },
+  { key: 'isFamilyConservative', label: 'Famille', icon: 'people-outline' },
+  { key: 'isBeachfront', label: 'Plage', icon: 'umbrella-outline' },
+  { key: 'isHoneymoonPackage', label: 'Lune de miel', icon: 'heart-outline' },
+];
+
 export default function HotelResultsScreen({ route, navigation }) {
   const insets = useSafeAreaInsets();
   const { destination = '', checkIn = '', checkOut = '', guests = 2 } = route.params || {};
@@ -36,8 +45,9 @@ export default function HotelResultsScreen({ route, navigation }) {
 
   const [filters, setFilters] = useState({ stars: null, category: null, minPrice: '', maxPrice: '' });
   const [pendingFilters, setPendingFilters] = useState({ stars: null, category: null, minPrice: '', maxPrice: '' });
+  const [culturalFilters, setCulturalFilters] = useState({});
 
-  useEffect(() => { loadHotels(1, true); }, [destination, checkIn, checkOut, guests, sortBy, filters]);
+  useEffect(() => { loadHotels(1, true); }, [destination, checkIn, checkOut, guests, sortBy, filters, culturalFilters]);
 
   async function loadHotels(pageNum = 1, reset = false) {
     if (pageNum === 1) setLoading(true);
@@ -50,6 +60,7 @@ export default function HotelResultsScreen({ route, navigation }) {
         ...(filters.category && { category: filters.category }),
         ...(filters.minPrice && { minPrice: filters.minPrice }),
         ...(filters.maxPrice && { maxPrice: filters.maxPrice }),
+        ...culturalFilters,
       };
       const res = await hotelAPI.search(params);
       const data = res.data?.data || [];
@@ -84,7 +95,16 @@ export default function HotelResultsScreen({ route, navigation }) {
     const empty = { stars: null, category: null, minPrice: '', maxPrice: '' };
     setPendingFilters(empty);
     setFilters(empty);
+    setCulturalFilters({});
     setFilterModal(false);
+  }
+
+  function toggleCulturalChip(key) {
+    setCulturalFilters(prev => {
+      const next = { ...prev };
+      if (next[key]) { delete next[key]; } else { next[key] = 'true'; }
+      return next;
+    });
   }
 
   function toggleFavorite(hotelId) {
@@ -141,6 +161,30 @@ export default function HotelResultsScreen({ route, navigation }) {
               <Text style={[styles.sortChipText, sortBy === s.key && styles.sortChipTextActive]}>{s.label}</Text>
             </TouchableOpacity>
           ))}
+        </ScrollView>
+        {/* Cultural Chips Row */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.culturalScroll}>
+          <TouchableOpacity
+            style={styles.culturalFiltersBtn}
+            onPress={() => navigation.navigate('CulturalFilters', { destination, checkIn, checkOut, guests })}
+          >
+            <Ionicons name="moon" size={13} color="#004E89" />
+            <Text style={styles.culturalFiltersBtnText}>Filtres halal &amp; famille </Text>
+            <Ionicons name="chevron-forward" size={12} color="#004E89" />
+          </TouchableOpacity>
+          {CULTURAL_CHIPS.map(chip => {
+            const active = !!culturalFilters[chip.key];
+            return (
+              <TouchableOpacity
+                key={chip.key}
+                style={[styles.culturalChip, active && styles.culturalChipActive]}
+                onPress={() => toggleCulturalChip(chip.key)}
+              >
+                <Ionicons name={chip.icon} size={13} color={active ? '#fff' : '#4A5568'} />
+                <Text style={[styles.culturalChipText, active && { color: '#fff' }]}>{chip.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
       </View>
 

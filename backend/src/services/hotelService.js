@@ -139,7 +139,10 @@ const MOCK_HOTELS = [
     mainImage: 'https://picsum.photos/800/600?random=29',
     images: ['https://picsum.photos/800/600?random=29','https://picsum.photos/800/600?random=30','https://picsum.photos/800/600?random=31'],
     amenities: ['Restaurant Étoilé','Piscine Intérieure','Spa Luxe','Bar','Conciergerie','Service Chambre 24h','Parking'],
-    rating: 9.6, reviewCount: 2134, isActive: true, isFeatured: true
+    rating: 9.6, reviewCount: 2134, isActive: true, isFeatured: true,
+    isAlcoholFree: false, isBurkiniAccepted: false, isHalalCertified: false, hasRamadanServices: false,
+    hasPrayerRoom: false, hasSeparatePool: false, isFamilyConservative: false, isMedicalTourism: false,
+    isHoneymoonPackage: true, hasAirportShuttle: true, isBeachfront: false,
   },
   {
     id: 'hotel-012', name: 'Atlantis The Palm Dubai', slug: 'atlantis-palm-dubai',
@@ -149,7 +152,10 @@ const MOCK_HOTELS = [
     mainImage: 'https://picsum.photos/800/600?random=32',
     images: ['https://picsum.photos/800/600?random=32','https://picsum.photos/800/600?random=33','https://picsum.photos/800/600?random=34'],
     amenities: ['Parc Aquatique','Plage Privée','17 Restaurants','Spa Aquaventure','Aquarium','Casino','Boutiques Luxe','WiFi'],
-    rating: 9.1, reviewCount: 3456, isActive: true, isFeatured: true
+    rating: 9.1, reviewCount: 3456, isActive: true, isFeatured: true,
+    isAlcoholFree: false, isBurkiniAccepted: false, isHalalCertified: false, hasRamadanServices: false,
+    hasPrayerRoom: false, hasSeparatePool: false, isFamilyConservative: false, isMedicalTourism: false,
+    isHoneymoonPackage: true, hasAirportShuttle: true, isBeachfront: true,
   },
   {
     id: 'hotel-013', name: 'Hotel Arts Barcelona', slug: 'hotel-arts-barcelona',
@@ -159,7 +165,10 @@ const MOCK_HOTELS = [
     mainImage: 'https://picsum.photos/800/600?random=35',
     images: ['https://picsum.photos/800/600?random=35','https://picsum.photos/800/600?random=36'],
     amenities: ['Piscine Rooftop','2 Restaurants Étoilés','Spa','Bar','Fitness','Vue Mer','Plage à Proximité'],
-    rating: 9.3, reviewCount: 1876, isActive: true, isFeatured: true
+    rating: 9.3, reviewCount: 1876, isActive: true, isFeatured: true,
+    isAlcoholFree: false, isBurkiniAccepted: false, isHalalCertified: false, hasRamadanServices: false,
+    hasPrayerRoom: false, hasSeparatePool: false, isFamilyConservative: false, isMedicalTourism: false,
+    isHoneymoonPackage: true, hasAirportShuttle: true, isBeachfront: false,
   },
   {
     id: 'hotel-014', name: 'Novotel Hammamet', slug: 'novotel-hammamet',
@@ -169,7 +178,10 @@ const MOCK_HOTELS = [
     mainImage: 'https://picsum.photos/800/600?random=36',
     images: ['https://picsum.photos/800/600?random=36','https://picsum.photos/800/600?random=37'],
     amenities: ['Plage','Piscine','Restaurant','Bar','WiFi','Parking','Climatisation','Tennis'],
-    rating: 7.9, reviewCount: 445, isActive: true, isFeatured: false
+    rating: 7.9, reviewCount: 445, isActive: true, isFeatured: false,
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: false, hasRamadanServices: true,
+    hasPrayerRoom: false, hasSeparatePool: false, isFamilyConservative: true, isMedicalTourism: false,
+    isHoneymoonPackage: false, hasAirportShuttle: false, isBeachfront: true,
   },
   {
     id: 'hotel-015', name: 'Hôtel Sindbad Hammamet', slug: 'sindbad-hammamet',
@@ -179,7 +191,10 @@ const MOCK_HOTELS = [
     mainImage: 'https://picsum.photos/800/600?random=38',
     images: ['https://picsum.photos/800/600?random=38','https://picsum.photos/800/600?random=39'],
     amenities: ['Piscine','Restaurant','WiFi','Parking','Plage à 200m','Animation'],
-    rating: 7.4, reviewCount: 298, isActive: true, isFeatured: false
+    rating: 7.4, reviewCount: 298, isActive: true, isFeatured: false,
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: false, hasRamadanServices: true,
+    hasPrayerRoom: false, hasSeparatePool: false, isFamilyConservative: true, isMedicalTourism: false,
+    isHoneymoonPackage: false, hasAirportShuttle: false, isBeachfront: false,
   },
 
   // MOROCCO HOTELS (8 hotels)
@@ -190,7 +205,10 @@ const MOCK_HOTELS = [
     mainImage: 'https://picsum.photos/800/600?random=60',
     images: ['https://picsum.photos/800/600?random=60','https://picsum.photos/800/600?random=61','https://picsum.photos/800/600?random=62'],
     amenities: ['Jardins Centenaires','3 Piscines','Spa','Casino','5 Restaurants','Bar Churchill','WiFi','Hammam Royal','Tennis'],
-    currency: 'MAD', rating: 9.5, reviewCount: 2341, isActive: true, isFeatured: true },
+    currency: 'MAD', rating: 9.5, reviewCount: 2341, isActive: true, isFeatured: true,
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: true, hasRamadanServices: true,
+    hasPrayerRoom: true, hasSeparatePool: false, isFamilyConservative: false, isMedicalTourism: false,
+    isHoneymoonPackage: true, hasAirportShuttle: true, isBeachfront: false },
 
   { id: 'hotel-ma-002', name: 'Four Seasons Resort Marrakech', slug: 'four-seasons-marrakech',
     description: 'Resort luxueux en plein cœur de Marrakech avec jardins andalous et vue sur l\'Atlas.',
@@ -199,7 +217,10 @@ const MOCK_HOTELS = [
     mainImage: 'https://picsum.photos/800/600?random=63',
     images: ['https://picsum.photos/800/600?random=63','https://picsum.photos/800/600?random=64'],
     amenities: ['2 Piscines','Spa','Restaurant','Bar','Gym','WiFi','Hammam','Navette Médina'],
-    currency: 'MAD', rating: 9.3, reviewCount: 1876, isActive: true, isFeatured: true },
+    currency: 'MAD', rating: 9.3, reviewCount: 1876, isActive: true, isFeatured: true,
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: true, hasRamadanServices: true,
+    hasPrayerRoom: true, hasSeparatePool: false, isFamilyConservative: false, isMedicalTourism: false,
+    isHoneymoonPackage: true, hasAirportShuttle: true, isBeachfront: false },
 
   { id: 'hotel-ma-003', name: 'Sofitel Casablanca Tour Blanche', slug: 'sofitel-casablanca',
     description: 'Hôtel d\'affaires et loisirs au cœur économique du Maroc, design contemporain et cuisine française.',
@@ -208,7 +229,10 @@ const MOCK_HOTELS = [
     mainImage: 'https://picsum.photos/800/600?random=65',
     images: ['https://picsum.photos/800/600?random=65','https://picsum.photos/800/600?random=66'],
     amenities: ['Piscine','Spa','2 Restaurants','Bar','Salle Conférence','WiFi','Gym','Parking'],
-    currency: 'MAD', rating: 8.8, reviewCount: 1102, isActive: true, isFeatured: false },
+    currency: 'MAD', rating: 8.8, reviewCount: 1102, isActive: true, isFeatured: false,
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: false, hasRamadanServices: true,
+    hasPrayerRoom: false, hasSeparatePool: false, isFamilyConservative: false, isMedicalTourism: false,
+    isHoneymoonPackage: false, hasAirportShuttle: true, isBeachfront: false },
 
   { id: 'hotel-ma-004', name: 'Riad Fès - Relais & Châteaux', slug: 'riad-fes',
     description: 'Riad authentique du XIXe siècle en plein cœur de la médina de Fès, patrimoine mondial UNESCO.',
@@ -217,7 +241,10 @@ const MOCK_HOTELS = [
     mainImage: 'https://picsum.photos/800/600?random=67',
     images: ['https://picsum.photos/800/600?random=67','https://picsum.photos/800/600?random=68'],
     amenities: ['Patio Andalou','Piscine','Spa','Restaurant Marocain','WiFi','Hammam','Rooftop','Guide Médina'],
-    currency: 'MAD', rating: 9.1, reviewCount: 543, isActive: true, isFeatured: true },
+    currency: 'MAD', rating: 9.1, reviewCount: 543, isActive: true, isFeatured: true,
+    isAlcoholFree: true, isBurkiniAccepted: true, isHalalCertified: true, hasRamadanServices: true,
+    hasPrayerRoom: true, hasSeparatePool: false, isFamilyConservative: true, isMedicalTourism: false,
+    isHoneymoonPackage: true, hasAirportShuttle: false, isBeachfront: false },
 
   { id: 'hotel-ma-005', name: 'Mazagan Beach & Golf Resort', slug: 'mazagan-resort',
     description: 'Resort balnéaire et golfique unique en son genre sur la côte atlantique marocaine.',
@@ -226,7 +253,10 @@ const MOCK_HOTELS = [
     mainImage: 'https://picsum.photos/800/600?random=69',
     images: ['https://picsum.photos/800/600?random=69','https://picsum.photos/800/600?random=70'],
     amenities: ['Golf 18 Trous','Casino','Plage Océan','5 Piscines','Spa','7 Restaurants','Centre Équestre','WiFi'],
-    currency: 'MAD', rating: 8.9, reviewCount: 789, isActive: true, isFeatured: true },
+    currency: 'MAD', rating: 8.9, reviewCount: 789, isActive: true, isFeatured: true,
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: false, hasRamadanServices: false,
+    hasPrayerRoom: false, hasSeparatePool: false, isFamilyConservative: false, isMedicalTourism: false,
+    isHoneymoonPackage: true, hasAirportShuttle: true, isBeachfront: true },
 
   { id: 'hotel-ma-006', name: 'Movenpick Hotel Mansour Eddahbi', slug: 'movenpick-marrakech',
     description: 'Complexe hôtelier 5 étoiles à Marrakech avec palmeraie et spa marocain traditionnel.',
@@ -235,7 +265,10 @@ const MOCK_HOTELS = [
     mainImage: 'https://picsum.photos/800/600?random=71',
     images: ['https://picsum.photos/800/600?random=71','https://picsum.photos/800/600?random=72'],
     amenities: ['Palmeraie','Piscine Olympique','Spa','Casino','4 Restaurants','Tennis','WiFi'],
-    currency: 'MAD', rating: 8.6, reviewCount: 934, isActive: true, isFeatured: false },
+    currency: 'MAD', rating: 8.6, reviewCount: 934, isActive: true, isFeatured: false,
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: false, hasRamadanServices: true,
+    hasPrayerRoom: false, hasSeparatePool: false, isFamilyConservative: false, isMedicalTourism: false,
+    isHoneymoonPackage: false, hasAirportShuttle: true, isBeachfront: false },
 
   { id: 'hotel-ma-007', name: 'Hyatt Regency Casablanca', slug: 'hyatt-casablanca',
     description: 'Hôtel d\'affaires premium en plein centre de Casablanca, idéal pour voyageurs professionnels.',
@@ -244,7 +277,10 @@ const MOCK_HOTELS = [
     mainImage: 'https://picsum.photos/800/600?random=73',
     images: ['https://picsum.photos/800/600?random=73','https://picsum.photos/800/600?random=74'],
     amenities: ['Restaurant','Bar','Piscine','Spa','Salle Conférence 1000 pers','WiFi','Gym','Valet'],
-    currency: 'MAD', rating: 8.7, reviewCount: 1456, isActive: true, isFeatured: false },
+    currency: 'MAD', rating: 8.7, reviewCount: 1456, isActive: true, isFeatured: false,
+    isAlcoholFree: false, isBurkiniAccepted: false, isHalalCertified: false, hasRamadanServices: true,
+    hasPrayerRoom: false, hasSeparatePool: false, isFamilyConservative: false, isMedicalTourism: false,
+    isHoneymoonPackage: false, hasAirportShuttle: true, isBeachfront: false },
 
   { id: 'hotel-ma-008', name: 'Kenzi Agdal Resort Marrakech', slug: 'kenzi-agdal',
     description: 'Resort marocain authentique avec architecture traditionnelle et jardins parfumés.',
@@ -253,7 +289,10 @@ const MOCK_HOTELS = [
     mainImage: 'https://picsum.photos/800/600?random=75',
     images: ['https://picsum.photos/800/600?random=75','https://picsum.photos/800/600?random=76'],
     amenities: ['Jardins','3 Piscines','Spa Marocain','Hammam','3 Restaurants','Tennis','WiFi','Animation'],
-    currency: 'MAD', rating: 8.4, reviewCount: 678, isActive: true, isFeatured: false },
+    currency: 'MAD', rating: 8.4, reviewCount: 678, isActive: true, isFeatured: false,
+    isAlcoholFree: true, isBurkiniAccepted: true, isHalalCertified: true, hasRamadanServices: true,
+    hasPrayerRoom: true, hasSeparatePool: true, isFamilyConservative: true, isMedicalTourism: false,
+    isHoneymoonPackage: false, hasAirportShuttle: true, isBeachfront: false },
 
   // ALGERIA HOTELS (5 hotels)
   { id: 'hotel-dz-001', name: 'Sheraton Club des Pins Resort', slug: 'sheraton-club-des-pins',
@@ -263,7 +302,10 @@ const MOCK_HOTELS = [
     mainImage: 'https://picsum.photos/800/600?random=77',
     images: ['https://picsum.photos/800/600?random=77','https://picsum.photos/800/600?random=78'],
     amenities: ['Plage Privée','2 Piscines','Spa','3 Restaurants','Tennis','WiFi','Casino','Gym'],
-    currency: 'DZD', rating: 8.6, reviewCount: 423, isActive: true, isFeatured: true },
+    currency: 'DZD', rating: 8.6, reviewCount: 423, isActive: true, isFeatured: true,
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: false, hasRamadanServices: true,
+    hasPrayerRoom: true, hasSeparatePool: false, isFamilyConservative: false, isMedicalTourism: false,
+    isHoneymoonPackage: false, hasAirportShuttle: true, isBeachfront: true },
 
   { id: 'hotel-dz-002', name: 'Sofitel Alger Hamma Garden', slug: 'sofitel-alger',
     description: 'Hôtel de luxe dans le quartier des ambassades d\'Alger, vue sur la baie d\'Alger.',
@@ -272,7 +314,10 @@ const MOCK_HOTELS = [
     mainImage: 'https://picsum.photos/800/600?random=79',
     images: ['https://picsum.photos/800/600?random=79','https://picsum.photos/800/600?random=80'],
     amenities: ['Vue Baie','Restaurant Gastronomique','Bar','Piscine','Spa','WiFi','Salle Conférence','Gym'],
-    currency: 'DZD', rating: 8.8, reviewCount: 312, isActive: true, isFeatured: true },
+    currency: 'DZD', rating: 8.8, reviewCount: 312, isActive: true, isFeatured: true,
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: false, hasRamadanServices: true,
+    hasPrayerRoom: false, hasSeparatePool: false, isFamilyConservative: false, isMedicalTourism: false,
+    isHoneymoonPackage: false, hasAirportShuttle: true, isBeachfront: false },
 
   { id: 'hotel-dz-003', name: 'El Aurassi Hotel Alger', slug: 'el-aurassi-alger',
     description: 'Hôtel emblématique d\'Alger offrant une vue panoramique exceptionnelle sur la Méditerranée.',
@@ -281,7 +326,10 @@ const MOCK_HOTELS = [
     mainImage: 'https://picsum.photos/800/600?random=81',
     images: ['https://picsum.photos/800/600?random=81','https://picsum.photos/800/600?random=82'],
     amenities: ['Vue Méditerranée','2 Restaurants','Bar','Piscine','Salle Conférence','WiFi','Parking'],
-    currency: 'DZD', rating: 7.9, reviewCount: 567, isActive: true, isFeatured: false },
+    currency: 'DZD', rating: 7.9, reviewCount: 567, isActive: true, isFeatured: false,
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: false, hasRamadanServices: true,
+    hasPrayerRoom: false, hasSeparatePool: false, isFamilyConservative: false, isMedicalTourism: false,
+    isHoneymoonPackage: false, hasAirportShuttle: false, isBeachfront: false },
 
   { id: 'hotel-dz-004', name: 'Marriott Oran Hotel', slug: 'marriott-oran',
     description: 'Première enseigne Marriott en Algérie dans la ville d\'Oran, standards internationaux.',
@@ -290,7 +338,10 @@ const MOCK_HOTELS = [
     mainImage: 'https://picsum.photos/800/600?random=83',
     images: ['https://picsum.photos/800/600?random=83','https://picsum.photos/800/600?random=84'],
     amenities: ['Piscine','Spa','2 Restaurants','Bar Rooftop','WiFi','Gym','Salle Conférence','Parking'],
-    currency: 'DZD', rating: 8.5, reviewCount: 234, isActive: true, isFeatured: true },
+    currency: 'DZD', rating: 8.5, reviewCount: 234, isActive: true, isFeatured: true,
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: false, hasRamadanServices: true,
+    hasPrayerRoom: false, hasSeparatePool: false, isFamilyConservative: false, isMedicalTourism: false,
+    isHoneymoonPackage: false, hasAirportShuttle: true, isBeachfront: false },
 
   { id: 'hotel-dz-005', name: 'Hilton Alger', slug: 'hilton-alger',
     description: 'Hôtel international de standing dans le quartier d\'affaires d\'Alger.',
@@ -299,7 +350,180 @@ const MOCK_HOTELS = [
     mainImage: 'https://picsum.photos/800/600?random=85',
     images: ['https://picsum.photos/800/600?random=85','https://picsum.photos/800/600?random=86'],
     amenities: ['Vue Mer','Restaurant','Bar','Piscine','Spa','WiFi','Gym','Navette Aéroport'],
-    currency: 'DZD', rating: 8.7, reviewCount: 189, isActive: true, isFeatured: false },
+    currency: 'DZD', rating: 8.7, reviewCount: 189, isActive: true, isFeatured: false,
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: false, hasRamadanServices: true,
+    hasPrayerRoom: false, hasSeparatePool: false, isFamilyConservative: false, isMedicalTourism: false,
+    isHoneymoonPackage: false, hasAirportShuttle: true, isBeachfront: false },
+
+  // EGYPT HOTELS (10 hotels)
+  { id: 'hotel-eg-001', name: 'Four Seasons Resort Sharm El Sheikh', slug: 'four-seasons-sharm',
+    description: 'Resort de luxe avec vue sur la Mer Rouge, accès direct au récif corallien et plongée sous-marine.',
+    address: 'South Sinai, Sharm El Sheikh', city: 'Sharm El Sheikh', country: 'Égypte',
+    lat: 27.9158, lng: 34.3299, stars: 5, category: 'RESORT',
+    mainImage: 'https://picsum.photos/800/600?random=100',
+    images: ['https://picsum.photos/800/600?random=100','https://picsum.photos/800/600?random=101'],
+    amenities: ['Plage Privée Mer Rouge','Centre Plongée','3 Piscines','Spa','4 Restaurants','Tennis','WiFi','Reef Club'],
+    currency: 'EGP', rating: 9.1, reviewCount: 1876, isActive: true, isFeatured: true,
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: true, hasRamadanServices: true,
+    hasPrayerRoom: true, hasSeparatePool: false, isFamilyConservative: false, isMedicalTourism: false,
+    isHoneymoonPackage: true, hasAirportShuttle: true, isBeachfront: true },
+
+  { id: 'hotel-eg-002', name: 'Marriott Mena House Cairo', slug: 'marriott-mena-house',
+    description: 'Hôtel historique de 1869 avec vue directe sur les Pyramides de Gizeh, jardin de 40 acres.',
+    address: '6 Pyramids Road, Giza, Cairo', city: 'Le Caire', country: 'Égypte',
+    lat: 29.9878, lng: 31.1340, stars: 5, category: 'HOTEL',
+    mainImage: 'https://picsum.photos/800/600?random=102',
+    images: ['https://picsum.photos/800/600?random=102','https://picsum.photos/800/600?random=103'],
+    amenities: ['Vue Pyramides','Piscine Historique','Spa','3 Restaurants','Bar','Golf','WiFi','Salle Conférence'],
+    currency: 'EGP', rating: 9.0, reviewCount: 2341, isActive: true, isFeatured: true,
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: true, hasRamadanServices: true,
+    hasPrayerRoom: true, hasSeparatePool: false, isFamilyConservative: false, isMedicalTourism: false,
+    isHoneymoonPackage: true, hasAirportShuttle: true, isBeachfront: false },
+
+  { id: 'hotel-eg-003', name: 'Kempinski Nile Hotel Cairo', slug: 'kempinski-cairo',
+    description: 'Hôtel de luxe sur les rives du Nil avec vue panoramique sur le fleuve sacré.',
+    address: '12 Ahmed Ragheb Street, Garden City, Cairo', city: 'Le Caire', country: 'Égypte',
+    lat: 30.0381, lng: 31.2268, stars: 5, category: 'HOTEL',
+    mainImage: 'https://picsum.photos/800/600?random=104',
+    images: ['https://picsum.photos/800/600?random=104','https://picsum.photos/800/600?random=105'],
+    amenities: ['Vue Nil','Piscine','Spa','Restaurant Français','Bar Rooftop','WiFi','Gym','Concierge'],
+    currency: 'EGP', rating: 8.9, reviewCount: 1102, isActive: true, isFeatured: false,
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: false, hasRamadanServices: true,
+    hasPrayerRoom: true, hasSeparatePool: false, isFamilyConservative: false, isMedicalTourism: false,
+    isHoneymoonPackage: false, hasAirportShuttle: true, isBeachfront: false },
+
+  { id: 'hotel-eg-004', name: 'Baron Palace Sahl Hasheesh', slug: 'baron-palace-hurghada',
+    description: 'Magnifique palais balnéaire tout inclus sur la Mer Rouge avec plage de sable blanc immaculé.',
+    address: 'Sahl Hasheesh Bay, Hurghada', city: 'Hurghada', country: 'Égypte',
+    lat: 27.1461, lng: 33.8744, stars: 5, category: 'RESORT',
+    mainImage: 'https://picsum.photos/800/600?random=106',
+    images: ['https://picsum.photos/800/600?random=106','https://picsum.photos/800/600?random=107'],
+    amenities: ['Plage Privée','5 Piscines','Sports Nautiques','Spa','7 Restaurants','Animation','Club Enfants','Tout Inclus'],
+    currency: 'EGP', rating: 8.7, reviewCount: 3210, isActive: true, isFeatured: true,
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: true, hasRamadanServices: true,
+    hasPrayerRoom: true, hasSeparatePool: true, isFamilyConservative: true, isMedicalTourism: false,
+    isHoneymoonPackage: false, hasAirportShuttle: true, isBeachfront: true },
+
+  { id: 'hotel-eg-005', name: 'Steigenberger Al Dau Beach Hotel', slug: 'steigenberger-hurghada',
+    description: 'Complexe balnéaire allemand de renommée mondiale avec services halal complets.',
+    address: 'Al Dau Bay, Hurghada', city: 'Hurghada', country: 'Égypte',
+    lat: 27.2042, lng: 33.8372, stars: 5, category: 'RESORT',
+    mainImage: 'https://picsum.photos/800/600?random=108',
+    images: ['https://picsum.photos/800/600?random=108','https://picsum.photos/800/600?random=109'],
+    amenities: ['Plage Privée','4 Piscines','Plongée','Spa','6 Restaurants','Bar Sans Alcool','WiFi','Animation Famille'],
+    currency: 'EGP', rating: 8.8, reviewCount: 1567, isActive: true, isFeatured: true,
+    isAlcoholFree: true, isBurkiniAccepted: true, isHalalCertified: true, hasRamadanServices: true,
+    hasPrayerRoom: true, hasSeparatePool: true, isFamilyConservative: true, isMedicalTourism: false,
+    isHoneymoonPackage: false, hasAirportShuttle: true, isBeachfront: true },
+
+  { id: 'hotel-eg-006', name: 'Sofitel Legend Old Cataract Aswan', slug: 'sofitel-aswan',
+    description: "Palace victorien légendaire d'Assouan inspiré d'Agatha Christie, vue sur le Nil et l'île Éléphantine.",
+    address: 'Abtal El Tahrir Street, Aswan', city: 'Assouan', country: 'Égypte',
+    lat: 24.0756, lng: 32.8987, stars: 5, category: 'HOTEL',
+    mainImage: 'https://picsum.photos/800/600?random=110',
+    images: ['https://picsum.photos/800/600?random=110','https://picsum.photos/800/600?random=111'],
+    amenities: ['Vue Nil','Piscine Historique','Spa','2 Restaurants','Bar','Felouque Privée','WiFi','Jardin Nubian'],
+    currency: 'EGP', rating: 9.3, reviewCount: 789, isActive: true, isFeatured: true,
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: true, hasRamadanServices: true,
+    hasPrayerRoom: true, hasSeparatePool: false, isFamilyConservative: false, isMedicalTourism: false,
+    isHoneymoonPackage: true, hasAirportShuttle: true, isBeachfront: false },
+
+  { id: 'hotel-eg-007', name: 'Winter Palace Hotel Luxor', slug: 'winter-palace-luxor',
+    description: "Hôtel historique de 1886 face aux temples de Karnak, ambiance coloniale et jardins tropicaux.",
+    address: 'Corniche El Nil, Luxor', city: 'Louxor', country: 'Égypte',
+    lat: 25.6918, lng: 32.6421, stars: 5, category: 'HOTEL',
+    mainImage: 'https://picsum.photos/800/600?random=112',
+    images: ['https://picsum.photos/800/600?random=112','https://picsum.photos/800/600?random=113'],
+    amenities: ['Vue Nil','Jardin Tropical','Piscine','Restaurant','Bar','WiFi','Visite Temples','Tennis'],
+    currency: 'EGP', rating: 8.6, reviewCount: 934, isActive: true, isFeatured: false,
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: true, hasRamadanServices: true,
+    hasPrayerRoom: true, hasSeparatePool: false, isFamilyConservative: false, isMedicalTourism: false,
+    isHoneymoonPackage: true, hasAirportShuttle: true, isBeachfront: false },
+
+  { id: 'hotel-eg-008', name: 'Albatros Aqua Park Sharm', slug: 'albatros-aquapark-sharm',
+    description: 'Complexe familial tout inclus avec parc aquatique géant et plage privée Mer Rouge.',
+    address: 'Nabq Bay, Sharm El Sheikh', city: 'Sharm El Sheikh', country: 'Égypte',
+    lat: 27.9756, lng: 34.4178, stars: 4, category: 'RESORT',
+    mainImage: 'https://picsum.photos/800/600?random=114',
+    images: ['https://picsum.photos/800/600?random=114','https://picsum.photos/800/600?random=115'],
+    amenities: ['Parc Aquatique','Plage Privée','4 Piscines','Club Enfants','5 Restaurants','Animation','Tout Inclus','WiFi'],
+    currency: 'EGP', rating: 8.3, reviewCount: 4521, isActive: true, isFeatured: true,
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: true, hasRamadanServices: true,
+    hasPrayerRoom: true, hasSeparatePool: true, isFamilyConservative: true, isMedicalTourism: false,
+    isHoneymoonPackage: false, hasAirportShuttle: true, isBeachfront: true },
+
+  { id: 'hotel-eg-009', name: 'Conrad Cairo Hotel & Casino', slug: 'conrad-cairo',
+    description: "Hôtel business premium sur l'île de Zamalek au Nil, quartier diplomatique du Caire.",
+    address: '1191 Nile Corniche, Zamalek, Cairo', city: 'Le Caire', country: 'Égypte',
+    lat: 30.0618, lng: 31.2242, stars: 5, category: 'HOTEL',
+    mainImage: 'https://picsum.photos/800/600?random=116',
+    images: ['https://picsum.photos/800/600?random=116','https://picsum.photos/800/600?random=117'],
+    amenities: ['Vue Nil','Casino','Piscine','Spa','3 Restaurants','Bar','WiFi','Gym','Salle Conférence'],
+    currency: 'EGP', rating: 8.8, reviewCount: 1234, isActive: true, isFeatured: false,
+    isAlcoholFree: false, isBurkiniAccepted: false, isHalalCertified: false, hasRamadanServices: true,
+    hasPrayerRoom: false, hasSeparatePool: false, isFamilyConservative: false, isMedicalTourism: false,
+    isHoneymoonPackage: false, hasAirportShuttle: true, isBeachfront: false },
+
+  { id: 'hotel-eg-010', name: 'Helnan Palestine Hotel Alexandria', slug: 'helnan-palestine-alex',
+    description: "Hôtel historique d'Alexandrie sur la corniche méditerranéenne, hérita de l'époque royale.",
+    address: 'Montazah Palace Grounds, Alexandria', city: 'Alexandrie', country: 'Égypte',
+    lat: 31.2973, lng: 30.0280, stars: 5, category: 'HOTEL',
+    mainImage: 'https://picsum.photos/800/600?random=118',
+    images: ['https://picsum.photos/800/600?random=118','https://picsum.photos/800/600?random=119'],
+    amenities: ['Jardins Royaux','Plage Méditerranée','Piscine','2 Restaurants','WiFi','Tennis','Vue Mer'],
+    currency: 'EGP', rating: 8.4, reviewCount: 678, isActive: true, isFeatured: false,
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: true, hasRamadanServices: true,
+    hasPrayerRoom: true, hasSeparatePool: true, isFamilyConservative: true, isMedicalTourism: false,
+    isHoneymoonPackage: false, hasAirportShuttle: true, isBeachfront: true },
+
+  // MAURITANIA HOTELS (4 hotels)
+  { id: 'hotel-mr-001', name: 'Azalaï Hotel Nouakchott', slug: 'azalai-nouakchott',
+    description: 'Meilleur hôtel de Nouakchott, référence business et diplomatique de Mauritanie avec cuisine africaine authentique.',
+    address: 'Avenue Gamal Abdel Nasser, Nouakchott', city: 'Nouakchott', country: 'Mauritanie',
+    lat: 18.0735, lng: -15.9582, stars: 4, category: 'HOTEL',
+    mainImage: 'https://picsum.photos/800/600?random=120',
+    images: ['https://picsum.photos/800/600?random=120','https://picsum.photos/800/600?random=121'],
+    amenities: ['Piscine','Restaurant Africain','WiFi','Climatisation','Parking','Salle Conférence','Bar Sans Alcool','Mosquée'],
+    currency: 'MRU', rating: 7.8, reviewCount: 234, isActive: true, isFeatured: true,
+    isAlcoholFree: true, isBurkiniAccepted: true, isHalalCertified: true, hasRamadanServices: true,
+    hasPrayerRoom: true, hasSeparatePool: false, isFamilyConservative: true, isMedicalTourism: false,
+    isHoneymoonPackage: false, hasAirportShuttle: true, isBeachfront: false },
+
+  { id: 'hotel-mr-002', name: 'Auberge Sahara Atar', slug: 'auberge-sahara-atar',
+    description: "Lodge désertique authentique dans la région d'Atar, porte d'entrée de l'Adrar, coucher de soleil sur les dunes.",
+    address: "Route d'Atar, Adrar", city: 'Atar', country: 'Mauritanie',
+    lat: 20.5167, lng: -13.0500, stars: 3, category: 'VILLA',
+    mainImage: 'https://picsum.photos/800/600?random=122',
+    images: ['https://picsum.photos/800/600?random=122','https://picsum.photos/800/600?random=123'],
+    amenities: ['Vue Désert','Tentes Sahariennes','Cuisine Mauritanienne','Excursions Dunes','Thé Traditionnel','Ciel Étoilé','WiFi'],
+    currency: 'MRU', rating: 8.5, reviewCount: 89, isActive: true, isFeatured: true,
+    isAlcoholFree: true, isBurkiniAccepted: true, isHalalCertified: true, hasRamadanServices: true,
+    hasPrayerRoom: true, hasSeparatePool: false, isFamilyConservative: true, isMedicalTourism: false,
+    isHoneymoonPackage: false, hasAirportShuttle: false, isBeachfront: false },
+
+  { id: 'hotel-mr-003', name: 'Novotel Nouakchott', slug: 'novotel-nouakchott',
+    description: "Hôtel international standard dans la capitale mauritanienne, idéal pour voyageurs d'affaires.",
+    address: 'Ilot K, Tevragh-Zeina, Nouakchott', city: 'Nouakchott', country: 'Mauritanie',
+    lat: 18.0860, lng: -15.9644, stars: 4, category: 'HOTEL',
+    mainImage: 'https://picsum.photos/800/600?random=124',
+    images: ['https://picsum.photos/800/600?random=124','https://picsum.photos/800/600?random=125'],
+    amenities: ['Piscine','Restaurant','WiFi','Gym','Parking','Salle Conférence','Navette Aéroport'],
+    currency: 'MRU', rating: 7.6, reviewCount: 156, isActive: true, isFeatured: false,
+    isAlcoholFree: true, isBurkiniAccepted: true, isHalalCertified: true, hasRamadanServices: true,
+    hasPrayerRoom: true, hasSeparatePool: false, isFamilyConservative: true, isMedicalTourism: false,
+    isHoneymoonPackage: false, hasAirportShuttle: true, isBeachfront: false },
+
+  { id: 'hotel-mr-004', name: 'Lodge Terjit Oasis', slug: 'lodge-terjit-oasis',
+    description: 'Oasis paradisiaque dans le désert mauritanien avec sources d\'eau chaude naturelles et palmiers centenaires.',
+    address: 'Oasis de Terjit, Adrar', city: 'Terjit', country: 'Mauritanie',
+    lat: 19.8833, lng: -13.3167, stars: 3, category: 'VILLA',
+    mainImage: 'https://picsum.photos/800/600?random=126',
+    images: ['https://picsum.photos/800/600?random=126','https://picsum.photos/800/600?random=127'],
+    amenities: ['Sources Chaudes','Palmiers','Cuisine Traditionnelle','Chamelles','Excursions','Artisanat Local','Silence Absolu'],
+    currency: 'MRU', rating: 9.0, reviewCount: 67, isActive: true, isFeatured: true,
+    isAlcoholFree: true, isBurkiniAccepted: true, isHalalCertified: true, hasRamadanServices: true,
+    hasPrayerRoom: true, hasSeparatePool: false, isFamilyConservative: true, isMedicalTourism: false,
+    isHoneymoonPackage: true, hasAirportShuttle: false, isBeachfront: false },
 ];
 
 const MOCK_ROOMS = {
@@ -335,6 +559,10 @@ const POPULAR_DESTINATIONS = [
   { city: 'Casablanca', country: 'Maroc', image: 'https://picsum.photos/400/300?random=91', hotelsCount: 6 },
   { city: 'Alger', country: 'Algérie', image: 'https://picsum.photos/400/300?random=92', hotelsCount: 5 },
   { city: 'Fès', country: 'Maroc', image: 'https://picsum.photos/400/300?random=93', hotelsCount: 3 },
+  { city: 'Le Caire', country: 'Égypte', image: 'https://picsum.photos/400/300?random=130', hotelsCount: 10, emoji: '🏛️' },
+  { city: 'Hurghada', country: 'Égypte', image: 'https://picsum.photos/400/300?random=131', hotelsCount: 8, emoji: '🤿' },
+  { city: 'Sharm El Sheikh', country: 'Égypte', image: 'https://picsum.photos/400/300?random=132', hotelsCount: 6, emoji: '🐠' },
+  { city: 'Nouakchott', country: 'Mauritanie', image: 'https://picsum.photos/400/300?random=133', hotelsCount: 4, emoji: '🌅' },
 ];
 
 function generateMockPrices(hotel, checkIn, checkOut, guests) {
@@ -351,7 +579,10 @@ function generateMockPrices(hotel, checkIn, checkOut, guests) {
     const originalTotal = hasDiscount ? Math.round(totalPrice / (1 - discountPct / 100)) : totalPrice;
 
     const currency = hotel.currency || 'TND';
-    const currencyMultiplier = currency === 'MAD' ? 3.5 : currency === 'DZD' ? 40 : 1;
+    let basePrice = pricePerNight;
+    if (currency === 'EGP') basePrice *= 10;
+    if (currency === 'MRU') basePrice *= 12;
+    const currencyMultiplier = currency === 'MAD' ? 3.5 : currency === 'DZD' ? 40 : currency === 'EGP' ? 10 : currency === 'MRU' ? 12 : 1;
     const pricePerNightConverted = Math.round(pricePerNight * currencyMultiplier);
     const totalPriceConverted = pricePerNightConverted * nights;
     const originalTotalConverted = hasDiscount ? Math.round(totalPriceConverted / (1 - discountPct / 100)) : totalPriceConverted;
@@ -393,7 +624,9 @@ function getBasePrice(hotel) {
   return Math.round(base * cityMultiplier);
 }
 
-function searchHotels({ destination, stars, category, minPrice, maxPrice, amenities, sortBy, guests = 1 }) {
+function searchHotels({ destination, stars, category, minPrice, maxPrice, amenities, sortBy, guests = 1,
+  isAlcoholFree, isBurkiniAccepted, isHalalCertified, hasRamadanServices, hasPrayerRoom,
+  hasSeparatePool, isFamilyConservative, isMedicalTourism, isHoneymoonPackage, hasAirportShuttle, isBeachfront, country }) {
   let results = [...MOCK_HOTELS].filter(h => h.isActive);
 
   if (destination) {
@@ -413,6 +646,18 @@ function searchHotels({ destination, stars, category, minPrice, maxPrice, amenit
     const amenArr = String(amenities).split(',').map(s => s.toLowerCase());
     results = results.filter(h => amenArr.every(a => h.amenities.some(ha => ha.toLowerCase().includes(a))));
   }
+  if (isAlcoholFree === 'true') results = results.filter(h => h.isAlcoholFree);
+  if (isBurkiniAccepted === 'true') results = results.filter(h => h.isBurkiniAccepted);
+  if (isHalalCertified === 'true') results = results.filter(h => h.isHalalCertified);
+  if (hasRamadanServices === 'true') results = results.filter(h => h.hasRamadanServices);
+  if (hasPrayerRoom === 'true') results = results.filter(h => h.hasPrayerRoom);
+  if (hasSeparatePool === 'true') results = results.filter(h => h.hasSeparatePool);
+  if (isFamilyConservative === 'true') results = results.filter(h => h.isFamilyConservative);
+  if (isMedicalTourism === 'true') results = results.filter(h => h.isMedicalTourism);
+  if (isHoneymoonPackage === 'true') results = results.filter(h => h.isHoneymoonPackage);
+  if (hasAirportShuttle === 'true') results = results.filter(h => h.hasAirportShuttle);
+  if (isBeachfront === 'true') results = results.filter(h => h.isBeachfront);
+  if (country) results = results.filter(h => h.country.toLowerCase().includes(country.toLowerCase()));
 
   const checkIn = new Date().toISOString().split('T')[0];
   const checkOut = new Date(Date.now() + 86400000).toISOString().split('T')[0];
