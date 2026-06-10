@@ -213,6 +213,9 @@ import TripPlannerScreen from './screens/hotels/TripPlannerScreen';
 import PriceAlertScreen from './screens/hotels/PriceAlertScreen';
 import RecentlyViewedScreen from './screens/hotels/RecentlyViewedScreen';
 import HotelOnboardingScreen from './screens/hotels/HotelOnboardingScreen';
+import BookingRedirectScreen from './screens/hotels/BookingRedirectScreen';
+import RevenueAdminScreen from './screens/hotels/RevenueAdminScreen';
+import HotelManagerScreen from './screens/hotels/HotelManagerScreen';
 
 // History Detail
 import HistoryDetailScreen from './screens/profile/HistoryDetailScreen';
@@ -1191,6 +1194,9 @@ function MainStack() {
       <Stack.Screen name="PriceAlert" component={PriceAlertScreen} options={{ headerShown: false }} />
       <Stack.Screen name="HotelRecentlyViewed" component={RecentlyViewedScreen} options={{ headerShown: false }} />
       <Stack.Screen name="HotelOnboarding" component={HotelOnboardingScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="BookingRedirect" component={BookingRedirectScreen} options={{ headerShown: false, gestureEnabled: false }} />
+      <Stack.Screen name="RevenueAdmin" component={RevenueAdminScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="HotelManager" component={HotelManagerScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }

@@ -447,6 +447,18 @@ export default function HotelSearchScreen({ navigation }) {
           </LinearGradient>
         </TouchableOpacity>
 
+        {/* Hotelier banner */}
+        <TouchableOpacity
+          onPress={() => navigation.navigate('HotelManager')}
+          style={{ margin: 16, backgroundColor: '#004E89', borderRadius: 12, padding: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+        >
+          <View>
+            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15 }}>💼 Vous êtes hôtelier ?</Text>
+            <Text style={{ color: '#a0c4e8', fontSize: 12, marginTop: 2 }}>Gérez votre visibilité sur EasyHotels</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#FF6B35" />
+        </TouchableOpacity>
+
         <View style={{ height: 30 }} />
       </ScrollView>
     </View>

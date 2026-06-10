@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, ScrollView, Image, TouchableOpacity, StyleSheet,
-  Dimensions, FlatList, ActivityIndicator, Linking, StatusBar,
+  Dimensions, FlatList, ActivityIndicator, Linking, StatusBar, Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -156,6 +156,17 @@ export default function HotelDetailScreen({ route, navigation }) {
         {/* Price Comparison (most important section) */}
         <View style={styles.sectionCard}>
           <PriceComparisonBar offers={priceOffers} />
+          <TouchableOpacity
+            style={styles.cpcInfoBtn}
+            onPress={() => Alert.alert(
+              'Comment ça marche ?',
+              'EasyHotels compare les prix de plusieurs partenaires (Booking.com, Expedia, Hotels.com, etc.) pour vous trouver la meilleure offre.\n\nLorsque vous réservez via un partenaire, EasyHotels perçoit une commission de partenariat. Cela nous permet de vous offrir ce service gratuitement.\n\nLes prix affichés sont ceux des partenaires et peuvent varier.',
+              [{ text: 'Compris', style: 'default' }]
+            )}
+          >
+            <Ionicons name="information-circle-outline" size={16} color="#718096" />
+            <Text style={styles.cpcInfoText}>Comment ça marche ?</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Amenities */}
@@ -338,7 +349,13 @@ export default function HotelDetailScreen({ route, navigation }) {
           </View>
           <TouchableOpacity
             style={styles.bookBtn}
-            onPress={() => Linking.openURL(bestOffer.deepLink || 'https://example.com').catch(() => {})}
+            onPress={() => navigation.navigate('BookingRedirect', {
+              hotel,
+              offer: bestOffer,
+              checkIn: ci,
+              checkOut: co,
+              guests,
+            })}
           >
             <Text style={styles.bookBtnText}>Choisir cet hôtel</Text>
             <Ionicons name="arrow-forward" size={16} color="#fff" />
@@ -366,6 +383,8 @@ const styles = StyleSheet.create({
   locationRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 4, marginTop: 6 },
   locationText: { flex: 1, fontSize: 13, color: '#718096', lineHeight: 18 },
   reviewCount: { fontSize: 12, color: '#A0AEC0', marginTop: 6 },
+  cpcInfoBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 16, paddingVertical: 8 },
+  cpcInfoText: { fontSize: 12, color: '#718096', fontWeight: '500' },
   sectionCard: { marginTop: 16 },
   card: { backgroundColor: '#fff', marginHorizontal: 16, marginTop: 16, borderRadius: 16, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6, elevation: 3 },
   cardTitle: { fontSize: 18, fontWeight: '800', color: '#1A202C', marginBottom: 14 },
