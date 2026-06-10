@@ -31,6 +31,7 @@ const businessRoutes = require('./routes/business');
 const promoRoutes = require('./routes/promo');
 const providerRoutes = require('./routes/provider');
 const hotelsRoutes = require('./routes/hotels');
+const { healthHandler } = require('./scripts/healthCheck');
 const cpcRoutes = require('./routes/cpc');
 const hotelManagerRoutes = require('./routes/hotelManager');
 const currencyRoutes = require('./routes/currency');
