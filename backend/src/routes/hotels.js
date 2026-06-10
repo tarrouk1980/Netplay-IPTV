@@ -4,8 +4,29 @@ const express = require('express');
 const router = express.Router();
 const {
   MOCK_HOTELS, POPULAR_DESTINATIONS, MOCK_REVIEWS,
-  generateMockPrices, searchHotels, getHotelById, getHotelRooms
+  generateMockPrices, searchHotels, getHotelById, getHotelRooms,
+  getFeaturedHotels, getPopularDestinations, getHotelReviews,
+  addReview, toggleFavorite, getUserFavorites,
 } = require('../services/hotelService');
+
+// Soft auth middleware (doesn't block if no token)
+function softAuth(req, res, next) {
+  try {
+    const header = req.headers.authorization;
+    if (header && header.startsWith('Bearer ')) {
+      const jwt = require('jsonwebtoken');
+      const token = header.slice(7);
+      req.user = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+    }
+  } catch {}
+  next();
+}
+
+// Auth required middleware
+function requireAuth(req, res, next) {
+  if (!req.user) return res.status(401).json({ success: false, message: 'Authentification requise' });
+  next();
+}
 
 // GET /api/hotels/destinations
 router.get('/destinations', (req, res) => {
@@ -93,6 +114,53 @@ router.get('/:id/reviews', (req, res) => {
   const hotel = getHotelById(req.params.id);
   if (!hotel) return res.status(404).json({ success: false, message: 'Hôtel non trouvé' });
   res.json({ success: true, data: MOCK_REVIEWS, meta: { total: MOCK_REVIEWS.length, avgRating: hotel.rating } });
+});
+
+// POST /api/hotels/:id/reviews
+router.post('/:id/reviews', softAuth, async (req, res) => {
+  const hotel = getHotelById(req.params.id);
+  if (!hotel) return res.status(404).json({ success: false, message: 'Hôtel non trouvé' });
+  try {
+    const { authorName, rating, title, comment, travelType = 'COUPLE', pros = [], cons = [] } = req.body;
+    if (!rating || !comment) return res.status(400).json({ success: false, message: 'rating et comment requis' });
+    const review = await addReview(hotel.id, {
+      userId: req.user?.id || null,
+      authorName: authorName || req.user?.name || 'Anonyme',
+      rating: parseFloat(rating),
+      title, comment, travelType, pros, cons,
+    });
+    res.status(201).json({ success: true, data: review });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// POST /api/hotels/favorites - Toggle favorite
+router.post('/favorites', softAuth, requireAuth, async (req, res) => {
+  const { hotelId } = req.body;
+  if (!hotelId) return res.status(400).json({ success: false, message: 'hotelId requis' });
+  try {
+    const result = await toggleFavorite(req.user.id, hotelId);
+    res.json({ success: true, data: result });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// GET /api/hotels/favorites
+router.get('/favorites', softAuth, requireAuth, async (req, res) => {
+  try {
+    const favs = await getUserFavorites(req.user.id);
+    res.json({ success: true, data: favs });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// GET /api/hotels/popular-destinations
+router.get('/popular-destinations', async (req, res) => {
+  const destinations = await getPopularDestinations();
+  res.json({ success: true, data: destinations });
 });
 
 module.exports = router;

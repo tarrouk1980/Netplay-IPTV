@@ -205,6 +205,7 @@ import HotelSearchScreen from './screens/hotels/HotelSearchScreen';
 import HotelResultsScreen from './screens/hotels/HotelResultsScreen';
 import HotelDetailScreen from './screens/hotels/HotelDetailScreen';
 import HotelFavoritesScreen from './screens/hotels/HotelFavoritesScreen';
+import HotelMapScreen from './screens/hotels/HotelMapScreen';
 
 // History Detail
 import HistoryDetailScreen from './screens/profile/HistoryDetailScreen';
@@ -1175,6 +1176,7 @@ function MainStack() {
       <Stack.Screen name="HotelResults" component={HotelResultsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="HotelDetail" component={HotelDetailScreen} options={{ headerShown: false }} />
       <Stack.Screen name="HotelFavorites" component={HotelFavoritesScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="HotelMap" component={HotelMapScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
