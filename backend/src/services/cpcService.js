@@ -122,25 +122,26 @@ function trackClick({ hotelId, provider, sessionId, deviceType = 'mobile', hotel
 
 /**
  * Build an affiliate/tracking URL for a given provider.
+ * Uses AFFILIATE_CONFIG for proper affiliate URL formats when available.
  */
-function buildAffiliateUrl(provider, hotelSlug, checkIn, checkOut, guests) {
-  const slug = encodeURIComponent(hotelSlug || 'hotel');
+function buildAffiliateUrl(provider, hotelSlug, checkIn, checkOut, guests, affiliateId) {
+  const slug = hotelSlug || 'hotel';
   const ci = checkIn || new Date().toISOString().split('T')[0];
   const co = checkOut || new Date(Date.now() + 86400000).toISOString().split('T')[0];
+  const g = guests || 2;
 
+  // Use affiliate config urlBuilder when available
+  const config = AFFILIATE_CONFIG[provider];
+  if (config && config.urlBuilder) {
+    return config.urlBuilder(slug, ci, co, g, affiliateId || null);
+  }
+
+  // Fallback for DIRECT and unknown providers
   switch (provider) {
-    case 'BOOKING':
-      return `https://www.booking.com/hotel/tn/${slug}.fr.html?checkin=${ci}&checkout=${co}&group_adults=${guests}&aid=easyhotels`;
-    case 'EXPEDIA':
-      return `https://www.expedia.com/hotels/info/${slug}?chkin=${ci}&chkout=${co}&rm1=a${guests}&ptt=Hotel`;
-    case 'HOTELS_COM':
-      return `https://fr.hotels.com/ho${slug}/?q-check-in=${ci}&q-check-out=${co}&q-rooms=1&q-room-0-adults=${guests}`;
-    case 'AIRBNB':
-      return `https://www.airbnb.fr/s/hotels?checkin=${ci}&checkout=${co}&adults=${guests}`;
     case 'DIRECT':
-      return `https://easyhotels.tn/book/${slug}?checkin=${ci}&checkout=${co}&guests=${guests}`;
+      return `https://easyhotels.tn/book/${encodeURIComponent(slug)}?checkin=${ci}&checkout=${co}&guests=${g}`;
     default:
-      return `https://easyhotels.tn/search?provider=${provider}&hotel=${slug}`;
+      return `https://easyhotels.tn/search?provider=${provider}&hotel=${encodeURIComponent(slug)}`;
   }
 }
 
