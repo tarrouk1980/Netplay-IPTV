@@ -7,7 +7,11 @@
     "test": "jest --forceExit",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "start:prod": "node src/server.js",
+    "db:push": "prisma db push",
+    "db:seed-hotels": "node src/scripts/seedHotels.js",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^5.12.0",

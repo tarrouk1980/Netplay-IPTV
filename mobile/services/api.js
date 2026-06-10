@@ -1,7 +1,8 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://easyway-api-6t9y.onrender.com';
+// Use env variable or fallback to Render URL
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://easyway-api.onrender.com';
 
 const api = axios.create({
   baseURL: BASE_URL,
