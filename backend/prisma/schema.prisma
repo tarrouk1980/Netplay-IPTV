@@ -501,3 +501,82 @@ model HotelSearchLog {
   resultsCount Int      @default(0)
   createdAt    DateTime @default(now())
 }
+
+// ─── MONETIZATION / CPC MODULE ─────────────────────────────────────────────
+
+enum AdvertiserType {
+  OTA          // Online Travel Agency (Booking.com, Expedia etc)
+  HOTEL_DIRECT // Hotel booking directly
+}
+
+enum BidStatus {
+  ACTIVE
+  PAUSED
+  BUDGET_EXHAUSTED
+}
+
+model HotelAdvertiser {
+  id               String         @id @default(cuid())
+  name             String
+  type             AdvertiserType
+  logoUrl          String?
+  websiteUrl       String
+  affiliateBaseUrl String?
+  cpcBid           Decimal        @default(0.5)
+  dailyBudget      Decimal        @default(100)
+  totalSpent       Decimal        @default(0)
+  totalClicks      Int            @default(0)
+  status           BidStatus      @default(ACTIVE)
+  apiKey           String?        @unique
+  createdAt        DateTime       @default(now())
+  clicks           AdvertiserClick[]
+}
+
+model HotelClick {
+  id             String   @id @default(cuid())
+  hotelId        String
+  advertiserId   String?
+  provider       String
+  userId         String?
+  sessionId      String
+  deviceType     String   @default("mobile")
+  ipAddress      String?
+  cpcAmount      Decimal  @default(0)
+  converted      Boolean  @default(false)
+  destinationUrl String
+  createdAt      DateTime @default(now())
+}
+
+model AdvertiserClick {
+  id           String          @id @default(cuid())
+  advertiserId String
+  advertiser   HotelAdvertiser @relation(fields: [advertiserId], references: [id])
+  hotelId      String
+  amount       Decimal
+  createdAt    DateTime        @default(now())
+}
+
+model SponsoredHotel {
+  id          String   @id @default(cuid())
+  hotelId     String
+  position    Int      @default(1)
+  badgeLabel  String   @default("Sponsorisé")
+  cpmRate     Decimal  @default(10)
+  dailyBudget Decimal  @default(50)
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  isActive    Boolean  @default(true)
+  startDate   DateTime @default(now())
+  endDate     DateTime
+  createdAt   DateTime @default(now())
+}
+
+model RevenueReport {
+  id            String   @id @default(cuid())
+  date          DateTime @default(now())
+  totalClicks   Int      @default(0)
+  totalRevenue  Decimal  @default(0)
+  byProvider    Json     @default("{}")
+  byDestination Json     @default("{}")
+  createdAt     DateTime @default(now())
+}
