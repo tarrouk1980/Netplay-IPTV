@@ -12,6 +12,7 @@ initSocket(server);
 
 const { startWeatherNotifier } = require('./services/weatherNotifier');
 const { startBillingScheduler } = require('./services/subscriptionBilling');
+const { startPriceRefreshJob } = require('./scripts/priceRefreshJob');
 
 server.listen(config.port, () => {
   console.log(`EASYWAY Backend running on port ${config.port}`);
@@ -19,6 +20,7 @@ server.listen(config.port, () => {
   if (config.nodeEnv !== 'test') {
     startWeatherNotifier();      // Hourly weather → push si pluie
     startBillingScheduler();     // Daily billing 1 TND/jour prestataires
+    startPriceRefreshJob();      // Price refresh every 15 minutes
   }
 });
 
