@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import LanguageSwitcher from './LanguageSwitcher'
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
@@ -67,6 +68,7 @@ export default function Navbar() {
 
         {/* CTAs */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <LanguageSwitcher textColor={textColor} />
           <Link
             to="/connexion"
             style={{

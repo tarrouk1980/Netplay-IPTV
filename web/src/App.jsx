@@ -16,6 +16,12 @@ import HomePageES from './pages/es/HomePageES'
 import BlogES from './pages/es/BlogES'
 import SearchResultsPageES from './pages/es/SearchResultsPageES'
 import { PrivacyPolicy, TermsOfService, CookiePolicy } from './pages/es/LegalPages'
+// EU expansion pages
+import HomePageFR from './pages/fr/HomePageFR'
+import BlogFR from './pages/fr/BlogFR'
+import HomePageIT from './pages/it/HomePageIT'
+import HomePageDE from './pages/de/HomePageDE'
+import HomePageBE from './pages/be/HomePageBE'
 
 function NotFoundPage() {
   return (
@@ -31,10 +37,10 @@ function NotFoundPage() {
 }
 
 /**
- * Language detection — redirects Spanish browser users to /es
- * Only fires on the root path (/) to avoid breaking direct /es/* links
+ * Language detection — redirects browser users to their market page
+ * Only fires on the root path (/) to avoid breaking direct /xx/* links
  */
-function SpanishLanguageDetector() {
+function LanguageDetector() {
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -43,12 +49,27 @@ function SpanishLanguageDetector() {
     // Check if already redirected this session
     if (sessionStorage.getItem('lang_redirected')) return
 
-    const browserLang = navigator.language || navigator.userLanguage || ''
-    const isSpanish = browserLang.toLowerCase().startsWith('es')
+    // Check saved user preference first
+    const saved = localStorage.getItem('easyhotels_lang')
+    if (saved && saved !== 'default') {
+      const map = { es: '/es', fr: '/fr', it: '/it', de: '/de', be: '/be' }
+      if (map[saved]) {
+        sessionStorage.setItem('lang_redirected', '1')
+        navigate(map[saved], { replace: true })
+        return
+      }
+    }
 
-    if (isSpanish) {
+    const browserLang = (navigator.language || navigator.userLanguage || '').toLowerCase()
+    let target = null
+    if (browserLang.startsWith('es')) target = '/es'
+    else if (browserLang.startsWith('fr')) target = '/fr'
+    else if (browserLang.startsWith('it')) target = '/it'
+    else if (browserLang.startsWith('de')) target = '/de'
+
+    if (target) {
       sessionStorage.setItem('lang_redirected', '1')
-      navigate('/es', { replace: true })
+      navigate(target, { replace: true })
     }
   }, [location.pathname])
 
@@ -58,7 +79,7 @@ function SpanishLanguageDetector() {
 export default function App() {
   return (
     <BrowserRouter>
-      <SpanishLanguageDetector />
+      <LanguageDetector />
       <Navbar />
       <Routes>
         {/* ── French/Arabic routes (existing) ── */}
@@ -80,6 +101,19 @@ export default function App() {
         <Route path="/privacidad" element={<PrivacyPolicy />} />
         <Route path="/terminos" element={<TermsOfService />} />
         <Route path="/politica-de-cookies" element={<CookiePolicy />} />
+
+        {/* ── France ── */}
+        <Route path="/fr" element={<HomePageFR />} />
+        <Route path="/fr/blog" element={<BlogFR />} />
+
+        {/* ── Italy ── */}
+        <Route path="/it" element={<HomePageIT />} />
+
+        {/* ── Germany ── */}
+        <Route path="/de" element={<HomePageDE />} />
+
+        {/* ── Belgium ── */}
+        <Route path="/be" element={<HomePageBE />} />
 
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
