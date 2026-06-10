@@ -151,6 +151,125 @@ const MOCK_HOTELS = [
     amenities: ['Piscine','Restaurant','WiFi','Parking','Plage à 200m','Animation'],
     rating: 7.4, reviewCount: 298, isActive: true, isFeatured: false
   },
+
+  // MOROCCO HOTELS (8 hotels)
+  { id: 'hotel-ma-001', name: 'La Mamounia Marrakech', slug: 'mamounia-marrakech',
+    description: 'Palace légendaire au cœur de Marrakech, l\'un des plus beaux hôtels au monde avec ses jardins d\'orangers centenaires.',
+    address: 'Avenue Bab Jdid, Marrakech 40040', city: 'Marrakech', country: 'Maroc',
+    lat: 31.6247, lng: -7.9992, stars: 5, category: 'HOTEL',
+    mainImage: 'https://picsum.photos/800/600?random=60',
+    images: ['https://picsum.photos/800/600?random=60','https://picsum.photos/800/600?random=61','https://picsum.photos/800/600?random=62'],
+    amenities: ['Jardins Centenaires','3 Piscines','Spa','Casino','5 Restaurants','Bar Churchill','WiFi','Hammam Royal','Tennis'],
+    currency: 'MAD', rating: 9.5, reviewCount: 2341, isActive: true, isFeatured: true },
+
+  { id: 'hotel-ma-002', name: 'Four Seasons Resort Marrakech', slug: 'four-seasons-marrakech',
+    description: 'Resort luxueux en plein cœur de Marrakech avec jardins andalous et vue sur l\'Atlas.',
+    address: '1 Boulevard de la Menara, Marrakech', city: 'Marrakech', country: 'Maroc',
+    lat: 31.6089, lng: -8.0083, stars: 5, category: 'RESORT',
+    mainImage: 'https://picsum.photos/800/600?random=63',
+    images: ['https://picsum.photos/800/600?random=63','https://picsum.photos/800/600?random=64'],
+    amenities: ['2 Piscines','Spa','Restaurant','Bar','Gym','WiFi','Hammam','Navette Médina'],
+    currency: 'MAD', rating: 9.3, reviewCount: 1876, isActive: true, isFeatured: true },
+
+  { id: 'hotel-ma-003', name: 'Sofitel Casablanca Tour Blanche', slug: 'sofitel-casablanca',
+    description: 'Hôtel d\'affaires et loisirs au cœur économique du Maroc, design contemporain et cuisine française.',
+    address: 'Rue Sidi Belyout, Casablanca 20000', city: 'Casablanca', country: 'Maroc',
+    lat: 33.5914, lng: -7.6207, stars: 5, category: 'HOTEL',
+    mainImage: 'https://picsum.photos/800/600?random=65',
+    images: ['https://picsum.photos/800/600?random=65','https://picsum.photos/800/600?random=66'],
+    amenities: ['Piscine','Spa','2 Restaurants','Bar','Salle Conférence','WiFi','Gym','Parking'],
+    currency: 'MAD', rating: 8.8, reviewCount: 1102, isActive: true, isFeatured: false },
+
+  { id: 'hotel-ma-004', name: 'Riad Fès - Relais & Châteaux', slug: 'riad-fes',
+    description: 'Riad authentique du XIXe siècle en plein cœur de la médina de Fès, patrimoine mondial UNESCO.',
+    address: 'Medina, Fès 30000', city: 'Fès', country: 'Maroc',
+    lat: 34.0643, lng: -4.9773, stars: 5, category: 'VILLA',
+    mainImage: 'https://picsum.photos/800/600?random=67',
+    images: ['https://picsum.photos/800/600?random=67','https://picsum.photos/800/600?random=68'],
+    amenities: ['Patio Andalou','Piscine','Spa','Restaurant Marocain','WiFi','Hammam','Rooftop','Guide Médina'],
+    currency: 'MAD', rating: 9.1, reviewCount: 543, isActive: true, isFeatured: true },
+
+  { id: 'hotel-ma-005', name: 'Mazagan Beach & Golf Resort', slug: 'mazagan-resort',
+    description: 'Resort balnéaire et golfique unique en son genre sur la côte atlantique marocaine.',
+    address: 'El Jadida, Route de Casablanca', city: 'El Jadida', country: 'Maroc',
+    lat: 33.2316, lng: -8.5007, stars: 5, category: 'RESORT',
+    mainImage: 'https://picsum.photos/800/600?random=69',
+    images: ['https://picsum.photos/800/600?random=69','https://picsum.photos/800/600?random=70'],
+    amenities: ['Golf 18 Trous','Casino','Plage Océan','5 Piscines','Spa','7 Restaurants','Centre Équestre','WiFi'],
+    currency: 'MAD', rating: 8.9, reviewCount: 789, isActive: true, isFeatured: true },
+
+  { id: 'hotel-ma-006', name: 'Movenpick Hotel Mansour Eddahbi', slug: 'movenpick-marrakech',
+    description: 'Complexe hôtelier 5 étoiles à Marrakech avec palmeraie et spa marocain traditionnel.',
+    address: 'Avenue de France, Marrakech', city: 'Marrakech', country: 'Maroc',
+    lat: 31.6375, lng: -7.9901, stars: 5, category: 'HOTEL',
+    mainImage: 'https://picsum.photos/800/600?random=71',
+    images: ['https://picsum.photos/800/600?random=71','https://picsum.photos/800/600?random=72'],
+    amenities: ['Palmeraie','Piscine Olympique','Spa','Casino','4 Restaurants','Tennis','WiFi'],
+    currency: 'MAD', rating: 8.6, reviewCount: 934, isActive: true, isFeatured: false },
+
+  { id: 'hotel-ma-007', name: 'Hyatt Regency Casablanca', slug: 'hyatt-casablanca',
+    description: 'Hôtel d\'affaires premium en plein centre de Casablanca, idéal pour voyageurs professionnels.',
+    address: 'Place des Nations Unies, Casablanca', city: 'Casablanca', country: 'Maroc',
+    lat: 33.5918, lng: -7.6135, stars: 5, category: 'HOTEL',
+    mainImage: 'https://picsum.photos/800/600?random=73',
+    images: ['https://picsum.photos/800/600?random=73','https://picsum.photos/800/600?random=74'],
+    amenities: ['Restaurant','Bar','Piscine','Spa','Salle Conférence 1000 pers','WiFi','Gym','Valet'],
+    currency: 'MAD', rating: 8.7, reviewCount: 1456, isActive: true, isFeatured: false },
+
+  { id: 'hotel-ma-008', name: 'Kenzi Agdal Resort Marrakech', slug: 'kenzi-agdal',
+    description: 'Resort marocain authentique avec architecture traditionnelle et jardins parfumés.',
+    address: 'Avenue Mohamed VI, Marrakech', city: 'Marrakech', country: 'Maroc',
+    lat: 31.5960, lng: -8.0144, stars: 5, category: 'RESORT',
+    mainImage: 'https://picsum.photos/800/600?random=75',
+    images: ['https://picsum.photos/800/600?random=75','https://picsum.photos/800/600?random=76'],
+    amenities: ['Jardins','3 Piscines','Spa Marocain','Hammam','3 Restaurants','Tennis','WiFi','Animation'],
+    currency: 'MAD', rating: 8.4, reviewCount: 678, isActive: true, isFeatured: false },
+
+  // ALGERIA HOTELS (5 hotels)
+  { id: 'hotel-dz-001', name: 'Sheraton Club des Pins Resort', slug: 'sheraton-club-des-pins',
+    description: 'Resort luxueux sur le front de mer d\'Alger, dans le quartier prisé du Club des Pins.',
+    address: 'Club des Pins, Staoueli, Alger', city: 'Alger', country: 'Algérie',
+    lat: 36.7291, lng: 2.8981, stars: 5, category: 'RESORT',
+    mainImage: 'https://picsum.photos/800/600?random=77',
+    images: ['https://picsum.photos/800/600?random=77','https://picsum.photos/800/600?random=78'],
+    amenities: ['Plage Privée','2 Piscines','Spa','3 Restaurants','Tennis','WiFi','Casino','Gym'],
+    currency: 'DZD', rating: 8.6, reviewCount: 423, isActive: true, isFeatured: true },
+
+  { id: 'hotel-dz-002', name: 'Sofitel Alger Hamma Garden', slug: 'sofitel-alger',
+    description: 'Hôtel de luxe dans le quartier des ambassades d\'Alger, vue sur la baie d\'Alger.',
+    address: 'Riad El Feth, Alger 16000', city: 'Alger', country: 'Algérie',
+    lat: 36.7525, lng: 3.0589, stars: 5, category: 'HOTEL',
+    mainImage: 'https://picsum.photos/800/600?random=79',
+    images: ['https://picsum.photos/800/600?random=79','https://picsum.photos/800/600?random=80'],
+    amenities: ['Vue Baie','Restaurant Gastronomique','Bar','Piscine','Spa','WiFi','Salle Conférence','Gym'],
+    currency: 'DZD', rating: 8.8, reviewCount: 312, isActive: true, isFeatured: true },
+
+  { id: 'hotel-dz-003', name: 'El Aurassi Hotel Alger', slug: 'el-aurassi-alger',
+    description: 'Hôtel emblématique d\'Alger offrant une vue panoramique exceptionnelle sur la Méditerranée.',
+    address: 'Ave Frantz Fanon, Alger', city: 'Alger', country: 'Algérie',
+    lat: 36.7432, lng: 3.0591, stars: 4, category: 'HOTEL',
+    mainImage: 'https://picsum.photos/800/600?random=81',
+    images: ['https://picsum.photos/800/600?random=81','https://picsum.photos/800/600?random=82'],
+    amenities: ['Vue Méditerranée','2 Restaurants','Bar','Piscine','Salle Conférence','WiFi','Parking'],
+    currency: 'DZD', rating: 7.9, reviewCount: 567, isActive: true, isFeatured: false },
+
+  { id: 'hotel-dz-004', name: 'Marriott Oran Hotel', slug: 'marriott-oran',
+    description: 'Première enseigne Marriott en Algérie dans la ville d\'Oran, standards internationaux.',
+    address: 'Boulvard Maata Mohamed, Oran', city: 'Oran', country: 'Algérie',
+    lat: 35.6969, lng: -0.6341, stars: 5, category: 'HOTEL',
+    mainImage: 'https://picsum.photos/800/600?random=83',
+    images: ['https://picsum.photos/800/600?random=83','https://picsum.photos/800/600?random=84'],
+    amenities: ['Piscine','Spa','2 Restaurants','Bar Rooftop','WiFi','Gym','Salle Conférence','Parking'],
+    currency: 'DZD', rating: 8.5, reviewCount: 234, isActive: true, isFeatured: true },
+
+  { id: 'hotel-dz-005', name: 'Hilton Alger', slug: 'hilton-alger',
+    description: 'Hôtel international de standing dans le quartier d\'affaires d\'Alger.',
+    address: 'Pins Maritimes, Alger', city: 'Alger', country: 'Algérie',
+    lat: 36.7389, lng: 3.0534, stars: 5, category: 'HOTEL',
+    mainImage: 'https://picsum.photos/800/600?random=85',
+    images: ['https://picsum.photos/800/600?random=85','https://picsum.photos/800/600?random=86'],
+    amenities: ['Vue Mer','Restaurant','Bar','Piscine','Spa','WiFi','Gym','Navette Aéroport'],
+    currency: 'DZD', rating: 8.7, reviewCount: 189, isActive: true, isFeatured: false },
 ];
 
 const MOCK_ROOMS = {
@@ -182,6 +301,10 @@ const POPULAR_DESTINATIONS = [
   { city: 'Sousse', country: 'Tunisie', image: 'https://picsum.photos/400/300?random=53', hotelCount: 41 },
   { city: 'Paris', country: 'France', image: 'https://picsum.photos/400/300?random=54', hotelCount: 320 },
   { city: 'Dubai', country: 'EAU', image: 'https://picsum.photos/400/300?random=55', hotelCount: 185 },
+  { city: 'Marrakech', country: 'Maroc', image: 'https://picsum.photos/400/300?random=90', hotelsCount: 8 },
+  { city: 'Casablanca', country: 'Maroc', image: 'https://picsum.photos/400/300?random=91', hotelsCount: 6 },
+  { city: 'Alger', country: 'Algérie', image: 'https://picsum.photos/400/300?random=92', hotelsCount: 5 },
+  { city: 'Fès', country: 'Maroc', image: 'https://picsum.photos/400/300?random=93', hotelsCount: 3 },
 ];
 
 function generateMockPrices(hotel, checkIn, checkOut, guests) {
@@ -197,6 +320,12 @@ function generateMockPrices(hotel, checkIn, checkOut, guests) {
     const discountPct = hasDiscount ? Math.floor(Math.random() * 20) + 5 : 0;
     const originalTotal = hasDiscount ? Math.round(totalPrice / (1 - discountPct / 100)) : totalPrice;
 
+    const currency = hotel.currency || 'TND';
+    const currencyMultiplier = currency === 'MAD' ? 3.5 : currency === 'DZD' ? 40 : 1;
+    const pricePerNightConverted = Math.round(pricePerNight * currencyMultiplier);
+    const totalPriceConverted = pricePerNightConverted * nights;
+    const originalTotalConverted = hasDiscount ? Math.round(totalPriceConverted / (1 - discountPct / 100)) : totalPriceConverted;
+
     offers.push({
       id: `offer-${hotel.id}-${provider.key}`,
       hotelId: hotel.id,
@@ -204,10 +333,11 @@ function generateMockPrices(hotel, checkIn, checkOut, guests) {
       providerName: provider.name,
       providerColor: provider.color,
       providerLogo: provider.logo,
-      originalPrice: originalTotal,
-      discountedPrice: totalPrice,
-      pricePerNight,
-      currency: 'TND',
+      originalPrice: originalTotalConverted,
+      discountedPrice: totalPriceConverted,
+      pricePerNight: pricePerNightConverted,
+      priceTND: pricePerNight,
+      currency,
       nights,
       checkIn,
       checkOut,

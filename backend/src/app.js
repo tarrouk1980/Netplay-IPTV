@@ -31,6 +31,9 @@ const businessRoutes = require('./routes/business');
 const promoRoutes = require('./routes/promo');
 const providerRoutes = require('./routes/provider');
 const hotelsRoutes = require('./routes/hotels');
+const cpcRoutes = require('./routes/cpc');
+const hotelManagerRoutes = require('./routes/hotelManager');
+const currencyRoutes = require('./routes/currency');
 
 const app = express();
 
@@ -74,6 +77,9 @@ app.use('/api/emergency', emergencyRoutes);
 app.use('/api/business', businessRoutes);
 app.use('/api/promo', promoRoutes);
 app.use('/api/hotels', hotelsRoutes);
+app.use('/api/cpc', cpcRoutes);
+app.use('/api/hotel-manager', hotelManagerRoutes);
+app.use('/api/currency', currencyRoutes);
 app.use('/api/provider', providerRoutes);
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/support', require('./routes/support'));
