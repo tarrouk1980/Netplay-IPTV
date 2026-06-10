@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EasyFlight — Aperçu UI</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #111; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #fff; padding: 20px; }
+
+  h1 { text-align: center; font-size: 14px; color: #8E8E9A; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 24px; }
+
+  .screens { display: flex; gap: 20px; overflow-x: auto; padding-bottom: 20px; justify-content: center; flex-wrap: wrap; }
+
+  .phone {
+    width: 320px; min-width: 320px; height: 640px; background: #0A0A0F;
+    border-radius: 36px; border: 2px solid #333; overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6); position: relative; flex-shrink: 0;
+  }
+  .phone-label {
+    text-align: center; color: #8E8E9A; font-size: 12px; margin-top: 10px; letter-spacing: 1px;
+  }
+  .screen { height: 100%; overflow-y: auto; padding: 0; }
+  .screen::-webkit-scrollbar { display: none; }
+
+  /* STATUS BAR */
+  .statusbar { background: #0A0A0F; padding: 12px 20px 4px; display: flex; justify-content: space-between; font-size: 11px; color: #8E8E9A; }
+
+  /* COLORS */
+  :root {
+    --bg: #0A0A0F; --surface: #1C1C28; --card: #22223A;
+    --text: #FFF; --muted: #8E8E9A; --primary: #1565C0;
+    --accent: #42A5F5; --success: #27AE60; --warning: #F5A623;
+    --danger: #E74C3C; --border: #2E2E3F;
+  }
+
+  /* COMPONENTS */
+  .header { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .back { color: var(--accent); font-size: 20px; }
+  .header-title { font-size: 16px; font-weight: 700; }
+  .header-sub { font-size: 11px; color: var(--muted); }
+
+  .btn { border-radius: 12px; padding: 14px; text-align: center; font-weight: 800; font-size: 14px; cursor: pointer; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-success { background: var(--success); color: #fff; }
+
+  .card { background: var(--surface); border-radius: 14px; border: 1px solid var(--border); }
+  .divider { height: 1px; background: var(--border); margin: 0 14px; }
+
+  /* ──────────────── SCREEN 1: HOME ──────────────── */
+  .home-logo { text-align: center; padding: 28px 0 12px; }
+  .logo-easy { font-size: 30px; font-weight: 900; color: var(--accent); }
+  .logo-flight { font-size: 30px; font-weight: 900; color: #fff; display: block; margin-top: -8px; }
+  .tagline { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  .tabs { display: flex; background: var(--surface); border-radius: 12px; padding: 4px; margin: 0 14px 14px; }
+  .tab { flex: 1; padding: 9px; text-align: center; border-radius: 9px; font-size: 12px; font-weight: 600; color: var(--muted); }
+  .tab.active { background: var(--primary); color: #fff; }
+
+  .search-card { margin: 0 14px 12px; background: var(--surface); border-radius: 14px; padding: 4px; }
+  .field-row { display: flex; align-items: center; padding: 12px 14px; gap: 10px; }
+  .field-icon { font-size: 18px; width: 26px; }
+  .field-label { font-size: 10px; color: var(--muted); margin-bottom: 2px; }
+  .field-value { font-size: 14px; font-weight: 600; }
+  .field-placeholder { font-size: 14px; color: var(--muted); }
+  .swap-btn {
+    position: absolute; right: 28px; top: 218px;
+    background: var(--primary); border-radius: 18px; width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; z-index: 10;
+  }
+
+  .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 14px 14px; }
+  .tool-card { background: var(--surface); border-radius: 12px; padding: 12px; border: 1px solid var(--border); }
+  .tool-icon { font-size: 24px; margin-bottom: 6px; }
+  .tool-title { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+  .tool-sub { font-size: 10px; color: var(--muted); }
+
+  .section-title { font-size: 13px; font-weight: 700; margin: 0 14px 8px; }
+
+  .dest-scroll { display: flex; gap: 8px; padding: 0 14px 14px; overflow-x: auto; }
+  .dest-scroll::-webkit-scrollbar { display: none; }
+  .dest-card { background: var(--surface); border-radius: 12px; padding: 12px; min-width: 80px; text-align: center; flex-shrink: 0; }
+  .dest-flag { font-size: 26px; margin-bottom: 4px; }
+  .dest-city { font-size: 11px; font-weight: 700; }
+  .dest-price { font-size: 10px; color: var(--accent); margin-top: 2px; }
+
+  /* ──────────────── SCREEN 2: RESULTS ──────────────── */
+  .filters { display: flex; gap: 6px; padding: 10px 12px; border-bottom: 1px solid var(--border); overflow-x: auto; }
+  .filters::-webkit-scrollbar { display: none; }
+  .chip { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 6px 12px; font-size: 11px; font-weight: 600; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+  .chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+  .result-count { font-size: 11px; color: var(--muted); padding: 6px 14px; }
+
+  .flight-card { margin: 0 12px 10px; background: var(--surface); border-radius: 14px; padding: 14px; border: 1px solid var(--border); }
+  .fc-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+  .airline-badge { width: 40px; height: 40px; border-radius: 10px; background: #C8102E; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; flex-shrink: 0; }
+  .airline-name { font-size: 12px; font-weight: 700; margin-left: 8px; }
+  .airline-num { font-size: 10px; color: var(--muted); margin-left: 8px; }
+  .price-block { text-align: right; }
+  .price-main { font-size: 22px; font-weight: 900; color: var(--accent); }
+  .price-sub { font-size: 10px; color: var(--muted); }
+  .timeline { display: flex; align-items: center; margin-bottom: 10px; }
+  .time-block { width: 70px; }
+  .time-block.right { text-align: right; }
+  .time-big { font-size: 20px; font-weight: 900; }
+  .time-code { font-size: 13px; font-weight: 700; color: var(--accent); }
+  .time-city { font-size: 10px; color: var(--muted); }
+  .duration-block { flex: 1; text-align: center; }
+  .duration-text { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .duration-line { display: flex; align-items: center; justify-content: center; gap: 3px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+  .line { flex: 1; height: 1.5px; background: var(--border); }
+  .direct-badge { font-size: 10px; font-weight: 700; color: var(--success); margin-top: 4px; }
+  .fc-footer { display: flex; gap: 6px; flex-wrap: wrap; }
+  .fc-tag { font-size: 10px; color: var(--muted); background: var(--card); padding: 3px 7px; border-radius: 6px; }
+
+  .sponsored { border-color: var(--accent) !important; position: relative; }
+  .sponsored-label { position: absolute; top: 0; left: 0; background: var(--accent); color: #000; font-size: 9px; font-weight: 900; padding: 2px 7px; border-top-left-radius: 13px; border-bottom-right-radius: 8px; }
+
+  /* ──────────────── SCREEN 3: CALENDAR ──────────────── */
+  .month-nav { display: flex; align-items: center; justify-content: space-between; padding: 14px; }
+  .month-arr { font-size: 24px; color: var(--accent); }
+  .month-name { font-size: 17px; font-weight: 700; }
+  .legend { display: flex; justify-content: center; gap: 16px; padding: 0 14px 10px; }
+  .leg-item { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--muted); }
+  .leg-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .day-names { display: grid; grid-template-columns: repeat(7, 1fr); padding: 0 10px; margin-bottom: 4px; }
+  .day-name { text-align: center; font-size: 10px; color: var(--muted); font-weight: 600; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; padding: 0 10px; }
+  .cal-cell { aspect-ratio: 0.8; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 7px; border: 1px solid transparent; position: relative; padding: 2px; }
+  .cal-cell.low { background: rgba(39,174,96,0.15); border-color: rgba(39,174,96,0.4); }
+  .cal-cell.medium { background: rgba(245,166,35,0.15); border-color: rgba(245,166,35,0.4); }
+  .cal-cell.high { background: rgba(231,76,60,0.15); border-color: rgba(231,76,60,0.4); }
+  .cal-cell.past { opacity: 0.25; }
+  .cal-cell.selected { background: var(--success) !important; border-color: var(--success) !important; }
+  .cal-num { font-size: 12px; font-weight: 700; }
+  .cal-price { font-size: 8px; font-weight: 700; }
+  .cal-price.low { color: var(--success); }
+  .cal-price.medium { color: var(--warning); }
+  .cal-price.high { color: var(--danger); }
+  .star { position: absolute; top: 1px; right: 1px; font-size: 7px; color: #FFD700; }
+
+  .stats-card { margin: 12px 14px 0; background: var(--surface); border-radius: 12px; padding: 14px; }
+  .stats-row { display: flex; justify-content: space-around; margin-bottom: 8px; }
+  .stat-val { font-size: 16px; font-weight: 900; text-align: center; }
+  .stat-lbl { font-size: 10px; color: var(--muted); text-align: center; margin-top: 2px; }
+
+  /* ──────────────── SCREEN 4: INSPIRE ──────────────── */
+  .inspire-header { padding: 14px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); }
+  .inspire-globe { font-size: 28px; margin-left: auto; }
+
+  .inspire-search { margin: 12px; background: var(--surface); border-radius: 14px; overflow: hidden; }
+  .is-row { display: flex; align-items: center; padding: 11px 14px; gap: 10px; }
+  .is-icon { font-size: 16px; width: 22px; }
+  .is-label { font-size: 10px; color: var(--muted); }
+  .is-val { font-size: 13px; font-weight: 600; }
+  .is-btn { background: var(--primary); margin: 10px; border-radius: 11px; padding: 14px; text-align: center; font-weight: 800; font-size: 14px; }
+
+  .inspire-item { display: flex; align-items: center; padding: 13px 12px; border-bottom: 1px solid var(--border); gap: 10px; position: relative; }
+  .inspire-item.top { background: var(--card); }
+  .rank { position: absolute; top: 0; left: 0; background: var(--accent); font-size: 9px; font-weight: 900; color: #000; padding: 2px 6px; border-top-left-radius: 0; border-bottom-right-radius: 8px; border-top-right-radius: 0; }
+  .insp-flag { font-size: 30px; }
+  .insp-city { font-size: 14px; font-weight: 700; }
+  .insp-country { font-size: 11px; color: var(--muted); }
+  .insp-meta { font-size: 10px; color: var(--muted); }
+  .insp-price { margin-left: auto; text-align: right; }
+  .insp-amount { font-size: 20px; font-weight: 900; color: var(--accent); }
+  .insp-cur { font-size: 10px; color: var(--muted); }
+  .insp-see { font-size: 11px; font-weight: 700; color: var(--primary); margin-top: 2px; }
+
+  /* ──────────────── SCREEN 5: EASYWAY HOME ──────────────── */
+  .ew-header { padding: 14px; display: flex; justify-content: space-between; align-items: center; }
+  .ew-logo { display: flex; align-items: baseline; gap: 2px; }
+  .ew-easy { font-size: 20px; font-weight: 900; color: #F5A623; }
+  .ew-way { font-size: 20px; font-weight: 900; color: #D32F2F; }
+  .ew-tagline { font-size: 9px; color: var(--muted); }
+  .ew-notif { background: var(--surface); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+
+  .services-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 0 12px 12px; }
+  .svc-card { background: var(--surface); border-radius: 12px; padding: 10px 6px; text-align: center; border: 1px solid var(--border); }
+  .svc-icon { font-size: 22px; margin-bottom: 5px; }
+  .svc-name { font-size: 10px; font-weight: 700; }
+  .svc-sub { font-size: 8px; color: var(--muted); margin-top: 1px; }
+  .svc-card.highlight { border-color: var(--accent) !important; }
+  .svc-new { display: inline-block; background: var(--accent); color: #000; font-size: 7px; font-weight: 900; padding: 1px 4px; border-radius: 4px; margin-top: 2px; }
+
+  /* scroll container for screens */
+  .scroll-inner { overflow-y: auto; height: 100%; }
+  .scroll-inner::-webkit-scrollbar { display: none; }
+</style>
+</head>
+<body>
+
+<h1>EasyFlight · Aperçu des écrans</h1>
+
+<div class="screens">
+
+  <!-- ══════════ SCREEN 1: EASYWAY HOME ══════════ -->
+  <div>
+    <div class="phone">
+      <div class="scroll-inner">
+        <div style="background:#0A0A0F">
+          <div class="statusbar"><span>9:41</span><span>📶 🔋</span></div>
+
+          <div class="ew-header">
+            <div>
+              <div class="ew-logo"><span class="ew-easy">EASY</span><span class="ew-way">WAY</span></div>
+              <div class="ew-tagline">La super-app tunisienne</div>
+            </div>
+            <div class="ew-notif">🔔</div>
+          </div>
+
+          <div style="padding:0 12px 8px;font-size:12px;color:#8E8E9A">Bonjour, Tarek 👋</div>
+
+          <div class="section-title" style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#8E8E9A;margin-bottom:10px">Services</div>
+          <div class="services-grid">
+            <div class="svc-card"><div class="svc-icon">🚕</div><div class="svc-name">EasyTaxy</div><div class="svc-sub">Réserver</div></div>
+            <div class="svc-card"><div class="svc-icon">🚑</div><div class="svc-name">SOS</div><div class="svc-sub">Assistance</div></div>
+            <div class="svc-card"><div class="svc-icon">📦</div><div class="svc-name">Livraison</div><div class="svc-sub">Rapide</div></div>
+            <div class="svc-card"><div class="svc-icon">🛒</div><div class="svc-name">Courses</div><div class="svc-sub">Épicerie</div></div>
+            <div class="svc-card"><div class="svc-icon">🏠</div><div class="svc-name">Back Home</div><div class="svc-sub">Covoiturage</div></div>
+            <div class="svc-card"><div class="svc-icon">🚗</div><div class="svc-name">EasyCar</div><div class="svc-sub">Location</div></div>
+            <div class="svc-card"><div class="svc-icon">📬</div><div class="svc-name">EasyPack</div><div class="svc-sub">Colis</div></div>
+            <div class="svc-card highlight"><div class="svc-icon">✈️</div><div class="svc-name">EasyFlight</div><div class="svc-new">NOUVEAU</div></div>
+          </div>
+
+          <div style="margin:0 12px 12px;background:#1565C022;border:1px solid #42A5F544;border-radius:12px;padding:12px;display:flex;gap:10px;align-items:center">
+            <span style="font-size:24px">✈️</span>
+            <div>
+              <div style="font-size:12px;font-weight:700;color:#42A5F5">EasyFlight est là !</div>
+              <div style="font-size:10px;color:#8E8E9A">Comparez les vols de tout le Nord Afrique</div>
+            </div>
+          </div>
+
+          <div class="section-title" style="font-size:11px">Activité récente</div>
+          <div style="margin:0 12px;background:#1C1C28;border-radius:12px;padding:14px;border:1px solid #2E2E3F">
+            <div style="font-size:12px;color:#8E8E9A;text-align:center">Aucune activité récente</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-label">1 · Accueil Easyway</div>
+  </div>
+
+  <!-- ══════════ SCREEN 2: EASYFLIGHT HOME ══════════ -->
+  <div>
+    <div class="phone">
+      <div class="scroll-inner">
+        <div style="background:#0A0A0F">
+          <div class="statusbar"><span>9:41</span><span>📶 🔋</span></div>
+
+          <div class="home-logo">
+            <span class="logo-easy">Easy</span>
+            <span class="logo-flight">Flight</span>
+            <div class="tagline">Comparez. Réservez. Décollez.</div>
+          </div>
+
+          <div class="tabs">
+            <div class="tab active">Aller simple</div>
+            <div class="tab">Aller-retour</div>
+          </div>
+
+          <div class="search-card" style="position:relative">
+            <div class="field-row">
+              <span class="field-icon">✈️</span>
+              <div>
+                <div class="field-label">Départ</div>
+                <div class="field-value">Tunis (TUN)</div>
+              </div>
+            </div>
+            <div class="swap-btn">⇅</div>
+            <div class="divider"></div>
+            <div class="field-row">
+              <span class="field-icon">🛬</span>
+              <div>
+                <div class="field-label">Arrivée</div>
+                <div class="field-placeholder">Ville ou aéroport</div>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div style="display:flex">
+              <div class="field-row" style="flex:1">
+                <span class="field-icon">📅</span>
+                <div>
+                  <div class="field-label">Départ</div>
+                  <div class="field-value" style="font-size:12px">Mar 17 août 2026</div>
+                </div>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div class="field-row">
+              <span class="field-icon">👤</span>
+              <div>
+                <div class="field-label">Passagers</div>
+                <div class="field-value">1 adulte</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin:0 14px 12px" class="btn btn-primary">🔍  Rechercher des vols</div>
+
+          <div class="tools-grid">
+            <div class="tool-card"><div class="tool-icon">🌍</div><div class="tool-title">Inspire-moi</div><div class="tool-sub">Où partir avec mon budget ?</div></div>
+            <div class="tool-card"><div class="tool-icon">📅</div><div class="tool-title">Calendrier prix</div><div class="tool-sub">Jour le moins cher</div></div>
+            <div class="tool-card"><div class="tool-icon">🔔</div><div class="tool-title">Mes alertes</div><div class="tool-sub">Notifié quand ça baisse</div></div>
+            <div class="tool-card"><div class="tool-icon">📋</div><div class="tool-title">Réservations</div><div class="tool-sub">Historique vols</div></div>
+          </div>
+
+          <div class="section-title">Vols depuis le Nord Afrique</div>
+          <div class="dest-scroll">
+            <div class="dest-card"><div class="dest-flag">🇹🇳</div><div class="dest-city">Tunisie</div><div class="dest-price">Tunis</div></div>
+            <div class="dest-card"><div class="dest-flag">🇩🇿</div><div class="dest-city">Algérie</div><div class="dest-price">Alger</div></div>
+            <div class="dest-card"><div class="dest-flag">🇲🇦</div><div class="dest-city">Maroc</div><div class="dest-price">Casablanca</div></div>
+            <div class="dest-card"><div class="dest-flag">🇱🇾</div><div class="dest-city">Libye</div><div class="dest-price">Tripoli</div></div>
+            <div class="dest-card"><div class="dest-flag">🇪🇬</div><div class="dest-city">Égypte</div><div class="dest-price">Le Caire</div></div>
+            <div class="dest-card"><div class="dest-flag">🇲🇷</div><div class="dest-city">Mauritanie</div><div class="dest-price">Nouakchott</div></div>
+          </div>
+
+          <div class="section-title">Destinations populaires</div>
+          <div class="dest-scroll">
+            <div class="dest-card"><div class="dest-flag">🇫🇷</div><div class="dest-city">Paris</div><div class="dest-price">~450 TND</div></div>
+            <div class="dest-card"><div class="dest-flag">🇹🇷</div><div class="dest-city">Istanbul</div><div class="dest-price">~380 TND</div></div>
+            <div class="dest-card"><div class="dest-flag">🇦🇪</div><div class="dest-city">Dubaï</div><div class="dest-price">~615 TND</div></div>
+            <div class="dest-card"><div class="dest-flag">🇮🇹</div><div class="dest-city">Rome</div><div class="dest-price">~335 TND</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-label">2 · EasyFlight — Recherche</div>
+  </div>
+
+  <!-- ══════════ SCREEN 3: RESULTS ══════════ -->
+  <div>
+    <div class="phone">
+      <div class="scroll-inner">
+        <div style="background:#0A0A0F">
+          <div class="statusbar"><span>9:41</span><span>📶 🔋</span></div>
+
+          <div class="header">
+            <span class="back">←</span>
+            <div style="flex:1">
+              <div class="header-title">TUN → CDG</div>
+              <div class="header-sub">17 août · 1 passager · Aller simple</div>
+            </div>
+            <div style="background:#1C1C28;border:1px solid #2E2E3F;border-radius:9px;padding:7px;font-size:16px">📅</div>
+          </div>
+
+          <div class="filters">
+            <div class="chip active">Prix ↑</div>
+            <div class="chip">Direct seulement</div>
+            <div class="chip">Durée</div>
+            <div class="chip">Départ</div>
+          </div>
+
+          <div class="result-count">5 vols trouvés</div>
+
+          <!-- SPONSORED FLIGHT -->
+          <div class="flight-card sponsored">
+            <div class="sponsored-label">Sponsorisé</div>
+            <div class="fc-top" style="margin-top:10px">
+              <div style="display:flex;align-items:center">
+                <div class="airline-badge" style="background:#C8102E">TU</div>
+                <div><div class="airline-name">Tunisair</div><div class="airline-num">TU706</div></div>
+              </div>
+              <div class="price-block"><div class="price-main">398 TND</div><div class="price-sub">398 TND × 1 pax</div></div>
+            </div>
+            <div class="timeline">
+              <div class="time-block"><div class="time-big">07:15</div><div class="time-code">TUN</div><div class="time-city">Tunis</div></div>
+              <div class="duration-block">
+                <div class="duration-text">2h55</div>
+                <div class="duration-line"><div class="dot"></div><div class="line"></div><span style="font-size:14px">✈</span><div class="line"></div><div class="dot"></div></div>
+                <div class="direct-badge">Direct</div>
+              </div>
+              <div class="time-block right"><div class="time-big">10:10</div><div class="time-code">CDG</div><div class="time-city">Paris</div></div>
+            </div>
+            <div class="fc-footer">
+              <span class="fc-tag">10 kg cabine · 23 kg soute</span>
+              <span class="fc-tag" style="color:#27AE60">✓ Remboursable</span>
+            </div>
+          </div>
+
+          <!-- REGULAR FLIGHTS -->
+          <div class="flight-card">
+            <div class="fc-top">
+              <div style="display:flex;align-items:center">
+                <div class="airline-badge" style="background:#FF6B00">BJ</div>
+                <div><div class="airline-name">Nouvelair</div><div class="airline-num">BJ507</div></div>
+              </div>
+              <div class="price-block"><div class="price-main">412 TND</div><div class="price-sub">412 TND × 1 pax</div></div>
+            </div>
+            <div class="timeline">
+              <div class="time-block"><div class="time-big">09:30</div><div class="time-code">TUN</div><div class="time-city">Tunis</div></div>
+              <div class="duration-block">
+                <div class="duration-text">2h55</div>
+                <div class="duration-line"><div class="dot"></div><div class="line"></div><span style="font-size:14px">✈</span><div class="line"></div><div class="dot"></div></div>
+                <div class="direct-badge">Direct</div>
+              </div>
+              <div class="time-block right"><div class="time-big">12:25</div><div class="time-code">CDG</div><div class="time-city">Paris</div></div>
+            </div>
+            <div class="fc-footer">
+              <span class="fc-tag">10 kg cabine · 23 kg soute</span>
+            </div>
+          </div>
+
+          <div class="flight-card">
+            <div class="fc-top">
+              <div style="display:flex;align-items:center">
+                <div class="airline-badge" style="background:#002395">AF</div>
+                <div><div class="airline-name">Air France</div><div class="airline-num">AF1284</div></div>
+              </div>
+              <div class="price-block"><div class="price-main">467 TND</div><div class="price-sub">467 TND × 1 pax</div></div>
+            </div>
+            <div class="timeline">
+              <div class="time-block"><div class="time-big">14:20</div><div class="time-code">TUN</div><div class="time-city">Tunis</div></div>
+              <div class="duration-block">
+                <div class="duration-text">2h55</div>
+                <div class="duration-line"><div class="dot"></div><div class="line"></div><span style="font-size:14px">✈</span><div class="line"></div><div class="dot"></div></div>
+                <div class="direct-badge">Direct</div>
+              </div>
+              <div class="time-block right"><div class="time-big">17:15</div><div class="time-code">CDG</div><div class="time-city">Paris</div></div>
+            </div>
+            <div class="fc-footer">
+              <span class="fc-tag">10 kg cabine · 23 kg soute</span>
+              <span class="fc-tag" style="color:#E74C3C">3 places restantes</span>
+            </div>
+          </div>
+
+          <div class="flight-card">
+            <div class="fc-top">
+              <div style="display:flex;align-items:center">
+                <div class="airline-badge" style="background:#C8102E">TK</div>
+                <div><div class="airline-name">Turkish Airlines</div><div class="airline-num">TK7886</div></div>
+              </div>
+              <div class="price-block"><div class="price-main">352 TND</div><div class="price-sub">352 TND × 1 pax</div></div>
+            </div>
+            <div class="timeline">
+              <div class="time-block"><div class="time-big">06:00</div><div class="time-code">TUN</div><div class="time-city">Tunis</div></div>
+              <div class="duration-block">
+                <div class="duration-text">5h10</div>
+                <div class="duration-line"><div class="dot"></div><div class="line"></div><div class="dot" style="background:#F5A623"></div><div class="line"></div><div class="dot"></div></div>
+                <div style="font-size:10px;font-weight:700;color:#F5A623;margin-top:4px">1 escale · IST</div>
+              </div>
+              <div class="time-block right"><div class="time-big">11:10</div><div class="time-code">CDG</div><div class="time-city">Paris</div></div>
+            </div>
+            <div class="fc-footer">
+              <span class="fc-tag">10 kg cabine · 23 kg soute</span>
+              <span class="fc-tag" style="color:#27AE60">✓ Remboursable</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-label">3 · Résultats de recherche</div>
+  </div>
+
+  <!-- ══════════ SCREEN 4: CALENDAR ══════════ -->
+  <div>
+    <div class="phone">
+      <div class="scroll-inner">
+        <div style="background:#0A0A0F">
+          <div class="statusbar"><span>9:41</span><span>📶 🔋</span></div>
+
+          <div class="header">
+            <span class="back">←</span>
+            <div>
+              <div class="header-title">Calendrier des prix</div>
+              <div class="header-sub">TUN → CDG · 1 pax</div>
+            </div>
+          </div>
+
+          <div class="month-nav">
+            <span class="month-arr">‹</span>
+            <span class="month-name">Août 2026</span>
+            <span class="month-arr">›</span>
+          </div>
+
+          <div class="legend">
+            <div class="leg-item"><div class="leg-dot" style="background:#27AE60"></div>Bas prix</div>
+            <div class="leg-item"><div class="leg-dot" style="background:#F5A623"></div>Moyen</div>
+            <div class="leg-item"><div class="leg-dot" style="background:#E74C3C"></div>Élevé</div>
+          </div>
+
+          <div class="day-names">
+            <div class="day-name">Lun</div><div class="day-name">Mar</div><div class="day-name">Mer</div>
+            <div class="day-name">Jeu</div><div class="day-name">Ven</div><div class="day-name">Sam</div><div class="day-name">Dim</div>
+          </div>
+
+          <div class="cal-grid">
+            <!-- Week 1: starts Saturday -->
+            <div class="cal-cell"></div><div class="cal-cell"></div><div class="cal-cell"></div>
+            <div class="cal-cell"></div><div class="cal-cell"></div>
+            <div class="cal-cell high"><div class="cal-num" style="color:#fff">1</div><div class="cal-price high">521</div></div>
+            <div class="cal-cell high"><div class="cal-num" style="color:#fff">2</div><div class="cal-price high">508</div></div>
+            <!-- Week 2 -->
+            <div class="cal-cell low"><div class="cal-num" style="color:#fff">3</div><div class="cal-price low">398</div><span class="star">★</span></div>
+            <div class="cal-cell low"><div class="cal-num" style="color:#fff">4</div><div class="cal-price low">405</div></div>
+            <div class="cal-cell medium"><div class="cal-num" style="color:#fff">5</div><div class="cal-price medium">447</div></div>
+            <div class="cal-cell medium"><div class="cal-num" style="color:#fff">6</div><div class="cal-price medium">452</div></div>
+            <div class="cal-cell medium"><div class="cal-num" style="color:#fff">7</div><div class="cal-price medium">461</div></div>
+            <div class="cal-cell high"><div class="cal-num" style="color:#fff">8</div><div class="cal-price high">532</div></div>
+            <div class="cal-cell high"><div class="cal-num" style="color:#fff">9</div><div class="cal-price high">514</div></div>
+            <!-- Week 3 -->
+            <div class="cal-cell low"><div class="cal-num" style="color:#fff">10</div><div class="cal-price low">412</div></div>
+            <div class="cal-cell low"><div class="cal-num" style="color:#fff">11</div><div class="cal-price low">419</div></div>
+            <div class="cal-cell selected"><div class="cal-num" style="color:#fff">12</div><div class="cal-price" style="color:#fff">431</div></div>
+            <div class="cal-cell low"><div class="cal-num" style="color:#fff">13</div><div class="cal-price low">428</div></div>
+            <div class="cal-cell medium"><div class="cal-num" style="color:#fff">14</div><div class="cal-price medium">468</div></div>
+            <div class="cal-cell high"><div class="cal-num" style="color:#fff">15</div><div class="cal-price high">543</div></div>
+            <div class="cal-cell high"><div class="cal-num" style="color:#fff">16</div><div class="cal-price high">525</div></div>
+            <!-- Week 4 -->
+            <div class="cal-cell medium"><div class="cal-num" style="color:#fff">17</div><div class="cal-price medium">449</div></div>
+            <div class="cal-cell medium"><div class="cal-num" style="color:#fff">18</div><div class="cal-price medium">455</div></div>
+            <div class="cal-cell low"><div class="cal-num" style="color:#fff">19</div><div class="cal-price low">408</div></div>
+            <div class="cal-cell low"><div class="cal-num" style="color:#fff">20</div><div class="cal-price low">415</div></div>
+            <div class="cal-cell medium"><div class="cal-num" style="color:#fff">21</div><div class="cal-price medium">462</div></div>
+            <div class="cal-cell high"><div class="cal-num" style="color:#fff">22</div><div class="cal-price high">519</div></div>
+            <div class="cal-cell high"><div class="cal-num" style="color:#fff">23</div><div class="cal-price high">528</div></div>
+            <!-- Week 5 -->
+            <div class="cal-cell low"><div class="cal-num" style="color:#fff">24</div><div class="cal-price low">402</div></div>
+            <div class="cal-cell low"><div class="cal-num" style="color:#fff">25</div><div class="cal-price low">411</div></div>
+            <div class="cal-cell medium"><div class="cal-num" style="color:#fff">26</div><div class="cal-price medium">458</div></div>
+            <div class="cal-cell medium"><div class="cal-num" style="color:#fff">27</div><div class="cal-price medium">464</div></div>
+            <div class="cal-cell medium"><div class="cal-num" style="color:#fff">28</div><div class="cal-price medium">471</div></div>
+            <div class="cal-cell high"><div class="cal-num" style="color:#fff">29</div><div class="cal-price high">511</div></div>
+            <div class="cal-cell high"><div class="cal-num" style="color:#fff">30</div><div class="cal-price high">505</div></div>
+            <div class="cal-cell low"><div class="cal-num" style="color:#fff">31</div><div class="cal-price low">398</div></div>
+          </div>
+
+          <div class="stats-card">
+            <div class="stats-row">
+              <div><div class="stat-val" style="color:#27AE60">398 TND</div><div class="stat-lbl">Meilleur prix</div></div>
+              <div><div class="stat-val">456 TND</div><div class="stat-lbl">Prix moyen</div></div>
+              <div><div class="stat-val" style="color:#E74C3C">543 TND</div><div class="stat-lbl">Prix max</div></div>
+            </div>
+            <div style="font-size:10px;color:#8E8E9A;text-align:center">★ = Meilleur prix du mois · Tapez une date pour voir les vols</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-label">4 · Calendrier des prix</div>
+  </div>
+
+  <!-- ══════════ SCREEN 5: INSPIRE ME ══════════ -->
+  <div>
+    <div class="phone">
+      <div class="scroll-inner">
+        <div style="background:#0A0A0F">
+          <div class="statusbar"><span>9:41</span><span>📶 🔋</span></div>
+
+          <div class="inspire-header">
+            <span class="back">←</span>
+            <div>
+              <div class="header-title">Inspire-moi</div>
+              <div class="header-sub">Où partir avec mon budget ?</div>
+            </div>
+            <span class="inspire-globe">🌍</span>
+          </div>
+
+          <div class="inspire-search">
+            <div class="is-row">
+              <span class="is-icon">✈️</span>
+              <div><div class="is-label">Depuis</div><div class="is-val">🇹🇳 Tunis (TUN)</div></div>
+            </div>
+            <div class="divider"></div>
+            <div class="is-row">
+              <span class="is-icon">📅</span>
+              <div><div class="is-label">Quand</div><div class="is-val">Dans 1 mois</div></div>
+            </div>
+            <div class="divider"></div>
+            <div class="is-row">
+              <span class="is-icon">💰</span>
+              <div><div class="is-label">Budget max</div><div class="is-val">500 TND</div></div>
+            </div>
+            <div class="is-btn">🌍  Trouver mes destinations</div>
+          </div>
+
+          <div style="padding:6px 12px;font-size:11px;color:#8E8E9A">12 destinations disponibles</div>
+
+          <div class="inspire-item top" style="padding-top:20px">
+            <div class="rank">#1</div>
+            <div class="insp-flag">🇲🇦</div>
+            <div><div class="insp-city">Casablanca</div><div class="insp-country">Maroc</div><div class="insp-meta">Royal Air Maroc · 2h35 · Direct</div></div>
+            <div class="insp-price"><div class="insp-amount">278</div><div class="insp-cur">TND</div><div class="insp-see">Voir →</div></div>
+          </div>
+
+          <div class="inspire-item top" style="padding-top:20px">
+            <div class="rank">#2</div>
+            <div class="insp-flag">🇩🇿</div>
+            <div><div class="insp-city">Alger</div><div class="insp-country">Algérie</div><div class="insp-meta">Tunisair · 1h30 · Direct</div></div>
+            <div class="insp-price"><div class="insp-amount">223</div><div class="insp-cur">TND</div><div class="insp-see">Voir →</div></div>
+          </div>
+
+          <div class="inspire-item top" style="padding-top:20px">
+            <div class="rank">#3</div>
+            <div class="insp-flag">🇪🇬</div>
+            <div><div class="insp-city">Le Caire</div><div class="insp-country">Égypte</div><div class="insp-meta">EgyptAir · 2h45 · Direct</div></div>
+            <div class="insp-price"><div class="insp-amount">314</div><div class="insp-cur">TND</div><div class="insp-see">Voir →</div></div>
+          </div>
+
+          <div class="inspire-item">
+            <div class="insp-flag">🇮🇹</div>
+            <div><div class="insp-city">Rome</div><div class="insp-country">Italie</div><div class="insp-meta">Tunisair · 2h10 · Direct</div></div>
+            <div class="insp-price"><div class="insp-amount">335</div><div class="insp-cur">TND</div><div class="insp-see">Voir →</div></div>
+          </div>
+
+          <div class="inspire-item">
+            <div class="insp-flag">🇪🇸</div>
+            <div><div class="insp-city">Barcelone</div><div class="insp-country">Espagne</div><div class="insp-meta">Vueling · 2h35 · Direct</div></div>
+            <div class="insp-price"><div class="insp-amount">365</div><div class="insp-cur">TND</div><div class="insp-see">Voir →</div></div>
+          </div>
+
+          <div class="inspire-item">
+            <div class="insp-flag">🇹🇷</div>
+            <div><div class="insp-city">Istanbul</div><div class="insp-country">Turquie</div><div class="insp-meta">Turkish Airlines · 3h35 · Direct</div></div>
+            <div class="insp-price"><div class="insp-amount">380</div><div class="insp-cur">TND</div><div class="insp-see">Voir →</div></div>
+          </div>
+
+          <div class="inspire-item">
+            <div class="insp-flag">🇫🇷</div>
+            <div><div class="insp-city">Marseille</div><div class="insp-country">France</div><div class="insp-meta">Nouvelair · 2h35 · Direct</div></div>
+            <div class="insp-price"><div class="insp-amount">398</div><div class="insp-cur">TND</div><div class="insp-see">Voir →</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-label">5 · Inspire-moi</div>
+  </div>
+
+</div>
+
+<div style="text-align:center;margin-top:20px;color:#8E8E9A;font-size:11px">
+  EasyFlight · Intégré dans Easyway · Branch: claude/easyflight-flight-comparator-ehl0f6
+</div>
+
+</body>
+</html>
