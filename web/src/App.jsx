@@ -1,7 +1,8 @@
-import React from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import React, { useEffect } from 'react'
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
+import GDPRBanner from './components/GDPRBanner'
 import HomePage from './pages/HomePage'
 import SearchResultsPage from './pages/SearchResultsPage'
 import HotelDetailPage from './pages/HotelDetailPage'
@@ -10,6 +11,11 @@ import BlogPage from './pages/BlogPage'
 import BlogPostPage from './pages/BlogPostPage'
 import AboutPage from './pages/AboutPage'
 import HotelManagerPage from './pages/HotelManagerPage'
+// Spanish pages
+import HomePageES from './pages/es/HomePageES'
+import BlogES from './pages/es/BlogES'
+import SearchResultsPageES from './pages/es/SearchResultsPageES'
+import { PrivacyPolicy, TermsOfService, CookiePolicy } from './pages/es/LegalPages'
 
 function NotFoundPage() {
   return (
@@ -24,11 +30,38 @@ function NotFoundPage() {
   )
 }
 
+/**
+ * Language detection — redirects Spanish browser users to /es
+ * Only fires on the root path (/) to avoid breaking direct /es/* links
+ */
+function SpanishLanguageDetector() {
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  useEffect(() => {
+    if (location.pathname !== '/') return
+    // Check if already redirected this session
+    if (sessionStorage.getItem('lang_redirected')) return
+
+    const browserLang = navigator.language || navigator.userLanguage || ''
+    const isSpanish = browserLang.toLowerCase().startsWith('es')
+
+    if (isSpanish) {
+      sessionStorage.setItem('lang_redirected', '1')
+      navigate('/es', { replace: true })
+    }
+  }, [location.pathname])
+
+  return null
+}
+
 export default function App() {
   return (
     <BrowserRouter>
+      <SpanishLanguageDetector />
       <Navbar />
       <Routes>
+        {/* ── French/Arabic routes (existing) ── */}
         <Route path="/" element={<HomePage />} />
         <Route path="/search" element={<SearchResultsPage />} />
         <Route path="/hotel/:id" element={<HotelDetailPage />} />
@@ -37,9 +70,21 @@ export default function App() {
         <Route path="/blog/:id" element={<BlogPostPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/hoteliers" element={<HotelManagerPage />} />
+
+        {/* ── Spanish routes ── */}
+        <Route path="/es" element={<HomePageES />} />
+        <Route path="/es/buscar" element={<SearchResultsPageES />} />
+        <Route path="/es/blog" element={<BlogES />} />
+
+        {/* ── Legal pages (Spain / EU) ── */}
+        <Route path="/privacidad" element={<PrivacyPolicy />} />
+        <Route path="/terminos" element={<TermsOfService />} />
+        <Route path="/politica-de-cookies" element={<CookiePolicy />} />
+
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
       <Footer />
+      <GDPRBanner />
     </BrowserRouter>
   )
 }
