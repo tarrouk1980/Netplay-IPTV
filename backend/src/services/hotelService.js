@@ -9,7 +9,10 @@ const MOCK_HOTELS = [
     mainImage: 'https://picsum.photos/800/600?random=1',
     images: ['https://picsum.photos/800/600?random=1','https://picsum.photos/800/600?random=2','https://picsum.photos/800/600?random=3','https://picsum.photos/800/600?random=4'],
     amenities: ['WiFi Gratuit','Piscine','Spa','Salle de Sport','Restaurant Gastronomique','Bar','Parking Valet','Navette Aéroport','Climatisation','Conciergerie 24h/24'],
-    rating: 9.2, reviewCount: 847, isActive: true, isFeatured: true
+    rating: 9.2, reviewCount: 847, isActive: true, isFeatured: true,
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: false, hasRamadanServices: true,
+    hasPrayerRoom: true, hasSeparatePool: false, isFamilyConservative: false, isMedicalTourism: false,
+    isHoneymoonPackage: false, hasAirportShuttle: true, isBeachfront: false,
   },
   {
     id: 'hotel-002', name: 'Djerba Beach Resort & Spa', slug: 'djerba-beach-resort',
@@ -19,7 +22,10 @@ const MOCK_HOTELS = [
     mainImage: 'https://picsum.photos/800/600?random=5',
     images: ['https://picsum.photos/800/600?random=5','https://picsum.photos/800/600?random=6','https://picsum.photos/800/600?random=7','https://picsum.photos/800/600?random=8'],
     amenities: ['Plage Privée','3 Piscines','Spa','Club Enfants','5 Restaurants','Animation Journée','Sports Nautiques','WiFi Gratuit','Tout Inclus'],
-    rating: 8.8, reviewCount: 1243, isActive: true, isFeatured: true
+    rating: 8.8, reviewCount: 1243, isActive: true, isFeatured: true,
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: true, hasRamadanServices: true,
+    hasPrayerRoom: true, hasSeparatePool: false, isFamilyConservative: true, isMedicalTourism: false,
+    isHoneymoonPackage: false, hasAirportShuttle: true, isBeachfront: true,
   },
   {
     id: 'hotel-003', name: 'Hasdrubal Thalassa Hammamet', slug: 'hasdrubal-hammamet',
@@ -29,7 +35,10 @@ const MOCK_HOTELS = [
     mainImage: 'https://picsum.photos/800/600?random=9',
     images: ['https://picsum.photos/800/600?random=9','https://picsum.photos/800/600?random=10','https://picsum.photos/800/600?random=11'],
     amenities: ['Thalassothérapie','Plage Privée','2 Piscines','Restaurant','WiFi','Spa','Tennis','Parking'],
-    rating: 8.6, reviewCount: 632, isActive: true, isFeatured: true
+    rating: 8.6, reviewCount: 632, isActive: true, isFeatured: true,
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: true, hasRamadanServices: true,
+    hasPrayerRoom: true, hasSeparatePool: false, isFamilyConservative: false, isMedicalTourism: true,
+    isHoneymoonPackage: true, hasAirportShuttle: true, isBeachfront: true,
   },
   {
     id: 'hotel-004', name: 'Marhaba Royal Salem Sousse', slug: 'marhaba-royal-sousse',
@@ -39,7 +48,10 @@ const MOCK_HOTELS = [
     mainImage: 'https://picsum.photos/800/600?random=12',
     images: ['https://picsum.photos/800/600?random=12','https://picsum.photos/800/600?random=13','https://picsum.photos/800/600?random=14'],
     amenities: ['Plage','Piscine','Restaurant','Bar','WiFi','Parking','Spa','Animation'],
-    rating: 8.1, reviewCount: 521, isActive: true, isFeatured: false
+    rating: 8.1, reviewCount: 521, isActive: true, isFeatured: false,
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: true, hasRamadanServices: true,
+    hasPrayerRoom: true, hasSeparatePool: true, isFamilyConservative: true, isMedicalTourism: false,
+    isHoneymoonPackage: false, hasAirportShuttle: false, isBeachfront: true,
   },
   {
     id: 'hotel-005', name: 'Novotel Tunis', slug: 'novotel-tunis',
@@ -49,7 +61,10 @@ const MOCK_HOTELS = [
     mainImage: 'https://picsum.photos/800/600?random=15',
     images: ['https://picsum.photos/800/600?random=15','https://picsum.photos/800/600?random=16'],
     amenities: ['WiFi Gratuit','Restaurant','Bar','Salle Conférence','Gym','Parking','Climatisation'],
-    rating: 8.4, reviewCount: 389, isActive: true, isFeatured: false
+    rating: 8.4, reviewCount: 389, isActive: true, isFeatured: false,
+    isAlcoholFree: false, isBurkiniAccepted: false, isHalalCertified: false, hasRamadanServices: true,
+    hasPrayerRoom: false, hasSeparatePool: false, isFamilyConservative: false, isMedicalTourism: false,
+    isHoneymoonPackage: false, hasAirportShuttle: false, isBeachfront: false,
   },
   {
     id: 'hotel-006', name: 'Radisson Blu Monastir', slug: 'radisson-monastir',
@@ -59,7 +74,10 @@ const MOCK_HOTELS = [
     mainImage: 'https://picsum.photos/800/600?random=17',
     images: ['https://picsum.photos/800/600?random=17','https://picsum.photos/800/600?random=18','https://picsum.photos/800/600?random=19'],
     amenities: ['Plage','Piscine Chauffée','Spa','Restaurant Panoramique','Bar','WiFi','Navette Aéroport','Salle Gym'],
-    rating: 8.9, reviewCount: 712, isActive: true, isFeatured: true
+    rating: 8.9, reviewCount: 712, isActive: true, isFeatured: true,
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: true, hasRamadanServices: true,
+    hasPrayerRoom: true, hasSeparatePool: false, isFamilyConservative: false, isMedicalTourism: false,
+    isHoneymoonPackage: true, hasAirportShuttle: true, isBeachfront: true,
   },
   {
     id: 'hotel-007', name: 'Dar Ben Gacem Tunis', slug: 'dar-ben-gacem',
@@ -69,7 +87,10 @@ const MOCK_HOTELS = [
     mainImage: 'https://picsum.photos/800/600?random=20',
     images: ['https://picsum.photos/800/600?random=20','https://picsum.photos/800/600?random=21'],
     amenities: ['WiFi','Petit-Déjeuner','Terrasse','Climatisation','Visite Guidée','Service Conciergerie'],
-    rating: 9.0, reviewCount: 215, isActive: true, isFeatured: false
+    rating: 9.0, reviewCount: 215, isActive: true, isFeatured: false,
+    isAlcoholFree: true, isBurkiniAccepted: true, isHalalCertified: true, hasRamadanServices: true,
+    hasPrayerRoom: true, hasSeparatePool: false, isFamilyConservative: true, isMedicalTourism: false,
+    isHoneymoonPackage: true, hasAirportShuttle: false, isBeachfront: false,
   },
   {
     id: 'hotel-008', name: 'El Mouradi Palm Marina Port El Kantaoui', slug: 'el-mouradi-port-kantaoui',
@@ -79,7 +100,10 @@ const MOCK_HOTELS = [
     mainImage: 'https://picsum.photos/800/600?random=22',
     images: ['https://picsum.photos/800/600?random=22','https://picsum.photos/800/600?random=23','https://picsum.photos/800/600?random=24'],
     amenities: ['Marina','4 Piscines','Plage','Spa','5 Restaurants','Tennis','Golf à Proximité','WiFi','Tout Inclus'],
-    rating: 8.7, reviewCount: 934, isActive: true, isFeatured: true
+    rating: 8.7, reviewCount: 934, isActive: true, isFeatured: true,
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: true, hasRamadanServices: true,
+    hasPrayerRoom: true, hasSeparatePool: true, isFamilyConservative: true, isMedicalTourism: false,
+    isHoneymoonPackage: false, hasAirportShuttle: true, isBeachfront: true,
   },
   {
     id: 'hotel-009', name: 'Loews Hotel Le Concorde Tunis', slug: 'loews-concorde-tunis',
@@ -89,7 +113,10 @@ const MOCK_HOTELS = [
     mainImage: 'https://picsum.photos/800/600?random=25',
     images: ['https://picsum.photos/800/600?random=25','https://picsum.photos/800/600?random=26'],
     amenities: ['Bar Rooftop','Restaurant','Piscine','Spa','Salle Conférence','WiFi','Valet','Gym'],
-    rating: 8.5, reviewCount: 678, isActive: true, isFeatured: false
+    rating: 8.5, reviewCount: 678, isActive: true, isFeatured: false,
+    isAlcoholFree: false, isBurkiniAccepted: false, isHalalCertified: false, hasRamadanServices: false,
+    hasPrayerRoom: false, hasSeparatePool: false, isFamilyConservative: false, isMedicalTourism: false,
+    isHoneymoonPackage: false, hasAirportShuttle: true, isBeachfront: false,
   },
   {
     id: 'hotel-010', name: 'Iberostar Selection Kantaoui Bay', slug: 'iberostar-kantaoui-bay',
@@ -99,7 +126,10 @@ const MOCK_HOTELS = [
     mainImage: 'https://picsum.photos/800/600?random=27',
     images: ['https://picsum.photos/800/600?random=27','https://picsum.photos/800/600?random=28'],
     amenities: ['Plage Privée','Piscines','Spa Thalasso','Casino','7 Restaurants','Discothèque','Boutiques','WiFi'],
-    rating: 8.3, reviewCount: 1102, isActive: true, isFeatured: true
+    rating: 8.3, reviewCount: 1102, isActive: true, isFeatured: true,
+    isAlcoholFree: false, isBurkiniAccepted: false, isHalalCertified: false, hasRamadanServices: false,
+    hasPrayerRoom: false, hasSeparatePool: false, isFamilyConservative: false, isMedicalTourism: false,
+    isHoneymoonPackage: true, hasAirportShuttle: true, isBeachfront: true,
   },
   {
     id: 'hotel-011', name: 'Four Seasons Hotel Paris George V', slug: 'four-seasons-paris',
