@@ -21,6 +21,9 @@ const hotelAPI = {
   getCurrencyRates: () => api.get('/api/currency/rates'),
   convert: (from, to, amount) => api.get('/api/currency/convert', { params: { from, to, amount } }),
   getMaghrebHotels: () => api.get('/api/hotels/search?limit=50'),
+  getPriceAlerts: () => api.get('/api/price-alerts'),
+  addPriceAlert: (data) => api.post('/api/price-alerts', data),
+  removePriceAlert: (id) => api.delete(`/api/price-alerts/${id}`),
 };
 
 export default hotelAPI;

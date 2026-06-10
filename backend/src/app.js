@@ -36,11 +36,15 @@ const cpcRoutes = require('./routes/cpc');
 const hotelManagerRoutes = require('./routes/hotelManager');
 const currencyRoutes = require('./routes/currency');
 const hotelLoyaltyRoutes = require('./routes/hotelLoyalty');
+const priceAlertsRoutes = require('./routes/priceAlerts');
+const seoHeaders = require('./middleware/seoHeaders');
+const analyticsRoutes = require('./routes/analytics');
 
 const app = express();
 
 // Security & middleware
 app.use(helmet());
+app.use(seoHeaders);
 app.use(cors());
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.json());
@@ -81,6 +85,8 @@ app.use('/api/cpc', cpcRoutes);
 app.use('/api/hotel-manager', hotelManagerRoutes);
 app.use('/api/currency', currencyRoutes);
 app.use('/api/hotel-loyalty', hotelLoyaltyRoutes);
+app.use('/api/price-alerts', priceAlertsRoutes);
+app.use('/api/analytics', analyticsRoutes);
 app.use('/api/provider', providerRoutes);
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/support', require('./routes/support'));
