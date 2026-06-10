@@ -200,6 +200,12 @@ import ReferralLeaderboardScreen from './screens/shared/ReferralLeaderboardScree
 // Rating
 import RatingScreen from './screens/taxi/RatingScreen';
 
+// Hotel Price Comparison (Trivago-style)
+import HotelSearchScreen from './screens/hotels/HotelSearchScreen';
+import HotelResultsScreen from './screens/hotels/HotelResultsScreen';
+import HotelDetailScreen from './screens/hotels/HotelDetailScreen';
+import HotelFavoritesScreen from './screens/hotels/HotelFavoritesScreen';
+
 // History Detail
 import HistoryDetailScreen from './screens/profile/HistoryDetailScreen';
 
@@ -1163,6 +1169,12 @@ function MainStack() {
       <Stack.Screen name="ClientProfile" component={ClientProfileScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminStats" component={AdminStatsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ProviderProfileV2" component={ProviderProfileScreen} options={{ headerShown: false }} />
+
+      {/* Hotel Price Comparison */}
+      <Stack.Screen name="HotelSearch" component={HotelSearchScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="HotelResults" component={HotelResultsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="HotelDetail" component={HotelDetailScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="HotelFavorites" component={HotelFavoritesScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }

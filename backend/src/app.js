@@ -30,6 +30,7 @@ const emergencyRoutes = require('./routes/emergency');
 const businessRoutes = require('./routes/business');
 const promoRoutes = require('./routes/promo');
 const providerRoutes = require('./routes/provider');
+const hotelsRoutes = require('./routes/hotels');
 
 const app = express();
 
@@ -72,6 +73,7 @@ app.use('/api/loyalty', loyaltyRoutes);
 app.use('/api/emergency', emergencyRoutes);
 app.use('/api/business', businessRoutes);
 app.use('/api/promo', promoRoutes);
+app.use('/api/hotels', hotelsRoutes);
 app.use('/api/provider', providerRoutes);
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/support', require('./routes/support'));

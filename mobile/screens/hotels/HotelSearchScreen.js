@@ -1,0 +1,369 @@
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  View, Text, TextInput, TouchableOpacity, ScrollView, Image,
+  StyleSheet, StatusBar, Platform, FlatList, Dimensions,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import hotelAPI from '../../services/hotelService';
+
+const { width } = Dimensions.get('window');
+
+const DESTINATIONS = [
+  { city: 'Tunis', country: 'Tunisie', image: 'https://picsum.photos/400/300?random=50' },
+  { city: 'Djerba', country: 'Tunisie', image: 'https://picsum.photos/400/300?random=51' },
+  { city: 'Hammamet', country: 'Tunisie', image: 'https://picsum.photos/400/300?random=52' },
+  { city: 'Sousse', country: 'Tunisie', image: 'https://picsum.photos/400/300?random=53' },
+  { city: 'Paris', country: 'France', image: 'https://picsum.photos/400/300?random=54' },
+  { city: 'Dubai', country: 'EAU', image: 'https://picsum.photos/400/300?random=55' },
+];
+
+export default function HotelSearchScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
+  const [destination, setDestination] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [checkIn, setCheckIn] = useState('');
+  const [checkOut, setCheckOut] = useState('');
+  const [guests, setGuests] = useState(2);
+  const [featured, setFeatured] = useState([]);
+  const [guestModalVisible, setGuestModalVisible] = useState(false);
+  const suggestTimeout = useRef(null);
+
+  useEffect(() => {
+    loadFeatured();
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    setCheckIn(formatDate(today));
+    setCheckOut(formatDate(tomorrow));
+  }, []);
+
+  function formatDate(d) {
+    return d.toISOString().split('T')[0];
+  }
+
+  function formatDisplayDate(str) {
+    if (!str) return '';
+    const d = new Date(str);
+    return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+  }
+
+  async function loadFeatured() {
+    try {
+      const res = await hotelAPI.getFeatured();
+      setFeatured(res.data?.data || []);
+    } catch {}
+  }
+
+  function onDestinationChange(text) {
+    setDestination(text);
+    clearTimeout(suggestTimeout.current);
+    if (text.length >= 2) {
+      suggestTimeout.current = setTimeout(async () => {
+        try {
+          const res = await hotelAPI.autocomplete(text);
+          setSuggestions(res.data?.data || []);
+        } catch {}
+      }, 300);
+    } else {
+      setSuggestions([]);
+    }
+  }
+
+  function handleSearch() {
+    if (!destination.trim()) return;
+    navigation.navigate('HotelResults', { destination, checkIn, checkOut, guests });
+  }
+
+  function handleDestinationTap(city) {
+    setDestination(city);
+    setSuggestions([]);
+    navigation.navigate('HotelResults', { destination: city, checkIn, checkOut, guests });
+  }
+
+  function adjustCheckIn(dir) {
+    const d = new Date(checkIn);
+    d.setDate(d.getDate() + dir);
+    if (d >= new Date()) {
+      setCheckIn(formatDate(d));
+      const dOut = new Date(checkOut);
+      if (d >= dOut) {
+        const next = new Date(d);
+        next.setDate(next.getDate() + 1);
+        setCheckOut(formatDate(next));
+      }
+    }
+  }
+
+  function adjustCheckOut(dir) {
+    const d = new Date(checkOut);
+    d.setDate(d.getDate() + dir);
+    const dIn = new Date(checkIn);
+    if (d > dIn) setCheckOut(formatDate(d));
+  }
+
+  const nights = Math.max(1, Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000));
+
+  return (
+    <View style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
+      <StatusBar barStyle="light-content" />
+      <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        {/* Hero Section */}
+        <LinearGradient
+          colors={['#004E89', '#1a6eac', '#FF6B35']}
+          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+          style={[styles.hero, { paddingTop: insets.top + 20 }]}
+        >
+          <View style={styles.heroHeader}>
+            <View>
+              <Text style={styles.heroTagline}>✈ Comparez les meilleurs prix</Text>
+              <Text style={styles.heroTitle}>Trouvez votre{'\n'}hôtel idéal</Text>
+            </View>
+            <TouchableOpacity onPress={() => navigation.navigate('HotelFavorites')} style={styles.favBtn}>
+              <Ionicons name="heart" size={22} color="#fff" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Search Card */}
+          <View style={styles.searchCard}>
+            {/* Destination */}
+            <View style={styles.inputGroup}>
+              <Ionicons name="search" size={18} color="#FF6B35" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Destination, hôtel..."
+                placeholderTextColor="#A0AEC0"
+                value={destination}
+                onChangeText={onDestinationChange}
+                returnKeyType="search"
+                onSubmitEditing={handleSearch}
+              />
+              {destination.length > 0 && (
+                <TouchableOpacity onPress={() => { setDestination(''); setSuggestions([]); }}>
+                  <Ionicons name="close-circle" size={18} color="#A0AEC0" />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Autocomplete */}
+            {suggestions.length > 0 && (
+              <View style={styles.suggestions}>
+                {suggestions.map((s, i) => (
+                  <TouchableOpacity key={i} style={styles.suggestionItem} onPress={() => handleDestinationTap(s.label)}>
+                    <Ionicons name={s.type === 'hotel' ? 'bed-outline' : 'location-outline'} size={16} color="#718096" />
+                    <View style={{ marginLeft: 8 }}>
+                      <Text style={styles.suggestionLabel}>{s.label}</Text>
+                      <Text style={styles.suggestionSub}>{s.sublabel}</Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+
+            {/* Dates Row */}
+            <View style={styles.datesRow}>
+              <View style={styles.dateBox}>
+                <Text style={styles.dateLabel}>ARRIVÉE</Text>
+                <View style={styles.dateControl}>
+                  <TouchableOpacity onPress={() => adjustCheckIn(-1)} style={styles.dateArrow}>
+                    <Ionicons name="chevron-back" size={16} color="#004E89" />
+                  </TouchableOpacity>
+                  <View style={styles.dateCenter}>
+                    <Ionicons name="calendar-outline" size={14} color="#FF6B35" />
+                    <Text style={styles.dateValue}>{formatDisplayDate(checkIn)}</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => adjustCheckIn(1)} style={styles.dateArrow}>
+                    <Ionicons name="chevron-forward" size={16} color="#004E89" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.nightsBadge}>
+                <Text style={styles.nightsText}>{nights}</Text>
+                <Text style={styles.nightsLabel}>nuit{nights > 1 ? 's' : ''}</Text>
+              </View>
+
+              <View style={styles.dateBox}>
+                <Text style={styles.dateLabel}>DÉPART</Text>
+                <View style={styles.dateControl}>
+                  <TouchableOpacity onPress={() => adjustCheckOut(-1)} style={styles.dateArrow}>
+                    <Ionicons name="chevron-back" size={16} color="#004E89" />
+                  </TouchableOpacity>
+                  <View style={styles.dateCenter}>
+                    <Ionicons name="calendar-outline" size={14} color="#FF6B35" />
+                    <Text style={styles.dateValue}>{formatDisplayDate(checkOut)}</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => adjustCheckOut(1)} style={styles.dateArrow}>
+                    <Ionicons name="chevron-forward" size={16} color="#004E89" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+
+            {/* Guests Row */}
+            <TouchableOpacity style={styles.guestsRow} onPress={() => setGuestModalVisible(true)}>
+              <Ionicons name="people-outline" size={18} color="#FF6B35" />
+              <Text style={styles.guestsText}>{guests} voyageur{guests > 1 ? 's' : ''}</Text>
+              <Ionicons name="chevron-down" size={16} color="#A0AEC0" style={{ marginLeft: 'auto' }} />
+            </TouchableOpacity>
+
+            {/* Search Button */}
+            <TouchableOpacity style={styles.searchBtn} onPress={handleSearch} activeOpacity={0.85}>
+              <LinearGradient colors={['#FF6B35', '#e85520']} style={styles.searchBtnGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+                <Ionicons name="search" size={20} color="#fff" />
+                <Text style={styles.searchBtnText}>Rechercher des hôtels</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </LinearGradient>
+
+        {/* Guest Modal */}
+        {guestModalVisible && (
+          <View style={styles.guestModalOverlay}>
+            <TouchableOpacity style={styles.guestModalBg} onPress={() => setGuestModalVisible(false)} />
+            <View style={styles.guestModal}>
+              <Text style={styles.guestModalTitle}>Nombre de voyageurs</Text>
+              {[1, 2, 3, 4, 5, 6].map(n => (
+                <TouchableOpacity key={n} style={[styles.guestOption, guests === n && styles.guestOptionActive]} onPress={() => { setGuests(n); setGuestModalVisible(false); }}>
+                  <Ionicons name="person" size={16} color={guests === n ? '#FF6B35' : '#718096'} />
+                  <Text style={[styles.guestOptionText, guests === n && { color: '#FF6B35' }]}>{n} voyageur{n > 1 ? 's' : ''}</Text>
+                  {guests === n && <Ionicons name="checkmark" size={16} color="#FF6B35" style={{ marginLeft: 'auto' }} />}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* Popular Destinations */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Destinations populaires</Text>
+          <View style={styles.destGrid}>
+            {DESTINATIONS.map((dest, i) => (
+              <TouchableOpacity key={i} style={styles.destCard} onPress={() => handleDestinationTap(dest.city)}>
+                <Image source={{ uri: dest.image }} style={styles.destImage} resizeMode="cover" />
+                <LinearGradient colors={['transparent', 'rgba(0,0,0,0.7)']} style={styles.destOverlay}>
+                  <Text style={styles.destCity}>{dest.city}</Text>
+                  <Text style={styles.destCountry}>{dest.country}</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Featured Hotels */}
+        {featured.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Hôtels recommandés</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('HotelResults', { destination: '', checkIn, checkOut, guests })}>
+                <Text style={styles.seeAll}>Voir tout</Text>
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              horizontal
+              data={featured}
+              keyExtractor={h => h.id}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
+              renderItem={({ item }) => (
+                <TouchableOpacity style={styles.featuredCard} onPress={() => navigation.navigate('HotelDetail', { hotelId: item.id, checkIn, checkOut, guests })}>
+                  <Image source={{ uri: item.mainImage }} style={styles.featuredImage} resizeMode="cover" />
+                  <LinearGradient colors={['transparent', 'rgba(0,0,0,0.75)']} style={styles.featuredOverlay}>
+                    <Text style={styles.featuredName} numberOfLines={2}>{item.name}</Text>
+                    <Text style={styles.featuredCity}>{item.city}</Text>
+                    <View style={styles.featuredPriceRow}>
+                      <Text style={styles.featuredPrice}>Dès {item.bestOffer?.discountedPrice} TND</Text>
+                      <View style={styles.featuredStars}>
+                        {Array.from({ length: item.stars }).map((_, si) => (
+                          <Ionicons key={si} name="star" size={10} color="#F5A623" />
+                        ))}
+                      </View>
+                    </View>
+                  </LinearGradient>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        )}
+
+        {/* Promo Banner */}
+        <TouchableOpacity style={styles.promoBanner} onPress={() => navigation.navigate('HotelResults', { destination: 'Djerba', checkIn, checkOut, guests })}>
+          <LinearGradient colors={['#004E89', '#1a6eac']} style={styles.promoBannerGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+            <View>
+              <Text style={styles.promoTitle}>🏖 Offres Djerba</Text>
+              <Text style={styles.promoSub}>Économisez jusqu'à 30% cet été</Text>
+            </View>
+            <TouchableOpacity style={styles.promoBtn} onPress={() => navigation.navigate('HotelResults', { destination: 'Djerba', checkIn, checkOut, guests })}>
+              <Text style={styles.promoBtnText}>Voir les offres</Text>
+            </TouchableOpacity>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        <View style={{ height: 30 }} />
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  hero: { paddingBottom: 30, paddingHorizontal: 16 },
+  heroHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
+  heroTagline: { color: 'rgba(255,255,255,0.85)', fontSize: 13, marginBottom: 4 },
+  heroTitle: { color: '#fff', fontSize: 28, fontWeight: '900', lineHeight: 34 },
+  favBtn: { backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 20, padding: 8 },
+  searchCard: { backgroundColor: '#fff', borderRadius: 20, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.15, shadowRadius: 20, elevation: 10 },
+  inputGroup: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F7FAFC', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 8, borderWidth: 1.5, borderColor: '#E2E8F0' },
+  inputIcon: { marginRight: 8 },
+  input: { flex: 1, fontSize: 15, color: '#2D3748', fontWeight: '500' },
+  suggestions: { backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 8, overflow: 'hidden' },
+  suggestionItem: { flexDirection: 'row', alignItems: 'center', padding: 12, borderBottomWidth: 1, borderBottomColor: '#F7FAFC' },
+  suggestionLabel: { fontSize: 14, fontWeight: '600', color: '#2D3748' },
+  suggestionSub: { fontSize: 12, color: '#718096' },
+  datesRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  dateBox: { flex: 1, backgroundColor: '#F7FAFC', borderRadius: 12, padding: 10, borderWidth: 1, borderColor: '#E2E8F0' },
+  dateLabel: { fontSize: 10, color: '#A0AEC0', fontWeight: '700', letterSpacing: 0.5, marginBottom: 4 },
+  dateControl: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  dateArrow: { padding: 2 },
+  dateCenter: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  dateValue: { fontSize: 13, fontWeight: '700', color: '#2D3748' },
+  nightsBadge: { backgroundColor: '#FF6B35', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 6, alignItems: 'center' },
+  nightsText: { color: '#fff', fontWeight: '800', fontSize: 16 },
+  nightsLabel: { color: 'rgba(255,255,255,0.8)', fontSize: 9, fontWeight: '600' },
+  guestsRow: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#F7FAFC', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 12, marginBottom: 12, borderWidth: 1.5, borderColor: '#E2E8F0' },
+  guestsText: { fontSize: 14, color: '#2D3748', fontWeight: '500' },
+  searchBtn: { borderRadius: 14, overflow: 'hidden' },
+  searchBtnGrad: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 15 },
+  searchBtnText: { color: '#fff', fontWeight: '800', fontSize: 16 },
+  guestModalOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 },
+  guestModalBg: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)' },
+  guestModal: { position: 'absolute', top: '30%', left: 40, right: 40, backgroundColor: '#fff', borderRadius: 20, padding: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 20, elevation: 15 },
+  guestModalTitle: { fontSize: 17, fontWeight: '800', color: '#1A202C', marginBottom: 14 },
+  guestOption: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F7FAFC' },
+  guestOptionActive: { backgroundColor: '#FFF5F0', borderRadius: 10, paddingHorizontal: 8, marginHorizontal: -8 },
+  guestOptionText: { fontSize: 15, color: '#4A5568', fontWeight: '500' },
+  section: { paddingTop: 24 },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginBottom: 14 },
+  sectionTitle: { fontSize: 20, fontWeight: '800', color: '#1A202C', paddingHorizontal: 16, marginBottom: 14 },
+  seeAll: { fontSize: 14, color: '#FF6B35', fontWeight: '700' },
+  destGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 10, gap: 6 },
+  destCard: { width: (width - 32) / 3, height: 100, borderRadius: 14, overflow: 'hidden' },
+  destImage: { width: '100%', height: '100%' },
+  destOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'flex-end', padding: 8 },
+  destCity: { color: '#fff', fontWeight: '800', fontSize: 13 },
+  destCountry: { color: 'rgba(255,255,255,0.8)', fontSize: 10 },
+  featuredCard: { width: 200, height: 240, borderRadius: 16, overflow: 'hidden' },
+  featuredImage: { width: '100%', height: '100%' },
+  featuredOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'flex-end', padding: 12 },
+  featuredName: { color: '#fff', fontWeight: '800', fontSize: 14, lineHeight: 18 },
+  featuredCity: { color: 'rgba(255,255,255,0.8)', fontSize: 11, marginVertical: 3 },
+  featuredPriceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  featuredPrice: { color: '#FF6B35', fontWeight: '800', fontSize: 13, backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
+  featuredStars: { flexDirection: 'row', gap: 1 },
+  promoBanner: { margin: 16, borderRadius: 16, overflow: 'hidden' },
+  promoBannerGrad: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20 },
+  promoTitle: { color: '#fff', fontSize: 17, fontWeight: '800' },
+  promoSub: { color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 3 },
+  promoBtn: { backgroundColor: '#FF6B35', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
+  promoBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+});
