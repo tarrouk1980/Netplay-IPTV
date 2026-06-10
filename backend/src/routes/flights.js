@@ -4,9 +4,14 @@ const express = require('express');
 const { body, query, validationResult } = require('express-validator');
 const { prisma } = require('../config/db');
 const { authenticate } = require('../middleware/auth');
-const { searchFlights, getAirports } = require('../services/flightSearch');
+const { searchFlights, getAirports, getCountries } = require('../services/flightSearch');
 
 const router = express.Router();
+
+// GET /api/flights/countries — North Africa countries with airports
+router.get('/countries', (req, res) => {
+  res.json({ countries: getCountries() });
+});
 
 // GET /api/flights/airports?q=tunis
 router.get('/airports', async (req, res) => {

@@ -244,16 +244,43 @@ export default function EasyFlightHomeScreen({ navigation }) {
           </Text>
         </TouchableOpacity>
 
+        {/* North Africa Countries */}
+        <Text style={styles.sectionTitle}>Vols depuis le Nord Afrique</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.destRow}>
+          {[
+            { country: 'Tunisie', flag: '🇹🇳', code: 'TUN', city: 'Tunis', color: '#C8102E' },
+            { country: 'Algérie', flag: '🇩🇿', code: 'ALG', city: 'Alger', color: '#006B3F' },
+            { country: 'Maroc', flag: '🇲🇦', code: 'CMN', city: 'Casablanca', color: '#006233' },
+            { country: 'Libye', flag: '🇱🇾', code: 'TIP', city: 'Tripoli', color: '#005BAC' },
+            { country: 'Mauritanie', flag: '🇲🇷', code: 'NKC', city: 'Nouakchott', color: '#006233' },
+            { country: 'Égypte', flag: '🇪🇬', code: 'CAI', city: 'Le Caire', color: '#C8102E' },
+          ].map((c) => (
+            <TouchableOpacity
+              key={c.code}
+              style={[styles.countryCard, { borderColor: c.color + '55' }]}
+              onPress={() => {
+                setOrigin({ code: c.code, city: c.city, name: c.city, country: c.country, countryCode: c.code.slice(0, 2) });
+              }}
+            >
+              <Text style={styles.destFlag}>{c.flag}</Text>
+              <Text style={styles.destCity}>{c.country}</Text>
+              <Text style={styles.destPrice}>{c.city}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
         {/* Popular Destinations */}
         <Text style={styles.sectionTitle}>Destinations populaires depuis Tunis</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.destRow}>
           {[
             { city: 'Paris', code: 'CDG', flag: '🇫🇷', price: '~450 TND' },
             { city: 'Istanbul', code: 'IST', flag: '🇹🇷', price: '~380 TND' },
-            { city: 'Dubaï', code: 'DXB', flag: '🇦🇪', price: '~620 TND' },
-            { city: 'Rome', code: 'FCO', flag: '🇮🇹', price: '~340 TND' },
-            { city: 'Casablanca', code: 'CMN', flag: '🇲🇦', price: '~280 TND' },
-            { city: 'Le Caire', code: 'CAI', flag: '🇪🇬', price: '~310 TND' },
+            { city: 'Dubaï', code: 'DXB', flag: '🇦🇪', price: '~615 TND' },
+            { city: 'Rome', code: 'FCO', flag: '🇮🇹', price: '~335 TND' },
+            { city: 'Casablanca', code: 'CMN', flag: '🇲🇦', price: '~295 TND' },
+            { city: 'Le Caire', code: 'CAI', flag: '🇪🇬', price: '~340 TND' },
+            { city: 'Barcelone', code: 'BCN', flag: '🇪🇸', price: '~365 TND' },
+            { city: 'Londres', code: 'LHR', flag: '🇬🇧', price: '~565 TND' },
           ].map((d) => (
             <TouchableOpacity
               key={d.code}
@@ -411,6 +438,11 @@ const styles = StyleSheet.create({
   searchBtnText: { color: COLORS.text, fontSize: 17, fontWeight: '800' },
   sectionTitle: { color: COLORS.text, fontSize: 15, fontWeight: '700', marginBottom: 12 },
   destRow: { marginBottom: 20 },
+  countryCard: {
+    backgroundColor: COLORS.surface, borderRadius: 14, padding: 14,
+    marginRight: 10, alignItems: 'center', minWidth: 90,
+    borderWidth: 1,
+  },
   destCard: {
     backgroundColor: COLORS.surface, borderRadius: 14, padding: 14,
     marginRight: 10, alignItems: 'center', minWidth: 90,
