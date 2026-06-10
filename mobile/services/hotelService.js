@@ -17,6 +17,10 @@ const hotelAPI = {
   getLastMinute: () => api.get('/api/hotels/last-minute'),
   getPriceCalendar: (id, month, year, guests) => api.get(`/api/hotels/${id}/calendar`, { params: { month, year, guests } }),
   getSimilar: (id, limit = 4) => api.get(`/api/hotels/${id}/similar`, { params: { limit } }),
+  // Maghreb & devises
+  getCurrencyRates: () => api.get('/api/currency/rates'),
+  convert: (from, to, amount) => api.get('/api/currency/convert', { params: { from, to, amount } }),
+  getMaghrebHotels: () => api.get('/api/hotels/search?limit=50'),
 };
 
 export default hotelAPI;

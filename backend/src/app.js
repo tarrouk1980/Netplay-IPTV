@@ -48,10 +48,8 @@ app.use(express.urlencoded({ extended: true }));
 // Serve uploaded KYC files statically
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString(), service: 'easyway-backend' });
-});
+// Health check — returns { status, version, services: { db, redis }, uptime, timestamp }
+app.get('/health', healthHandler);
 
 // Routes
 app.use('/api/auth', authRoutes);

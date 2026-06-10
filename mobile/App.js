@@ -216,6 +216,8 @@ import HotelOnboardingScreen from './screens/hotels/HotelOnboardingScreen';
 import BookingRedirectScreen from './screens/hotels/BookingRedirectScreen';
 import RevenueAdminScreen from './screens/hotels/RevenueAdminScreen';
 import HotelManagerScreen from './screens/hotels/HotelManagerScreen';
+import MaghrebMapScreen from './screens/hotels/MaghrebMapScreen';
+import CurrencyConverterScreen from './screens/hotels/CurrencyConverterScreen';
 
 // History Detail
 import HistoryDetailScreen from './screens/profile/HistoryDetailScreen';
@@ -1197,6 +1199,8 @@ function MainStack() {
       <Stack.Screen name="BookingRedirect" component={BookingRedirectScreen} options={{ headerShown: false, gestureEnabled: false }} />
       <Stack.Screen name="RevenueAdmin" component={RevenueAdminScreen} options={{ headerShown: false }} />
       <Stack.Screen name="HotelManager" component={HotelManagerScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="MaghrebMap" component={MaghrebMapScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="CurrencyConverter" component={CurrencyConverterScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
