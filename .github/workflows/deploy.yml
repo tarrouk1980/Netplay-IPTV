@@ -1,0 +1,31 @@
+name: Deploy EasyHotels
+
+on:
+  push:
+    branches: [main, claude/happy-davinci-tasrxd]
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with: { node-version: '18' }
+      - run: cd backend && npm install
+      - run: cd backend && npm test -- --passWithNoTests
+
+  deploy-backend:
+    needs: test-backend
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Deploy to Render
+        run: echo "Trigger Render deploy hook here"
+
+  build-mobile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - run: cd mobile && npm install
+      - run: echo "EAS Build would run here with: npx eas build --platform all --non-interactive"

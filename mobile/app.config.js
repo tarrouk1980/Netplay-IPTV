@@ -1,22 +1,30 @@
 module.exports = {
   expo: {
-    name: 'EASYWAY',
+    name: 'EasyHotels - Comparer les Prix',
     slug: 'easyway',
     owner: 'tarekclubiste',
-    version: '1.0.0',
+    version: '2.0.0',
     orientation: 'portrait',
     icon: './assets/icon.png',
     backgroundColor: '#0A0A0F',
-    splash: { image: './assets/splash.png', backgroundColor: '#0A0A0F' },
+    splash: {
+      image: './assets/splash.png',
+      resizeMode: 'contain',
+      backgroundColor: '#004E89',
+    },
     assetBundlePatterns: ['**/*'],
-    ios: { supportsTablet: false, bundleIdentifier: 'com.easyway.app', scheme: 'easyway' },
+    ios: {
+      supportsTablet: false,
+      bundleIdentifier: 'com.easyway.app',
+      scheme: 'easyhotels',
+    },
     android: {
       adaptiveIcon: {
         foregroundImage: './assets/adaptive-icon.png',
         backgroundColor: '#0A0A0F',
       },
       package: 'com.easyway.app',
-      scheme: 'easyway',
+      scheme: 'easyhotels',
       compileSdkVersion: 34,
       targetSdkVersion: 34,
       minSdkVersion: 24,
@@ -39,7 +47,12 @@ module.exports = {
     runtimeVersion: {
       policy: 'sdkVersion',
     },
-    plugins: ['expo-notifications', 'expo-location', 'expo-av'],
+    plugins: [
+      'expo-notifications',
+      'expo-location',
+      'expo-av',
+      'expo-linear-gradient',
+    ],
     extra: {
       mapboxToken: process.env.MAPBOX_TOKEN || 'pk.eyJ1IjoiZWFzeXdheXRhcmVrIiwiYSI6ImNtcHNuaGJ1ODBoc2Qyc3FxenU0aGFvd3QifQ.K-z5zbFtY8v5lyMUn7TryQ',
       eas: {

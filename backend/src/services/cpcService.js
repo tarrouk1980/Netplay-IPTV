@@ -1,6 +1,7 @@
 'use strict';
 
 const { v4: uuidv4 } = require('uuid');
+const AFFILIATE_CONFIG = require('../config/affiliates');
 
 // ─── Mock Advertisers ────────────────────────────────────────────────────────
 const ADVERTISERS = [
