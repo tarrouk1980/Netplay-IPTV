@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "EasyFlight",
+    "slug": "easyflight",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#0A1628"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.easyflight.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0A1628"
+      },
+      "package": "com.easyflight.app"
+    },
+    "scheme": "easyflight",
+    "plugins": ["expo-linear-gradient"]
+  }
+}
