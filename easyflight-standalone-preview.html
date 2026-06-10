@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EasyFlight — Aperçu Interface</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #060C18;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+    color: #F0F4FF;
+    min-height: 100vh;
+    padding: 40px 20px 60px;
+  }
+
+  /* ── Page header ── */
+  .page-header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+  .page-header h1 {
+    font-size: 42px;
+    font-weight: 900;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, #60A5FA, #2563EB);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+  }
+  .page-header .sub {
+    color: #7B8DB0;
+    font-size: 16px;
+    letter-spacing: 0.3px;
+  }
+  .page-header .badges {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  .badge {
+    background: #111E35;
+    border: 1px solid #1E3050;
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 13px;
+    color: #7B8DB0;
+  }
+  .badge.blue  { border-color: #2563EB; color: #60A5FA; }
+  .badge.teal  { border-color: #0D9488; color: #2DD4BF; }
+  .badge.green { border-color: #10B981; color: #34D399; }
+
+  /* ── Screens grid ── */
+  .screens {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+    justify-content: center;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  /* ── Phone shell ── */
+  .phone-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+  .screen-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #7B8DB0;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+  }
+  .phone {
+    width: 340px;
+    height: 720px;
+    background: #0A1628;
+    border-radius: 44px;
+    border: 2px solid #1E3050;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.8), 0 0 0 1px #0D1F38, inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+  .notch {
+    width: 110px;
+    height: 28px;
+    background: #060C18;
+    border-radius: 0 0 18px 18px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 10;
+  }
+  .screen-content {
+    height: calc(100% - 28px);
+    overflow: hidden;
+  }
+
+  /* ── Colors ── */
+  :root {
+    --bg:       #0A1628;
+    --surface:  #111E35;
+    --card:     #192740;
+    --elevated: #1E3050;
+    --text:     #F0F4FF;
+    --muted:    #7B8DB0;
+    --subtle:   #4A5878;
+    --primary:  #2563EB;
+    --ferry:    #0D9488;
+    --accent:   #60A5FA;
+    --success:  #10B981;
+    --warning:  #F59E0B;
+    --danger:   #EF4444;
+    --border:   #1E3050;
+  }
+
+  /* ═══════════════════════════════════════════
+     SCREEN 1 — HOME / VOL TAB
+  ═══════════════════════════════════════════ */
+  .home-screen {
+    background: var(--bg);
+    height: 100%;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .home-screen::-webkit-scrollbar { display: none; }
+
+  .home-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px 10px;
+  }
+  .app-logo {
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+  .app-tagline {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+  .header-icons {
+    display: flex;
+    gap: 8px;
+  }
+  .icon-btn {
+    width: 36px;
+    height: 36px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    cursor: pointer;
+  }
+
+  .mode-switcher {
+    display: flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 4px;
+    margin: 0 16px 14px;
+  }
+  .mode-btn {
+    flex: 1;
+    padding: 9px;
+    border-radius: 11px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .mode-btn.active-flight { background: var(--primary); color: #fff; }
+  .mode-btn.active-ferry  { background: var(--ferry);   color: #fff; }
+
+  .search-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    margin: 0 16px 14px;
+    padding: 15px;
+  }
+
+  .trip-type-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .trip-btn {
+    flex: 1;
+    padding: 8px;
+    text-align: center;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .trip-btn.active {
+    border-color: var(--primary);
+    background: rgba(37,99,235,0.15);
+    color: #60A5FA;
+  }
+
+  .route-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .place-btn {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 10px 12px;
+    cursor: pointer;
+  }
+  .place-btn-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 3px;
+  }
+  .place-btn-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .swap-btn {
+    width: 34px;
+    height: 34px;
+    background: var(--elevated);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    color: var(--accent);
+    cursor: pointer;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .date-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .date-field {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 10px 12px;
+  }
+  .date-field-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 3px;
+  }
+  .date-field-val {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .pax-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 10px 12px;
+    margin-bottom: 13px;
+  }
+  .pax-label { font-size: 13px; font-weight: 600; color: var(--muted); }
+  .pax-control { display: flex; align-items: center; gap: 14px; }
+  .pax-btn {
+    width: 28px;
+    height: 28px;
+    background: var(--elevated);
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: var(--accent);
+    font-weight: 700;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .pax-count { font-size: 17px; font-weight: 800; color: var(--text); }
+
+  .search-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: 16px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 800;
+    color: #fff;
+    cursor: pointer;
+    letter-spacing: 0.3px;
+  }
+  .search-btn.flight { background: var(--primary); }
+  .search-btn.ferry  { background: var(--ferry); }
+
+  .tools-row {
+    display: flex;
+    gap: 9px;
+    padding: 0 16px;
+    margin-bottom: 20px;
+  }
+  .tool-card {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 12px 8px;
+    text-align: center;
+    cursor: pointer;
+  }
+  .tool-icon { font-size: 20px; margin-bottom: 5px; }
+  .tool-label { font-size: 10px; font-weight: 600; color: var(--muted); line-height: 1.3; }
+
+  .section-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--text);
+    padding: 0 16px;
+    margin-bottom: 10px;
+  }
+
+  .route-scroll {
+    display: flex;
+    gap: 10px;
+    padding: 0 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin-bottom: 18px;
+  }
+  .route-scroll::-webkit-scrollbar { display: none; }
+  .route-chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 14px;
+    min-width: 150px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .route-flag { font-size: 20px; margin-bottom: 5px; }
+  .route-label { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+  .route-price { font-size: 11px; font-weight: 600; color: var(--accent); }
+
+  .promo-banner {
+    margin: 0 16px 20px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .promo-emoji { font-size: 26px; }
+  .promo-title { font-size: 13px; font-weight: 800; color: var(--text); margin-bottom: 3px; }
+  .promo-sub   { font-size: 11px; color: var(--muted); }
+
+  /* ═══════════════════════════════════════════
+     SCREEN 1B — HOME / FERRY TAB
+  ═══════════════════════════════════════════ */
+
+  /* ═══════════════════════════════════════════
+     SCREEN 2 — FLIGHT RESULTS
+  ═══════════════════════════════════════════ */
+  .results-screen {
+    background: var(--bg);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .results-header {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid var(--border);
+    gap: 10px;
+  }
+  .back-btn {
+    font-size: 20px;
+    color: var(--accent);
+    cursor: pointer;
+    font-weight: 300;
+  }
+  .results-route { font-size: 16px; font-weight: 900; color: var(--text); }
+  .results-sub   { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .cal-btn {
+    width: 36px; height: 36px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    margin-left: auto;
+    cursor: pointer;
+  }
+
+  .filter-bar {
+    display: flex;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .filter-bar::-webkit-scrollbar { display: none; }
+  .chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 13px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .chip.active-f { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .chip.active-t { background: var(--ferry);   border-color: var(--ferry);   color: #fff; }
+
+  .results-count {
+    font-size: 11px;
+    color: var(--muted);
+    padding: 7px 16px;
+  }
+
+  .results-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    scrollbar-width: none;
+  }
+  .results-list::-webkit-scrollbar { display: none; }
+
+  .flight-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 14px;
+    margin-bottom: 10px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .flight-card:hover { border-color: var(--primary); }
+
+  .low-cost-badge {
+    position: absolute;
+    top: 0; right: 0;
+    background: var(--warning);
+    color: #000;
+    font-size: 8px;
+    font-weight: 900;
+    padding: 3px 8px;
+    border-bottom-left-radius: 10px;
+    letter-spacing: 0.8px;
+  }
+
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+  .airline-row { display: flex; align-items: center; gap: 9px; }
+  .airline-badge {
+    width: 40px; height: 40px;
+    border-radius: 11px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 900; color: #fff;
+  }
+  .airline-name  { font-size: 12px; font-weight: 700; color: var(--text); }
+  .flight-no     { font-size: 10px; color: var(--muted); }
+  .price-tag     { text-align: right; }
+  .price-amount  { font-size: 24px; font-weight: 900; color: var(--accent); line-height: 1; }
+  .price-cur     { font-size: 11px; color: var(--muted); }
+
+  .timeline {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .time-block { width: 62px; }
+  .time-block.right { text-align: right; }
+  .time-text   { font-size: 20px; font-weight: 900; color: var(--text); }
+  .airport-code{ font-size: 13px; font-weight: 800; color: var(--accent); }
+  .city-name   { font-size: 10px; color: var(--muted); }
+  .center-block {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 6px;
+  }
+  .dur-txt { font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+  .line-viz {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 2px;
+  }
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+  .line-seg {
+    flex: 1;
+    height: 1.5px;
+    background: var(--border);
+  }
+  .plane-icon { font-size: 12px; }
+  .stops-label {
+    font-size: 10px;
+    font-weight: 700;
+    margin-top: 3px;
+  }
+  .green { color: var(--success); }
+  .amber { color: var(--warning); }
+
+  .card-footer {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .footer-tag {
+    font-size: 10px;
+    background: var(--card);
+    color: var(--muted);
+    padding: 3px 7px;
+    border-radius: 7px;
+  }
+  .book-btn {
+    margin-left: auto;
+    background: var(--primary);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 6px 13px;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+
+  /* ═══════════════════════════════════════════
+     SCREEN 3 — FERRY RESULTS
+  ═══════════════════════════════════════════ */
+  .ferry-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 14px;
+    margin-bottom: 10px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .overnight-badge {
+    position: absolute;
+    top: 0; right: 0;
+    background: #1A237E;
+    color: #fff;
+    font-size: 8px;
+    font-weight: 900;
+    padding: 3px 8px;
+    border-bottom-left-radius: 10px;
+  }
+  .ferry-price { font-size: 24px; font-weight: 900; color: var(--ferry); line-height: 1; }
+  .ferry-price-sub { font-size: 10px; color: var(--muted); }
+  .car-price { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .port-code  { font-size: 12px; font-weight: 800; color: var(--ferry); }
+  .sea-label  { font-size: 9px; color: var(--subtle, #4A5878); margin-top: 3px; }
+  .amen-row   { display: flex; gap: 5px; margin: 8px 0; overflow-x: auto; scrollbar-width: none; }
+  .amen-row::-webkit-scrollbar { display: none; }
+  .amen-tag {
+    background: var(--card);
+    border-radius: 7px;
+    padding: 3px 7px;
+    font-size: 10px;
+    color: var(--muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .ferry-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .seats-left { font-size: 10px; color: var(--subtle, #4A5878); }
+  .book-ferry-btn {
+    background: var(--ferry);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 7px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+
+  /* ═══════════════════════════════════════════
+     SCREEN 4 — PRICE CALENDAR
+  ═══════════════════════════════════════════ */
+  .calendar-screen {
+    background: var(--bg);
+    height: 100%;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .calendar-screen::-webkit-scrollbar { display: none; }
+
+  .cal-header {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid var(--border);
+    gap: 10px;
+  }
+  .cal-title { font-size: 16px; font-weight: 800; color: var(--text); }
+  .cal-sub   { font-size: 11px; color: var(--muted); }
+
+  .stats-row {
+    display: flex;
+    gap: 8px;
+    padding: 14px 16px 0;
+  }
+  .stat-card {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 10px;
+    text-align: center;
+  }
+  .stat-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; }
+  .stat-value { font-size: 18px; font-weight: 900; }
+
+  .month-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 10px;
+  }
+  .nav-btn {
+    width: 34px; height: 34px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: var(--accent); font-weight: 700;
+    cursor: pointer;
+  }
+  .month-label { font-size: 15px; font-weight: 800; color: var(--text); text-transform: capitalize; }
+
+  .days-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    padding: 0 16px;
+    margin-bottom: 6px;
+  }
+  .day-header {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+  }
+
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+    padding: 0 16px;
+  }
+  .cal-cell {
+    aspect-ratio: 0.85;
+    border-radius: 9px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    border: 1px solid transparent;
+  }
+  .cal-cell.empty {}
+  .cal-cell.low  { background: #065F46; }
+  .cal-cell.med  { background: #92400E; }
+  .cal-cell.high { background: #7F1D1D; }
+  .cal-cell.none { background: var(--card); }
+  .cal-cell.best { border-color: var(--success) !important; border-width: 1.5px; }
+  .cell-day  { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.6); }
+  .cell-day.dim { color: var(--subtle, #4A5878); }
+  .cell-price { font-size: 9px; font-weight: 800; color: #fff; }
+  .cell-na    { font-size: 12px; color: var(--subtle, #4A5878); }
+  .star       { position: absolute; top: 2px; right: 3px; font-size: 9px; color: #FFD700; }
+
+  .legend {
+    display: flex;
+    gap: 12px;
+    padding: 12px 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-dot  { width: 9px; height: 9px; border-radius: 3px; }
+  .legend-txt  { font-size: 11px; color: var(--muted); }
+
+  .tip-card {
+    margin: 4px 16px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 13px;
+  }
+  .tip-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 5px; }
+  .tip-body  { font-size: 12px; color: var(--muted); }
+
+  /* ═══════════════════════════════════════════
+     SCREEN 5 — INSPIRE ME
+  ═══════════════════════════════════════════ */
+  .inspire-screen {
+    background: var(--bg);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .inspire-header {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid var(--border);
+    gap: 10px;
+  }
+  .inspire-title { font-size: 16px; font-weight: 800; color: var(--text); }
+
+  .origin-row {
+    display: flex;
+    gap: 7px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .origin-row::-webkit-scrollbar { display: none; }
+  .origin-chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 11px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .origin-chip.active { background: var(--primary); border-color: var(--primary); }
+  .origin-chip .o-flag { font-size: 15px; }
+  .origin-chip .o-city { font-size: 10px; font-weight: 700; color: var(--muted); margin-top: 2px; }
+  .origin-chip.active .o-city { color: #fff; }
+
+  .inspire-sub {
+    font-size: 12px;
+    color: var(--muted);
+    padding: 8px 16px;
+  }
+
+  .dest-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 12px;
+    scrollbar-width: none;
+  }
+  .dest-list::-webkit-scrollbar { display: none; }
+
+  .dest-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 13px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+  .dest-card.first { border-color: var(--primary); border-width: 1.5px; }
+  .dest-rank { width: 30px; text-align: center; font-size: 18px; }
+  .dest-emoji-box {
+    width: 48px; height: 48px;
+    background: var(--card);
+    border-radius: 13px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    flex-shrink: 0;
+  }
+  .dest-info { flex: 1; }
+  .dest-city    { font-size: 14px; font-weight: 800; color: var(--text); }
+  .dest-country { font-size: 11px; color: var(--muted); }
+  .dest-vibe    { font-size: 10px; color: var(--subtle, #4A5878); margin-top: 2px; }
+  .dest-price-col { text-align: right; }
+  .price-from  { font-size: 10px; color: var(--muted); }
+  .price-amt   { font-size: 20px; font-weight: 900; color: var(--accent); }
+  .price-dur   { font-size: 10px; color: var(--subtle, #4A5878); }
+
+  /* ═══════════════════════════════════════════
+     AFFILIATES EXPLANATION SECTION
+  ═══════════════════════════════════════════ */
+  .revenue-section {
+    max-width: 900px;
+    margin: 48px auto 0;
+    background: #0D1A2E;
+    border: 1px solid #1E3050;
+    border-radius: 24px;
+    padding: 32px;
+  }
+  .revenue-section h2 {
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .revenue-section .rev-sub {
+    color: #7B8DB0;
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+  .rev-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+  }
+  .rev-card {
+    background: #111E35;
+    border: 1px solid #1E3050;
+    border-radius: 16px;
+    padding: 18px;
+  }
+  .rev-icon  { font-size: 26px; margin-bottom: 10px; }
+  .rev-title { font-size: 14px; font-weight: 800; color: #F0F4FF; margin-bottom: 4px; }
+  .rev-body  { font-size: 12px; color: #7B8DB0; line-height: 1.5; }
+  .rev-amount { font-size: 18px; font-weight: 900; color: #60A5FA; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<!-- ── PAGE HEADER ── -->
+<div class="page-header">
+  <h1>✈ EasyFlight</h1>
+  <div class="sub">App indépendante · Espagne ↔ Maghreb · Vols & Ferries</div>
+  <div class="badges">
+    <span class="badge blue">React Native (Expo)</span>
+    <span class="badge blue">Node.js Backend</span>
+    <span class="badge teal">Ferries inclus</span>
+    <span class="badge green">Travelpayouts CPC</span>
+    <span class="badge">Ryanair · Vueling · Iberia · Balearia</span>
+  </div>
+</div>
+
+<!-- ── SCREENS GRID ── -->
+<div class="screens">
+
+  <!-- ══ SCREEN 1: HOME — Vols ══ -->
+  <div class="phone-wrap">
+    <div class="screen-label">1 · Accueil — Vols</div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="screen-content">
+        <div class="home-screen">
+
+          <div class="home-header">
+            <div>
+              <div class="app-logo">EasyFlight</div>
+              <div class="app-tagline">Espagne ↔ Maghreb · Vols & Ferries</div>
+            </div>
+            <div class="header-icons">
+              <div class="icon-btn">✨</div>
+              <div class="icon-btn">🔔</div>
+            </div>
+          </div>
+
+          <div class="mode-switcher">
+            <div class="mode-btn active-flight">✈ Vols</div>
+            <div class="mode-btn">⛴ Ferries</div>
+          </div>
+
+          <div class="search-card">
+            <div class="trip-type-row">
+              <div class="trip-btn active">Aller simple</div>
+              <div class="trip-btn">Aller-retour</div>
+            </div>
+
+            <div class="route-row">
+              <div class="place-btn">
+                <div class="place-btn-label">Départ</div>
+                <div class="place-btn-value">MAD · Madrid</div>
+              </div>
+              <div class="swap-btn">⇄</div>
+              <div class="place-btn">
+                <div class="place-btn-label">Arrivée</div>
+                <div class="place-btn-value">CMN · Casablanca</div>
+              </div>
+            </div>
+
+            <div class="date-row">
+              <div class="date-field">
+                <div class="date-field-label">Date départ</div>
+                <div class="date-field-val">15 août 2026</div>
+              </div>
+            </div>
+
+            <div class="pax-row">
+              <div class="pax-label">Passagers</div>
+              <div class="pax-control">
+                <div class="pax-btn">−</div>
+                <div class="pax-count">2</div>
+                <div class="pax-btn">+</div>
+              </div>
+            </div>
+
+            <div class="search-btn flight">✈  Rechercher des vols</div>
+          </div>
+
+          <div class="tools-row">
+            <div class="tool-card"><div class="tool-icon">📅</div><div class="tool-label">Calendrier des prix</div></div>
+            <div class="tool-card"><div class="tool-icon">✨</div><div class="tool-label">Inspire moi</div></div>
+            <div class="tool-card"><div class="tool-icon">🔔</div><div class="tool-label">Alertes prix</div></div>
+            <div class="tool-card"><div class="tool-icon">⭐</div><div class="tool-label">Mes favoris</div></div>
+          </div>
+
+          <div class="section-title">🔥 Routes populaires</div>
+          <div class="route-scroll">
+            <div class="route-chip"><div class="route-flag">🇲🇦</div><div class="route-label">Madrid → Casablanca</div><div class="route-price">dès 45€</div></div>
+            <div class="route-chip"><div class="route-flag">🇩🇿</div><div class="route-label">Barcelone → Alger</div><div class="route-price">dès 58€</div></div>
+            <div class="route-chip"><div class="route-flag">🇹🇳</div><div class="route-label">Valence → Tunis</div><div class="route-price">dès 62€</div></div>
+            <div class="route-chip"><div class="route-flag">🇲🇦</div><div class="route-label">Málaga → Marrakech</div><div class="route-price">dès 38€</div></div>
+          </div>
+
+          <div class="promo-banner">
+            <div class="promo-emoji">🇪🇸 ↔ 🌍</div>
+            <div>
+              <div class="promo-title">Diaspora Maghreb en Espagne</div>
+              <div class="promo-sub">30+ compagnies · Ryanair, Vueling, Iberia, Balearia…</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN 1B: HOME — Ferries ══ -->
+  <div class="phone-wrap">
+    <div class="screen-label">2 · Accueil — Ferries</div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="screen-content">
+        <div class="home-screen">
+
+          <div class="home-header">
+            <div>
+              <div class="app-logo">EasyFlight</div>
+              <div class="app-tagline">Espagne ↔ Maghreb · Vols & Ferries</div>
+            </div>
+            <div class="header-icons">
+              <div class="icon-btn">✨</div>
+              <div class="icon-btn">🔔</div>
+            </div>
+          </div>
+
+          <div class="mode-switcher">
+            <div class="mode-btn">✈ Vols</div>
+            <div class="mode-btn active-ferry">⛴ Ferries</div>
+          </div>
+
+          <div class="search-card">
+            <div class="route-row">
+              <div class="place-btn">
+                <div class="place-btn-label">Port départ</div>
+                <div class="place-btn-value">ALG_ES · Algésiras</div>
+              </div>
+              <div class="swap-btn">⇄</div>
+              <div class="place-btn">
+                <div class="place-btn-label">Port arrivée</div>
+                <div class="place-btn-value">TNG · Tanger Med</div>
+              </div>
+            </div>
+
+            <div class="date-row">
+              <div class="date-field">
+                <div class="date-field-label">Date traversée</div>
+                <div class="date-field-val">20 juillet 2026</div>
+              </div>
+            </div>
+
+            <div class="pax-row">
+              <div class="pax-label">Passagers</div>
+              <div class="pax-control">
+                <div class="pax-btn">−</div>
+                <div class="pax-count">4</div>
+                <div class="pax-btn">+</div>
+              </div>
+            </div>
+
+            <div class="search-btn ferry">⛴  Rechercher des ferries</div>
+          </div>
+
+          <div class="tools-row">
+            <div class="tool-card"><div class="tool-icon">📅</div><div class="tool-label">Calendrier des prix</div></div>
+            <div class="tool-card"><div class="tool-icon">✨</div><div class="tool-label">Inspire moi</div></div>
+            <div class="tool-card"><div class="tool-icon">🔔</div><div class="tool-label">Alertes prix</div></div>
+            <div class="tool-card"><div class="tool-icon">⭐</div><div class="tool-label">Mes favoris</div></div>
+          </div>
+
+          <div class="section-title">⚓ Liaisons maritimes</div>
+          <div class="route-scroll">
+            <div class="route-chip" style="border-color:#0D9488"><div class="route-flag">🇲🇦</div><div class="route-label">Algésiras → Tanger</div><div class="route-price" style="color:#2DD4BF">dès 28€ · 35min</div></div>
+            <div class="route-chip" style="border-color:#0D9488"><div class="route-flag">🇲🇦</div><div class="route-label">Almería → Nador</div><div class="route-price" style="color:#2DD4BF">dès 55€ · 7h</div></div>
+            <div class="route-chip" style="border-color:#0D9488"><div class="route-flag">🇩🇿</div><div class="route-label">Almería → Oran</div><div class="route-price" style="color:#2DD4BF">dès 68€ · 8h</div></div>
+            <div class="route-chip" style="border-color:#0D9488"><div class="route-flag">🇹🇳</div><div class="route-label">Gênes → Tunis</div><div class="route-price" style="color:#2DD4BF">dès 88€ · 21h</div></div>
+          </div>
+
+          <div class="promo-banner" style="border-color:#0D9488">
+            <div class="promo-emoji">🚢</div>
+            <div>
+              <div class="promo-title">Opération Marhaba 2026</div>
+              <div class="promo-sub">Balearia, FRS, Algérie Ferries, CTN, GNV</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN 3: FLIGHT RESULTS ══ -->
+  <div class="phone-wrap">
+    <div class="screen-label">3 · Résultats vols</div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="screen-content">
+        <div class="results-screen">
+
+          <div class="results-header">
+            <div class="back-btn">←</div>
+            <div>
+              <div class="results-route">MAD → CMN</div>
+              <div class="results-sub">15 août · 2 passagers · Aller simple</div>
+            </div>
+            <div class="cal-btn">📅</div>
+          </div>
+
+          <div class="filter-bar">
+            <div class="chip">✈ Direct</div>
+            <div class="chip active-f">Prix ↑</div>
+            <div class="chip">Durée</div>
+            <div class="chip">Départ</div>
+          </div>
+
+          <div class="results-count">4 vols trouvés</div>
+
+          <div class="results-list">
+
+            <!-- Card 1 — Vueling LOW COST -->
+            <div class="flight-card">
+              <div class="low-cost-badge">LOW COST</div>
+              <div class="card-top">
+                <div class="airline-row">
+                  <div class="airline-badge" style="background:#F7B731">VY</div>
+                  <div>
+                    <div class="airline-name">Vueling</div>
+                    <div class="flight-no">VY8402</div>
+                  </div>
+                </div>
+                <div class="price-tag">
+                  <div class="price-amount">42</div>
+                  <div class="price-cur">EUR</div>
+                </div>
+              </div>
+              <div class="timeline">
+                <div class="time-block">
+                  <div class="time-text">07:40</div>
+                  <div class="airport-code">MAD</div>
+                  <div class="city-name">Madrid</div>
+                </div>
+                <div class="center-block">
+                  <div class="dur-txt">2h25</div>
+                  <div class="line-viz">
+                    <div class="dot"></div>
+                    <div class="line-seg"></div>
+                    <div class="plane-icon">✈</div>
+                    <div class="line-seg"></div>
+                    <div class="dot"></div>
+                  </div>
+                  <div class="stops-label green">Direct</div>
+                </div>
+                <div class="time-block right">
+                  <div class="time-text">10:05</div>
+                  <div class="airport-code" style="text-align:right">CMN</div>
+                  <div class="city-name" style="text-align:right">Casablanca</div>
+                </div>
+              </div>
+              <div class="card-footer">
+                <div class="footer-tag">💼 10 kg</div>
+                <div class="footer-tag">✓ Remb.</div>
+                <div class="book-btn">Réserver →</div>
+              </div>
+            </div>
+
+            <!-- Card 2 — Iberia -->
+            <div class="flight-card">
+              <div class="card-top">
+                <div class="airline-row">
+                  <div class="airline-badge" style="background:#C00B1D">IB</div>
+                  <div>
+                    <div class="airline-name">Iberia</div>
+                    <div class="flight-no">IB3604</div>
+                  </div>
+                </div>
+                <div class="price-tag">
+                  <div class="price-amount">58</div>
+                  <div class="price-cur">EUR</div>
+                </div>
+              </div>
+              <div class="timeline">
+                <div class="time-block">
+                  <div class="time-text">11:15</div>
+                  <div class="airport-code">MAD</div>
+                  <div class="city-name">Madrid</div>
+                </div>
+                <div class="center-block">
+                  <div class="dur-txt">2h28</div>
+                  <div class="line-viz">
+                    <div class="dot"></div>
+                    <div class="line-seg"></div>
+                    <div class="plane-icon">✈</div>
+                    <div class="line-seg"></div>
+                    <div class="dot"></div>
+                  </div>
+                  <div class="stops-label green">Direct</div>
+                </div>
+                <div class="time-block right">
+                  <div class="time-text">13:43</div>
+                  <div class="airport-code" style="text-align:right">CMN</div>
+                  <div class="city-name" style="text-align:right">Casablanca</div>
+                </div>
+              </div>
+              <div class="card-footer">
+                <div class="footer-tag">💼 23 kg</div>
+                <div class="footer-tag">✓ Remb.</div>
+                <div class="book-btn">Réserver →</div>
+              </div>
+            </div>
+
+            <!-- Card 3 — Royal Air Maroc -->
+            <div class="flight-card">
+              <div class="card-top">
+                <div class="airline-row">
+                  <div class="airline-badge" style="background:#006233">AT</div>
+                  <div>
+                    <div class="airline-name">Royal Air Maroc</div>
+                    <div class="flight-no">AT527</div>
+                  </div>
+                </div>
+                <div class="price-tag">
+                  <div class="price-amount">63</div>
+                  <div class="price-cur">EUR</div>
+                </div>
+              </div>
+              <div class="timeline">
+                <div class="time-block">
+                  <div class="time-text">16:30</div>
+                  <div class="airport-code">MAD</div>
+                  <div class="city-name">Madrid</div>
+                </div>
+                <div class="center-block">
+                  <div class="dur-txt">2h28</div>
+                  <div class="line-viz">
+                    <div class="dot"></div>
+                    <div class="line-seg"></div>
+                    <div class="plane-icon">✈</div>
+                    <div class="line-seg"></div>
+                    <div class="dot"></div>
+                  </div>
+                  <div class="stops-label green">Direct</div>
+                </div>
+                <div class="time-block right">
+                  <div class="time-text">18:58</div>
+                  <div class="airport-code" style="text-align:right">CMN</div>
+                  <div class="city-name" style="text-align:right">Casablanca</div>
+                </div>
+              </div>
+              <div class="card-footer">
+                <div class="footer-tag">💼 23 kg</div>
+                <div class="footer-tag" style="color:#EF4444">⚠ 3 places</div>
+                <div class="book-btn">Réserver →</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN 4: FERRY RESULTS ══ -->
+  <div class="phone-wrap">
+    <div class="screen-label">4 · Résultats ferries</div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="screen-content">
+        <div class="results-screen">
+
+          <div class="results-header" style="border-color:#1E3050">
+            <div class="back-btn" style="color:#0D9488">←</div>
+            <div>
+              <div class="results-route">⛴ Algésiras → Tanger</div>
+              <div class="results-sub">20 juillet · 4 passagers</div>
+            </div>
+          </div>
+
+          <div class="filter-bar">
+            <div class="chip active-t">Prix ↑</div>
+            <div class="chip">Durée</div>
+            <div class="chip">Départ</div>
+          </div>
+
+          <div class="results-count">3 traversées disponibles</div>
+
+          <div class="results-list">
+
+            <!-- Ferry 1 — Balearia rapide -->
+            <div class="ferry-card">
+              <div class="card-top">
+                <div class="airline-row">
+                  <div class="airline-badge" style="background:#003087;font-size:9px">BAL</div>
+                  <div>
+                    <div class="airline-name">Baleària</div>
+                    <div class="flight-no">Route BA101</div>
+                  </div>
+                </div>
+                <div class="price-tag">
+                  <div class="ferry-price">28</div>
+                  <div class="ferry-price-sub">EUR / pax</div>
+                  <div class="car-price">🚗 +22€</div>
+                </div>
+              </div>
+              <div class="timeline">
+                <div class="time-block">
+                  <div class="time-text">07:00</div>
+                  <div class="port-code">ALG</div>
+                  <div class="city-name">Algésiras</div>
+                </div>
+                <div class="center-block">
+                  <div class="dur-txt">35 min</div>
+                  <div class="line-viz">
+                    <div class="dot" style="background:#0D9488"></div>
+                    <div class="line-seg"></div>
+                    <span style="font-size:14px">⛴</span>
+                    <div class="line-seg"></div>
+                    <div class="dot" style="background:#0D9488"></div>
+                  </div>
+                  <div class="sea-label">Traversée maritime</div>
+                </div>
+                <div class="time-block right">
+                  <div class="time-text">07:35</div>
+                  <div class="port-code" style="text-align:right">TNG</div>
+                  <div class="city-name" style="text-align:right">Tanger Med</div>
+                </div>
+              </div>
+              <div class="amen-row">
+                <div class="amen-tag">☕ cafétéria</div>
+                <div class="amen-tag">🛋 lounge</div>
+              </div>
+              <div class="ferry-footer">
+                <div class="seats-left">200 places passager</div>
+                <div class="book-ferry-btn">Réserver →</div>
+              </div>
+            </div>
+
+            <!-- Ferry 2 — Acciona -->
+            <div class="ferry-card">
+              <div class="card-top">
+                <div class="airline-row">
+                  <div class="airline-badge" style="background:#00B451;font-size:9px">ACC</div>
+                  <div>
+                    <div class="airline-name">Acciona Trasmed.</div>
+                    <div class="flight-no">Route AC101</div>
+                  </div>
+                </div>
+                <div class="price-tag">
+                  <div class="ferry-price">31</div>
+                  <div class="ferry-price-sub">EUR / pax</div>
+                  <div class="car-price">🚗 +24€</div>
+                </div>
+              </div>
+              <div class="timeline">
+                <div class="time-block">
+                  <div class="time-text">09:15</div>
+                  <div class="port-code">ALG</div>
+                  <div class="city-name">Algésiras</div>
+                </div>
+                <div class="center-block">
+                  <div class="dur-txt">35 min</div>
+                  <div class="line-viz">
+                    <div class="dot" style="background:#0D9488"></div>
+                    <div class="line-seg"></div>
+                    <span style="font-size:14px">⛴</span>
+                    <div class="line-seg"></div>
+                    <div class="dot" style="background:#0D9488"></div>
+                  </div>
+                  <div class="sea-label">Traversée maritime</div>
+                </div>
+                <div class="time-block right">
+                  <div class="time-text">09:50</div>
+                  <div class="port-code" style="text-align:right">TNG</div>
+                  <div class="city-name" style="text-align:right">Tanger Med</div>
+                </div>
+              </div>
+              <div class="amen-row">
+                <div class="amen-tag">☕ cafétéria</div>
+                <div class="amen-tag">🚗 voitures</div>
+              </div>
+              <div class="ferry-footer">
+                <div class="seats-left">150 places passager</div>
+                <div class="book-ferry-btn">Réserver →</div>
+              </div>
+            </div>
+
+            <!-- Ferry 3 — FRS nuit Barcelone -->
+            <div class="ferry-card" style="border-color:#1A237E">
+              <div class="overnight-badge">🌙 NUIT</div>
+              <div class="card-top">
+                <div class="airline-row">
+                  <div class="airline-badge" style="background:#E30613;font-size:9px">FRS</div>
+                  <div>
+                    <div class="airline-name">FRS Iberia</div>
+                    <div class="flight-no">Route FR201</div>
+                  </div>
+                </div>
+                <div class="price-tag">
+                  <div class="ferry-price">38</div>
+                  <div class="ferry-price-sub">EUR / pax</div>
+                  <div class="car-price">🚗 +30€</div>
+                </div>
+              </div>
+              <div class="timeline">
+                <div class="time-block">
+                  <div class="time-text">17:30</div>
+                  <div class="port-code">BCN</div>
+                  <div class="city-name">Barcelone</div>
+                </div>
+                <div class="center-block">
+                  <div class="dur-txt">20h · cabines</div>
+                  <div class="line-viz">
+                    <div class="dot" style="background:#0D9488"></div>
+                    <div class="line-seg"></div>
+                    <span style="font-size:14px">⛴</span>
+                    <div class="line-seg"></div>
+                    <div class="dot" style="background:#0D9488"></div>
+                  </div>
+                  <div class="sea-label">Traversée nuit</div>
+                </div>
+                <div class="time-block right">
+                  <div class="time-text">13:30</div>
+                  <div class="port-code" style="text-align:right">TNG</div>
+                  <div class="city-name" style="text-align:right">Tanger</div>
+                </div>
+              </div>
+              <div class="amen-row">
+                <div class="amen-tag">🍽 restaurant</div>
+                <div class="amen-tag">🛏 cabines</div>
+                <div class="amen-tag">🏊 piscine</div>
+                <div class="amen-tag">🚗 voitures</div>
+              </div>
+              <div class="ferry-footer">
+                <div class="seats-left">45 places voiture</div>
+                <div class="book-ferry-btn">Réserver →</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN 5: PRICE CALENDAR ══ -->
+  <div class="phone-wrap">
+    <div class="screen-label">5 · Calendrier des prix</div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="screen-content">
+        <div class="calendar-screen">
+
+          <div class="cal-header">
+            <div class="back-btn">←</div>
+            <div>
+              <div class="cal-title">Calendrier des prix</div>
+              <div class="cal-sub">MAD → CMN · 1 passager</div>
+            </div>
+          </div>
+
+          <div class="stats-row">
+            <div class="stat-card" style="border-color:#065F46">
+              <div class="stat-label">Min</div>
+              <div class="stat-value" style="color:#10B981">38€</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Moy.</div>
+              <div class="stat-value" style="color:#60A5FA">54€</div>
+            </div>
+            <div class="stat-card" style="border-color:#7F1D1D">
+              <div class="stat-label">Max</div>
+              <div class="stat-value" style="color:#EF4444">82€</div>
+            </div>
+          </div>
+
+          <div class="month-nav">
+            <div class="nav-btn">‹</div>
+            <div class="month-label">août 2026</div>
+            <div class="nav-btn">›</div>
+          </div>
+
+          <div class="days-header">
+            <div class="day-header">L</div>
+            <div class="day-header">M</div>
+            <div class="day-header">X</div>
+            <div class="day-header">J</div>
+            <div class="day-header">V</div>
+            <div class="day-header">S</div>
+            <div class="day-header">D</div>
+          </div>
+
+          <div class="cal-grid">
+            <!-- offset Saturday start for Aug 2026 -->
+            <div class="cal-cell empty"></div>
+            <div class="cal-cell empty"></div>
+            <div class="cal-cell empty"></div>
+            <div class="cal-cell empty"></div>
+            <div class="cal-cell empty"></div>
+            <div class="cal-cell low best"><span class="star">★</span><div class="cell-day">1</div><div class="cell-price">38€</div></div>
+            <div class="cal-cell med"><div class="cell-day">2</div><div class="cell-price">56€</div></div>
+            <div class="cal-cell low"><div class="cell-day">3</div><div class="cell-price">42€</div></div>
+            <div class="cal-cell low"><div class="cell-day">4</div><div class="cell-price">40€</div></div>
+            <div class="cal-cell med"><div class="cell-day">5</div><div class="cell-price">58€</div></div>
+            <div class="cal-cell high"><div class="cell-day">6</div><div class="cell-price">78€</div></div>
+            <div class="cal-cell high"><div class="cell-day">7</div><div class="cell-price">82€</div></div>
+            <div class="cal-cell med"><div class="cell-day">8</div><div class="cell-price">55€</div></div>
+            <div class="cal-cell low"><div class="cell-day">9</div><div class="cell-price">44€</div></div>
+            <div class="cal-cell low"><div class="cell-day">10</div><div class="cell-price">43€</div></div>
+            <div class="cal-cell med"><div class="cell-day">11</div><div class="cell-price">52€</div></div>
+            <div class="cal-cell med"><div class="cell-day">12</div><div class="cell-price">60€</div></div>
+            <div class="cal-cell high"><div class="cell-day">13</div><div class="cell-price">75€</div></div>
+            <div class="cal-cell high"><div class="cell-day">14</div><div class="cell-price">80€</div></div>
+            <div class="cal-cell low"><div class="cell-day">15</div><div class="cell-price">46€</div></div>
+            <div class="cal-cell low"><div class="cell-day">16</div><div class="cell-price">45€</div></div>
+            <div class="cal-cell med"><div class="cell-day">17</div><div class="cell-price">53€</div></div>
+            <div class="cal-cell med"><div class="cell-day">18</div><div class="cell-price">57€</div></div>
+            <div class="cal-cell high"><div class="cell-day">19</div><div class="cell-price">74€</div></div>
+            <div class="cal-cell high"><div class="cell-day">20</div><div class="cell-price">79€</div></div>
+            <div class="cal-cell med"><div class="cell-day">21</div><div class="cell-price">61€</div></div>
+            <div class="cal-cell none"><div class="cell-day dim">22</div><div class="cell-na">—</div></div>
+            <div class="cal-cell low"><div class="cell-day">23</div><div class="cell-price">48€</div></div>
+            <div class="cal-cell med"><div class="cell-day">24</div><div class="cell-price">54€</div></div>
+            <div class="cal-cell high"><div class="cell-day">25</div><div class="cell-price">71€</div></div>
+            <div class="cal-cell high"><div class="cell-day">26</div><div class="cell-price">76€</div></div>
+            <div class="cal-cell med"><div class="cell-day">27</div><div class="cell-price">59€</div></div>
+            <div class="cal-cell low"><div class="cell-day">28</div><div class="cell-price">47€</div></div>
+            <div class="cal-cell low"><div class="cell-day">29</div><div class="cell-price">45€</div></div>
+            <div class="cal-cell med"><div class="cell-day">30</div><div class="cell-price">56€</div></div>
+            <div class="cal-cell high"><div class="cell-day">31</div><div class="cell-price">72€</div></div>
+          </div>
+
+          <div class="legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#065F46"></div><div class="legend-txt">Bon prix</div></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#92400E"></div><div class="legend-txt">Moyen</div></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#7F1D1D"></div><div class="legend-txt">Élevé</div></div>
+            <div class="legend-item"><span style="font-size:11px;color:#FFD700">★</span><div class="legend-txt">Moins cher</div></div>
+          </div>
+
+          <div class="tip-card">
+            <div class="tip-title">💡 Meilleur jour ce mois</div>
+            <div class="tip-body">Le 1er août à partir de <span style="color:#10B981;font-weight:800">38€</span> avec Vueling</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN 6: INSPIRE ME ══ -->
+  <div class="phone-wrap">
+    <div class="screen-label">6 · Inspire-moi</div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="screen-content">
+        <div class="inspire-screen">
+
+          <div class="inspire-header">
+            <div class="back-btn">←</div>
+            <div class="inspire-title">✨ Inspirez-moi</div>
+          </div>
+
+          <div class="origin-row">
+            <div class="origin-chip active">
+              <div class="o-flag">🏙</div>
+              <div class="o-city">Madrid</div>
+            </div>
+            <div class="origin-chip">
+              <div class="o-flag">🏖</div>
+              <div class="o-city">Barcelone</div>
+            </div>
+            <div class="origin-chip">
+              <div class="o-flag">🌅</div>
+              <div class="o-city">Valence</div>
+            </div>
+            <div class="origin-chip">
+              <div class="o-flag">☀️</div>
+              <div class="o-city">Málaga</div>
+            </div>
+            <div class="origin-chip">
+              <div class="o-flag">💃</div>
+              <div class="o-city">Séville</div>
+            </div>
+          </div>
+
+          <div class="inspire-sub">
+            Depuis <span style="color:#60A5FA;font-weight:700">Madrid</span>, où partir au meilleur prix ?
+          </div>
+
+          <div class="dest-list">
+
+            <div class="dest-card first">
+              <div class="dest-rank">🥇</div>
+              <div class="dest-emoji-box">🕌</div>
+              <div class="dest-info">
+                <div class="dest-city">Casablanca</div>
+                <div class="dest-country">Maroc</div>
+                <div class="dest-vibe">Culture & histoire</div>
+              </div>
+              <div class="dest-price-col">
+                <div class="price-from">dès</div>
+                <div class="price-amt">42€</div>
+                <div class="price-dur">2h25</div>
+              </div>
+            </div>
+
+            <div class="dest-card">
+              <div class="dest-rank">🥈</div>
+              <div class="dest-emoji-box">⛵</div>
+              <div class="dest-info">
+                <div class="dest-city">Tanger</div>
+                <div class="dest-country">Maroc</div>
+                <div class="dest-vibe">Côte atlantique</div>
+              </div>
+              <div class="dest-price-col">
+                <div class="price-from">dès</div>
+                <div class="price-amt">35€</div>
+                <div class="price-dur">2h10</div>
+              </div>
+            </div>
+
+            <div class="dest-card">
+              <div class="dest-rank">🥉</div>
+              <div class="dest-emoji-box">🏮</div>
+              <div class="dest-info">
+                <div class="dest-city">Marrakech</div>
+                <div class="dest-country">Maroc</div>
+                <div class="dest-vibe">Marchés & medina</div>
+              </div>
+              <div class="dest-price-col">
+                <div class="price-from">dès</div>
+                <div class="price-amt">45€</div>
+                <div class="price-dur">2h28</div>
+              </div>
+            </div>
+
+            <div class="dest-card">
+              <div class="dest-rank" style="font-size:13px;color:#4A5878">#4</div>
+              <div class="dest-emoji-box">🌆</div>
+              <div class="dest-info">
+                <div class="dest-city">Alger</div>
+                <div class="dest-country">Algérie</div>
+                <div class="dest-vibe">Casbah & mer</div>
+              </div>
+              <div class="dest-price-col">
+                <div class="price-from">dès</div>
+                <div class="price-amt">55€</div>
+                <div class="price-dur">2h42</div>
+              </div>
+            </div>
+
+            <div class="dest-card">
+              <div class="dest-rank" style="font-size:13px;color:#4A5878">#5</div>
+              <div class="dest-emoji-box">🏺</div>
+              <div class="dest-info">
+                <div class="dest-city">Tunis</div>
+                <div class="dest-country">Tunisie</div>
+                <div class="dest-vibe">Carthage & mer</div>
+              </div>
+              <div class="dest-price-col">
+                <div class="price-from">dès</div>
+                <div class="price-amt">62€</div>
+                <div class="price-dur">2h58</div>
+              </div>
+            </div>
+
+            <div class="dest-card">
+              <div class="dest-rank" style="font-size:13px;color:#4A5878">#6</div>
+              <div class="dest-emoji-box">🏛</div>
+              <div class="dest-info">
+                <div class="dest-city">Fès</div>
+                <div class="dest-country">Maroc</div>
+                <div class="dest-vibe">Cité impériale</div>
+              </div>
+              <div class="dest-price-col">
+                <div class="price-from">dès</div>
+                <div class="price-amt">45€</div>
+                <div class="price-dur">2h20</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /screens -->
+
+<!-- ── REVENUE SECTION ── -->
+<div class="revenue-section">
+  <h2>💰 Modèle de revenus — Comment tu gagnes</h2>
+  <div class="rev-sub">Pas de paiement direct. 100% affiliation CPC/CPA via compagnies européennes.</div>
+  <div class="rev-grid">
+    <div class="rev-card">
+      <div class="rev-icon">✈</div>
+      <div class="rev-title">Travelpayouts</div>
+      <div class="rev-body">Ryanair, Vueling, Iberia, Transavia, Air France, KLM, Lufthansa…<br>URL générée automatiquement avec ton marker ID.</div>
+      <div class="rev-amount">1–3% CPA · +CPC</div>
+    </div>
+    <div class="rev-card">
+      <div class="rev-icon">⛴</div>
+      <div class="rev-title">Directferries</div>
+      <div class="rev-body">Balearia, FRS, Acciona, Grimaldi, GNV…<br>Programme d'affiliation ferry dédié Espagne↔Maghreb.</div>
+      <div class="rev-amount">2–4€ / réservation</div>
+    </div>
+    <div class="rev-card">
+      <div class="rev-icon">📱</div>
+      <div class="rev-title">AdMob (Google)</div>
+      <div class="rev-body">Publicités display et interstitielles dans l'app. Revenue passif sur tous les utilisateurs.</div>
+      <div class="rev-amount">0.5–2€ / 1000 vues</div>
+    </div>
+    <div class="rev-card">
+      <div class="rev-icon">🗺</div>
+      <div class="rev-title">Booking.com Hotels</div>
+      <div class="rev-body">Après réservation du vol/ferry → proposer un hôtel à destination. 4% commission.</div>
+      <div class="rev-amount">4% CPA hôtel</div>
+    </div>
+    <div class="rev-card">
+      <div class="rev-icon">🎯</div>
+      <div class="rev-title">Kiwi.com Partner</div>
+      <div class="rev-body">Combinaisons de vols low-cost multi-compagnies (ex: Ryanair + Vueling). CPA plus élevé.</div>
+      <div class="rev-amount">3–5% CPA</div>
+    </div>
+    <div class="rev-card">
+      <div class="rev-icon">📊</div>
+      <div class="rev-title">Projection mois 1</div>
+      <div class="rev-body">2 000 utilisateurs × 3 clics/user × 1.5€ CPC moyen = estimation prudente premier mois Espagne.</div>
+      <div class="rev-amount">~9 000€ / mois</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
