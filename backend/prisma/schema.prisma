@@ -364,3 +364,140 @@ model BackHomeRide {
   createdAt   DateTime @default(now())
   driver      User     @relation(fields: [driverId], references: [id])
 }
+
+// ─── HOTEL MODULE ───────────────────────────────────────────────────────────
+
+enum HotelCategory {
+  HOTEL
+  RESORT
+  APARTMENT
+  HOSTEL
+  VILLA
+}
+
+enum RoomType {
+  SINGLE
+  DOUBLE
+  TWIN
+  SUITE
+  DELUXE
+  FAMILY
+}
+
+enum PriceSource {
+  BOOKING
+  EXPEDIA
+  HOTELS_COM
+  AIRBNB
+  DIRECT
+}
+
+enum TravelType {
+  SOLO
+  COUPLE
+  FAMILY
+  BUSINESS
+}
+
+model Hotel {
+  id          String        @id @default(cuid())
+  name        String
+  slug        String        @unique
+  description String
+  address     String
+  city        String
+  country     String        @default("Tunisie")
+  lat         Float
+  lng         Float
+  stars       Int
+  category    HotelCategory @default(HOTEL)
+  mainImage   String
+  images      String[]
+  amenities   String[]
+  rating      Float         @default(0)
+  reviewCount Int           @default(0)
+  isActive    Boolean       @default(true)
+  isFeatured  Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+
+  rooms         HotelRoom[]
+  priceOffers   HotelPriceOffer[]
+  reviews       HotelReview[]
+  favorites     HotelFavorite[]
+}
+
+model HotelRoom {
+  id          String     @id @default(cuid())
+  hotelId     String
+  hotel       Hotel      @relation(fields: [hotelId], references: [id])
+  name        String
+  type        RoomType
+  maxGuests   Int
+  beds        Int
+  bathrooms   Int        @default(1)
+  size        Float?
+  amenities   String[]
+  images      String[]
+  isAvailable Boolean    @default(true)
+
+  priceOffers HotelPriceOffer[]
+}
+
+model HotelPriceOffer {
+  id                 String      @id @default(cuid())
+  hotelId            String
+  hotel              Hotel       @relation(fields: [hotelId], references: [id])
+  roomId             String?
+  room               HotelRoom?  @relation(fields: [roomId], references: [id])
+  sourceProvider     PriceSource
+  originalPrice      Decimal
+  discountedPrice    Decimal
+  currency           String      @default("TND")
+  checkIn            DateTime
+  checkOut           DateTime
+  guestsCount        Int
+  availability       Int         @default(10)
+  dealLabel          String?
+  isFreeCancellation Boolean     @default(false)
+  includesBreakfast  Boolean     @default(false)
+  deepLink           String?
+  lastUpdatedAt      DateTime    @default(now())
+}
+
+model HotelReview {
+  id          String     @id @default(cuid())
+  hotelId     String
+  hotel       Hotel      @relation(fields: [hotelId], references: [id])
+  userId      String?
+  authorName  String
+  rating      Float
+  title       String?
+  comment     String
+  travelType  TravelType @default(COUPLE)
+  pros        String[]
+  cons        String[]
+  stayDate    DateTime?
+  createdAt   DateTime   @default(now())
+}
+
+model HotelFavorite {
+  id        String   @id @default(cuid())
+  userId    String
+  hotelId   String
+  hotel     Hotel    @relation(fields: [hotelId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, hotelId])
+}
+
+model HotelSearchLog {
+  id           String   @id @default(cuid())
+  userId       String?
+  destination  String
+  checkIn      DateTime?
+  checkOut     DateTime?
+  guestsCount  Int?
+  filters      Json?
+  resultsCount Int      @default(0)
+  createdAt    DateTime @default(now())
+}
