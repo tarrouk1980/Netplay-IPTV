@@ -297,13 +297,51 @@ export default function EasyFlightHomeScreen({ navigation }) {
           ))}
         </ScrollView>
 
-        {/* My Bookings shortcut */}
-        <TouchableOpacity
-          style={styles.myBookingsBtn}
-          onPress={() => navigation.navigate('FlightBookings')}
-        >
-          <Text style={styles.myBookingsText}>📋  Mes réservations EasyFlight</Text>
-        </TouchableOpacity>
+        {/* Feature shortcuts */}
+        <Text style={styles.sectionTitle}>Outils</Text>
+        <View style={styles.toolsGrid}>
+          <TouchableOpacity
+            style={styles.toolCard}
+            onPress={() => navigation.navigate('FlightInspire')}
+          >
+            <Text style={styles.toolIcon}>🌍</Text>
+            <Text style={styles.toolTitle}>Inspire-moi</Text>
+            <Text style={styles.toolSub}>Où partir avec mon budget ?</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.toolCard}
+            onPress={() => {
+              if (!origin || !dest) {
+                setError('Choisissez d\'abord un départ et une destination.');
+                return;
+              }
+              navigation.navigate('FlightPriceCalendar', { origin, dest, passengers });
+            }}
+          >
+            <Text style={styles.toolIcon}>📅</Text>
+            <Text style={styles.toolTitle}>Calendrier prix</Text>
+            <Text style={styles.toolSub}>Jour le moins cher</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.toolCard}
+            onPress={() => navigation.navigate('FlightAlerts')}
+          >
+            <Text style={styles.toolIcon}>🔔</Text>
+            <Text style={styles.toolTitle}>Mes alertes</Text>
+            <Text style={styles.toolSub}>Notifié quand ça baisse</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.toolCard}
+            onPress={() => navigation.navigate('FlightBookings')}
+          >
+            <Text style={styles.toolIcon}>📋</Text>
+            <Text style={styles.toolTitle}>Réservations</Text>
+            <Text style={styles.toolSub}>Historique vols</Text>
+          </TouchableOpacity>
+        </View>
 
       </ScrollView>
 
@@ -450,10 +488,14 @@ const styles = StyleSheet.create({
   destFlag: { fontSize: 28, marginBottom: 6 },
   destCity: { color: COLORS.text, fontWeight: '700', fontSize: 13 },
   destPrice: { color: COLORS.accent, fontSize: 11, marginTop: 2 },
-  myBookingsBtn: {
-    backgroundColor: COLORS.surface, borderRadius: 12, padding: 16, alignItems: 'center',
+  toolsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 24 },
+  toolCard: {
+    backgroundColor: COLORS.surface, borderRadius: 14, padding: 14,
+    width: '47.5%', borderWidth: 1, borderColor: COLORS.border,
   },
-  myBookingsText: { color: COLORS.accent, fontWeight: '600', fontSize: 14 },
+  toolIcon: { fontSize: 28, marginBottom: 8 },
+  toolTitle: { color: COLORS.text, fontSize: 14, fontWeight: '700', marginBottom: 2 },
+  toolSub: { color: COLORS.muted, fontSize: 11 },
   // Modal
   modal: { flex: 1, backgroundColor: COLORS.bg },
   modalHeader: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12 },

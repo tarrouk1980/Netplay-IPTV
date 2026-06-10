@@ -44,14 +44,21 @@ export default function FlightDetailScreen({ navigation, route }) {
   const stops = flight.stops === 0 ? 'Direct' : `${flight.stops} escale${flight.stops > 1 ? 's' : ''}`;
 
   const handleBook = () => {
-    navigation.navigate('FlightBooking', {
-      flight,
-      search,
-      tripType,
-      origin,
-      dest,
-      inboundFlights,
-    });
+    navigation.navigate('FlightBooking', { flight, search, tripType, origin, dest, inboundFlights });
+  };
+
+  const handleSetAlert = () => {
+    navigation.navigate('FlightAlerts');
+    // Inline: create alert via API then go to alerts list
+    const api = require('../../services/api').default;
+    api.post('/api/flights/alerts', {
+      origin: flight.origin.code,
+      dest: flight.destination.code,
+      date: flight.departure.date,
+      passengers: search?.passengers || 1,
+      targetPrice: Math.round(flight.price.total * 0.9 * 10) / 10,
+      currency: flight.price.currency,
+    }).catch(() => {});
   };
 
   return (
@@ -184,10 +191,13 @@ export default function FlightDetailScreen({ navigation, route }) {
       <View style={styles.cta}>
         <View style={styles.ctaPrice}>
           <Text style={styles.ctaTotalLabel}>Total</Text>
-          <Text style={styles.ctaTotal}>{flight.price.total.toFixed(2)} TND</Text>
+          <Text style={styles.ctaTotal}>{flight.price.total.toFixed(2)} {flight.price.currency || 'TND'}</Text>
         </View>
+        <TouchableOpacity style={styles.ctaAlertBtn} onPress={handleSetAlert}>
+          <Text style={styles.ctaAlertText}>🔔</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.ctaBtn} onPress={handleBook}>
-          <Text style={styles.ctaBtnText}>Réserver ce vol</Text>
+          <Text style={styles.ctaBtnText}>Réserver</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -254,6 +264,12 @@ const styles = StyleSheet.create({
   ctaPrice: { flex: 1 },
   ctaTotalLabel: { color: COLORS.muted, fontSize: 12 },
   ctaTotal: { color: COLORS.accent, fontSize: 22, fontWeight: '900' },
+  ctaAlertBtn: {
+    backgroundColor: COLORS.surface, borderRadius: 14, width: 48, height: 48,
+    alignItems: 'center', justifyContent: 'center', marginRight: 8,
+    borderWidth: 1, borderColor: COLORS.border,
+  },
+  ctaAlertText: { fontSize: 20 },
   ctaBtn: {
     backgroundColor: COLORS.primary, borderRadius: 14, paddingHorizontal: 24,
     paddingVertical: 14,

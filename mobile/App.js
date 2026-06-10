@@ -395,6 +395,9 @@ import FlightDetailScreen from './screens/flight/FlightDetailScreen';
 import FlightBookingScreen from './screens/flight/FlightBookingScreen';
 import FlightConfirmScreen from './screens/flight/FlightConfirmScreen';
 import FlightBookingsScreen from './screens/flight/FlightBookingsScreen';
+import FlightPriceCalendarScreen from './screens/flight/FlightPriceCalendarScreen';
+import FlightInspireScreen from './screens/flight/FlightInspireScreen';
+import FlightAlertsScreen from './screens/flight/FlightAlertsScreen';
 
 // Batch 55
 import TaxiMapScreen from './screens/taxi/TaxiMapScreen';
@@ -943,6 +946,9 @@ function MainStack() {
       <Stack.Screen name="FlightBooking" component={FlightBookingScreen} options={{ headerShown: false }} />
       <Stack.Screen name="FlightConfirm" component={FlightConfirmScreen} options={{ headerShown: false, gestureEnabled: false }} />
       <Stack.Screen name="FlightBookings" component={FlightBookingsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="FlightPriceCalendar" component={FlightPriceCalendarScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="FlightInspire" component={FlightInspireScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="FlightAlerts" component={FlightAlertsScreen} options={{ headerShown: false }} />
 
       {/* Chat */}
       <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />

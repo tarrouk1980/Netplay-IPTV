@@ -144,6 +144,12 @@ export default function FlightResultsScreen({ navigation, route }) {
             {tripType === 'ROUND_TRIP' ? ` · A/R ${search?.returnDate}` : ' · Aller simple'}
           </Text>
         </View>
+        <TouchableOpacity
+          style={styles.calendarBtn}
+          onPress={() => navigation.navigate('FlightPriceCalendar', { origin, dest, passengers: search?.passengers || 1 })}
+        >
+          <Text style={styles.calendarBtnText}>📅</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Filters */}
@@ -206,9 +212,14 @@ const styles = StyleSheet.create({
   },
   backBtn: { padding: 4, marginRight: 12 },
   backIcon: { color: COLORS.accent, fontSize: 22 },
-  headerInfo: {},
+  headerInfo: { flex: 1 },
   headerRoute: { color: COLORS.text, fontSize: 17, fontWeight: '800' },
   headerSub: { color: COLORS.muted, fontSize: 12, marginTop: 2 },
+  calendarBtn: {
+    backgroundColor: COLORS.surface, borderRadius: 10, padding: 8,
+    borderWidth: 1, borderColor: COLORS.border,
+  },
+  calendarBtnText: { fontSize: 18 },
   filters: {
     paddingHorizontal: 12, paddingVertical: 10,
     borderBottomWidth: 1, borderBottomColor: COLORS.border,

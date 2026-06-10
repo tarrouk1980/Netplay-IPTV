@@ -108,6 +108,7 @@ model User {
   reportsReceived     Report[]         @relation("ReportedReports")
   backHomeRides       BackHomeRide[]
   flightBookings      FlightBooking[]
+  flightAlerts        FlightAlert[]
 }
 
 enum RewardType {
@@ -387,4 +388,20 @@ model FlightBooking {
   status         String   @default("CONFIRMED") // CONFIRMED | CANCELLED
   createdAt      DateTime @default(now())
   user           User     @relation(fields: [userId], references: [id])
+}
+
+model FlightAlert {
+  id           String   @id @default(cuid())
+  userId       String
+  origin       String
+  dest         String
+  date         String
+  passengers   Int      @default(1)
+  targetPrice  Float
+  currency     String   @default("TND")
+  lastPrice    Float?
+  active       Boolean  @default(true)
+  triggeredAt  DateTime?
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id])
 }
