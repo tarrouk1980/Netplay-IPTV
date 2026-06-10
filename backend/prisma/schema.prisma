@@ -107,6 +107,7 @@ model User {
   reportsGiven        Report[]         @relation("ReporterReports")
   reportsReceived     Report[]         @relation("ReportedReports")
   backHomeRides       BackHomeRide[]
+  flightBookings      FlightBooking[]
 }
 
 enum RewardType {
@@ -363,4 +364,27 @@ model BackHomeRide {
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
   driver      User     @relation(fields: [driverId], references: [id])
+}
+
+model FlightBooking {
+  id             String   @id @default(cuid())
+  userId         String
+  bookingRef     String   @unique
+  flightId       String
+  flightNumber   String
+  origin         String
+  dest           String
+  departureDate  DateTime
+  departureTime  String
+  arrivalTime    String
+  airline        String
+  pricePerPax    Float
+  totalPrice     Float
+  passengers     String   // JSON array
+  contactEmail   String
+  contactPhone   String
+  tripType       String   @default("ONE_WAY")
+  status         String   @default("CONFIRMED") // CONFIRMED | CANCELLED
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id])
 }

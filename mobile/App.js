@@ -388,6 +388,14 @@ import ClientOrdersAllScreen from './screens/profile/ClientOrdersAllScreen';
 import AdminCouponListScreen from './screens/admin/AdminCouponListScreen';
 import DeliveryRatingScreen from './screens/delivery/DeliveryRatingScreen';
 
+// EasyFlight
+import EasyFlightHomeScreen from './screens/flight/EasyFlightHomeScreen';
+import FlightResultsScreen from './screens/flight/FlightResultsScreen';
+import FlightDetailScreen from './screens/flight/FlightDetailScreen';
+import FlightBookingScreen from './screens/flight/FlightBookingScreen';
+import FlightConfirmScreen from './screens/flight/FlightConfirmScreen';
+import FlightBookingsScreen from './screens/flight/FlightBookingsScreen';
+
 // Batch 55
 import TaxiMapScreen from './screens/taxi/TaxiMapScreen';
 
@@ -684,6 +692,8 @@ const linking = {
       DeliveryTracking: 'tracking/delivery/:orderId',
       BuyPass: 'subscription',
       Chat: 'chat/:orderId',
+      EasyFlightHome: 'flight',
+      FlightBookings: 'flight/bookings',
     },
   },
 };
@@ -925,6 +935,14 @@ function MainStack() {
       <Stack.Screen name="TaxiScheduleAdvanced" component={TaxiScheduleAdvancedScreen} options={{ headerShown: false }} />
       <Stack.Screen name="LivreurLiveMap" component={LivreurLiveMapScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminAppSettings" component={AdminAppSettingsScreen} options={{ headerShown: false }} />
+
+      {/* EasyFlight */}
+      <Stack.Screen name="EasyFlightHome" component={EasyFlightHomeScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="FlightResults" component={FlightResultsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="FlightDetail" component={FlightDetailScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="FlightBooking" component={FlightBookingScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="FlightConfirm" component={FlightConfirmScreen} options={{ headerShown: false, gestureEnabled: false }} />
+      <Stack.Screen name="FlightBookings" component={FlightBookingsScreen} options={{ headerShown: false }} />
 
       {/* Chat */}
       <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />

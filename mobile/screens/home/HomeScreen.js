@@ -41,6 +41,7 @@ const SERVICES = [
   { key: 'BACKHOME', iconService: 'BACKHOME', title: 'Back Home', subtitle: 'Covoiturage retour', color: '#F5A623' },
   { key: 'EASYCAR', iconService: 'EASYCAR', title: 'EasyCar', subtitle: 'Location véhicule', color: '#1565C0' },
   { key: 'EASYPACKAGE', iconService: 'EASYPACKAGE', title: 'EasyPackage', subtitle: 'Envoyer un colis', color: '#6D4C41' },
+  { key: 'EASYFLIGHT', iconService: 'EASYFLIGHT', title: 'EasyFlight', subtitle: 'Comparer les vols', color: '#1565C0' },
 ];
 
 // Offres du moment — fallback si API indisponible
@@ -172,6 +173,7 @@ export default function HomeScreen({ navigation }) {
     else if (serviceKey === 'BACKHOME') navigation.navigate('BackHomeRide');
     else if (serviceKey === 'EASYCAR') navigation.navigate('EasyCar');
     else if (serviceKey === 'EASYPACKAGE') navigation.navigate('EasyPackage');
+    else if (serviceKey === 'EASYFLIGHT') navigation.navigate('EasyFlightHome');
   };
 
   return (
