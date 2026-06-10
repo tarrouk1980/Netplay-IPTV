@@ -9,6 +9,9 @@ const {
   addReview, toggleFavorite, getUserFavorites,
   getFlashDeals, getPriceCalendar, getSimilarHotels, getTrendingHotels, getLastMinuteDeals,
 } = require('../services/hotelService');
+const cacheService = require('../services/cacheService');
+const analyticsService = require('../services/analyticsService');
+const rateLimiter = require('../middleware/rateLimiter');
 
 // Soft auth middleware (doesn't block if no token)
 function softAuth(req, res, next) {
@@ -35,23 +38,43 @@ router.get('/destinations', (req, res) => {
 });
 
 // GET /api/hotels/featured
-router.get('/featured', (req, res) => {
-  const featured = MOCK_HOTELS.filter(h => h.isFeatured && h.isActive).slice(0, 6);
-  const withPrices = featured.map(hotel => {
-    const checkIn = new Date().toISOString().split('T')[0];
-    const checkOut = new Date(Date.now() + 86400000).toISOString().split('T')[0];
-    const prices = generateMockPrices(hotel, checkIn, checkOut, 2);
-    return { ...hotel, bestOffer: prices[0] };
-  });
-  res.json({ success: true, data: withPrices });
+router.get('/featured', async (req, res) => {
+  try {
+    const cacheKey = 'featured:hotels';
+    const cached = await cacheService.get(cacheKey);
+    if (cached) return res.json({ success: true, data: cached, fromCache: true });
+
+    const featured = MOCK_HOTELS.filter(h => h.isFeatured && h.isActive).slice(0, 6);
+    const withPrices = featured.map(hotel => {
+      const checkIn = new Date().toISOString().split('T')[0];
+      const checkOut = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+      const prices = generateMockPrices(hotel, checkIn, checkOut, 2);
+      return { ...hotel, bestOffer: prices[0] };
+    });
+    await cacheService.set(cacheKey, withPrices, 1800); // 30 min TTL
+    res.json({ success: true, data: withPrices });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 // GET /api/hotels/search
-router.get('/search', (req, res) => {
+router.get('/search', rateLimiter(60, 60000), async (req, res) => {
   try {
     const { destination, checkIn, checkOut, guests, minPrice, maxPrice, stars, category, amenities, sortBy, page = 1, limit = 10,
       isAlcoholFree, isBurkiniAccepted, isHalalCertified, hasRamadanServices, hasPrayerRoom,
       hasSeparatePool, isFamilyConservative, isMedicalTourism, isHoneymoonPackage, hasAirportShuttle, isBeachfront, country } = req.query;
+
+    // Track search analytics
+    analyticsService.trackSearch({ destination, checkIn, checkOut, guests, stars, category, country, userAgent: req.headers['user-agent'] });
+
+    const searchParams = { destination, checkIn, checkOut, guests, minPrice, maxPrice, stars, category, amenities, sortBy, page, limit,
+      isAlcoholFree, isBurkiniAccepted, isHalalCertified, hasRamadanServices, hasPrayerRoom,
+      hasSeparatePool, isFamilyConservative, isMedicalTourism, isHoneymoonPackage, hasAirportShuttle, isBeachfront, country };
+    const cacheKey = `search:${JSON.stringify(searchParams)}`;
+    const cached = await cacheService.get(cacheKey);
+    if (cached) return res.json({ ...cached, fromCache: true });
+
     const allResults = searchHotels({ destination, stars, category, minPrice, maxPrice, amenities, sortBy, guests: Number(guests) || 2, checkIn, checkOut,
       isAlcoholFree, isBurkiniAccepted, isHalalCertified, hasRamadanServices, hasPrayerRoom,
       hasSeparatePool, isFamilyConservative, isMedicalTourism, isHoneymoonPackage, hasAirportShuttle, isBeachfront, country });
@@ -59,11 +82,13 @@ router.get('/search', (req, res) => {
     const limitNum = parseInt(limit);
     const start = (pageNum - 1) * limitNum;
     const paginated = allResults.slice(start, start + limitNum);
-    res.json({
+    const response = {
       success: true,
       data: paginated,
-      meta: { total: allResults.length, page: pageNum, limit: limitNum, totalPages: Math.ceil(allResults.length / limitNum) }
-    });
+      meta: { total: allResults.length, page: pageNum, limit: limitNum, totalPages: Math.ceil(allResults.length / limitNum) },
+    };
+    await cacheService.set(cacheKey, response, 300); // 5 min TTL
+    res.json(response);
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -93,7 +118,11 @@ router.get('/autocomplete', (req, res) => {
 });
 
 // GET /api/hotels/:id
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
+  const cacheKey = `hotel:${req.params.id}`;
+  const cached = await cacheService.get(cacheKey);
+  if (cached) return res.json({ success: true, data: cached, fromCache: true });
+
   const hotel = getHotelById(req.params.id);
   if (!hotel) return res.status(404).json({ success: false, message: 'Hôtel non trouvé' });
   const rooms = getHotelRooms(hotel.id);
@@ -102,7 +131,9 @@ router.get('/:id', (req, res) => {
   const guests = Number(req.query.guests) || 2;
   const prices = generateMockPrices(hotel, checkIn, checkOut, guests);
   const reviews = MOCK_REVIEWS.map((r, i) => ({ ...r, hotelId: hotel.id }));
-  res.json({ success: true, data: { ...hotel, rooms, priceOffers: prices, reviews } });
+  const data = { ...hotel, rooms, priceOffers: prices, reviews };
+  await cacheService.set(cacheKey, data, 900); // 15 min TTL
+  res.json({ success: true, data });
 });
 
 // GET /api/hotels/:id/prices

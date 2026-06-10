@@ -3,6 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const cpcService = require('../services/cpcService');
+const analyticsService = require('../services/analyticsService');
 
 /**
  * POST /api/cpc/click
@@ -35,6 +36,9 @@ router.post('/click', (req, res) => {
       checkOut,
       guests,
     });
+
+    // Track in analytics service
+    analyticsService.trackClick({ hotelId, provider, sessionId, deviceType, hotelSlug, checkIn, checkOut, guests });
 
     return res.json({ success: true, ...result });
   } catch (err) {
