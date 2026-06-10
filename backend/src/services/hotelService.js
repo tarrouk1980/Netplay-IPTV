@@ -289,6 +289,136 @@ function getHotelRooms(hotelId) {
   ];
 }
 
+// ─── New functions ────────────────────────────────────────────────────────────
+
+function getFeaturedHotels() {
+  return MOCK_HOTELS.filter(h => h.isFeatured && h.isActive);
+}
+
+function getPopularDestinations() {
+  return POPULAR_DESTINATIONS;
+}
+
+function getHotelReviews(hotelId) {
+  return MOCK_REVIEWS.map(r => ({ ...r, hotelId }));
+}
+
+async function addReview(hotelId, reviewData) {
+  const review = { id: 'rev-' + Date.now(), hotelId, ...reviewData, createdAt: new Date().toISOString() };
+  return review;
+}
+
+async function toggleFavorite(userId, hotelId) {
+  return { userId, hotelId, isFavorite: true };
+}
+
+async function getUserFavorites(userId) {
+  return MOCK_HOTELS.filter(h => h.isFeatured).map(h => ({ ...h, userId }));
+}
+
+function getFlashDeals() {
+  const now = Date.now();
+  const deals = MOCK_HOTELS.slice(0, 12).map((hotel, idx) => {
+    const discountPct = 25 + Math.floor(Math.random() * 36); // 25–60%
+    const basePrice = getBasePrice(hotel);
+    const originalPrice = Math.round(basePrice * (1 + Math.random() * 0.3));
+    const newPrice = Math.round(originalPrice * (1 - discountPct / 100));
+    const hoursLeft = 2 + Math.floor(Math.random() * 22);
+    return {
+      id: 'flash-' + hotel.id,
+      hotelId: hotel.id,
+      hotelName: hotel.name,
+      image: hotel.mainImage,
+      stars: hotel.stars,
+      city: hotel.city,
+      country: hotel.country,
+      category: hotel.category,
+      originalPrice,
+      newPrice,
+      discountPct,
+      providerName: ['Booking.com', 'Expedia', 'Hotels.com', 'Direct'][idx % 4],
+      expiryTs: now + hoursLeft * 3600 * 1000,
+      hoursLeft,
+    };
+  });
+  return deals.sort((a, b) => b.discountPct - a.discountPct);
+}
+
+function getPriceCalendar(hotelId, month, year, guests) {
+  const hotel = getHotelById(hotelId);
+  const base = hotel ? getBasePrice(hotel) : 200;
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const result = [];
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dow = new Date(dateStr).getDay();
+    const isWeekend = dow === 0 || dow === 6;
+    const variation = 0.75 + Math.random() * 0.5;
+    const weekendMult = isWeekend ? 1.2 : 1;
+    const price = Math.round(base * variation * weekendMult * (guests / 2));
+    const avail = Math.random() > 0.1;
+    result.push({ date: dateStr, price: avail ? price : null, availability: avail });
+  }
+  return result;
+}
+
+function getSimilarHotels(hotelId, limit = 4) {
+  const hotel = getHotelById(hotelId);
+  if (!hotel) return [];
+  return MOCK_HOTELS
+    .filter(h => h.id !== hotelId && h.isActive && (h.city === hotel.city || h.stars === hotel.stars))
+    .slice(0, limit)
+    .map(h => {
+      const ci = new Date().toISOString().split('T')[0];
+      const co = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+      const prices = generateMockPrices(h, ci, co, 2);
+      return { ...h, bestOffer: prices[0], bestPrice: prices[0].discountedPrice };
+    });
+}
+
+function getTrendingHotels() {
+  const TREND_BADGES = ['🔥 Populaire', '⭐ Top noté', '💎 Luxe', '🏖 Plage', '🌟 Tendance', '🎯 Meilleur rapport'];
+  return MOCK_HOTELS
+    .filter(h => h.isActive)
+    .slice(0, 6)
+    .map((h, i) => {
+      const ci = new Date().toISOString().split('T')[0];
+      const co = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+      const prices = generateMockPrices(h, ci, co, 2);
+      return {
+        ...h,
+        bestOffer: prices[0],
+        bestPrice: prices[0].discountedPrice,
+        trendBadge: TREND_BADGES[i % TREND_BADGES.length],
+        viewsThisWeek: 150 + Math.floor(Math.random() * 500),
+      };
+    });
+}
+
+function getLastMinuteDeals() {
+  const now = Date.now();
+  return MOCK_HOTELS.slice(0, 6).map((hotel, i) => {
+    const discountPct = 15 + Math.floor(Math.random() * 25);
+    const baseP = getBasePrice(hotel);
+    const originalPrice = Math.round(baseP * 1.2);
+    const newPrice = Math.round(originalPrice * (1 - discountPct / 100));
+    const hoursLeft = 6 + Math.floor(Math.random() * 42);
+    return {
+      id: 'lm-' + hotel.id,
+      hotelId: hotel.id,
+      hotelName: hotel.name,
+      image: hotel.mainImage,
+      stars: hotel.stars,
+      city: hotel.city,
+      country: hotel.country,
+      originalPrice,
+      newPrice,
+      discountPct,
+      expiryTs: now + hoursLeft * 3600 * 1000,
+    };
+  });
+}
+
 module.exports = {
   MOCK_HOTELS,
   POPULAR_DESTINATIONS,
@@ -297,4 +427,15 @@ module.exports = {
   searchHotels,
   getHotelById,
   getHotelRooms,
+  getFeaturedHotels,
+  getPopularDestinations,
+  getHotelReviews,
+  addReview,
+  toggleFavorite,
+  getUserFavorites,
+  getFlashDeals,
+  getPriceCalendar,
+  getSimilarHotels,
+  getTrendingHotels,
+  getLastMinuteDeals,
 };

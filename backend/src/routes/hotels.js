@@ -7,6 +7,7 @@ const {
   generateMockPrices, searchHotels, getHotelById, getHotelRooms,
   getFeaturedHotels, getPopularDestinations, getHotelReviews,
   addReview, toggleFavorite, getUserFavorites,
+  getFlashDeals, getPriceCalendar, getSimilarHotels, getTrendingHotels, getLastMinuteDeals,
 } = require('../services/hotelService');
 
 // Soft auth middleware (doesn't block if no token)
@@ -161,6 +162,64 @@ router.get('/favorites', softAuth, requireAuth, async (req, res) => {
 router.get('/popular-destinations', async (req, res) => {
   const destinations = await getPopularDestinations();
   res.json({ success: true, data: destinations });
+});
+
+// GET /api/hotels/flash-deals
+router.get('/flash-deals', (req, res) => {
+  try {
+    const deals = getFlashDeals();
+    res.json({ success: true, data: deals });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// GET /api/hotels/trending
+router.get('/trending', (req, res) => {
+  try {
+    const hotels = getTrendingHotels();
+    res.json({ success: true, data: hotels });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// GET /api/hotels/last-minute
+router.get('/last-minute', (req, res) => {
+  try {
+    const deals = getLastMinuteDeals();
+    res.json({ success: true, data: deals });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// GET /api/hotels/:id/calendar
+router.get('/:id/calendar', (req, res) => {
+  const hotel = getHotelById(req.params.id);
+  if (!hotel) return res.status(404).json({ success: false, message: 'Hôtel non trouvé' });
+  const { month, year, guests = 2 } = req.query;
+  const m = parseInt(month) || (new Date().getMonth() + 1);
+  const y = parseInt(year) || new Date().getFullYear();
+  try {
+    const cal = getPriceCalendar(hotel.id, m, y, Number(guests));
+    res.json({ success: true, data: cal });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// GET /api/hotels/:id/similar
+router.get('/:id/similar', (req, res) => {
+  const hotel = getHotelById(req.params.id);
+  if (!hotel) return res.status(404).json({ success: false, message: 'Hôtel non trouvé' });
+  const limit = parseInt(req.query.limit) || 4;
+  try {
+    const similar = getSimilarHotels(hotel.id, limit);
+    res.json({ success: true, data: similar });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 module.exports = router;

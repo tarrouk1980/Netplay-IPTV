@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView, Image,
-  StyleSheet, StatusBar, Platform, FlatList, Dimensions,
+  StyleSheet, StatusBar, Platform, FlatList, Dimensions, Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,6 +9,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import hotelAPI from '../../services/hotelService';
 
 const { width } = Dimensions.get('window');
+
+const QUICK_FILTERS = [
+  { key: 'all', label: 'Tous' },
+  { key: 'Tunisie', label: 'Tunisie' },
+  { key: 'France', label: 'France' },
+  { key: 'Dubai', label: 'Dubai' },
+  { key: '5stars', label: '5★' },
+  { key: 'Resort', label: 'Resort' },
+];
 
 const DESTINATIONS = [
   { city: 'Tunis', country: 'Tunisie', image: 'https://picsum.photos/400/300?random=50' },
@@ -27,11 +36,23 @@ export default function HotelSearchScreen({ navigation }) {
   const [checkOut, setCheckOut] = useState('');
   const [guests, setGuests] = useState(2);
   const [featured, setFeatured] = useState([]);
+  const [flashDeals, setFlashDeals] = useState([]);
+  const [trending, setTrending] = useState([]);
+  const [quickFilter, setQuickFilter] = useState('all');
   const [guestModalVisible, setGuestModalVisible] = useState(false);
   const suggestTimeout = useRef(null);
+  const flashPulse = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     loadFeatured();
+    loadFlashDeals();
+    loadTrending();
+    const loop = Animated.loop(Animated.sequence([
+      Animated.timing(flashPulse, { toValue: 1.06, duration: 700, useNativeDriver: true }),
+      Animated.timing(flashPulse, { toValue: 1, duration: 700, useNativeDriver: true }),
+    ]));
+    loop.start();
+    return () => loop.stop();
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -54,6 +75,31 @@ export default function HotelSearchScreen({ navigation }) {
       const res = await hotelAPI.getFeatured();
       setFeatured(res.data?.data || []);
     } catch {}
+  }
+
+  async function loadFlashDeals() {
+    try {
+      const res = await hotelAPI.getFlashDeals();
+      setFlashDeals((res.data?.data || []).slice(0, 4));
+    } catch {}
+  }
+
+  async function loadTrending() {
+    try {
+      const res = await hotelAPI.getTrending();
+      setTrending(res.data?.data || []);
+    } catch {}
+  }
+
+  function handleQuickFilter(key) {
+    setQuickFilter(key);
+    let dest = '';
+    if (key === 'Tunisie') dest = 'Tunis';
+    else if (key === 'France') dest = 'Paris';
+    else if (key === 'Dubai') dest = 'Dubai';
+    if (dest) navigation.navigate('HotelResults', { destination: dest, checkIn, checkOut, guests });
+    else if (key === '5stars') navigation.navigate('HotelResults', { destination: '', checkIn, checkOut, guests, stars: '5' });
+    else if (key === 'Resort') navigation.navigate('HotelResults', { destination: '', checkIn, checkOut, guests, category: 'RESORT' });
   }
 
   function onDestinationChange(text) {
@@ -287,6 +333,107 @@ export default function HotelSearchScreen({ navigation }) {
           </View>
         )}
 
+        {/* Quick Filters */}
+        <View style={styles.section}>
+          <FlatList
+            horizontal
+            data={QUICK_FILTERS}
+            keyExtractor={f => f.key}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[styles.qfChip, quickFilter === item.key && styles.qfChipActive]}
+                onPress={() => handleQuickFilter(item.key)}
+              >
+                <Text style={[styles.qfChipText, quickFilter === item.key && styles.qfChipTextActive]}>{item.label}</Text>
+              </TouchableOpacity>
+            )}
+          />
+        </View>
+
+        {/* Flash Deals section */}
+        {flashDeals.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Animated.Text style={[styles.sectionTitle, { transform: [{ scale: flashPulse }] }]}>⚡ Offres Flash</Animated.Text>
+              <TouchableOpacity onPress={() => navigation.navigate('FlashDeals')}>
+                <Text style={styles.seeAll}>Voir toutes</Text>
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              horizontal
+              data={flashDeals}
+              keyExtractor={d => d.id}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
+              renderItem={({ item }) => (
+                <TouchableOpacity style={styles.flashCard} onPress={() => navigation.navigate('HotelDetail', { hotelId: item.hotelId })}>
+                  <Image source={{ uri: item.image }} style={styles.flashImage} resizeMode="cover" />
+                  <View style={styles.flashDiscBadge}>
+                    <Text style={styles.flashDiscText}>-{item.discountPct}%</Text>
+                  </View>
+                  <LinearGradient colors={['transparent', 'rgba(0,0,0,0.75)']} style={styles.flashGrad} />
+                  <View style={styles.flashContent}>
+                    <Text style={styles.flashName} numberOfLines={1}>{item.hotelName}</Text>
+                    <View style={styles.flashPriceRow}>
+                      <Text style={styles.flashOrig}>{item.originalPrice} TND</Text>
+                      <Text style={styles.flashNew}>{item.newPrice} TND</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        )}
+
+        {/* Tendances cette semaine */}
+        {trending.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Tendances cette semaine 🔥</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('HotelResults', { destination: '', checkIn, checkOut, guests })}>
+                <Text style={styles.seeAll}>Voir tout</Text>
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              horizontal
+              data={trending.slice(0, 5)}
+              keyExtractor={h => h.id}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 16, gap: 10 }}
+              renderItem={({ item }) => (
+                <TouchableOpacity style={styles.trendCard} onPress={() => navigation.navigate('HotelDetail', { hotelId: item.id, checkIn, checkOut, guests })}>
+                  <Image source={{ uri: item.mainImage }} style={styles.trendImage} resizeMode="cover" />
+                  <LinearGradient colors={['transparent', 'rgba(0,0,0,0.8)']} style={StyleSheet.absoluteFill} />
+                  {item.trendBadge && (
+                    <View style={styles.trendBadge}>
+                      <Text style={styles.trendBadgeText}>{item.trendBadge}</Text>
+                    </View>
+                  )}
+                  <View style={styles.trendContent}>
+                    <Text style={styles.trendName} numberOfLines={1}>{item.name}</Text>
+                    <Text style={styles.trendCity}>{item.city}</Text>
+                    <Text style={styles.trendPrice}>Dès {item.bestPrice} TND</Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        )}
+
+        {/* Trip Planner Button */}
+        <TouchableOpacity style={styles.tripPlannerBtn} onPress={() => navigation.navigate('TripPlanner')}>
+          <LinearGradient colors={['#004E89', '#1a6eac']} style={styles.tripPlannerGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+            <Ionicons name="map-outline" size={22} color="#fff" />
+            <View style={{ flex: 1, marginLeft: 12 }}>
+              <Text style={styles.tripPlannerTitle}>Planifier un voyage</Text>
+              <Text style={styles.tripPlannerSub}>Multi-destinations · Calculez votre budget</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.7)" />
+          </LinearGradient>
+        </TouchableOpacity>
+
         {/* Promo Banner */}
         <TouchableOpacity style={styles.promoBanner} onPress={() => navigation.navigate('HotelResults', { destination: 'Djerba', checkIn, checkOut, guests })}>
           <LinearGradient colors={['#004E89', '#1a6eac']} style={styles.promoBannerGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
@@ -360,6 +507,32 @@ const styles = StyleSheet.create({
   featuredPriceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   featuredPrice: { color: '#FF6B35', fontWeight: '800', fontSize: 13, backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
   featuredStars: { flexDirection: 'row', gap: 1 },
+  qfChip: { backgroundColor: '#fff', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1.5, borderColor: '#E2E8F0' },
+  qfChipActive: { backgroundColor: '#FF6B35', borderColor: '#FF6B35' },
+  qfChipText: { fontSize: 13, fontWeight: '700', color: '#4A5568' },
+  qfChipTextActive: { color: '#fff' },
+  flashCard: { width: 160, height: 190, borderRadius: 14, overflow: 'hidden' },
+  flashImage: { width: '100%', height: '100%' },
+  flashDiscBadge: { position: 'absolute', top: 10, left: 10, backgroundColor: '#E53E3E', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
+  flashDiscText: { color: '#fff', fontWeight: '900', fontSize: 13 },
+  flashGrad: { ...StyleSheet.absoluteFillObject },
+  flashContent: { position: 'absolute', bottom: 10, left: 10, right: 10 },
+  flashName: { color: '#fff', fontWeight: '800', fontSize: 12, marginBottom: 4 },
+  flashPriceRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  flashOrig: { color: 'rgba(255,255,255,0.65)', fontSize: 10, textDecorationLine: 'line-through' },
+  flashNew: { color: '#FFD700', fontWeight: '900', fontSize: 14 },
+  trendCard: { width: 150, height: 190, borderRadius: 14, overflow: 'hidden' },
+  trendImage: { width: '100%', height: '100%' },
+  trendBadge: { position: 'absolute', top: 10, left: 8, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
+  trendBadgeText: { color: '#FFD700', fontSize: 10, fontWeight: '700' },
+  trendContent: { position: 'absolute', bottom: 10, left: 10, right: 10 },
+  trendName: { color: '#fff', fontWeight: '800', fontSize: 13 },
+  trendCity: { color: 'rgba(255,255,255,0.75)', fontSize: 10, marginVertical: 2 },
+  trendPrice: { color: '#FF6B35', fontWeight: '800', fontSize: 12, backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 5, paddingHorizontal: 5, paddingVertical: 1, alignSelf: 'flex-start' },
+  tripPlannerBtn: { margin: 16, marginBottom: 0, borderRadius: 16, overflow: 'hidden' },
+  tripPlannerGrad: { flexDirection: 'row', alignItems: 'center', padding: 16 },
+  tripPlannerTitle: { color: '#fff', fontSize: 16, fontWeight: '800' },
+  tripPlannerSub: { color: 'rgba(255,255,255,0.75)', fontSize: 12, marginTop: 2 },
   promoBanner: { margin: 16, borderRadius: 16, overflow: 'hidden' },
   promoBannerGrad: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20 },
   promoTitle: { color: '#fff', fontSize: 17, fontWeight: '800' },

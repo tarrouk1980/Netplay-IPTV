@@ -206,6 +206,13 @@ import HotelResultsScreen from './screens/hotels/HotelResultsScreen';
 import HotelDetailScreen from './screens/hotels/HotelDetailScreen';
 import HotelFavoritesScreen from './screens/hotels/HotelFavoritesScreen';
 import HotelMapScreen from './screens/hotels/HotelMapScreen';
+import HotelCompareScreen from './screens/hotels/HotelCompareScreen';
+import PriceCalendarScreen from './screens/hotels/PriceCalendarScreen';
+import FlashDealsScreen from './screens/hotels/FlashDealsScreen';
+import TripPlannerScreen from './screens/hotels/TripPlannerScreen';
+import PriceAlertScreen from './screens/hotels/PriceAlertScreen';
+import RecentlyViewedScreen from './screens/hotels/RecentlyViewedScreen';
+import HotelOnboardingScreen from './screens/hotels/HotelOnboardingScreen';
 
 // History Detail
 import HistoryDetailScreen from './screens/profile/HistoryDetailScreen';
@@ -1177,6 +1184,13 @@ function MainStack() {
       <Stack.Screen name="HotelDetail" component={HotelDetailScreen} options={{ headerShown: false }} />
       <Stack.Screen name="HotelFavorites" component={HotelFavoritesScreen} options={{ headerShown: false }} />
       <Stack.Screen name="HotelMap" component={HotelMapScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="HotelCompare" component={HotelCompareScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="PriceCalendar" component={PriceCalendarScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="FlashDeals" component={FlashDealsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="TripPlanner" component={TripPlannerScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="PriceAlert" component={PriceAlertScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="HotelRecentlyViewed" component={RecentlyViewedScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="HotelOnboarding" component={HotelOnboardingScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }

@@ -9,6 +9,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import StarRating from '../../components/hotels/StarRating';
 import RatingBadge from '../../components/hotels/RatingBadge';
 import PriceComparisonBar from '../../components/hotels/PriceComparisonBar';
+import PriceHistoryChart from '../../components/hotels/PriceHistoryChart';
+import WeatherWidget from '../../components/hotels/WeatherWidget';
+import NearbyAttractions from '../../components/hotels/NearbyAttractions';
 import hotelAPI from '../../services/hotelService';
 
 const { width } = Dimensions.get('window');
@@ -43,6 +46,7 @@ export default function HotelDetailScreen({ route, navigation }) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [imageIndex, setImageIndex] = useState(0);
   const [showAllReviews, setShowAllReviews] = useState(false);
+  const [similarHotels, setSimilarHotels] = useState([]);
 
   const ci = checkIn || new Date().toISOString().split('T')[0];
   const co = checkOut || new Date(Date.now() + 86400000).toISOString().split('T')[0];
@@ -53,14 +57,16 @@ export default function HotelDetailScreen({ route, navigation }) {
   async function loadHotel() {
     setLoading(true);
     try {
-      const [detailRes, reviewsRes] = await Promise.all([
+      const [detailRes, reviewsRes, similarRes] = await Promise.all([
         hotelAPI.getById(hotelId, { checkIn: ci, checkOut: co, guests }),
         hotelAPI.getReviews(hotelId),
+        hotelAPI.getSimilar(hotelId, 4).catch(() => ({ data: { data: [] } })),
       ]);
       const data = detailRes.data?.data || {};
       setHotel(data);
       setPriceOffers(data.priceOffers || []);
       setReviews(reviewsRes.data?.data || []);
+      setSimilarHotels(similarRes.data?.data || []);
     } catch (e) {
       console.warn('Hotel detail error:', e);
     } finally {
@@ -216,6 +222,81 @@ export default function HotelDetailScreen({ route, navigation }) {
           </View>
         )}
 
+        {/* Price History Chart */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Historique des prix</Text>
+          <PriceHistoryChart basePrice={bestOffer?.pricePerNight || 300} currency="TND" />
+        </View>
+
+        {/* Weather Widget */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Météo à {hotel.city}</Text>
+          <WeatherWidget city={hotel.city} />
+        </View>
+
+        {/* Nearby Attractions */}
+        <View style={styles.card}>
+          <NearbyAttractions city={hotel.city} />
+        </View>
+
+        {/* Action buttons: Compare, Alert, Calendar */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Outils de recherche</Text>
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={() => navigation.navigate('HotelCompare', { hotelIds: [hotel.id], checkIn: ci, checkOut: co, guests })}
+          >
+            <Ionicons name="git-compare-outline" size={20} color="#004E89" />
+            <Text style={styles.actionBtnText}>Comparer avec d'autres hôtels</Text>
+            <Ionicons name="chevron-forward" size={16} color="#A0AEC0" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionBtn, styles.actionBtnBorder]}
+            onPress={() => navigation.navigate('PriceAlert', { hotelId: hotel.id, hotelName: hotel.name, hotelImage: hotel.mainImage, stars: hotel.stars, currentPrice: bestOffer?.pricePerNight })}
+          >
+            <Ionicons name="notifications-outline" size={20} color="#FF6B35" />
+            <Text style={styles.actionBtnText}>Définir une alerte prix</Text>
+            <Ionicons name="chevron-forward" size={16} color="#A0AEC0" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionBtn, styles.actionBtnBorder]}
+            onPress={() => navigation.navigate('PriceCalendar', { hotelId: hotel.id, guests, hotelName: hotel.name })}
+          >
+            <Ionicons name="calendar-outline" size={20} color="#38A169" />
+            <Text style={styles.actionBtnText}>Voir le calendrier des prix</Text>
+            <Ionicons name="chevron-forward" size={16} color="#A0AEC0" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Similar Hotels */}
+        {similarHotels.length > 0 && (
+          <View style={{ paddingTop: 16 }}>
+            <View style={[styles.cardTitle, { paddingHorizontal: 16, fontSize: 18, fontWeight: '800', color: '#1A202C', marginBottom: 12 }]}>
+            </View>
+            <Text style={{ fontSize: 18, fontWeight: '800', color: '#1A202C', paddingHorizontal: 16, marginBottom: 10 }}>Hôtels similaires</Text>
+            <FlatList
+              horizontal
+              data={similarHotels}
+              keyExtractor={h => h.id}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.similarCard}
+                  onPress={() => navigation.navigate('HotelDetail', { hotelId: item.id, checkIn: ci, checkOut: co, guests })}
+                >
+                  <Image source={{ uri: item.mainImage }} style={styles.similarImage} resizeMode="cover" />
+                  <LinearGradient colors={['transparent', 'rgba(0,0,0,0.8)']} style={StyleSheet.absoluteFill} />
+                  <View style={styles.similarContent}>
+                    <Text style={styles.similarName} numberOfLines={2}>{item.name}</Text>
+                    <Text style={styles.similarPrice}>{item.bestPrice} TND</Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        )}
+
         {/* Location Card */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Localisation</Text>
@@ -315,6 +396,14 @@ const styles = StyleSheet.create({
   mapOverlayText: { color: '#fff', fontWeight: '700', fontSize: 14 },
   locationDetail: { flexDirection: 'row', alignItems: 'flex-start', gap: 6 },
   locationDetailText: { flex: 1, fontSize: 13, color: '#4A5568', lineHeight: 18 },
+  actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 13 },
+  actionBtnBorder: { borderTopWidth: 1, borderTopColor: '#EDF2F7' },
+  actionBtnText: { flex: 1, fontSize: 14, fontWeight: '600', color: '#2D3748' },
+  similarCard: { width: 160, height: 180, borderRadius: 14, overflow: 'hidden' },
+  similarImage: { width: '100%', height: '100%' },
+  similarContent: { position: 'absolute', bottom: 10, left: 10, right: 10 },
+  similarName: { color: '#fff', fontWeight: '800', fontSize: 12, lineHeight: 16, marginBottom: 4 },
+  similarPrice: { color: '#FFD700', fontWeight: '900', fontSize: 13 },
   bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#fff', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 14, borderTopWidth: 1, borderTopColor: '#EDF2F7', shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 10 },
   bottomBarLabel: { fontSize: 11, color: '#A0AEC0', fontWeight: '500', marginBottom: 2 },
   bottomBarOriginal: { fontSize: 13, color: '#A0AEC0', textDecorationLine: 'line-through' },
