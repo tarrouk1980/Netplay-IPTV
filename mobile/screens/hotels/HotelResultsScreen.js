@@ -209,12 +209,22 @@ export default function HotelResultsScreen({ route, navigation }) {
           data={hotels}
           keyExtractor={h => h.id}
           renderItem={({ item }) => (
-            <HotelCard
-              hotel={item}
-              isFavorite={favorites.has(item.id)}
-              onFavorite={() => toggleFavorite(item.id)}
-              onPress={() => navigation.navigate('HotelDetail', { hotelId: item.id, checkIn, checkOut, guests })}
-            />
+            <View>
+              <HotelCard
+                hotel={item}
+                isFavorite={favorites.has(item.id)}
+                onFavorite={() => toggleFavorite(item.id)}
+                onPress={() => navigation.navigate('HotelDetail', { hotelId: item.id, checkIn, checkOut, guests })}
+              />
+              {(item.isAlcoholFree || item.isBurkiniAccepted || item.isHalalCertified || item.hasRamadanServices) && (
+                <View style={styles.culturalBadges}>
+                  {item.isAlcoholFree && <View style={styles.badge}><Text style={styles.badgeText}>🚫 Sans Alcool</Text></View>}
+                  {item.isBurkiniAccepted && <View style={styles.badge}><Text style={styles.badgeText}>🧕 Burkini</Text></View>}
+                  {item.isHalalCertified && <View style={styles.badge}><Text style={styles.badgeText}>🌙 Halal</Text></View>}
+                  {item.hasRamadanServices && <View style={styles.badge}><Text style={styles.badgeText}>⭐ Ramadan</Text></View>}
+                </View>
+              )}
+            </View>
           )}
           refreshing={refreshing}
           onRefresh={onRefresh}
@@ -354,4 +364,13 @@ const styles = StyleSheet.create({
   clearBtnText: { fontWeight: '700', color: '#4A5568', fontSize: 15 },
   applyBtn: { flex: 2, backgroundColor: '#FF6B35', borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
   applyBtnText: { fontWeight: '800', color: '#fff', fontSize: 15 },
+  culturalScroll: { paddingHorizontal: 14, paddingBottom: 8, paddingTop: 2, gap: 8 },
+  culturalFiltersBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#EBF8FF', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: '#004E89' },
+  culturalFiltersBtnText: { fontSize: 12, fontWeight: '700', color: '#004E89' },
+  culturalChip: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#EDF2F7', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5 },
+  culturalChipActive: { backgroundColor: '#FF6B35' },
+  culturalChipText: { fontSize: 12, fontWeight: '600', color: '#4A5568' },
+  culturalBadges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 16, paddingBottom: 8, marginTop: -4 },
+  badge: { backgroundColor: '#F0FFF4', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: '#C6F6D5' },
+  badgeText: { fontSize: 11, color: '#276749', fontWeight: '600' },
 });
