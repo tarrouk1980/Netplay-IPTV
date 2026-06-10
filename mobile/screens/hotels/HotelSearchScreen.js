@@ -459,8 +459,23 @@ export default function HotelSearchScreen({ navigation }) {
           <Ionicons name="chevron-forward" size={20} color="#FF6B35" />
         </TouchableOpacity>
 
-        <View style={{ height: 30 }} />
+        {/* PRO Banner */}
+        <TouchableOpacity style={styles.proBanner} onPress={() => navigation.navigate('EasyHotelsPro')} activeOpacity={0.85}>
+          <LinearGradient colors={['#1A1A3E', '#004E89']} style={styles.proBannerGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+            <Text style={styles.proBannerText}>⚡ Passez PRO — Offres exclusives 24h avant tout le monde</Text>
+            <Ionicons name="chevron-forward" size={16} color="#FF6B35" />
+          </LinearGradient>
+        </TouchableOpacity>
+
+        <View style={{ height: 80 }} />
       </ScrollView>
+
+      {/* Chatbot FAB */}
+      <TouchableOpacity style={styles.chatbotFAB} onPress={() => navigation.navigate('HotelChatbot')} activeOpacity={0.85}>
+        <LinearGradient colors={['#FF6B35', '#e85520']} style={styles.chatbotFABGrad}>
+          <Text style={{ fontSize: 22 }}>🤖</Text>
+        </LinearGradient>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -551,4 +566,9 @@ const styles = StyleSheet.create({
   promoSub: { color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 3 },
   promoBtn: { backgroundColor: '#FF6B35', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
   promoBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  proBanner: { margin: 16, marginTop: 0, borderRadius: 12, overflow: 'hidden' },
+  proBannerGrad: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 12 },
+  proBannerText: { color: '#fff', fontSize: 12, fontWeight: '700', flex: 1 },
+  chatbotFAB: { position: 'absolute', bottom: 28, right: 20, width: 58, height: 58, borderRadius: 29, overflow: 'hidden', shadowColor: '#FF6B35', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 10 },
+  chatbotFABGrad: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 });

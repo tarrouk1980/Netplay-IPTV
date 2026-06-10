@@ -218,6 +218,10 @@ import RevenueAdminScreen from './screens/hotels/RevenueAdminScreen';
 import HotelManagerScreen from './screens/hotels/HotelManagerScreen';
 import MaghrebMapScreen from './screens/hotels/MaghrebMapScreen';
 import CurrencyConverterScreen from './screens/hotels/CurrencyConverterScreen';
+import HotelChatbotScreen from './screens/hotels/HotelChatbotScreen';
+import HotelReferralScreen from './screens/hotels/ReferralScreen';
+import HotelLoyaltyScreen from './screens/hotels/LoyaltyScreen';
+import EasyHotelsProScreen from './screens/hotels/EasyHotelsProScreen';
 
 // History Detail
 import HistoryDetailScreen from './screens/profile/HistoryDetailScreen';
@@ -1201,6 +1205,10 @@ function MainStack() {
       <Stack.Screen name="HotelManager" component={HotelManagerScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MaghrebMap" component={MaghrebMapScreen} options={{ headerShown: false }} />
       <Stack.Screen name="CurrencyConverter" component={CurrencyConverterScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="HotelChatbot" component={HotelChatbotScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="HotelReferral" component={HotelReferralScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="HotelLoyalty" component={HotelLoyaltyScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="EasyHotelsPro" component={EasyHotelsProScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }

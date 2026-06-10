@@ -35,6 +35,7 @@ const { healthHandler } = require('./scripts/healthCheck');
 const cpcRoutes = require('./routes/cpc');
 const hotelManagerRoutes = require('./routes/hotelManager');
 const currencyRoutes = require('./routes/currency');
+const hotelLoyaltyRoutes = require('./routes/hotelLoyalty');
 
 const app = express();
 
@@ -79,6 +80,7 @@ app.use('/api/hotels', hotelsRoutes);
 app.use('/api/cpc', cpcRoutes);
 app.use('/api/hotel-manager', hotelManagerRoutes);
 app.use('/api/currency', currencyRoutes);
+app.use('/api/hotel-loyalty', hotelLoyaltyRoutes);
 app.use('/api/provider', providerRoutes);
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/support', require('./routes/support'));
