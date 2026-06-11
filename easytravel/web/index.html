@@ -315,19 +315,49 @@ section { padding: 80px 24px; max-width: 1140px; margin: 0 auto; }
 .store-label span { display: block; font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
 .store-label strong { font-size: 15px; font-weight: 800; }
 
+/* ── ROUTE MAP ── */
+.route-map-section { padding: 80px 24px; text-align: center; }
+.route-map-section h2 { font-size: clamp(24px,4vw,36px); font-weight: 900; margin-bottom: 8px; }
+.route-map-container {
+  max-width: 680px; margin: 36px auto 0;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 24px; padding: 28px; overflow: hidden;
+}
+.route-map-svg { width: 100%; height: auto; display: block; }
+@keyframes dashMove { to { stroke-dashoffset: -20; } }
+@keyframes ferryPulse { to { stroke-dashoffset: -10; } }
+.route-flight { stroke-dasharray: 8 4; animation: dashMove 1.5s linear infinite; }
+.route-ferry  { stroke-dasharray: 4 3; animation: ferryPulse 0.8s linear infinite; }
+.route-map-legend {
+  display: flex; gap: 24px; justify-content: center; margin-top: 18px; flex-wrap: wrap;
+}
+.legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+
 /* ── FOOTER ── */
 footer {
   border-top: 1px solid var(--border);
-  padding: 40px 24px;
+  padding: 48px 24px 36px;
   text-align: center;
 }
 .footer-logo { font-size: 20px; font-weight: 900; margin-bottom: 8px; }
 .footer-logo span { color: var(--accent); }
-.footer-sub  { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+.footer-sub  { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+.footer-sns { display: flex; gap: 12px; justify-content: center; margin-bottom: 24px; }
+.sns-btn {
+  width: 44px; height: 44px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  text-decoration: none; transition: transform 0.2s, opacity 0.2s;
+  border: 1px solid transparent;
+}
+.sns-btn:hover { transform: translateY(-3px); opacity: 0.9; }
+.sns-fb { background: #1877F2; }
+.sns-ig { background: linear-gradient(135deg,#f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%); }
+.sns-tt { background: #010101; border-color: #333; }
+.sns-yt { background: #FF0000; }
 .footer-links { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; }
 .footer-links a { font-size: 13px; color: var(--muted); text-decoration: none; }
 .footer-links a:hover { color: var(--text); }
-.footer-copy { font-size: 12px; color: var(--subtle); margin-top: 20px; }
+.footer-copy { font-size: 12px; color: var(--subtle); margin-top: 20px; line-height: 1.8; }
 
 /* ── DIVIDER ── */
 .full-divider { border: none; border-top: 1px solid var(--border); margin: 0; }
@@ -346,7 +376,7 @@ footer {
 
 <!-- ── NAVBAR ── -->
 <nav>
-  <div class="nav-logo">Easy<span>Flight</span></div>
+  <div class="nav-logo">Easy<span>Travel</span></div>
   <div class="nav-links">
     <a href="#routes">Rutas</a>
     <a href="#features">Funciones</a>
@@ -687,10 +717,129 @@ footer {
   </div>
 </div>
 
+<!-- ── ROUTE MAP ── -->
+<section class="route-map-section" id="rutas">
+  <div class="section-label">Nuestras Rutas</div>
+  <h2>España ↔ Magreb</h2>
+  <p style="color:var(--muted);font-size:15px;margin-top:8px;max-width:520px;margin-left:auto;margin-right:auto">
+    Vuelos directos y ferris entre las principales ciudades de España y el norte de África
+  </p>
+  <div class="route-map-container">
+    <svg class="route-map-svg" viewBox="0 0 600 360" xmlns="http://www.w3.org/2000/svg">
+      <!-- Background -->
+      <rect width="600" height="360" fill="#060C18" rx="12"/>
+      <!-- Sea glow -->
+      <ellipse cx="290" cy="195" rx="170" ry="55" fill="rgba(37,99,235,0.07)"/>
+
+      <!-- Portugal -->
+      <path d="M 94,64 L 125,102 L 132,148 L 144,175 L 116,174 L 102,142 L 97,102 Z"
+            fill="#172540" stroke="#1E3050" stroke-width="1" opacity="0.8"/>
+      <!-- Spain -->
+      <path d="M 94,64 L 203,48 L 270,50 L 354,90 L 314,148 L 257,181 L 201,183 L 183,195 L 144,175 L 132,148 L 125,102 Z"
+            fill="#1E3050" stroke="#2563EB" stroke-width="1.5" opacity="0.9"/>
+      <!-- Balearic Islands -->
+      <ellipse cx="342" cy="157" rx="13" ry="5" fill="#1E3050" stroke="#2563EB" stroke-width="1" opacity="0.65"/>
+
+      <!-- Morocco -->
+      <path d="M 86,202 L 183,195 L 174,215 L 161,239 L 140,251 L 94,312 L 55,318 L 44,288 L 56,228 L 72,203 Z"
+            fill="#1A2E1A" stroke="#0D9488" stroke-width="1.5" opacity="0.9"/>
+      <!-- Algeria -->
+      <path d="M 161,239 L 174,215 L 183,195 L 298,203 L 373,183 L 434,191 L 448,214 L 438,334 L 161,334 Z"
+            fill="#1A2E1A" stroke="#0D9488" stroke-width="1.5" opacity="0.9"/>
+      <!-- Tunisia -->
+      <path d="M 373,183 L 434,191 L 448,178 L 528,181 L 518,251 L 488,268 L 450,248 L 448,214 L 434,191 Z"
+            fill="#1A2E1A" stroke="#0D9488" stroke-width="1.5" opacity="0.9"/>
+
+      <!-- Flight routes (animated dashed) -->
+      <line x1="220" y1="112" x2="137" y2="243" stroke="#60A5FA" stroke-width="1.5" class="route-flight" opacity="0.85"/>
+      <line x1="220" y1="112" x2="367" y2="180" stroke="#60A5FA" stroke-width="1.5" class="route-flight" opacity="0.8" style="animation-delay:-0.5s"/>
+      <line x1="349" y1="90" x2="367" y2="180" stroke="#60A5FA" stroke-width="1.5" class="route-flight" opacity="0.75" style="animation-delay:-1s"/>
+      <line x1="295" y1="127" x2="518" y2="180" stroke="#60A5FA" stroke-width="1.5" class="route-flight" opacity="0.7" style="animation-delay:-0.3s"/>
+      <line x1="349" y1="90" x2="137" y2="243" stroke="#60A5FA" stroke-width="1.2" class="route-flight" opacity="0.6" style="animation-delay:-0.8s"/>
+      <line x1="220" y1="112" x2="291" y2="201" stroke="#60A5FA" stroke-width="1.2" class="route-flight" opacity="0.6" style="animation-delay:-1.3s"/>
+
+      <!-- Ferry route Algeciras → Tanger (short crossing) -->
+      <line x1="183" y1="193" x2="176" y2="199" stroke="#2DD4BF" stroke-width="4" class="route-ferry" opacity="0.95"/>
+
+      <!-- Spain city dots -->
+      <circle cx="220" cy="112" r="5.5" fill="#2563EB" stroke="#93C5FD" stroke-width="2"/>
+      <circle cx="349" cy="90" r="4" fill="#2563EB" stroke="#93C5FD" stroke-width="1.5"/>
+      <circle cx="295" cy="127" r="4" fill="#2563EB" stroke="#93C5FD" stroke-width="1.5"/>
+      <circle cx="205" cy="178" r="3" fill="#2563EB" stroke="#93C5FD" stroke-width="1.5"/>
+      <circle cx="183" cy="193" r="4" fill="#0D9488" stroke="#2DD4BF" stroke-width="2"/>
+
+      <!-- Maghreb city dots -->
+      <circle cx="137" cy="243" r="4.5" fill="#0D9488" stroke="#2DD4BF" stroke-width="1.5"/>
+      <circle cx="176" cy="199" r="3.5" fill="#0D9488" stroke="#2DD4BF" stroke-width="1.5"/>
+      <circle cx="291" cy="201" r="3.5" fill="#0D9488" stroke="#2DD4BF" stroke-width="1.5"/>
+      <circle cx="367" cy="180" r="4.5" fill="#0D9488" stroke="#2DD4BF" stroke-width="1.5"/>
+      <circle cx="518" cy="180" r="4.5" fill="#0D9488" stroke="#2DD4BF" stroke-width="1.5"/>
+
+      <!-- Spain labels -->
+      <text x="226" y="110" font-size="10" fill="#F0F4FF" font-family="Inter,sans-serif" font-weight="700">Madrid</text>
+      <text x="353" y="88" font-size="9.5" fill="#F0F4FF" font-family="Inter,sans-serif" font-weight="700">Barcelona</text>
+      <text x="299" y="125" font-size="9.5" fill="#F0F4FF" font-family="Inter,sans-serif" font-weight="700">Valencia</text>
+      <text x="188" y="175" font-size="8.5" fill="#7B8DB0" font-family="Inter,sans-serif">Málaga</text>
+      <text x="188" y="190" font-size="8" fill="#2DD4BF" font-family="Inter,sans-serif">Algeciras</text>
+
+      <!-- Maghreb labels -->
+      <text x="143" y="250" font-size="9.5" fill="#F0F4FF" font-family="Inter,sans-serif" font-weight="700">Casablanca</text>
+      <text x="148" y="198" font-size="8.5" fill="#7B8DB0" font-family="Inter,sans-serif">Tanger</text>
+      <text x="294" y="198" font-size="8.5" fill="#7B8DB0" font-family="Inter,sans-serif">Oran</text>
+      <text x="371" y="178" font-size="9.5" fill="#F0F4FF" font-family="Inter,sans-serif" font-weight="700">Alger</text>
+      <text x="522" y="178" font-size="9.5" fill="#F0F4FF" font-family="Inter,sans-serif" font-weight="700">Tunis</text>
+
+      <!-- Country watermarks -->
+      <text x="195" y="135" font-size="13" fill="#2563EB" font-family="Inter,sans-serif" font-weight="900" opacity="0.35" letter-spacing="2">ESPAÑA</text>
+      <text x="88" y="268" font-size="10" fill="#0D9488" font-family="Inter,sans-serif" font-weight="700" opacity="0.35" letter-spacing="1">MAROC</text>
+      <text x="255" y="285" font-size="10" fill="#0D9488" font-family="Inter,sans-serif" font-weight="700" opacity="0.35" letter-spacing="1">ALGÉRIE</text>
+      <text x="448" y="228" font-size="10" fill="#0D9488" font-family="Inter,sans-serif" font-weight="700" opacity="0.35" letter-spacing="1">TUNISIE</text>
+    </svg>
+
+    <div class="route-map-legend">
+      <div class="legend-item">
+        <svg width="28" height="8"><line x1="0" y1="4" x2="28" y2="4" stroke="#60A5FA" stroke-width="2" stroke-dasharray="8 4"/></svg>
+        <span>Vuelos directos</span>
+      </div>
+      <div class="legend-item">
+        <svg width="28" height="8"><line x1="0" y1="4" x2="28" y2="4" stroke="#2DD4BF" stroke-width="3" stroke-dasharray="4 3"/></svg>
+        <span>Ferris</span>
+      </div>
+      <div class="legend-item">
+        <svg width="12" height="12"><circle cx="6" cy="6" r="4.5" fill="#2563EB" stroke="#93C5FD" stroke-width="1.5"/></svg>
+        <span>España</span>
+      </div>
+      <div class="legend-item">
+        <svg width="12" height="12"><circle cx="6" cy="6" r="4.5" fill="#0D9488" stroke="#2DD4BF" stroke-width="1.5"/></svg>
+        <span>Magreb</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="full-divider">
+
 <!-- ── FOOTER ── -->
 <footer>
-  <div class="footer-logo">Easy<span>Flight</span></div>
+  <div class="footer-logo">Easy<span>Travel</span></div>
   <div class="footer-sub">El comparador de vuelos y ferris para la comunidad magrebí en España</div>
+
+  <!-- Social Media -->
+  <div class="footer-sns">
+    <a href="#" class="sns-btn sns-fb" title="Facebook" aria-label="Facebook">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="white" aria-hidden="true"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+    </a>
+    <a href="#" class="sns-btn sns-ig" title="Instagram" aria-label="Instagram">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="white" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+    </a>
+    <a href="#" class="sns-btn sns-tt" title="TikTok" aria-label="TikTok">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="white" aria-hidden="true"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
+    </a>
+    <a href="#" class="sns-btn sns-yt" title="YouTube" aria-label="YouTube">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="white" aria-hidden="true"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+    </a>
+  </div>
+
   <div class="footer-links">
     <a href="#">Política de privacidad</a>
     <a href="#">Términos de uso</a>
@@ -700,7 +849,8 @@ footer {
     <a href="#" style="color:var(--accent)">🇦🇪 النسخة العربية</a>
   </div>
   <div class="footer-copy">
-    © 2026 EasyTravel. Tous les prix sont indicatifs · Les redirections vers les compagnies sont des liens d'affiliation (Travelpayouts / Directferries)
+    © 2026 EasyTravel — Todos los derechos reservados<br>
+    <span style="font-size:11px;opacity:0.75">Los precios son indicativos · Las redirecciones a compañías son enlaces de afiliación (Travelpayouts · Directferries)</span>
   </div>
 </footer>
 
