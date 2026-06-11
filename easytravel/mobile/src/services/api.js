@@ -1,8 +1,15 @@
 import axios from 'axios';
+import Constants from 'expo-constants';
 
-// Change to your server IP when testing on device
+// In dev, reuse the Metro host (the PC's LAN IP) so a physical phone
+// can reach the backend running on the same machine.
+function getDevBaseUrl() {
+  const host = Constants.expoConfig?.hostUri?.split(':')[0];
+  return host ? `http://${host}:4000` : 'http://localhost:4000';
+}
+
 const BASE_URL = __DEV__
-  ? 'http://localhost:4000'
+  ? getDevBaseUrl()
   : 'https://api.easytravel.app';
 
 const api = axios.create({
