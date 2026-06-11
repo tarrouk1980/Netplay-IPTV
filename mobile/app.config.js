@@ -1,7 +1,7 @@
 module.exports = {
   expo: {
     name: 'EasyHotels - Comparer les Prix',
-    slug: 'easyway',
+    slug: 'easytravel',
     owner: 'tarekeasytravel',
     version: '2.0.0',
     orientation: 'portrait',
