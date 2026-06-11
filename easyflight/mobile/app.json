@@ -21,6 +21,12 @@
       "package": "com.easyflight.app"
     },
     "scheme": "easyflight",
-    "plugins": ["expo-linear-gradient"]
+    "plugins": [
+      "expo-linear-gradient",
+      ["react-native-google-mobile-ads", {
+        "androidAppId": "ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY",
+        "iosAppId": "ca-app-pub-XXXXXXXXXXXXXXXX~ZZZZZZZZZZ"
+      }]
+    ]
   }
 }
