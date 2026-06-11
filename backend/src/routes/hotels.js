@@ -8,6 +8,7 @@ const {
   getFeaturedHotels, getPopularDestinations, getHotelReviews,
   addReview, toggleFavorite, getUserFavorites,
   getFlashDeals, getPriceCalendar, getSimilarHotels, getTrendingHotels, getLastMinuteDeals,
+  getHotelsByMarket,
 } = require('../services/hotelService');
 const cacheService = require('../services/cacheService');
 const analyticsService = require('../services/analyticsService');
@@ -255,6 +256,18 @@ router.get('/:id/similar', (req, res) => {
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
+});
+
+// GET /api/hotels/by-market/:market
+// Returns hotels popular with a specific EU market (es/fr/be/it/de)
+router.get('/by-market/:market', async (req, res) => {
+  const { market } = req.params;
+  const validMarkets = ['es', 'fr', 'be', 'it', 'de'];
+  if (!validMarkets.includes(market)) {
+    return res.status(400).json({ error: 'Invalid market' });
+  }
+  const hotels = getHotelsByMarket(market);
+  res.json({ hotels, market, count: hotels.length });
 });
 
 module.exports = router;

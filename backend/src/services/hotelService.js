@@ -524,6 +524,172 @@ const MOCK_HOTELS = [
     isAlcoholFree: true, isBurkiniAccepted: true, isHalalCertified: true, hasRamadanServices: true,
     hasPrayerRoom: true, hasSeparatePool: false, isFamilyConservative: true, isMedicalTourism: false,
     isHoneymoonPackage: true, hasAirportShuttle: false, isBeachfront: false },
+
+  // EU MARKET HOTELS - Algeria (French diaspora focus)
+  {
+    _id: 'hz001', name: 'Sofitel Alger Hamma Garden', city: 'Alger', country: 'Algérie',
+    stars: 5, rating: 8.7, reviewCount: 342, price: 28000, currency: 'DZD',
+    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800',
+    amenities: ['Piscine', 'Spa', 'WiFi', 'Restaurant', 'Bar Sans Alcool', 'Salle de sport'],
+    isAlcoholFree: true, isBurkiniAccepted: false, isHalalCertified: true,
+    hasRamadanServices: true, hasPrayerRoom: true, hasSeparatePool: false,
+    isFamilyConservative: false, isMedicalTourism: false, isHoneymoonPackage: false,
+    hasAirportShuttle: true, isBeachfront: false,
+    description: 'Hôtel 5 étoiles au coeur d\'Alger, idéal pour les voyageurs d\'affaires',
+    lat: 36.7558, lng: 3.0588, popularWith: ['fr', 'be'],
+    isActive: true, isFeatured: false, id: 'hz001', slug: 'sofitel-alger-hamma-garden-eu', category: 'HOTEL', mainImage: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800',
+  },
+  {
+    _id: 'hz002', name: 'El Aurassi Hotel Alger', city: 'Alger', country: 'Algérie',
+    stars: 5, rating: 8.2, reviewCount: 891, price: 22000, currency: 'DZD',
+    image: 'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800',
+    amenities: ['Vue panoramique', 'Piscine', 'WiFi', 'Restaurant', 'Terrasse'],
+    isAlcoholFree: false, isBurkiniAccepted: false, isHalalCertified: false,
+    hasRamadanServices: true, hasPrayerRoom: true, hasSeparatePool: false,
+    isFamilyConservative: false, isMedicalTourism: false, isHoneymoonPackage: false,
+    hasAirportShuttle: true, isBeachfront: false,
+    description: 'Vue imprenable sur la baie d\'Alger depuis les hauteurs',
+    lat: 36.7372, lng: 3.0797, popularWith: ['fr', 'be', 'de'],
+    isActive: true, isFeatured: false, id: 'hz002', slug: 'el-aurassi-alger-eu', category: 'HOTEL', mainImage: 'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800',
+  },
+  {
+    _id: 'hz003', name: 'Hôtel Sheraton Oran', city: 'Oran', country: 'Algérie',
+    stars: 5, rating: 8.4, reviewCount: 567, price: 18000, currency: 'DZD',
+    image: 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800',
+    amenities: ['Piscine', 'Spa', 'WiFi', 'Restaurant', 'Parking'],
+    isAlcoholFree: false, isBurkiniAccepted: false, isHalalCertified: false,
+    hasRamadanServices: true, hasPrayerRoom: true, hasSeparatePool: false,
+    isFamilyConservative: false, isMedicalTourism: false, isHoneymoonPackage: false,
+    hasAirportShuttle: true, isBeachfront: false,
+    description: 'La référence de l\'hôtellerie à Oran',
+    lat: 35.6971, lng: -0.6308, popularWith: ['fr', 'be'],
+    isActive: true, isFeatured: false, id: 'hz003', slug: 'sheraton-oran-eu', category: 'HOTEL', mainImage: 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800',
+  },
+
+  // EU MARKET HOTELS - Morocco (Spain/France focus)
+  {
+    _id: 'hz004', name: 'Four Seasons Marrakech', city: 'Marrakech', country: 'Maroc',
+    stars: 5, rating: 9.4, reviewCount: 2341, price: 4200, currency: 'MAD',
+    image: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800',
+    amenities: ['2 Piscines', 'Spa', 'WiFi', 'Restaurant Halal', 'Jardin'],
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: true,
+    hasRamadanServices: true, hasPrayerRoom: true, hasSeparatePool: true,
+    isFamilyConservative: false, isMedicalTourism: false, isHoneymoonPackage: true,
+    hasAirportShuttle: true, isBeachfront: false,
+    description: 'Le summum du luxe à Marrakech, à 15 min de la médina',
+    lat: 31.6295, lng: -7.9811, popularWith: ['es', 'fr', 'be', 'it'],
+    isActive: true, isFeatured: true, id: 'hz004', slug: 'four-seasons-marrakech-eu', category: 'RESORT', mainImage: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800',
+  },
+  {
+    _id: 'hz005', name: 'Riad Yasmine Marrakech', city: 'Marrakech', country: 'Maroc',
+    stars: 4, rating: 9.1, reviewCount: 876, price: 950, currency: 'MAD',
+    image: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800',
+    amenities: ['Piscine', 'WiFi', 'Petit-déjeuner', 'Terrasse', 'Hammam'],
+    isAlcoholFree: true, isBurkiniAccepted: true, isHalalCertified: true,
+    hasRamadanServices: true, hasPrayerRoom: true, hasSeparatePool: false,
+    isFamilyConservative: true, isMedicalTourism: false, isHoneymoonPackage: true,
+    hasAirportShuttle: false, isBeachfront: false,
+    description: 'Riad authentique au coeur de la médina, entièrement halal',
+    lat: 31.6340, lng: -7.9872, popularWith: ['fr', 'es', 'be'],
+    isActive: true, isFeatured: false, id: 'hz005', slug: 'riad-yasmine-marrakech-eu', category: 'VILLA', mainImage: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800',
+  },
+  {
+    _id: 'hz006', name: 'Club Med Agadir', city: 'Agadir', country: 'Maroc',
+    stars: 4, rating: 8.6, reviewCount: 3211, price: 1800, currency: 'MAD',
+    image: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800',
+    amenities: ['Plage', 'Piscine', 'WiFi', 'All Inclusive', 'Animation'],
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: false,
+    hasRamadanServices: false, hasPrayerRoom: true, hasSeparatePool: false,
+    isFamilyConservative: true, isMedicalTourism: false, isHoneymoonPackage: false,
+    hasAirportShuttle: true, isBeachfront: true,
+    description: 'All inclusive sur la plus belle plage d\'Agadir',
+    lat: 30.4278, lng: -9.5981, popularWith: ['fr', 'be', 'de', 'it'],
+    isActive: true, isFeatured: true, id: 'hz006', slug: 'club-med-agadir-eu', category: 'RESORT', mainImage: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800',
+  },
+
+  // EU MARKET HOTELS - Tunisia (France/Italy focus)
+  {
+    _id: 'hz007', name: 'Radisson Blu Tunis', city: 'Tunis', country: 'Tunisie',
+    stars: 5, rating: 8.8, reviewCount: 1456, price: 420, currency: 'TND',
+    image: 'https://images.unsplash.com/photo-1534430480872-3498386e7856?w=800',
+    amenities: ['Piscine sur toit', 'Spa', 'WiFi', 'Restaurant', 'Bar'],
+    isAlcoholFree: false, isBurkiniAccepted: false, isHalalCertified: false,
+    hasRamadanServices: true, hasPrayerRoom: true, hasSeparatePool: false,
+    isFamilyConservative: false, isMedicalTourism: false, isHoneymoonPackage: true,
+    hasAirportShuttle: true, isBeachfront: false,
+    description: 'Hôtel premium au centre de Tunis avec vue sur la médina',
+    lat: 36.8191, lng: 10.1658, popularWith: ['fr', 'it', 'de'],
+    isActive: true, isFeatured: false, id: 'hz007', slug: 'radisson-blu-tunis-eu', category: 'HOTEL', mainImage: 'https://images.unsplash.com/photo-1534430480872-3498386e7856?w=800',
+  },
+  {
+    _id: 'hz008', name: 'Diar Lemdina Hammamet', city: 'Hammamet', country: 'Tunisie',
+    stars: 4, rating: 8.3, reviewCount: 2891, price: 285, currency: 'TND',
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800',
+    amenities: ['Plage privée', 'Piscine', 'WiFi', 'All Inclusive', 'Animation'],
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: false,
+    hasRamadanServices: false, hasPrayerRoom: true, hasSeparatePool: true,
+    isFamilyConservative: true, isMedicalTourism: false, isHoneymoonPackage: false,
+    hasAirportShuttle: true, isBeachfront: true,
+    description: 'Resort familial avec plage privée à Hammamet',
+    lat: 36.4000, lng: 10.6167, popularWith: ['fr', 'be', 'it', 'de'],
+    isActive: true, isFeatured: false, id: 'hz008', slug: 'diar-lemdina-hammamet-eu', category: 'RESORT', mainImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800',
+  },
+  {
+    _id: 'hz009', name: 'Hasdrubal Thalassa Djerba', city: 'Djerba', country: 'Tunisie',
+    stars: 5, rating: 9.0, reviewCount: 1678, price: 380, currency: 'TND',
+    image: 'https://images.unsplash.com/photo-1540541338537-1220059d5a25?w=800',
+    amenities: ['Thalassothérapie', 'Plage', 'Piscine', 'WiFi', 'Spa'],
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: false,
+    hasRamadanServices: true, hasPrayerRoom: true, hasSeparatePool: true,
+    isFamilyConservative: false, isMedicalTourism: true, isHoneymoonPackage: true,
+    hasAirportShuttle: true, isBeachfront: true,
+    description: 'Spa et thalassothérapie de luxe à Djerba',
+    lat: 33.8075, lng: 10.8451, popularWith: ['fr', 'be', 'de', 'it'],
+    isActive: true, isFeatured: true, id: 'hz009', slug: 'hasdrubal-thalassa-djerba-eu', category: 'RESORT', mainImage: 'https://images.unsplash.com/photo-1540541338537-1220059d5a25?w=800',
+  },
+
+  // EU MARKET HOTELS - Egypt (German/Italian focus)
+  {
+    _id: 'hz010', name: 'Kempinski Soma Bay Hurghada', city: 'Hurghada', country: 'Égypte',
+    stars: 5, rating: 9.2, reviewCount: 4521, price: 8500, currency: 'EGP',
+    image: 'https://images.unsplash.com/photo-1549294413-26f195200c16?w=800',
+    amenities: ['Plage privée', '3 Piscines', 'Spa', 'WiFi', 'All Inclusive', 'Plongée'],
+    isAlcoholFree: false, isBurkiniAccepted: true, isHalalCertified: false,
+    hasRamadanServices: true, hasPrayerRoom: true, hasSeparatePool: false,
+    isFamilyConservative: false, isMedicalTourism: false, isHoneymoonPackage: true,
+    hasAirportShuttle: true, isBeachfront: true,
+    description: 'Resort 5 étoiles all inclusive sur la mer Rouge',
+    lat: 27.2574, lng: 33.8129, popularWith: ['de', 'it', 'fr'],
+    isActive: true, isFeatured: true, id: 'hz010', slug: 'kempinski-soma-bay-hurghada-eu', category: 'RESORT', mainImage: 'https://images.unsplash.com/photo-1549294413-26f195200c16?w=800',
+  },
+  {
+    _id: 'hz011', name: 'Steigenberger Al Dau Beach', city: 'Hurghada', country: 'Égypte',
+    stars: 5, rating: 8.9, reviewCount: 3892, price: 6200, currency: 'EGP',
+    image: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800',
+    amenities: ['Plage', 'Piscines', 'WiFi', 'All Inclusive', 'Snorkeling'],
+    isAlcoholFree: false, isBurkiniAccepted: false, isHalalCertified: false,
+    hasRamadanServices: false, hasPrayerRoom: false, hasSeparatePool: false,
+    isFamilyConservative: false, isMedicalTourism: false, isHoneymoonPackage: false,
+    hasAirportShuttle: true, isBeachfront: true,
+    description: 'All inclusive allemand-friendly sur la mer Rouge',
+    lat: 27.1783, lng: 33.8409, popularWith: ['de', 'it'],
+    isActive: true, isFeatured: false, id: 'hz011', slug: 'steigenberger-al-dau-beach-eu', category: 'RESORT', mainImage: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800',
+  },
+
+  // EU MARKET HOTELS - Spain (local hotel, for completeness)
+  {
+    _id: 'hz012', name: 'Hotel Barceló Málaga', city: 'Málaga', country: 'Espagne',
+    stars: 4, rating: 8.5, reviewCount: 2341, price: 95, currency: 'EUR',
+    image: 'https://images.unsplash.com/photo-1455587734955-081b22074882?w=800',
+    amenities: ['Piscine sur toit', 'Spa', 'WiFi', 'Restaurant', 'Vue mer'],
+    isAlcoholFree: false, isBurkiniAccepted: false, isHalalCertified: false,
+    hasRamadanServices: false, hasPrayerRoom: false, hasSeparatePool: false,
+    isFamilyConservative: false, isMedicalTourism: false, isHoneymoonPackage: false,
+    hasAirportShuttle: true, isBeachfront: true,
+    description: 'Hôtel moderne à Málaga, porte d\'entrée vers l\'Afrique du Nord',
+    lat: 36.7196, lng: -4.4200, popularWith: ['es'],
+    isActive: true, isFeatured: false, id: 'hz012', slug: 'hotel-barcelo-malaga-eu', category: 'HOTEL', mainImage: 'https://images.unsplash.com/photo-1455587734955-081b22074882?w=800',
+  },
 ];
 
 const MOCK_ROOMS = {
@@ -800,6 +966,10 @@ function getTrendingHotels() {
     });
 }
 
+function getHotelsByMarket(market) {
+  return MOCK_HOTELS.filter(h => h.popularWith && h.popularWith.includes(market));
+}
+
 function getLastMinuteDeals() {
   const now = Date.now();
   return MOCK_HOTELS.slice(0, 6).map((hotel, i) => {
@@ -843,4 +1013,5 @@ module.exports = {
   getSimilarHotels,
   getTrendingHotels,
   getLastMinuteDeals,
+  getHotelsByMarket,
 };
