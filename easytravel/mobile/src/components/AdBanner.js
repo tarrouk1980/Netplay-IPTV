@@ -1,17 +1,12 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { COLORS } from '../theme/colors';
+import { admob } from './admob';
 
-// Try to load real AdMob; fall back gracefully if not installed.
-let BannerAd, BannerAdSize, TestIds;
-try {
-  const admob = require('react-native-google-mobile-ads');
-  BannerAd = admob.BannerAd;
-  BannerAdSize = admob.BannerAdSize;
-  TestIds = admob.TestIds;
-} catch (_) {
-  // react-native-google-mobile-ads not available — placeholder will be used
-}
+// Real AdMob SDK if enabled in ./admob.js, otherwise placeholder is used.
+const BannerAd = admob?.BannerAd;
+const BannerAdSize = admob?.BannerAdSize;
+const TestIds = admob?.TestIds;
 
 // Production ad unit IDs (replace with real IDs before publishing)
 const AD_UNIT_IDS = {

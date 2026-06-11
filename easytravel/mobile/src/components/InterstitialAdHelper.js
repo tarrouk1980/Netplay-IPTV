@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import { admob } from './admob';
 
 // Production ad unit IDs (replace with real IDs before publishing)
 const INTERSTITIAL_UNIT_IDS = {
@@ -27,12 +28,14 @@ export async function showInterstitialBeforeBooking(callback) {
     return;
   }
 
+  // AdMob not enabled (see ./admob.js) — proceed straight to booking
+  if (!admob) {
+    callback();
+    return;
+  }
+
   try {
-    const {
-      InterstitialAd,
-      AdEventType,
-      TestIds,
-    } = require('react-native-google-mobile-ads');
+    const { InterstitialAd, AdEventType } = admob;
 
     const adUnitId = Platform.OS === 'ios'
       ? INTERSTITIAL_UNIT_IDS.ios

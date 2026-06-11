@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -19,8 +19,9 @@ import { registerForPushNotifications } from './src/services/notifications';
 const Stack = createNativeStackNavigator();
 
 const NAV_THEME = {
-  dark: true,
+  ...DarkTheme,
   colors: {
+    ...DarkTheme.colors,
     background:   '#0A1628',
     card:         '#0A1628',
     text:         '#F0F4FF',
