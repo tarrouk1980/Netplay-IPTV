@@ -22,6 +22,10 @@ import BlogFR from './pages/fr/BlogFR'
 import HomePageIT from './pages/it/HomePageIT'
 import HomePageDE from './pages/de/HomePageDE'
 import HomePageBE from './pages/be/HomePageBE'
+// Monetization & admin pages
+import AffiliateSetupPage from './pages/AffiliateSetupPage'
+import AdminDashboard from './pages/AdminDashboard'
+import LandingHotelierFR from './pages/LandingHotelierFR'
 
 function NotFoundPage() {
   return (
@@ -114,6 +118,11 @@ export default function App() {
 
         {/* ── Belgium ── */}
         <Route path="/be" element={<HomePageBE />} />
+
+        {/* ── Monetization & admin ── */}
+        <Route path="/setup/affiliates" element={<AffiliateSetupPage />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/fr/hoteliers" element={<LandingHotelierFR />} />
 
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
