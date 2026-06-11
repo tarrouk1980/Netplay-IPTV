@@ -3,6 +3,7 @@ const express = require('express');
 const {
   searchFlights, getAirports, getAirportsByCountry, getCountries, AIRPORTS,
 } = require('../services/flightSearch');
+const { searchRealFlights, getCalendarPrices } = require('../services/travelpayoutsAPI');
 
 const router = express.Router();
 
@@ -18,11 +19,19 @@ router.get('/countries', (_, res) => {
 });
 
 // GET /api/flights/search?origin=MAD&dest=CMN&date=2026-08-15&passengers=2&tripType=ONE_WAY
-router.get('/search', (req, res) => {
+router.get('/search', async (req, res) => {
   const { origin, dest, date, returnDate, passengers = 1, tripType = 'ONE_WAY', currency } = req.query;
   if (!origin || !dest || !date) {
     return res.status(400).json({ error: 'origin, dest and date are required' });
   }
+
+  // Try real Travelpayouts data first
+  const realFlights = await searchRealFlights(origin, dest, date, Number(passengers));
+  if (realFlights && realFlights.length > 0) {
+    return res.json({ outbound: realFlights, inbound: [], tripType, source: 'live' });
+  }
+
+  // Fallback to mock data
   const result = searchFlights({
     origin, dest, date, returnDate, passengers: Number(passengers), tripType, currency,
   });
@@ -30,11 +39,38 @@ router.get('/search', (req, res) => {
 });
 
 // GET /api/flights/calendar?origin=MAD&dest=CMN&month=2026-08&passengers=1
-router.get('/calendar', (req, res) => {
+router.get('/calendar', async (req, res) => {
   const { origin, dest, month, passengers = 1 } = req.query;
   if (!origin || !dest || !month) {
     return res.status(400).json({ error: 'origin, dest and month are required' });
   }
+
+  // Try real Travelpayouts calendar data first
+  const calendarData = await getCalendarPrices(origin, dest, month);
+  if (calendarData && calendarData.length > 0) {
+    const days = {};
+    for (const entry of calendarData) {
+      const dateStr = entry.depart_date || entry.date;
+      if (dateStr) {
+        days[dateStr] = {
+          price:    entry.price,
+          currency: 'EUR',
+          count:    1,
+        };
+      }
+    }
+    const prices = Object.values(days).map((d) => d.price);
+    const sorted = [...prices].sort((a, b) => a - b);
+    const p33 = sorted[Math.floor(sorted.length * 0.33)] || 0;
+    const p66 = sorted[Math.floor(sorted.length * 0.66)] || 0;
+    Object.keys(days).forEach((k) => {
+      const p = days[k].price;
+      days[k].level = p <= p33 ? 'LOW' : p <= p66 ? 'MED' : 'HIGH';
+    });
+    return res.json({ month, origin, dest, days, source: 'live' });
+  }
+
+  // Fallback to mock data
   const [year, m] = month.split('-').map(Number);
   const daysInMonth = new Date(year, m, 0).getDate();
   const days = {};
