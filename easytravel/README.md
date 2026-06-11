@@ -1,4 +1,4 @@
-# ✈ EasyFlight
+# ✈ EasyTravel
 
 > Comparateur de vols et ferries Espagne ↔ Maghreb — App mobile + Backend + Landing page
 
@@ -7,7 +7,7 @@
 ## Structure
 
 ```
-easyflight/
+easytravel/
 ├── mobile/              React Native (Expo) — iOS & Android
 ├── backend/             Node.js API (Express) — port 4000
 ├── web/                 Landing page marketing (HTML/CSS, espagnol)

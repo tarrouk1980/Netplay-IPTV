@@ -1,7 +1,7 @@
 {
-  "name": "easyflight-backend",
+  "name": "easytravel-backend",
   "version": "1.0.0",
-  "description": "EasyFlight API — vols & ferries Espagne ↔ Maghreb",
+  "description": "EasyTravel API — vols & ferries Espagne ↔ Maghreb",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

@@ -401,14 +401,14 @@ function buildAffiliateUrl(origin, dest, date, airlineCode) {
   const tpCarriers = ['VY', 'IB', 'FR', 'I2', 'UX', 'AT', '3O', 'TO', 'AF', 'LH', 'U2', 'TK', 'EK', 'TP', 'KL'];
 
   if (tpCarriers.includes(airlineCode)) {
-    return `https://tp.media/click?shmarker=${TRAVELPAYOUTS_MARKER}&promo_id=4132&source_type=link&type=click&campaign_id=121&trs=296196&from=${origin}&to=${dest}&depart_date=${date}&utm_source=easyflight&utm_medium=cpc`;
+    return `https://tp.media/click?shmarker=${TRAVELPAYOUTS_MARKER}&promo_id=4132&source_type=link&type=click&campaign_id=121&trs=296196&from=${origin}&to=${dest}&depart_date=${date}&utm_source=easytravel&utm_medium=cpc`;
   }
 
   const directSites = {
     AH: 'airalgerie.dz', TU: 'tunisair.com', BJ: 'nouvelair.com',
   };
-  const site = directSites[airlineCode] || 'easyflight.app';
-  return `https://${site}/?from=${origin}&to=${dest}&dep=${date}&utm_source=easyflight&utm_medium=affiliate`;
+  const site = directSites[airlineCode] || 'easytravel.app';
+  return `https://${site}/?from=${origin}&to=${dest}&dep=${date}&utm_source=easytravel&utm_medium=affiliate`;
 }
 
 // ─── PUBLIC API ───────────────────────────────────────────────────────────────

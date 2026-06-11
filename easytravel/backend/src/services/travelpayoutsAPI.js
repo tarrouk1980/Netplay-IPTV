@@ -7,7 +7,7 @@ const BASE = 'https://api.travelpayouts.com';
 
 // Build Travelpayouts affiliate booking URL (real one, not placeholder)
 function buildTPAffiliateUrl(origin, dest, date, passengers = 1) {
-  return `https://search.jetradar.com/flights/${origin}${dest}${date.replace(/-/g, '')}1?marker=${TP_MARKER}&utm_source=easyflight&utm_medium=cpc&utm_campaign=search`;
+  return `https://search.jetradar.com/flights/${origin}${dest}${date.replace(/-/g, '')}1?marker=${TP_MARKER}&utm_source=easytravel&utm_medium=cpc&utm_campaign=search`;
 }
 
 async function searchRealFlights(origin, dest, date, passengers = 1) {

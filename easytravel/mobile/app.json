@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "EasyFlight",
-    "slug": "easyflight",
+    "name": "EasyTravel",
+    "slug": "easytravel",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
@@ -13,7 +13,7 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.easyflight.app",
+      "bundleIdentifier": "com.easytravel.app",
       "buildNumber": "1",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Pour afficher les aéroports proches de vous.",
@@ -21,7 +21,7 @@
       }
     },
     "android": {
-      "package": "com.easyflight.app",
+      "package": "com.easytravel.app",
       "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#0A1628"
@@ -32,6 +32,6 @@
         "INTERNET"
       ]
     },
-    "scheme": "easyflight"
+    "scheme": "easytravel"
   }
 }

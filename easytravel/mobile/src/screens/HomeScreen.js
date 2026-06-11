@@ -175,7 +175,7 @@ export default function HomeScreen({ navigation }) {
         {/* Header */}
         <View style={s.header}>
           <View>
-            <Text style={s.logo}>EasyFlight</Text>
+            <Text style={s.logo}>EasyTravel</Text>
             <Text style={s.tagline}>Espagne ↔ Maghreb · Vols & Ferries</Text>
           </View>
           <View style={s.headerActions}>

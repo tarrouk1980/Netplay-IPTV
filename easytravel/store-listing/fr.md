@@ -1,7 +1,7 @@
-# EasyFlight — Store Listing (Français)
+# EasyTravel — Store Listing (Français)
 
 ## Titre (30 chars)
-EasyFlight — Vols & Ferries
+EasyTravel — Vols & Ferries
 
 ## Sous-titre iOS (30 chars)
 Espagne ↔ Maghreb pas cher
@@ -13,9 +13,9 @@ Vols & ferries Espagne↔Maroc·Algérie·Tunisie. Ryanair, Vueling, Balearia.
 
 ## Description complète
 
-✈ EasyFlight — Le comparateur de vols et ferries Espagne ↔ Maghreb
+✈ EasyTravel — Le comparateur de vols et ferries Espagne ↔ Maghreb
 
-Vous cherchez des vols pas chers entre l'Espagne et le Maroc, l'Algérie, la Tunisie ? EasyFlight compare en quelques secondes Ryanair, Vueling, Iberia, Air Algérie et plus de 30 compagnies.
+Vous cherchez des vols pas chers entre l'Espagne et le Maroc, l'Algérie, la Tunisie ? EasyTravel compare en quelques secondes Ryanair, Vueling, Iberia, Air Algérie et plus de 30 compagnies.
 
 🔥 VOLS PAS CHERS DEPUIS L'ESPAGNE
 • Madrid → Casablanca dès 42€ · Vueling, Iberia, Royal Air Maroc
@@ -42,7 +42,7 @@ Vous cherchez des vols pas chers entre l'Espagne et le Maroc, l'Algérie, la Tun
 💳 PAIEMENT SANS PROBLÈME
 Payez directement sur le site officiel de Ryanair, Vueling ou Iberia avec votre carte bancaire européenne. Aucune commission supplémentaire.
 
-Téléchargez EasyFlight gratuitement ✈
+Téléchargez EasyTravel gratuitement ✈
 
 ---
 

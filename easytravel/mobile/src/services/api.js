@@ -3,7 +3,7 @@ import axios from 'axios';
 // Change to your server IP when testing on device
 const BASE_URL = __DEV__
   ? 'http://localhost:4000'
-  : 'https://api.easyflight.app';
+  : 'https://api.easytravel.app';
 
 const api = axios.create({
   baseURL: BASE_URL,

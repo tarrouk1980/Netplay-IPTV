@@ -275,8 +275,8 @@ function buildFerryAffiliateUrl(origin, dest, date, companyCode) {
     INTERSHIPPING: 'intershipping.es',
     ALGERIE_FERRIES: 'algerieferries.dz',
   };
-  const site = sites[companyCode] || 'easyflight.app/ferries';
-  return `https://${site}/?from=${origin}&to=${dest}&dep=${date}&utm_source=easyflight&utm_medium=cpc`;
+  const site = sites[companyCode] || 'easytravel.app/ferries';
+  return `https://${site}/?from=${origin}&to=${dest}&dep=${date}&utm_source=easytravel&utm_medium=cpc`;
 }
 
 // ─── PUBLIC API ───────────────────────────────────────────────────────────────

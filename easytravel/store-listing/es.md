@@ -1,7 +1,7 @@
-# EasyFlight — Store Listing (Español / Spain)
+# EasyTravel — Store Listing (Español / Spain)
 
 ## Título (30 chars max)
-EasyFlight — Vuelos Magreb
+EasyTravel — Vuelos Magreb
 
 ## Subtítulo iOS (30 chars max)
 Compara vuelos y ferris
@@ -13,11 +13,11 @@ Vuelos baratos España↔Marruecos·Argelia·Túnez. Ryanair, Vueling, ferris.
 
 ## Descripción completa (4000 chars max)
 
-✈ EasyFlight — El comparador de vuelos y ferris para la comunidad magrebí en España
+✈ EasyTravel — El comparador de vuelos y ferris para la comunidad magrebí en España
 
-¿Buscas vuelos baratos entre España y Marruecos, Argelia, Túnez o Egipto? EasyFlight compara en segundos Ryanair, Vueling, Iberia, Air Arabia y más de 30 compañías para encontrarte el mejor precio.
+¿Buscas vuelos baratos entre España y Marruecos, Argelia, Túnez o Egipto? EasyTravel compara en segundos Ryanair, Vueling, Iberia, Air Arabia y más de 30 compañías para encontrarte el mejor precio.
 
-🔥 LO QUE ENCONTRARÁS EN EASYFLIGHT
+🔥 LO QUE ENCONTRARÁS EN EASYTRAVEL
 
 ✈ VUELOS BARATOS ESPAÑA ↔ MAGREB
 • Madrid → Casablanca desde 42€ (Vueling, Iberia, RAM)
@@ -47,7 +47,7 @@ Pagas directamente en el sitio oficial de Ryanair, Vueling o Iberia con tu tarje
 🔒 PRIVACIDAD
 No guardamos datos de pago. No necesitas crear cuenta. Comienza a comparar en 10 segundos.
 
-Descarga EasyFlight gratis ahora ✈
+Descarga EasyTravel gratis ahora ✈
 
 ---
 
@@ -61,7 +61,7 @@ Viajes
 4+
 
 ## Sitio web
-https://easyflight.app
+https://easytravel.app
 
 ## Email soporte
-support@easyflight.app
+support@easytravel.app
