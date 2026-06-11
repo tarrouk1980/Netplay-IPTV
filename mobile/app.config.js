@@ -2,7 +2,7 @@ module.exports = {
   expo: {
     name: 'EasyHotels - Comparer les Prix',
     slug: 'easyway',
-    owner: 'tarekclubiste',
+    owner: 'tarekeasytravel',
     version: '2.0.0',
     orientation: 'portrait',
     icon: './assets/icon.png',
@@ -39,7 +39,7 @@ module.exports = {
       ],
     },
     updates: {
-      url: 'https://u.expo.dev/028c05e2-49a4-41fd-b364-3e5be6bc7ca1',
+      url: 'https://u.expo.dev/NOUVEAU_PROJECT_ID',
       enabled: true,
       checkAutomatically: 'ON_LOAD',
       fallbackToCacheTimeout: 0,
@@ -56,7 +56,7 @@ module.exports = {
     extra: {
       mapboxToken: process.env.MAPBOX_TOKEN || 'pk.eyJ1IjoiZWFzeXdheXRhcmVrIiwiYSI6ImNtcHNuaGJ1ODBoc2Qyc3FxenU0aGFvd3QifQ.K-z5zbFtY8v5lyMUn7TryQ',
       eas: {
-        projectId: '028c05e2-49a4-41fd-b364-3e5be6bc7ca1',
+        projectId: 'NOUVEAU_PROJECT_ID',
       },
     },
   },
