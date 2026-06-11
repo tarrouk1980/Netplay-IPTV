@@ -113,7 +113,7 @@ export default function HomePage() {
           ) : trending.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {trending.map((p: any) => (
-                <ProductCard key={p.id} id={p.id} title={p.title} price={p.price} seller={p.seller?.name || "Vendeur"} rating={0} isVerified={p.seller?.isVerified} category={p.category} />
+                <ProductCard key={p.id} id={p.id} title={p.title} price={p.promoPrice || p.price} originalPrice={p.promoPrice ? p.price : undefined} seller={p.seller?.name || "Vendeur"} rating={0} isVerified={p.seller?.isVerified} category={p.category} image={p.images?.[0]} isBestSeller={p.isBestSeller} isNewArrival={p.isNewArrival} stock={p.stock} stockAlert={p.stockAlert} />
               ))}
             </div>
           ) : (

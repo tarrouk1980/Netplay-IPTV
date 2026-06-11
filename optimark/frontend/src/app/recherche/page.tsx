@@ -165,11 +165,17 @@ function RechercheContent() {
                       key={item.id}
                       id={item.id}
                       title={item.title}
-                      price={item.price}
+                      price={item.promoPrice || item.price}
+                      originalPrice={item.promoPrice ? item.price : undefined}
                       seller={item.seller?.name || "Vendeur"}
                       rating={0}
                       isVerified={item.seller?.isVerified}
                       category={item.category}
+                      image={item.images?.[0]}
+                      isBestSeller={item.isBestSeller}
+                      isNewArrival={item.isNewArrival}
+                      stock={item.stock}
+                      stockAlert={item.stockAlert}
                     />
                   )
                 )}

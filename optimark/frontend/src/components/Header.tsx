@@ -222,11 +222,11 @@ export default function Header() {
             <span className="text-[10px] font-semibold">Services</span>
           </Link>
 
-          <Link href="/auth/connexion" className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition ${pathname.startsWith("/auth") ? "text-rose-800" : "text-slate-400"}`}>
+          <Link href={user ? "/compte" : "/auth/connexion"} className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition ${pathname.startsWith("/compte") || pathname.startsWith("/auth") ? "text-rose-800" : "text-slate-400"}`}>
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
-            <span className="text-[10px] font-semibold">Compte</span>
+            <span className="text-[10px] font-semibold">{user ? user.name.split(" ")[0] : "Compte"}</span>
           </Link>
         </div>
       </nav>
