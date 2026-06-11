@@ -39,6 +39,7 @@ const hotelLoyaltyRoutes = require('./routes/hotelLoyalty');
 const priceAlertsRoutes = require('./routes/priceAlerts');
 const seoHeaders = require('./middleware/seoHeaders');
 const analyticsRoutes = require('./routes/analytics');
+const newsletterRoutes = require('./routes/newsletter');
 
 const app = express();
 
@@ -87,6 +88,7 @@ app.use('/api/currency', currencyRoutes);
 app.use('/api/hotel-loyalty', hotelLoyaltyRoutes);
 app.use('/api/price-alerts', priceAlertsRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/provider', providerRoutes);
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/support', require('./routes/support'));
