@@ -32,7 +32,8 @@ export default function LiveSessionPage() {
 
   useEffect(() => {
     fetch(`/api/live/${id}`)
-      .then((r) => r.json())
+      .then((r) => r.text())
+      .then((t) => { try { return JSON.parse(t); } catch { return {}; } })
       .then((d) => {
         setSession(d.data);
         setViewers(d.data?.viewerCount || 0);

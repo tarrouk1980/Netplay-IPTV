@@ -19,7 +19,8 @@ export default function VendeurLivePage() {
     if (!token) { router.push("/auth/connexion"); return; }
     const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
     fetch(`${base}/live/my`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => r.json())
+      .then((r) => r.text())
+      .then((t) => { try { return JSON.parse(t); } catch { return {}; } })
       .then((d) => setHistory(d.data || []))
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -38,7 +39,8 @@ export default function VendeurLivePage() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ title, products: productIds }),
       });
-      const json = await res.json();
+      const text = await res.text();
+      const json = text ? JSON.parse(text) : {};
       if (json.success) {
         router.push(`/live/${json.data.id}`);
       } else {

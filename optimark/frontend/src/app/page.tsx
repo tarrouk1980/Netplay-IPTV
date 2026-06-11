@@ -52,7 +52,7 @@ export default function HomePage() {
         setLoading(false);
       }
     };
-    fetchAll();
+    fetchAll().catch(() => {});
   }, []);
 
   return (

@@ -36,7 +36,8 @@ export default function VendeurAnalyticsPage() {
     fetch(`/api/analytics/vendor?period=${period}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((r) => r.json())
+      .then((r) => r.text())
+      .then((t) => { try { return JSON.parse(t); } catch { return {}; } })
       .then((d) => setAnalytics(d.data))
       .catch(() => {})
       .finally(() => setLoading(false));
