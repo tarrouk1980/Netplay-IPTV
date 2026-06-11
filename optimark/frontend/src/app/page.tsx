@@ -28,10 +28,11 @@ export default function HomePage() {
   useEffect(() => {
     const fetchAll = async () => {
       try {
+        const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
         const [tRes, lRes, sRes] = await Promise.all([
-          fetch("/api/recommendations/trending?limit=4"),
-          fetch("/api/live"),
-          fetch("/api/recommendations/services?limit=4"),
+          fetch(`${base}/recommendations/trending?limit=4`),
+          fetch(`${base}/live`),
+          fetch(`${base}/recommendations/services?limit=4`),
         ]);
         const [tData, lData, sData] = await Promise.all([tRes.json(), lRes.json(), sRes.json()]);
         setTrending(tData.data || []);

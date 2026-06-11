@@ -95,14 +95,25 @@ export default function FacturePage({ params }: { params: Promise<{ id: string }
         <div className="grid grid-cols-2 gap-8 mb-10">
           <div>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Facturé à</p>
-            <p className="font-bold text-slate-900">{order.buyer?.name}</p>
+            <p className="font-bold text-slate-900">{order.deliveryAddress?.fullName || order.buyer?.name}</p>
             <p className="text-slate-600 text-sm">{order.buyer?.email}</p>
-            {order.buyer?.phone && <p className="text-slate-600 text-sm">{order.buyer.phone}</p>}
+            {(order.deliveryAddress?.phone || order.buyer?.phone) && (
+              <p className="text-slate-600 text-sm">{order.deliveryAddress?.phone || order.buyer.phone}</p>
+            )}
+            {order.deliveryAddress?.address && (
+              <p className="text-slate-600 text-sm mt-1">{order.deliveryAddress.address}</p>
+            )}
+            {order.deliveryAddress?.city && (
+              <p className="text-slate-600 text-sm">{order.deliveryAddress.city}{order.deliveryAddress.postalCode ? ` ${order.deliveryAddress.postalCode}` : ""}, Tunisie</p>
+            )}
           </div>
           <div>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Paiement</p>
             <p className="font-bold text-slate-900">{PAYMENT_LABELS[order.paymentMethod] || order.paymentMethod}</p>
             <p className="text-slate-600 text-sm">Réf. commande : #{order.id.slice(0, 8).toUpperCase()}</p>
+            {order.deliveryAddress?.notes && (
+              <p className="text-slate-500 text-xs mt-2 italic">"{order.deliveryAddress.notes}"</p>
+            )}
           </div>
         </div>
 

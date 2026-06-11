@@ -17,7 +17,8 @@ export default function VendeurLivePage() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) { router.push("/auth/connexion"); return; }
-    fetch("/api/live/my", { headers: { Authorization: `Bearer ${token}` } })
+    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+    fetch(`${base}/live/my`, { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => r.json())
       .then((d) => setHistory(d.data || []))
       .catch(() => {})
@@ -31,7 +32,8 @@ export default function VendeurLivePage() {
     const token = localStorage.getItem("token");
     try {
       const productIds = products.split(",").map((s) => s.trim()).filter(Boolean);
-      const res = await fetch("/api/live", {
+      const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const res = await fetch(`${base}/live`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ title, products: productIds }),
