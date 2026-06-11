@@ -87,7 +87,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const seller = product.seller?.name || "Vendeur";
   const isVerified = !!product.seller?.isVerified;
   const rating = product.rating || 4.5;
-  const reviewCount = product.reviewCount || MOCK_REVIEWS.length;
+  const reviewCount = product.reviewCount || reviews.length;
 
   const handleAddToCart = () => {
     addItem({ id: product.id, title: product.title, price: product.price, seller, image: images[0] });
