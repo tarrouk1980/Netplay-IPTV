@@ -175,7 +175,7 @@ export default function HomePageFR() {
               <h2 style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginLeft: 4 }}>Vous rentrez au bled cet été ? 🇩🇿🇲🇦🇹🇳</h2>
             </div>
             <p style={{ color: 'rgba(255,255,255,0.9)', fontSize: 16, maxWidth: 560 }}>
-              Pour la communauté maghrébine en France 🇫🇷, Belgique 🇧🇪 et Luxembourg 🇱🇺 — Trouvez le meilleur hôtel et comparez les prix en quelques secondes.
+              Pour la communauté maghrébine en France 🇫🇷, Belgique 🇧🇪, Luxembourg 🇱🇺 et Suisse romande 🇨🇭 — Trouvez le meilleur hôtel et comparez les prix en quelques secondes.
             </p>
           </div>
           <button

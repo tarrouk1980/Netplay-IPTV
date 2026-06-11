@@ -4,7 +4,7 @@
 
 | Market | Lang | Diaspora Target | Route | Est. Monthly Searches |
 |--------|------|-----------------|-------|-----------------------|
-| 🇫🇷🇧🇪🇱🇺 France + Belgique + Luxembourg | FR | 3.65M diaspora (Algerian 1.7M + Moroccan 1.6M + Tunisian 400k + Belgian 650k + Luxembourg 50k) | /fr | 53,000+ |
+| 🇫🇷🇧🇪🇱🇺🇨🇭 France + Belgique + Luxembourg + Suisse romande | FR | 3.8M diaspora — /fr | /fr | 53,000+ |
 | 🇪🇸 Espagne | ES | Moroccan (900k+) | /es | 15,000+ |
 | 🇮🇹 Italie | IT | Moroccan (430k) | /it | 7,000+ |
 | 🇩🇪 Deutschland | DE | Moroccan (130k) + Tunisian (50k) | /de | 5,000+ |

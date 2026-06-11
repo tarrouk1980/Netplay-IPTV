@@ -68,7 +68,7 @@ function LanguageDetector() {
     const browserLang = (navigator.language || navigator.userLanguage || '').toLowerCase()
     let target = null
     if (browserLang.startsWith('es')) target = '/es'
-    else if (browserLang.startsWith('fr') || browserLang === 'nl-be' || browserLang.startsWith('lb') || browserLang === 'fr-lu') target = '/fr'
+    else if (browserLang.startsWith('fr') || browserLang === 'nl-be' || browserLang.startsWith('lb') || browserLang === 'fr-lu' || browserLang === 'fr-ch') target = '/fr'
     else if (browserLang.startsWith('it')) target = '/it'
     else if (browserLang.startsWith('de')) target = '/de'
 
@@ -123,6 +123,8 @@ export default function App() {
         <Route path="/be" element={<Navigate to="/fr" replace />} />
         {/* ── Luxembourg — redirects to /fr ── */}
         <Route path="/lu" element={<Navigate to="/fr" replace />} />
+        {/* ── French Switzerland — redirects to /fr ── */}
+        <Route path="/ch" element={<Navigate to="/fr" replace />} />
 
         {/* ── Monetization & admin ── */}
         <Route path="/setup/affiliates" element={<AffiliateSetupPage />} />
