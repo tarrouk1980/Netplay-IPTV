@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import HomeScreen           from './src/screens/HomeScreen';
 import FlightResultsScreen  from './src/screens/FlightResultsScreen';
@@ -13,6 +14,7 @@ import PriceCalendarScreen  from './src/screens/PriceCalendarScreen';
 import InspireScreen        from './src/screens/InspireScreen';
 import AlertsScreen         from './src/screens/AlertsScreen';
 import BookmarksScreen      from './src/screens/BookmarksScreen';
+import OnboardingScreen     from './src/screens/OnboardingScreen';
 
 import { registerForPushNotifications } from './src/services/notifications';
 
@@ -37,9 +39,26 @@ const SCREEN_OPTIONS = {
 };
 
 export default function App() {
+  const [showOnboarding, setShowOnboarding] = useState(null);
+
   useEffect(() => {
     registerForPushNotifications().catch(() => {});
+    AsyncStorage.getItem('onboarding_done').then((val) => {
+      setShowOnboarding(val !== '1');
+    }).catch(() => setShowOnboarding(false));
   }, []);
+
+  if (showOnboarding === null) return null; // splash
+
+  if (showOnboarding) {
+    return (
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <OnboardingScreen onDone={() => setShowOnboarding(false)} />
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    );
+  }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '../theme/colors';
+import CompareLinks from '../components/CompareLinks';
 
 const SORT_OPTIONS = [
   { key: 'price',     label: 'Prix ↑' },
@@ -114,6 +115,12 @@ function FlightCard({ flight, onPress }) {
           <Text style={s.bookBtnTxt}>Réserver →</Text>
         </TouchableOpacity>
       </View>
+      <CompareLinks
+        origin={flight.origin.code}
+        dest={flight.destination.code}
+        date={flight.departure.date}
+        passengers={1}
+      />
     </TouchableOpacity>
   );
 }
