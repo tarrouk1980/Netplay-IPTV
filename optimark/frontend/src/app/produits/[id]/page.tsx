@@ -10,16 +10,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
 
-const MOCK_REVIEWS = [
-  { id: 1, author: "Sami B.", rating: 5, comment: "Produit excellent, conforme à la description. Livraison rapide.", date: "15 mai 2025" },
-  { id: 2, author: "Rania M.", rating: 4, comment: "Très bon rapport qualité/prix. Je recommande ce vendeur.", date: "3 mai 2025" },
-  { id: 3, author: "Youssef K.", rating: 5, comment: "Parfait ! Je suis très satisfait de mon achat.", date: "22 avril 2025" },
-];
 
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [product, setProduct] = useState<any>(null);
   const [similar, setSimilar] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [qty, setQty] = useState(1);
   const [activeImg, setActiveImg] = useState(0);
@@ -41,11 +37,13 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       api.get(`/products/${id}`).catch(() => null),
       api.get(`/recommendations/similar/${id}?limit=4`).catch(() => null),
       user ? api.get(`/favorites/${id}/status`).catch(() => null) : Promise.resolve(null),
-    ]).then(([pRes, sRes, fRes]) => {
+      api.get(`/reviews/product/${id}`).catch(() => null),
+    ]).then(([pRes, sRes, fRes, rRes]) => {
       if (!mounted) return;
       setProduct(pRes?.data?.data || null);
       setSimilar(sRes?.data?.data || []);
       setFavorited(fRes?.data?.favorited || false);
+      setReviews(rRes?.data?.data || []);
       setLoading(false);
     });
 
@@ -163,15 +161,29 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               <h1 className="text-2xl font-black text-slate-900 mt-1">{product.title}</h1>
             </div>
 
-            <div className="flex items-center gap-3">
-              <span className="text-3xl font-black text-rose-800">{Number(product.price).toFixed(2)} <span className="text-base font-bold">TND</span></span>
-              {product.originalPrice && (
-                <span className="text-slate-400 text-base line-through">{Number(product.originalPrice).toFixed(2)} TND</span>
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-3xl font-black text-rose-800">
+                {Number(product.promoPrice || product.price).toFixed(2)} <span className="text-base font-bold">TND</span>
+              </span>
+              {product.promoPrice && (
+                <>
+                  <span className="text-slate-400 text-base line-through">{Number(product.price).toFixed(2)} TND</span>
+                  <span className="bg-green-500 text-white text-xs font-black px-2 py-0.5 rounded-full">
+                    -{Math.round((1 - product.promoPrice / product.price) * 100)}%
+                  </span>
+                </>
               )}
+            </div>
+            {/* Stock badges */}
+            <div className="flex gap-2 flex-wrap">
+              {product.isBestSeller && <span className="bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1 rounded-full">🏆 Best Seller</span>}
+              {product.isNewArrival && <span className="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full">🆕 Nouveau</span>}
+              {product.stock === 0 && <span className="bg-red-100 text-red-700 text-xs font-bold px-3 py-1 rounded-full">Épuisé</span>}
+              {product.stock > 0 && product.stock <= (product.stockAlert || 5) && <span className="bg-orange-100 text-orange-700 text-xs font-bold px-3 py-1 rounded-full">⚠️ Plus que {product.stock} en stock !</span>}
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="font-medium text-slate-700">{seller}</span>
+              <Link href={`/boutique/${product.sellerId}`} className="font-medium text-rose-800 hover:underline">{seller}</Link>
               {isVerified && <span className="text-green-600 text-xs font-semibold bg-green-50 px-2 py-0.5 rounded-full">✓ Vérifié</span>}
             </div>
 
@@ -223,28 +235,37 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
         {/* Reviews */}
         <section className="mt-14">
-          <h2 className="text-xl font-black text-slate-900 mb-6">Avis clients</h2>
-          <div className="space-y-4">
-            {MOCK_REVIEWS.map((review) => (
-              <div key={review.id} className="bg-white border border-slate-100 rounded-xl p-5" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 bg-rose-100 rounded-full flex items-center justify-center font-bold text-rose-800 text-sm">
-                      {review.author.charAt(0)}
+          <h2 className="text-xl font-black text-slate-900 mb-6">
+            Avis clients {reviews.length > 0 && <span className="text-slate-400 font-normal text-base">({reviews.length})</span>}
+          </h2>
+          {reviews.length === 0 ? (
+            <div className="bg-slate-50 rounded-xl p-8 text-center text-slate-400">
+              <p className="text-3xl mb-2">💬</p>
+              <p>Aucun avis pour ce produit pour le moment.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {reviews.map((review: any) => (
+                <div key={review.id} className="bg-white border border-slate-100 rounded-xl p-5" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 bg-rose-100 rounded-full flex items-center justify-center font-bold text-rose-800 text-sm">
+                        {review.user?.name?.charAt(0) || "?"}
+                      </div>
+                      <span className="font-semibold text-slate-800">{review.user?.name || "Anonyme"}</span>
                     </div>
-                    <span className="font-semibold text-slate-800">{review.author}</span>
+                    <span className="text-slate-400 text-xs">{new Date(review.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</span>
                   </div>
-                  <span className="text-slate-400 text-xs">{review.date}</span>
+                  <div className="flex items-center gap-1 mb-2">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <span key={i} className={i < review.rating ? "text-amber-400" : "text-slate-200"}>★</span>
+                    ))}
+                  </div>
+                  {review.comment && <p className="text-slate-600 text-sm">{review.comment}</p>}
                 </div>
-                <div className="flex items-center gap-1 mb-2">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <span key={i} className={i < review.rating ? "text-amber-400" : "text-slate-200"}>★</span>
-                  ))}
-                </div>
-                <p className="text-slate-600 text-sm">{review.comment}</p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Similar products */}
@@ -253,7 +274,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             <h2 className="text-xl font-black text-slate-900 mb-6">Produits similaires</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {similar.map((p: any) => (
-                <ProductCard key={p.id} id={p.id} title={p.title} price={p.price} seller={p.seller?.name || "Vendeur"} rating={0} isVerified={p.seller?.isVerified} category={p.category} image={p.image} />
+                <ProductCard key={p.id} id={p.id} title={p.title} price={p.promoPrice || p.price} originalPrice={p.promoPrice ? p.price : undefined} seller={p.seller?.name || "Vendeur"} rating={0} isVerified={p.seller?.isVerified} category={p.category} image={p.images?.[0]} isBestSeller={p.isBestSeller} stock={p.stock} stockAlert={p.stockAlert} />
               ))}
             </div>
           </section>

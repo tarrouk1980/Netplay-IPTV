@@ -38,15 +38,19 @@ export default function ProduitsPage() {
           setProducts(real.map((p: any) => ({
             id: p.id,
             title: p.title,
-            price: p.price,
-            originalPrice: p.originalPrice,
+            price: p.promoPrice || p.price,
+            originalPrice: p.promoPrice ? p.price : undefined,
+            sellerId: p.sellerId,
             seller: p.seller?.name || "Vendeur",
             rating: p.rating || 0,
             reviewCount: p.reviewCount || 0,
             isVerified: !!p.seller?.isVerified,
             category: p.category,
-            image: p.image,
-            badge: p.badge,
+            image: p.images?.[0] || p.image,
+            isBestSeller: !!p.isBestSeller,
+            isNewArrival: !!p.isNewArrival,
+            stock: p.stock,
+            stockAlert: p.stockAlert,
           })));
         }
       })
