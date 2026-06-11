@@ -1,0 +1,79 @@
+import React from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { Text } from "react-native";
+import { useAuth } from "../contexts/AuthContext";
+
+import HomeScreen from "../screens/buyer/HomeScreen";
+import ProductDetailScreen from "../screens/buyer/ProductDetailScreen";
+import CartScreen from "../screens/buyer/CartScreen";
+import OrdersScreen from "../screens/buyer/OrdersScreen";
+import OrderDetailScreen from "../screens/buyer/OrderDetailScreen";
+import ProfileScreen from "../screens/buyer/ProfileScreen";
+import AuthScreen from "../screens/AuthScreen";
+import SellerDashboardScreen from "../screens/seller/SellerDashboardScreen";
+import SellerProductsScreen from "../screens/seller/SellerProductsScreen";
+import SellerProductFormScreen from "../screens/seller/SellerProductFormScreen";
+import SellerOrdersScreen from "../screens/seller/SellerOrdersScreen";
+import { useCart } from "../contexts/CartContext";
+
+const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
+
+const ROSE = "#9f1239";
+
+function BuyerTabs() {
+  const { items } = useCart();
+  return (
+    <Tab.Navigator screenOptions={{
+      tabBarActiveTintColor: ROSE,
+      tabBarInactiveTintColor: "#94a3b8",
+      tabBarStyle: { borderTopWidth: 1, borderTopColor: "#f1f5f9", height: 60, paddingBottom: 8 },
+      headerStyle: { backgroundColor: "#fff" },
+      headerTitleStyle: { fontWeight: "800", color: "#1e293b" },
+    }}>
+      <Tab.Screen name="Home" component={HomeScreen} options={{ title: "Accueil", tabBarLabel: "Accueil", tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>🏠</Text> }} />
+      <Tab.Screen name="Cart" component={CartScreen} options={{
+        title: "Panier", tabBarLabel: "Panier",
+        tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>🛒</Text>,
+        tabBarBadge: items.length > 0 ? items.length : undefined,
+      }} />
+      <Tab.Screen name="Orders" component={OrdersScreen} options={{ title: "Commandes", tabBarLabel: "Commandes", tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>📦</Text> }} />
+      <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: "Profil", tabBarLabel: "Profil", tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>👤</Text> }} />
+    </Tab.Navigator>
+  );
+}
+
+function SellerTabs() {
+  return (
+    <Tab.Navigator screenOptions={{
+      tabBarActiveTintColor: ROSE,
+      tabBarInactiveTintColor: "#94a3b8",
+      tabBarStyle: { borderTopWidth: 1, borderTopColor: "#f1f5f9", height: 60, paddingBottom: 8 },
+      headerStyle: { backgroundColor: "#9f1239" },
+      headerTitleStyle: { fontWeight: "800", color: "#fff" },
+      headerTintColor: "#fff",
+    }}>
+      <Tab.Screen name="SellerDashboard" component={SellerDashboardScreen} options={{ title: "Dashboard", tabBarLabel: "Dashboard", tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>📊</Text> }} />
+      <Tab.Screen name="SellerProducts" component={SellerProductsScreen} options={{ title: "Mes produits", tabBarLabel: "Produits", tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>📋</Text> }} />
+      <Tab.Screen name="SellerOrders" component={SellerOrdersScreen} options={{ title: "Commandes", tabBarLabel: "Commandes", tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>📬</Text> }} />
+    </Tab.Navigator>
+  );
+}
+
+export default function AppNavigator() {
+  return (
+    <NavigationContainer>
+      <Stack.Navigator screenOptions={{ headerStyle: { backgroundColor: "#fff" }, headerTitleStyle: { fontWeight: "800" }, headerTintColor: ROSE }}>
+        <Stack.Screen name="BuyerTab" component={BuyerTabs} options={{ headerShown: false }} />
+        <Stack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ title: "Produit" }} />
+        <Stack.Screen name="OrderDetail" component={OrderDetailScreen} options={{ title: "Commande" }} />
+        <Stack.Screen name="Auth" component={AuthScreen} options={{ title: "Connexion" }} />
+        <Stack.Screen name="SellerTab" component={SellerTabs} options={{ headerShown: false }} />
+        <Stack.Screen name="SellerAddProduct" component={SellerProductFormScreen} options={{ title: "Nouveau produit" }} />
+        <Stack.Screen name="SellerEditProduct" component={SellerProductFormScreen} options={{ title: "Modifier le produit" }} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
