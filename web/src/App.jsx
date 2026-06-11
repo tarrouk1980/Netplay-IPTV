@@ -57,7 +57,7 @@ function LanguageDetector() {
     // Check saved user preference first
     const saved = localStorage.getItem('easyhotels_lang')
     if (saved && saved !== 'default') {
-      const map = { es: '/es', fr: '/fr', it: '/it', de: '/de', be: '/fr' }
+      const map = { es: '/es', fr: '/fr', it: '/it', de: '/de', be: '/fr', lb: '/fr' }
       if (map[saved]) {
         sessionStorage.setItem('lang_redirected', '1')
         navigate(map[saved], { replace: true })
@@ -68,7 +68,7 @@ function LanguageDetector() {
     const browserLang = (navigator.language || navigator.userLanguage || '').toLowerCase()
     let target = null
     if (browserLang.startsWith('es')) target = '/es'
-    else if (browserLang.startsWith('fr') || browserLang === 'nl-be') target = '/fr'
+    else if (browserLang.startsWith('fr') || browserLang === 'nl-be' || browserLang.startsWith('lb') || browserLang === 'fr-lu') target = '/fr'
     else if (browserLang.startsWith('it')) target = '/it'
     else if (browserLang.startsWith('de')) target = '/de'
 
@@ -121,6 +121,8 @@ export default function App() {
 
         {/* ── Belgium — redirects to /fr ── */}
         <Route path="/be" element={<Navigate to="/fr" replace />} />
+        {/* ── Luxembourg — redirects to /fr ── */}
+        <Route path="/lu" element={<Navigate to="/fr" replace />} />
 
         {/* ── Monetization & admin ── */}
         <Route path="/setup/affiliates" element={<AffiliateSetupPage />} />
