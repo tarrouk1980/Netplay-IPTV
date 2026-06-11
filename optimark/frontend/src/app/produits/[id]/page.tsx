@@ -225,6 +225,14 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               </button>
             </div>
 
+            {/* Marque */}
+            {product.brand && (
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-slate-500">Marque :</span>
+                <span className="font-bold text-slate-800">{product.brand}</span>
+              </div>
+            )}
+
             <div className="bg-slate-50 rounded-xl p-4 text-sm text-slate-600 space-y-1">
               <p>✅ Livraison disponible partout en Tunisie — OPTIMARK Express 24h</p>
               <p>✅ Paiement sécurisé (Konnect, Paymee, Cash à la livraison)</p>
@@ -232,6 +240,25 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             </div>
           </div>
         </div>
+
+        {/* Fiche technique */}
+        {product.specs && typeof product.specs === 'object' && Object.keys(product.specs).length > 0 && (
+          <section className="mt-10">
+            <h2 className="text-xl font-black text-slate-900 mb-4">Fiche technique</h2>
+            <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden" style={{boxShadow:"0 2px 8px rgba(0,0,0,0.05)"}}>
+              <table className="w-full text-sm">
+                <tbody>
+                  {Object.entries(product.specs as Record<string,string>).map(([key, val], i) => (
+                    <tr key={key} className={i % 2 === 0 ? "bg-white" : "bg-slate-50"}>
+                      <td className="px-5 py-3 font-semibold text-slate-600 w-1/3 border-r border-slate-100">{key}</td>
+                      <td className="px-5 py-3 text-slate-800">{val}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
 
         {/* Reviews */}
         <section className="mt-14">

@@ -17,6 +17,7 @@ function ProduitsContent() {
   const [search, setSearch] = useState("");
   const [selectedCat, setSelectedCat] = useState(searchParams.get("cat") || "Tous");
   const [sort, setSort] = useState("recent");
+  const [brandFilter, setBrandFilter] = useState("");
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
@@ -41,6 +42,7 @@ function ProduitsContent() {
           isVerified: !!p.seller?.isVerified,
           category: p.category,
           image: p.images?.[0],
+          brand: p.brand || "",
           isBestSeller: !!p.isBestSeller,
           isNewArrival: !!p.isNewArrival,
           stock: p.stock,
@@ -58,11 +60,13 @@ function ProduitsContent() {
     .filter(p => !minPrice || p.price >= parseFloat(minPrice))
     .filter(p => !maxPrice || p.price <= parseFloat(maxPrice))
     .filter(p => !search || p.title.toLowerCase().includes(search.toLowerCase()) || p.seller.toLowerCase().includes(search.toLowerCase()))
+    .filter(p => !brandFilter || (p.brand || "").toLowerCase().includes(brandFilter.toLowerCase()))
     .sort((a, b) => {
       if (sort === "asc") return a.price - b.price;
       if (sort === "desc") return b.price - a.price;
       if (sort === "rating") return b.rating - a.rating;
       if (sort === "seller") return a.seller.localeCompare(b.seller);
+      if (sort === "brand") return (a.brand || "").localeCompare(b.brand || "");
       return 0; // recent
     });
 
@@ -120,6 +124,12 @@ function ProduitsContent() {
               <p className="font-black text-slate-800 text-sm uppercase tracking-wider">Filtres</p>
 
               <div>
+                <p className="font-semibold text-slate-700 mb-2 text-sm">Marque</p>
+                <input type="text" value={brandFilter} onChange={e => setBrandFilter(e.target.value)} placeholder="ex: Samsung, Nike..."
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-100 focus:border-rose-800" />
+              </div>
+
+              <div>
                 <p className="font-semibold text-slate-700 mb-3 text-sm">Prix (TND)</p>
                 <div className="flex gap-2">
                   <input type="number" value={minPrice} onChange={e => setMinPrice(e.target.value)} placeholder="Min"
@@ -157,7 +167,7 @@ function ProduitsContent() {
                 </div>
               )}
 
-              <button onClick={() => { setSearch(""); setSelectedCat("Tous"); setVerifiedOnly(false); setMinPrice(""); setMaxPrice(""); setCompare([]); }}
+              <button onClick={() => { setSearch(""); setSelectedCat("Tous"); setVerifiedOnly(false); setMinPrice(""); setMaxPrice(""); setBrandFilter(""); setCompare([]); }}
                 className="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold py-2 rounded-xl text-sm transition">
                 Réinitialiser
               </button>
@@ -174,6 +184,7 @@ function ProduitsContent() {
                 <option value="desc">Prix décroissant</option>
                 <option value="rating">Mieux notés</option>
                 <option value="seller">Par vendeur (A→Z)</option>
+                <option value="brand">Par marque (A→Z)</option>
               </select>
             </div>
 

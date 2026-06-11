@@ -35,6 +35,7 @@ function ComparerContent() {
     { label: "Stock", key: (p: any) => p.stock > 0 ? `${p.stock} disponibles` : "Épuisé", highlight: (vals: string[]) => vals.map(v => v !== "Épuisé") },
     { label: "Best Seller", key: (p: any) => p.isBestSeller ? "🏆 Oui" : "Non", highlight: (vals: string[]) => vals.map(v => v.includes("Oui")) },
     { label: "Nouveau", key: (p: any) => p.isNewArrival ? "🆕 Oui" : "Non", highlight: () => [] },
+    { label: "Marque", key: (p: any) => p.brand || "—", highlight: () => [] },
   ];
 
   return (
@@ -108,6 +109,29 @@ function ComparerContent() {
                 </div>
               ))}
             </div>
+
+            {/* Specs rows — union of all spec keys */}
+            {(() => {
+              const allKeys = Array.from(new Set(products.flatMap(p => p.specs && typeof p.specs === 'object' ? Object.keys(p.specs) : [])));
+              if (!allKeys.length) return null;
+              return (
+                <>
+                  <div className={`grid bg-slate-900 text-white`} style={{gridTemplateColumns:`200px repeat(${products.length}, 1fr)`}}>
+                    <div className="px-4 py-2 text-xs font-bold uppercase tracking-wide col-span-full border-t border-slate-700">Fiche technique</div>
+                  </div>
+                  {allKeys.map(key => (
+                    <div key={key} className={`grid border-b border-slate-50`} style={{gridTemplateColumns:`200px repeat(${products.length}, 1fr)`}}>
+                      <div className="px-4 py-3 bg-slate-50 border-r border-slate-100 text-sm font-semibold text-slate-600">{key}</div>
+                      {products.map(p => (
+                        <div key={p.id} className="px-4 py-3 text-sm text-slate-700 text-center border-r border-slate-50 last:border-r-0">
+                          {(p.specs as any)?.[key] || "—"}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </>
+              );
+            })()}
           </div>
         )}
       </main>

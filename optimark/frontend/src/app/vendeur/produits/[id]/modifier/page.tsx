@@ -13,7 +13,8 @@ export default function ModifierProduitPage({ params }: { params: Promise<{ id: 
   const { id } = use(params);
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [form, setForm] = useState({ title: "", description: "", price: "", promoPrice: "", category: "", stock: "", stockAlert: "5", images: "", isBestSeller: false, isNewArrival: false });
+  const [form, setForm] = useState({ title: "", description: "", price: "", promoPrice: "", brand: "", category: "", stock: "", stockAlert: "5", images: "", isBestSeller: false, isNewArrival: false });
+  const [specs, setSpecs] = useState<{key:string;val:string}[]>([{key:"",val:""}]);
   const [submitting, setSubmitting] = useState(false);
   const [fetching, setFetching] = useState(true);
 
@@ -28,6 +29,7 @@ export default function ModifierProduitPage({ params }: { params: Promise<{ id: 
         description: p.description || "",
         price: String(p.price || ""),
         promoPrice: p.promoPrice ? String(p.promoPrice) : "",
+        brand: p.brand || "",
         category: p.category || "",
         stock: String(p.stock ?? ""),
         stockAlert: String(p.stockAlert ?? 5),
@@ -35,6 +37,10 @@ export default function ModifierProduitPage({ params }: { params: Promise<{ id: 
         isBestSeller: !!p.isBestSeller,
         isNewArrival: !!p.isNewArrival,
       });
+      if (p.specs && typeof p.specs === 'object') {
+        const entries = Object.entries(p.specs as Record<string,string>);
+        setSpecs(entries.length ? entries.map(([key,val]) => ({key,val})) : [{key:"",val:""}]);
+      }
     }).catch(() => router.back()).finally(() => setFetching(false));
   }, [user, loading, id]);
 
@@ -47,12 +53,14 @@ export default function ModifierProduitPage({ params }: { params: Promise<{ id: 
         description: form.description.trim(),
         price: parseFloat(form.price),
         promoPrice: form.promoPrice ? parseFloat(form.promoPrice) : null,
+        brand: form.brand.trim() || null,
         category: form.category,
         stock: parseInt(form.stock),
         stockAlert: parseInt(form.stockAlert),
         images: form.images.split("\n").map(u => u.trim()).filter(Boolean),
         isBestSeller: form.isBestSeller,
         isNewArrival: form.isNewArrival,
+        specs: Object.fromEntries(specs.filter(s => s.key.trim()).map(s => [s.key.trim(), s.val.trim()])),
       });
       router.push("/vendeur/produits");
     } catch {
@@ -115,6 +123,11 @@ export default function ModifierProduitPage({ params }: { params: Promise<{ id: 
           </div>
 
           <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Marque</label>
+            <input type="text" value={form.brand} onChange={set("brand")} placeholder="ex: Samsung, Nike, Artisanat local..." className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-rose-200" />
+          </div>
+
+          <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Catégorie *</label>
             <select value={form.category} onChange={set("category")} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-rose-200 bg-white">
               <option value="">Sélectionner</option>
@@ -138,6 +151,22 @@ export default function ModifierProduitPage({ params }: { params: Promise<{ id: 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Images (URLs, une par ligne)</label>
             <textarea value={form.images} onChange={set("images")} rows={3} placeholder="https://..." className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-rose-200 resize-none" />
+          </div>
+
+          <div className="bg-slate-50 rounded-xl p-4 space-y-3">
+            <p className="text-sm font-semibold text-slate-700">Fiche technique</p>
+            <p className="text-xs text-slate-400">Ajoutez les caractéristiques techniques (ex: Poids, Couleur, Matière...)</p>
+            {specs.map((s, i) => (
+              <div key={i} className="flex gap-2">
+                <input value={s.key} onChange={e => setSpecs(prev => prev.map((x,j) => j===i ? {...x,key:e.target.value} : x))}
+                  placeholder="Caractéristique" className="w-1/2 border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-rose-200" />
+                <input value={s.val} onChange={e => setSpecs(prev => prev.map((x,j) => j===i ? {...x,val:e.target.value} : x))}
+                  placeholder="Valeur" className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-rose-200" />
+                {specs.length > 1 && <button type="button" onClick={() => setSpecs(prev => prev.filter((_,j) => j!==i))} className="text-slate-400 hover:text-red-500 px-1">✕</button>}
+              </div>
+            ))}
+            <button type="button" onClick={() => setSpecs(prev => [...prev, {key:"",val:""}])}
+              className="text-sm text-rose-800 font-semibold hover:underline">+ Ajouter une ligne</button>
           </div>
 
           <div className="flex gap-3 pt-2">
