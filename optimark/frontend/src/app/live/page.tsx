@@ -12,7 +12,8 @@ export default function LivePage() {
 
   useEffect(() => {
     fetch((process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api') + '/live')
-      .then((r) => r.json())
+      .then((r) => r.text())
+      .then((t) => { try { return JSON.parse(t); } catch { return {}; } })
       .then((d) => setSessions(d.data || []))
       .catch(() => setSessions([]))
       .finally(() => setLoading(false));

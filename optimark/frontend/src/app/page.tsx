@@ -29,12 +29,18 @@ export default function HomePage() {
     const fetchAll = async () => {
       try {
         const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-        const [tRes, lRes, sRes] = await Promise.all([
-          fetch(`${base}/recommendations/trending?limit=4`),
-          fetch(`${base}/live`),
-          fetch(`${base}/recommendations/services?limit=4`),
+        const safeFetch = async (url: string) => {
+          try {
+            const r = await fetch(url);
+            const text = await r.text();
+            return text ? JSON.parse(text) : {};
+          } catch { return {}; }
+        };
+        const [tData, lData, sData] = await Promise.all([
+          safeFetch(`${base}/recommendations/trending?limit=4`),
+          safeFetch(`${base}/live`),
+          safeFetch(`${base}/recommendations/services?limit=4`),
         ]);
-        const [tData, lData, sData] = await Promise.all([tRes.json(), lRes.json(), sRes.json()]);
         setTrending(tData.data || []);
         setLives(lData.data || []);
         setServices(sData.data || []);

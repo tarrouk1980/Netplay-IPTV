@@ -37,7 +37,8 @@ function RechercheContent() {
 
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
       const res = await fetch(`${baseUrl}/search?${params}`);
-      const json = await res.json();
+      const text = await res.text();
+      const json = text ? JSON.parse(text) : {};
       setResults(json.data || []);
       setTotal(json.total || 0);
     } catch {
