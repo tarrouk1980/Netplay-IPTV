@@ -143,7 +143,7 @@ export default function MapboxWebView({
   return (
     <View style={[styles.container, style]}>
       <WebView
-        source={{ html }}
+        source={{ html, baseUrl: 'https://api.mapbox.com' }}
         style={styles.webview}
         scrollEnabled={false}
         javaScriptEnabled={true}
@@ -152,6 +152,8 @@ export default function MapboxWebView({
         mixedContentMode="always"
         nestedScrollEnabled={false}
         overScrollMode="never"
+        allowFileAccessFromFileURLs={true}
+        allowUniversalAccessFromFileURLs={true}
         onShouldStartLoadWithRequest={() => true}
       />
     </View>
