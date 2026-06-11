@@ -1,4 +1,4 @@
-import { IsArray, IsEnum, IsNumber, IsString, Min, ValidateNested } from 'class-validator';
+import { IsArray, IsEnum, IsNumber, IsObject, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class OrderItemDto {
@@ -25,4 +25,8 @@ export class CreateOrderDto {
 
   @IsEnum(PaymentMethod)
   paymentMethod: PaymentMethod;
+
+  @IsOptional()
+  @IsObject()
+  deliveryAddress?: Record<string, any>;
 }

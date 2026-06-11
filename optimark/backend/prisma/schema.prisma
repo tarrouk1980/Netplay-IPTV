@@ -104,14 +104,15 @@ model Service {
 }
 
 model Order {
-  id            String        @id @default(uuid())
-  buyerId       String
-  buyer         User          @relation(fields: [buyerId], references: [id])
-  items         OrderItem[]
-  total         Float
-  status        OrderStatus   @default(PENDING)
-  paymentMethod PaymentMethod
-  createdAt     DateTime      @default(now())
+  id              String        @id @default(uuid())
+  buyerId         String
+  buyer           User          @relation(fields: [buyerId], references: [id])
+  items           OrderItem[]
+  total           Float
+  status          OrderStatus   @default(PENDING)
+  paymentMethod   PaymentMethod
+  deliveryAddress Json?
+  createdAt       DateTime      @default(now())
 }
 
 enum OrderStatus {

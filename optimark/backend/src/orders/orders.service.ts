@@ -34,6 +34,7 @@ export class OrdersService {
         buyerId,
         total,
         paymentMethod: dto.paymentMethod as any,
+        deliveryAddress: dto.deliveryAddress || undefined,
         items: { create: itemsData },
       },
       include: { items: { include: { product: true } } },
