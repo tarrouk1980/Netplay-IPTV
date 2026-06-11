@@ -113,7 +113,7 @@ export default function ComptePage() {
 
           {user.role === "SELLER" && (
             <Link
-              href="/vendeur"
+              href="/vendeur/dashboard"
               className="bg-white border border-slate-100 rounded-2xl p-5 flex items-center gap-4 hover:border-rose-300 transition"
               style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
             >
