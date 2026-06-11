@@ -19,6 +19,8 @@ import { PrivacyPolicy, TermsOfService, CookiePolicy } from './pages/es/LegalPag
 // EU expansion pages
 import HomePageFR from './pages/fr/HomePageFR'
 import BlogFR from './pages/fr/BlogFR'
+import BlogPostFR from './pages/fr/BlogPostFR'
+import BlogPostES from './pages/es/BlogPostES'
 import HomePageIT from './pages/it/HomePageIT'
 import HomePageDE from './pages/de/HomePageDE'
 import HomePageBE from './pages/be/HomePageBE'
@@ -100,6 +102,7 @@ export default function App() {
         <Route path="/es" element={<HomePageES />} />
         <Route path="/es/buscar" element={<SearchResultsPageES />} />
         <Route path="/es/blog" element={<BlogES />} />
+        <Route path="/es/blog/:slug" element={<BlogPostES />} />
 
         {/* ── Legal pages (Spain / EU) ── */}
         <Route path="/privacidad" element={<PrivacyPolicy />} />
@@ -109,6 +112,7 @@ export default function App() {
         {/* ── France ── */}
         <Route path="/fr" element={<HomePageFR />} />
         <Route path="/fr/blog" element={<BlogFR />} />
+        <Route path="/fr/blog/:slug" element={<BlogPostFR />} />
 
         {/* ── Italy ── */}
         <Route path="/it" element={<HomePageIT />} />
