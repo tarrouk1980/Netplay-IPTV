@@ -73,6 +73,22 @@ eas build --platform all --profile production
 eas submit --platform all
 ```
 
+> **Avant le build production**, ré-ajouter dans `mobile/app.json` :
+> 1. Les icônes : `"icon": "./assets/icon.png"` + `adaptiveIcon.foregroundImage` (créer le dossier `assets/`)
+> 2. Le plugin AdMob avec tes vrais IDs :
+> ```json
+> "plugins": [
+>   ["expo-notifications", { "color": "#2563EB" }],
+>   ["react-native-google-mobile-ads", {
+>     "androidAppId": "ca-app-pub-XXXX~YYYY",
+>     "iosAppId": "ca-app-pub-XXXX~ZZZZ"
+>   }]
+> ]
+> ```
+> 3. `extra.eas.projectId` (généré par `eas init`)
+>
+> Ces entrées sont retirées du `app.json` de dev car elles cassent `expo start` (assets manquants).
+
 ---
 
 ## Revenus estimés (marché espagnol)

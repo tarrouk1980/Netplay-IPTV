@@ -4,7 +4,6 @@
     "slug": "easyflight",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "primaryColor": "#2563EB",
     "splash": {
@@ -25,39 +24,14 @@
       "package": "com.easyflight.app",
       "versionCode": 1,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0A1628"
       },
       "permissions": [
         "RECEIVE_BOOT_COMPLETED",
         "VIBRATE",
         "INTERNET"
-      ],
-      "googleServicesFile": "./google-services.json"
-    },
-    "scheme": "easyflight",
-    "extra": {
-      "eas": {
-        "projectId": "YOUR_EAS_PROJECT_ID"
-      }
-    },
-    "plugins": [
-      "expo-linear-gradient",
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/notification-icon.png",
-          "color": "#2563EB",
-          "sounds": []
-        }
-      ],
-      [
-        "react-native-google-mobile-ads",
-        {
-          "androidAppId": "ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY",
-          "iosAppId": "ca-app-pub-XXXXXXXXXXXXXXXX~ZZZZZZZZZZ"
-        }
       ]
-    ]
+    },
+    "scheme": "easyflight"
   }
 }
