@@ -24,7 +24,9 @@ const FLIGHT_TIMES = [
   { route: 'Paris → Alger', time: '2h30', icon: '🇩🇿' },
   { route: 'Paris → Casablanca', time: '3h00', icon: '🇲🇦' },
   { route: 'Paris → Tunis', time: '2h45', icon: '🇹🇳' },
-  { route: 'Paris → Marrakech', time: '3h15', icon: '🇲🇦' },
+  { route: 'Bruxelles → Marrakech', time: '3h30', icon: '🇲🇦' },
+  { route: 'Bruxelles → Alger', time: '2h30', icon: '🇩🇿' },
+  { route: 'Bruxelles → Tunis', time: '2h15', icon: '🇹🇳' },
 ]
 
 function useCounterAnimation(target, duration = 2000) {
@@ -170,10 +172,10 @@ export default function HomePageFR() {
               <span style={{ fontSize: 28 }}>🇩🇿</span>
               <span style={{ fontSize: 28 }}>🇲🇦</span>
               <span style={{ fontSize: 28 }}>🇹🇳</span>
-              <h2 style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginLeft: 4 }}>La communauté maghrébine en France</h2>
+              <h2 style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginLeft: 4 }}>Vous rentrez au bled cet été ? 🇩🇿🇲🇦🇹🇳</h2>
             </div>
             <p style={{ color: 'rgba(255,255,255,0.9)', fontSize: 16, maxWidth: 560 }}>
-              Vous rentrez au bled cet été ? Trouvez le meilleur hôtel et comparez les prix en quelques secondes.
+              Pour la communauté maghrébine en France 🇫🇷 et en Belgique 🇧🇪 — Trouvez le meilleur hôtel et comparez les prix en quelques secondes.
             </p>
           </div>
           <button
@@ -188,8 +190,8 @@ export default function HomePageFR() {
       {/* FLIGHT TIMES */}
       <section style={{ background: '#fff', padding: '50px 24px' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <h2 style={{ textAlign: 'center', fontSize: 26, fontWeight: 800, color: '#2d3748', marginBottom: 8 }}>✈️ Vols depuis Paris</h2>
-          <p style={{ textAlign: 'center', color: '#718096', marginBottom: 36 }}>Des destinations proches, à moins de 3h de vol</p>
+          <h2 style={{ textAlign: 'center', fontSize: 26, fontWeight: 800, color: '#2d3748', marginBottom: 8 }}>✈️ Vols depuis Paris et Bruxelles</h2>
+          <p style={{ textAlign: 'center', color: '#718096', marginBottom: 36 }}>Des destinations proches, à moins de 3h30 de vol</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
             {FLIGHT_TIMES.map((f, i) => (
               <div key={i} style={{ background: '#F8F9FA', borderRadius: 12, padding: '20px 16px', textAlign: 'center', border: '1px solid #e2e8f0' }}>
@@ -216,7 +218,7 @@ export default function HomePageFR() {
       <section style={{ padding: '80px 24px', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <h2 style={{ fontSize: 36, fontWeight: 800, color: '#2d3748', marginBottom: 12 }}>🌍 Destinations populaires</h2>
-          <p style={{ color: '#718096', fontSize: 16 }}>Les villes les plus recherchées par la communauté française</p>
+          <p style={{ color: '#718096', fontSize: 16 }}>Les meilleurs prix pour la diaspora maghrébine en France et Belgique</p>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 24 }}>
           {DESTINATIONS.map(d => (

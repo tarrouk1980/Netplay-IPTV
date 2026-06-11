@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import GDPRBanner from './components/GDPRBanner'
@@ -23,7 +23,6 @@ import BlogPostFR from './pages/fr/BlogPostFR'
 import BlogPostES from './pages/es/BlogPostES'
 import HomePageIT from './pages/it/HomePageIT'
 import HomePageDE from './pages/de/HomePageDE'
-import HomePageBE from './pages/be/HomePageBE'
 // Monetization & admin pages
 import AffiliateSetupPage from './pages/AffiliateSetupPage'
 import AdminDashboard from './pages/AdminDashboard'
@@ -58,7 +57,7 @@ function LanguageDetector() {
     // Check saved user preference first
     const saved = localStorage.getItem('easyhotels_lang')
     if (saved && saved !== 'default') {
-      const map = { es: '/es', fr: '/fr', it: '/it', de: '/de', be: '/be' }
+      const map = { es: '/es', fr: '/fr', it: '/it', de: '/de', be: '/fr' }
       if (map[saved]) {
         sessionStorage.setItem('lang_redirected', '1')
         navigate(map[saved], { replace: true })
@@ -69,7 +68,7 @@ function LanguageDetector() {
     const browserLang = (navigator.language || navigator.userLanguage || '').toLowerCase()
     let target = null
     if (browserLang.startsWith('es')) target = '/es'
-    else if (browserLang.startsWith('fr')) target = '/fr'
+    else if (browserLang.startsWith('fr') || browserLang === 'nl-be') target = '/fr'
     else if (browserLang.startsWith('it')) target = '/it'
     else if (browserLang.startsWith('de')) target = '/de'
 
@@ -120,8 +119,8 @@ export default function App() {
         {/* ── Germany ── */}
         <Route path="/de" element={<HomePageDE />} />
 
-        {/* ── Belgium ── */}
-        <Route path="/be" element={<HomePageBE />} />
+        {/* ── Belgium — redirects to /fr ── */}
+        <Route path="/be" element={<Navigate to="/fr" replace />} />
 
         {/* ── Monetization & admin ── */}
         <Route path="/setup/affiliates" element={<AffiliateSetupPage />} />

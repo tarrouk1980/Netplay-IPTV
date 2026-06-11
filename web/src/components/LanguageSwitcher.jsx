@@ -2,16 +2,15 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 
 const LANGUAGES = [
-  { code: 'es', flag: '🇪🇸', label: 'Español', path: '/es' },
-  { code: 'fr', flag: '🇫🇷', label: 'Français', path: '/fr' },
-  { code: 'be', flag: '🇧🇪', label: 'Belgique', path: '/be' },
-  { code: 'it', flag: '🇮🇹', label: 'Italiano', path: '/it' },
-  { code: 'de', flag: '🇩🇪', label: 'Deutsch', path: '/de' },
+  { code: 'es', flag: '🇪🇸', label: 'España', path: '/es' },
+  { code: 'fr', flag: '🇫🇷🇧🇪', label: 'France & Belgique', path: '/fr' },
+  { code: 'it', flag: '🇮🇹', label: 'Italia', path: '/it' },
+  { code: 'de', flag: '🇩🇪', label: 'Deutschland', path: '/de' },
   { code: 'default', flag: '🌍', label: 'Global', path: '/' },
 ]
 
 function getCurrentLang(pathname) {
-  const match = pathname.match(/^\/(es|fr|be|it|de)/)
+  const match = pathname.match(/^\/(es|fr|it|de)/)
   return match ? match[1] : 'default'
 }
 
@@ -22,7 +21,7 @@ export default function LanguageSwitcher({ textColor = '#2d3748' }) {
   const ref = useRef(null)
 
   const currentCode = getCurrentLang(location.pathname)
-  const current = LANGUAGES.find(l => l.code === currentCode) || LANGUAGES[5]
+  const current = LANGUAGES.find(l => l.code === currentCode) || LANGUAGES[4]
 
   useEffect(() => {
     const handleClick = (e) => {
