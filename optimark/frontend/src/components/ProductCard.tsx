@@ -16,6 +16,8 @@ interface ProductCardProps {
   isNewArrival?: boolean;
   stock?: number;
   stockAlert?: number;
+  onCompare?: (e: React.MouseEvent) => void;
+  inCompare?: boolean;
 }
 
 const categoryColors: Record<string, string> = {
@@ -36,7 +38,7 @@ const categoryIcons: Record<string, string> = {
   SPORT: "⚽",
 };
 
-export default function ProductCard({ id, title, price, originalPrice, seller, rating, reviewCount = 0, isVerified = false, category, image, badge, isBestSeller, isNewArrival, stock, stockAlert = 5 }: ProductCardProps) {
+export default function ProductCard({ id, title, price, originalPrice, seller, rating, reviewCount = 0, isVerified = false, category, image, badge, isBestSeller, isNewArrival, stock, stockAlert = 5, onCompare, inCompare }: ProductCardProps) {
   const cat = category?.toUpperCase() || "";
   const gradient = categoryColors[cat] || "from-rose-700 to-rose-900";
   const icon = categoryIcons[cat] || "📦";
@@ -60,6 +62,13 @@ export default function ProductCard({ id, title, price, originalPrice, seller, r
 
         {/* Badges top-left */}
         <div className="absolute top-2 left-2 flex flex-col gap-1">
+          {onCompare && (
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onCompare(e); }}
+              className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition shadow ${inCompare ? "bg-rose-800 text-white" : "bg-white/90 text-slate-600 opacity-0 group-hover:opacity-100 hover:bg-rose-50"}`}>
+              {inCompare ? "✓ Comparer" : "+ Comparer"}
+            </button>
+          )}
           {isBestSeller && <span className="bg-amber-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">🏆 Best seller</span>}
           {badge && <span className="bg-rose-800 text-white text-[10px] font-black px-2 py-0.5 rounded-full">{badge}</span>}
           {discount > 0 && <span className="bg-green-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">-{discount}%</span>}

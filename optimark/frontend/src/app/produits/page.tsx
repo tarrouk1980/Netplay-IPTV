@@ -201,21 +201,12 @@ function ProduitsContent() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {filtered.map((product) => (
-                  <div key={product.id} className="relative group">
-                    <ProductCard {...product} />
-                    {/* Intercept clicks on the compare button without triggering the Link */}
-                    <div className="absolute top-2 left-2 z-20" onClick={e => e.preventDefault()}>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); toggleCompare(product); }}
-                        className={`text-xs font-bold px-2 py-1 rounded-lg transition shadow ${
-                          compare.find(x => x.id === product.id)
-                            ? "bg-rose-800 text-white"
-                            : "bg-white/90 text-slate-600 opacity-0 group-hover:opacity-100 hover:bg-rose-50"
-                        }`}>
-                        {compare.find(x => x.id === product.id) ? "✓ Comparer" : "+ Comparer"}
-                      </button>
-                    </div>
-                  </div>
+                  <ProductCard
+                    key={product.id}
+                    {...product}
+                    onCompare={() => toggleCompare(product)}
+                    inCompare={!!compare.find(x => x.id === product.id)}
+                  />
                 ))}
               </div>
             )}
