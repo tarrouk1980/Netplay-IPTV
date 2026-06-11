@@ -34,7 +34,7 @@ const SLIDES = [
     icon: '🔔',
     title: 'Alertes & Calendrier',
     subtitle:
-      'Définissez votre prix cible. On vous alerte dès qu'il baisse.',
+      "Définissez votre prix cible. On vous alerte dès qu'il baisse.",
   },
 ];
 
