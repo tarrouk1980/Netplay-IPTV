@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import api from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 export default function Header() {
   const { count } = useCart();
@@ -15,6 +16,12 @@ export default function Header() {
   const [currency, setCurrency] = useState("TND");
   const [unread, setUnread] = useState(0);
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (search.trim()) router.push(`/recherche?q=${encodeURIComponent(search.trim())}`);
+  };
 
   useEffect(() => {
     if (!user) { setUnread(0); return; }
@@ -75,7 +82,7 @@ export default function Header() {
             </Link>
 
             {/* Search — desktop */}
-            <div className="hidden md:flex flex-1 max-w-2xl">
+            <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-2xl">
               <div className="flex w-full border border-slate-200 rounded-xl overflow-hidden focus-within:border-rose-800 focus-within:ring-2 focus-within:ring-rose-100 transition">
                 <input
                   type="text"
@@ -84,14 +91,14 @@ export default function Header() {
                   placeholder="Rechercher produits, services, artisans..."
                   className="flex-1 px-4 py-2.5 bg-white text-slate-700 placeholder-slate-400 outline-none text-sm"
                 />
-                <button className="bg-rose-800 hover:bg-rose-900 text-white px-5 py-2.5 font-semibold text-sm transition flex items-center gap-2">
+                <button type="submit" className="bg-rose-800 hover:bg-rose-900 text-white px-5 py-2.5 font-semibold text-sm transition flex items-center gap-2">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                   Chercher
                 </button>
               </div>
-            </div>
+            </form>
 
             {/* Mobile right actions */}
             <div className="flex md:hidden items-center gap-2 ml-auto">

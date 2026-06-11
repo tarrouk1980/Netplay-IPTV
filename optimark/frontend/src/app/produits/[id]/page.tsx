@@ -266,6 +266,11 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               ))}
             </div>
           )}
+
+          {/* Write a review */}
+          {user && (
+            <WriteReview productId={id} onSubmitted={(r) => setReviews(prev => [r, ...prev])} />
+          )}
         </section>
 
         {/* Similar products */}
@@ -283,5 +288,65 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
       <Footer />
     </div>
+  );
+}
+
+function WriteReview({ productId, onSubmitted }: { productId: string; onSubmitted: (r: any) => void }) {
+  const [rating, setRating] = useState(0);
+  const [hover, setHover] = useState(0);
+  const [comment, setComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!rating) return;
+    setSubmitting(true);
+    try {
+      const res = await api.post("/reviews", { productId, rating, comment });
+      onSubmitted(res.data?.data);
+      setSubmitted(true);
+      setRating(0);
+      setComment("");
+    } catch {
+      alert("Erreur lors de l'envoi de l'avis");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (submitted) return (
+    <div className="mt-6 bg-green-50 border border-green-200 rounded-xl p-4 text-green-700 font-semibold text-sm">
+      ✓ Merci pour votre avis !
+    </div>
+  );
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-6 bg-white border border-slate-100 rounded-xl p-5" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+      <h3 className="font-bold text-slate-800 mb-4">Laisser un avis</h3>
+      <div className="flex items-center gap-1 mb-4">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <button key={i} type="button"
+            onMouseEnter={() => setHover(i + 1)}
+            onMouseLeave={() => setHover(0)}
+            onClick={() => setRating(i + 1)}
+            className={`text-2xl transition ${i < (hover || rating) ? "text-amber-400" : "text-slate-200"}`}>
+            ★
+          </button>
+        ))}
+        {rating > 0 && <span className="text-slate-500 text-sm ml-2">{["", "Mauvais", "Passable", "Bien", "Très bien", "Excellent"][rating]}</span>}
+      </div>
+      <textarea
+        value={comment}
+        onChange={e => setComment(e.target.value)}
+        placeholder="Partagez votre expérience avec ce produit... (optionnel)"
+        rows={3}
+        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-rose-100 resize-none mb-3"
+      />
+      <button type="submit" disabled={!rating || submitting}
+        className="bg-rose-800 hover:bg-rose-900 text-white font-bold px-6 py-2 rounded-xl text-sm transition disabled:opacity-50">
+        {submitting ? "Envoi..." : "Publier l'avis"}
+      </button>
+    </form>
   );
 }
