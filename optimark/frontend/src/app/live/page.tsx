@@ -11,7 +11,7 @@ export default function LivePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/live")
+    fetch((process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api') + '/live')
       .then((r) => r.json())
       .then((d) => setSessions(d.data || []))
       .catch(() => setSessions([]))

@@ -35,7 +35,8 @@ function RechercheContent() {
       if (f.maxPrice) params.set("maxPrice", f.maxPrice);
       if (f.isVerifiedSeller) params.set("isVerifiedSeller", "true");
 
-      const res = await fetch(`/api/search?${params}`);
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const res = await fetch(`${baseUrl}/search?${params}`);
       const json = await res.json();
       setResults(json.data || []);
       setTotal(json.total || 0);
