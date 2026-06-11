@@ -28,3 +28,14 @@ export class OrdersController {
     return this.ordersService.updateStatus(id, status, req.user.id);
   }
 }
+
+  @Get(':id/invoice')
+  getInvoice(@Param('id') id: string, @Request() req: any) {
+    return this.ordersService.getInvoice(id, req.user.id);
+  }
+
+  @Patch(':id/status')
+  updateStatus(@Param('id') id: string, @Body('status') status: string, @Request() req: any) {
+    return this.ordersService.updateStatus(id, status, req.user.id);
+  }
+}

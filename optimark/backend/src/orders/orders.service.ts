@@ -70,6 +70,25 @@ export class OrdersService {
     return { data: order, message: 'Commande récupérée', success: true };
   }
 
+  async getInvoice(id: string, userId: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { id },
+      include: {
+        buyer: { select: { id: true, name: true, email: true, phone: true } },
+        items: {
+          include: {
+            product: {
+              select: { id: true, title: true, price: true, seller: { select: { id: true, name: true } } },
+            },
+          },
+        },
+      },
+    });
+    if (!order) throw new Error('Commande introuvable');
+    if (order.buyerId !== userId) throw new Error('Accès refusé');
+    return { data: order, success: true };
+  }
+
   async updateStatus(id: string, status: string, userId: string) {
     const order = await this.prisma.order.findUnique({ where: { id } });
     if (!order) throw new NotFoundException('Commande introuvable');

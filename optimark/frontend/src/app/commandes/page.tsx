@@ -84,7 +84,11 @@ export default function CommandesPage() {
                   </div>
                   <div className="border-t border-slate-100 pt-3 flex items-center justify-between">
                     <p className="text-slate-500 text-sm">{order.items?.length || 0} article(s)</p>
-                    <p className="font-black text-rose-800">{Number(order.total || 0).toFixed(2)} TND</p>
+                    <div className="flex items-center gap-3">
+                      <a href={`/commandes/${order.id}/facture`} target="_blank"
+                        className="text-xs text-rose-800 font-semibold hover:underline">🧾 Facture</a>
+                      <p className="font-black text-rose-800">{Number(order.total || 0).toFixed(2)} TND</p>
+                    </div>
                   </div>
                 </div>
               );

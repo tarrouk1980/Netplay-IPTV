@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AdminModule } from './admin/admin.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { FavoritesModule } from './favorites/favorites.module';
 import { NotificationsModule } from './notifications/notifications.module';
@@ -30,6 +31,7 @@ import { VendorsModule } from './vendors/vendors.module';
     LiveModule,
     FavoritesModule,
     NotificationsModule,
+    AdminModule,
   ],
 })
 export class AppModule {}

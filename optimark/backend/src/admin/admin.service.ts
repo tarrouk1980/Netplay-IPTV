@@ -1,0 +1,130 @@
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+
+@Injectable()
+export class AdminService {
+  constructor(private prisma: PrismaService) {}
+
+  async getStats() {
+    const [users, products, orders, revenue] = await Promise.all([
+      this.prisma.user.count(),
+      this.prisma.product.count(),
+      this.prisma.order.count(),
+      this.prisma.order.aggregate({ _sum: { total: true } }),
+    ]);
+    const sellers = await this.prisma.user.count({ where: { role: 'SELLER' } });
+    const pendingOrders = await this.prisma.order.count({ where: { status: 'PENDING' } });
+    return {
+      data: {
+        totalUsers: users,
+        totalSellers: sellers,
+        totalProducts: products,
+        totalOrders: orders,
+        totalRevenue: revenue._sum.total || 0,
+        pendingOrders,
+      },
+      success: true,
+    };
+  }
+
+  async getUsers(page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+    const [users, total] = await Promise.all([
+      this.prisma.user.findMany({
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        select: { id: true, name: true, email: true, role: true, isVerified: true, createdAt: true, phone: true },
+      }),
+      this.prisma.user.count(),
+    ]);
+    return { data: users, total, page, limit, success: true };
+  }
+
+  async updateUserRole(userId: string, role: string) {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { role: role as any },
+      select: { id: true, name: true, email: true, role: true, isVerified: true },
+    });
+    return { data: user, success: true };
+  }
+
+  async toggleUserVerified(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: { isVerified: !user!.isVerified },
+      select: { id: true, name: true, email: true, role: true, isVerified: true },
+    });
+    return { data: updated, success: true };
+  }
+
+  async getOrders(page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+    const [orders, total] = await Promise.all([
+      this.prisma.order.findMany({
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          buyer: { select: { id: true, name: true, email: true } },
+          items: { include: { product: { select: { id: true, title: true, sellerId: true } } } },
+        },
+      }),
+      this.prisma.order.count(),
+    ]);
+    return { data: orders, total, page, limit, success: true };
+  }
+
+  async updateOrderStatus(orderId: string, status: string) {
+    const order = await this.prisma.order.update({
+      where: { id: orderId },
+      data: { status: status as any },
+    });
+    return { data: order, success: true };
+  }
+
+  async getProducts(page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+    const [products, total] = await Promise.all([
+      this.prisma.product.findMany({
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: { seller: { select: { id: true, name: true } } },
+      }),
+      this.prisma.product.count(),
+    ]);
+    return { data: products, total, page, limit, success: true };
+  }
+
+  async toggleProductActive(productId: string) {
+    const product = await this.prisma.product.findUnique({ where: { id: productId } });
+    const updated = await this.prisma.product.update({
+      where: { id: productId },
+      data: { isActive: !product!.isActive },
+    });
+    return { data: updated, success: true };
+  }
+
+  async getInvoice(orderId: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        buyer: { select: { id: true, name: true, email: true, phone: true } },
+        items: {
+          include: {
+            product: {
+              select: {
+                id: true, title: true, price: true,
+                seller: { select: { id: true, name: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+    return { data: order, success: true };
+  }
+}
