@@ -64,7 +64,7 @@ export default function Header() {
               <option value="EUR" className="text-slate-900">EUR (€)</option>
               <option value="USD" className="text-slate-900">USD ($)</option>
             </select>
-            <Link href="/vendeur/dashboard" className="hover:text-white transition">Vendre sur OPTIMARK</Link>
+            <Link href="/devenir-vendeur" className="hover:text-white transition">Vendre sur OPTIMARK</Link>
           </div>
         </div>
       </div>

@@ -26,33 +26,36 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchAll = async () => {
+    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+    const safeFetch = async (url: string) => {
       try {
-        const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-        const safeFetch = async (url: string) => {
-          try {
-            const r = await fetch(url);
-            const text = await r.text();
-            return text ? JSON.parse(text) : {};
-          } catch { return {}; }
-        };
-        const [tData, lData, sData] = await Promise.all([
-          safeFetch(`${base}/recommendations/trending?limit=4`),
-          safeFetch(`${base}/live`),
-          safeFetch(`${base}/recommendations/services?limit=4`),
-        ]);
-        setTrending(tData.data || []);
-        setLives(lData.data || []);
-        setServices(sData.data || []);
-      } catch {
-        setTrending([]);
-        setLives([]);
-        setServices([]);
-      } finally {
-        setLoading(false);
-      }
+        const r = await fetch(url);
+        const text = await r.text();
+        return text ? JSON.parse(text) : {};
+      } catch { return {}; }
     };
-    fetchAll().catch(() => {});
+
+    const fetchAll = async () => {
+      const [tData, lData, sData] = await Promise.all([
+        safeFetch(`${base}/recommendations/trending?limit=8`),
+        safeFetch(`${base}/live`),
+        safeFetch(`${base}/recommendations/services?limit=4`),
+      ]);
+
+      let products = tData.data || [];
+      // Si trending vide, charger les derniers produits
+      if (products.length === 0) {
+        const fallback = await safeFetch(`${base}/products?limit=8`);
+        products = fallback.data || [];
+      }
+
+      setTrending(products);
+      setLives(lData.data || []);
+      setServices(sData.data || []);
+      setLoading(false);
+    };
+
+    fetchAll().catch(() => setLoading(false));
   }, []);
 
   return (

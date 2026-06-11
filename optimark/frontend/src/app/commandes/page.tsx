@@ -74,7 +74,7 @@ export default function CommandesPage() {
             {orders.map((order: any) => {
               const status = STATUS_LABELS[order.status] || STATUS_LABELS.PENDING;
               return (
-                <div key={order.id} className="bg-white border border-slate-100 rounded-2xl p-5" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+                <Link key={order.id} href={`/commandes/${order.id}`} className="block bg-white border border-slate-100 rounded-2xl p-5 hover:border-rose-200 transition" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
                   <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                     <div>
                       <p className="font-bold text-slate-800">Commande #{order.id?.slice(0, 8)}</p>
@@ -85,12 +85,12 @@ export default function CommandesPage() {
                   <div className="border-t border-slate-100 pt-3 flex items-center justify-between">
                     <p className="text-slate-500 text-sm">{order.items?.length || 0} article(s)</p>
                     <div className="flex items-center gap-3">
-                      <a href={`/commandes/${order.id}/facture`} target="_blank"
+                      <a href={`/commandes/${order.id}/facture`} target="_blank" onClick={e => e.stopPropagation()}
                         className="text-xs text-rose-800 font-semibold hover:underline">🧾 Facture</a>
                       <p className="font-black text-rose-800">{Number(order.total || 0).toFixed(2)} TND</p>
                     </div>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>

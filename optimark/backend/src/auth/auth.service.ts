@@ -42,6 +42,21 @@ export class AuthService {
     return { data: { token, user: this.sanitize(user) }, message: 'Connexion réussie', success: true };
   }
 
+  async getMe(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException('Utilisateur introuvable');
+    return { data: this.sanitize(user), success: true };
+  }
+
+  async upgradeToSeller(userId: string) {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { role: 'SELLER' },
+    });
+    const token = this.jwt.sign({ sub: user.id, email: user.email, role: user.role });
+    return { data: { token, user: this.sanitize(user) }, message: 'Compte mis à niveau en vendeur', success: true };
+  }
+
   private sanitize(user: any) {
     const { password, ...rest } = user;
     return rest;
