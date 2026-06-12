@@ -29,6 +29,12 @@ export class ServicesController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('my')
+  findMy(@Request() req: any) {
+    return this.servicesService.findAll({ sellerId: req.user.id });
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post()
   create(@Body() dto: CreateServiceDto, @Request() req: any) {
     return this.servicesService.create(dto, req.user.id);

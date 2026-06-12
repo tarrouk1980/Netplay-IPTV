@@ -6,8 +6,8 @@ import { CreateServiceDto } from './dtos/create-service.dto';
 export class ServicesService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(query: { category?: string; minPrice?: number; maxPrice?: number; search?: string }) {
-    const where: any = { isActive: true };
+  async findAll(query: { category?: string; minPrice?: number; maxPrice?: number; search?: string; sellerId?: string }) {
+    const where: any = query.sellerId ? { sellerId: query.sellerId } : { isActive: true };
     if (query.category) where.category = query.category;
     if (query.minPrice || query.maxPrice) {
       where.price = {};
