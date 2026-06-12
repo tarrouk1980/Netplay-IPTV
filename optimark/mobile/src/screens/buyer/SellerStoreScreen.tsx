@@ -1,22 +1,29 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { View, Text, FlatList, TouchableOpacity, Image, ActivityIndicator, StyleSheet, ScrollView } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, Image, ActivityIndicator, StyleSheet, ScrollView, Alert } from "react-native";
 import api from "../../api";
 import { useCart } from "../../contexts/CartContext";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function SellerStoreScreen({ route, navigation }: any) {
   const { sellerId } = route.params;
   const [seller, setSeller] = useState<any>(null);
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [following, setFollowing] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
   const { addItem } = useCart();
+  const { user } = useAuth();
 
   const load = useCallback(() => {
     Promise.all([
       api.get(`/vendors/store/public/${sellerId}`).catch(() => null),
       api.get(`/products?sellerId=${sellerId}`).catch(() => null),
-    ]).then(([storeRes, prodRes]) => {
+      api.get(`/vendors/${sellerId}/follow/status`).catch(() => null),
+    ]).then(([storeRes, prodRes, followRes]) => {
       setSeller(storeRes?.data?.data || storeRes?.data || null);
       setProducts(prodRes?.data?.data || []);
+      setFollowing(followRes?.data?.data?.following || false);
+      setFollowerCount(followRes?.data?.data?.followerCount || 0);
     }).finally(() => setLoading(false));
   }, [sellerId]);
 
@@ -65,6 +72,19 @@ export default function SellerStoreScreen({ route, navigation }: any) {
             </View>
           )}
           {seller?.description && <Text style={s.sellerDesc}>{seller.description}</Text>}
+          {user && user.id !== sellerId && (
+            <TouchableOpacity style={[s.followBtn, following && s.followingBtn]} onPress={async () => {
+              try {
+                const res = await api.post(`/vendors/${sellerId}/follow`);
+                setFollowing(res.data?.data?.following);
+                setFollowerCount(prev => res.data?.data?.following ? prev + 1 : Math.max(0, prev - 1));
+              } catch { Alert.alert("Erreur", "Impossible de suivre ce vendeur."); }
+            }}>
+              <Text style={[s.followBtnText, following && { color: "#64748b" }]}>
+                {following ? "✓ Abonné" : "🔔 Suivre"}
+              </Text>
+            </TouchableOpacity>
+          )}
           <View style={s.statsRow}>
             {seller?.avgRating > 0 && (
               <View style={s.stat}>
@@ -76,6 +96,12 @@ export default function SellerStoreScreen({ route, navigation }: any) {
               <Text style={s.statVal}>{products.length}</Text>
               <Text style={s.statLbl}>Produits</Text>
             </View>
+            {followerCount > 0 && (
+              <View style={s.stat}>
+                <Text style={s.statVal}>{followerCount}</Text>
+                <Text style={s.statLbl}>Abonnés</Text>
+              </View>
+            )}
             {seller?.totalSales > 0 && (
               <View style={s.stat}>
                 <Text style={s.statVal}>{seller.totalSales}</Text>
@@ -122,4 +148,7 @@ const s = StyleSheet.create({
   addBtnText: { fontSize: 11, fontWeight: "800", color: "#9f1239" },
   empty: { alignItems: "center", paddingVertical: 40, gap: 10 },
   emptyText: { fontSize: 14, color: "#64748b", fontWeight: "600" },
+  followBtn: { alignSelf: "center", backgroundColor: "#fff1f2", borderRadius: 12, paddingHorizontal: 24, paddingVertical: 10, marginVertical: 12, borderWidth: 1, borderColor: "#fecdd3" },
+  followingBtn: { backgroundColor: "#f8fafc", borderColor: "#e2e8f0" },
+  followBtnText: { fontSize: 14, fontWeight: "800", color: "#9f1239" },
 });
