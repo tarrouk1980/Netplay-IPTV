@@ -76,6 +76,10 @@ export default function SellerDashboardScreen({ navigation }: any) {
             <Text style={s.actionIcon}>💼</Text>
             <Text style={s.actionLabel}>Services</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={s.actionBtn} onPress={() => navigation.navigate("SellerStoreEditor")}>
+            <Text style={s.actionIcon}>🏪</Text>
+            <Text style={s.actionLabel}>Ma boutique</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={s.actionBtn} onPress={() => navigation.navigate("SellerSubscription")}>
             <Text style={s.actionIcon}>💎</Text>
             <Text style={s.actionLabel}>Mon plan</Text>
