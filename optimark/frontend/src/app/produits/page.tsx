@@ -95,9 +95,15 @@ function ProduitsContent() {
   const [compare, setCompare] = useState<any[]>([]);
 
   useEffect(() => {
-    api.get("/products")
-      .then(res => {
+    Promise.all([
+      api.get("/products"),
+      api.get("/flash-sales/active").catch(() => ({ data: { data: [] } })),
+    ]).then(([res, flashRes]) => {
         const real = res.data?.data || [];
+        const flashMap: Record<string, number> = {};
+        (flashRes.data?.data || flashRes.data || []).forEach((sale: any) => {
+          if (sale.productId && sale.discount) flashMap[sale.productId] = sale.discount;
+        });
         setProducts(real.map((p: any) => ({
           id: p.id,
           title: p.title,
@@ -117,6 +123,7 @@ function ProduitsContent() {
           stock: p.stock,
           stockAlert: p.stockAlert,
           description: p.description,
+          flashDiscount: flashMap[p.id] || undefined,
         })));
       })
       .catch(() => {})

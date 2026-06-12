@@ -67,6 +67,22 @@ export class ReturnsService {
     return { data: updated, success: true };
   }
 
+  async findBySeller(sellerId: string) {
+    const requests = await this.prisma.returnRequest.findMany({
+      where: {
+        order: {
+          items: { some: { product: { sellerId } } },
+        },
+      },
+      include: {
+        order: { select: { id: true, total: true, createdAt: true } },
+        buyer: { select: { id: true, name: true, email: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return { data: requests, success: true };
+  }
+
   // ─── Loyalty ───────────────────────────────────────────
   async addLoyaltyPoints(userId: string, orderTotal: number) {
     const points = Math.floor(orderTotal * POINTS_PER_TND);

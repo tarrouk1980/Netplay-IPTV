@@ -22,6 +22,11 @@ export class ReturnsController {
     return this.returnsService.findAll();
   }
 
+  @Get('seller')
+  findBySeller(@Request() req: any) {
+    return this.returnsService.findBySeller(req.user.id);
+  }
+
   @Patch(':id/status')
   updateStatus(@Param('id') id: string, @Body() body: { status: string; adminNote?: string }) {
     return this.returnsService.updateStatus(id, body.status, body.adminNote);
