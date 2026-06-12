@@ -74,4 +74,10 @@ export class AdminController {
     this.checkAdmin(req);
     return this.adminService.getRevenueChart(parseInt(days));
   }
+
+  @Get('commissions')
+  commissions(@Request() req: any) {
+    this.checkAdmin(req);
+    return this.adminService.getCommissionsReport();
+  }
 }

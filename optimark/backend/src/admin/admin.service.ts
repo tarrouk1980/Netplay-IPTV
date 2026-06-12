@@ -128,6 +128,39 @@ export class AdminService {
     return { data: order, success: true };
   }
 
+  async getCommissionsReport() {
+    const sellers = await this.prisma.user.findMany({
+      where: { role: 'SELLER' },
+      select: {
+        id: true, name: true, email: true, subscriptionPlan: true, isVerified: true,
+        products: { select: { id: true } },
+      },
+    });
+
+    const report = await Promise.all(sellers.map(async seller => {
+      const orders = await this.prisma.order.findMany({
+        where: { status: { not: 'CANCELLED' }, items: { some: { product: { sellerId: seller.id } } } },
+        include: { items: { include: { product: { select: { sellerId: true } } } } },
+      });
+      const revenue = orders.reduce((sum, o) => {
+        const sellerItems = o.items.filter(i => i.product.sellerId === seller.id);
+        return sum + sellerItems.reduce((s, i) => s + i.price * i.quantity, 0);
+      }, 0);
+      const plan = seller.subscriptionPlan || 'FREE';
+      const commissionRate = plan === 'PRO' ? 7 : plan === 'BUSINESS' ? 5 : 10;
+      const commission = revenue * commissionRate / 100;
+      return {
+        id: seller.id, name: seller.name, email: seller.email,
+        plan, commissionRate, productCount: seller.products.length,
+        revenue: parseFloat(revenue.toFixed(2)),
+        commission: parseFloat(commission.toFixed(2)),
+        isVerified: seller.isVerified,
+      };
+    }));
+
+    return { data: report.sort((a, b) => b.revenue - a.revenue), success: true };
+  }
+
   async getRevenueChart(days = 30) {
     const since = new Date();
     since.setDate(since.getDate() - days);

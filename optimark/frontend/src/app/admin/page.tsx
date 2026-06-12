@@ -11,7 +11,7 @@ const STATUS_LABELS: Record<string, string> = { PENDING: "En attente", CONFIRMED
 const STATUS_COLORS: Record<string, string> = { PENDING: "bg-amber-100 text-amber-800", CONFIRMED: "bg-blue-100 text-blue-800", SHIPPED: "bg-purple-100 text-purple-800", DELIVERED: "bg-green-100 text-green-800", CANCELLED: "bg-rose-100 text-rose-800" };
 const ALL_STATUSES = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"];
 
-type Tab = "stats" | "users" | "orders" | "products" | "returns";
+type Tab = "stats" | "users" | "orders" | "products" | "returns" | "commissions";
 
 export default function AdminPage() {
   const { user, loading } = useAuth();
@@ -23,6 +23,7 @@ export default function AdminPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [returns, setReturns] = useState<any[]>([]);
+  const [commissions, setCommissions] = useState<any[]>([]);
   const [fetching, setFetching] = useState(false);
 
   useEffect(() => {
@@ -38,6 +39,7 @@ export default function AdminPage() {
     else if (tab === "orders") loadOrders();
     else if (tab === "products") loadProducts();
     else if (tab === "returns") loadReturns();
+    else if (tab === "commissions") loadCommissions();
   }, [tab]);
 
   const loadStats = async () => {
@@ -69,6 +71,13 @@ export default function AdminPage() {
     setFetching(true);
     const res = await api.get("/admin/products?limit=50").catch(() => null);
     setProducts(res?.data?.data || []);
+    setFetching(false);
+  };
+
+  const loadCommissions = async () => {
+    setFetching(true);
+    const res = await api.get("/admin/commissions").catch(() => null);
+    setCommissions(res?.data?.data || []);
     setFetching(false);
   };
 
@@ -112,6 +121,7 @@ export default function AdminPage() {
     { key: "orders", label: "Commandes", icon: "📦" },
     { key: "products", label: "Produits", icon: "🏪" },
     { key: "returns", label: "Retours", icon: "↩️" },
+    { key: "commissions", label: "Commissions", icon: "💸" },
   ];
 
   return (
@@ -348,6 +358,57 @@ export default function AdminPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Commissions */}
+        {tab === "commissions" && !fetching && (
+          <div>
+            <div className="bg-rose-50 border border-rose-100 rounded-xl px-5 py-3 mb-4 flex items-center justify-between flex-wrap gap-2">
+              <p className="text-rose-800 font-bold text-sm">
+                Total commissions : {commissions.reduce((s, c) => s + c.commission, 0).toFixed(2)} TND
+              </p>
+              <p className="text-slate-500 text-xs">{commissions.length} vendeurs</p>
+            </div>
+            <div className="bg-white rounded-xl border border-slate-100 overflow-hidden" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-100">
+                      {["Vendeur", "Plan", "Produits", "Revenu généré", "Commission", "Taux", "Vérifié"].map(h => (
+                        <th key={h} className="text-left px-5 py-3 text-slate-500 font-semibold text-xs uppercase">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {commissions.map(c => (
+                      <tr key={c.id} className="border-b border-slate-50 hover:bg-slate-50">
+                        <td className="px-5 py-3">
+                          <p className="font-semibold text-slate-800">{c.name}</p>
+                          <p className="text-xs text-slate-400">{c.email}</p>
+                        </td>
+                        <td className="px-5 py-3">
+                          <span className={`text-xs font-black px-2 py-1 rounded-full ${
+                            c.plan === "BUSINESS" ? "bg-purple-100 text-purple-700"
+                            : c.plan === "PRO" ? "bg-rose-100 text-rose-700"
+                            : "bg-slate-100 text-slate-600"
+                          }`}>{c.plan}</span>
+                        </td>
+                        <td className="px-5 py-3 text-slate-600">{c.productCount}</td>
+                        <td className="px-5 py-3 font-black text-slate-800">{c.revenue.toFixed(2)} TND</td>
+                        <td className="px-5 py-3 font-black text-rose-800">{c.commission.toFixed(2)} TND</td>
+                        <td className="px-5 py-3 text-slate-500">{c.commissionRate}%</td>
+                        <td className="px-5 py-3">
+                          <span className={`text-xs font-bold px-2 py-1 rounded-full ${c.isVerified ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-400"}`}>
+                            {c.isVerified ? "✓" : "—"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         )}
       </main>
