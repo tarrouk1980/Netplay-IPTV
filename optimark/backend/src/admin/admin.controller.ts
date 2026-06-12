@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Query, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Query, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AdminService } from './admin.service';
 
@@ -79,5 +79,23 @@ export class AdminController {
   commissions(@Request() req: any) {
     this.checkAdmin(req);
     return this.adminService.getCommissionsReport();
+  }
+
+  @Get('reviews')
+  getReviews(@Request() req: any, @Query('limit') limit = '50') {
+    this.checkAdmin(req);
+    return this.adminService.getReviews(parseInt(limit));
+  }
+
+  @Delete('reviews/:id')
+  deleteReview(@Param('id') id: string, @Request() req: any) {
+    this.checkAdmin(req);
+    return this.adminService.deleteReview(id);
+  }
+
+  @Get('returns')
+  getReturns(@Request() req: any, @Query('limit') limit = '50') {
+    this.checkAdmin(req);
+    return this.adminService.getReturns(parseInt(limit));
   }
 }

@@ -183,4 +183,33 @@ export class AdminService {
     const data = Object.entries(map).map(([date, revenue]) => ({ date, revenue }));
     return { data, success: true };
   }
+
+  async getReviews(limit = 50) {
+    const reviews = await this.prisma.review.findMany({
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+        product: { select: { id: true, title: true } },
+      },
+    });
+    return { data: reviews, success: true };
+  }
+
+  async deleteReview(id: string) {
+    await this.prisma.review.delete({ where: { id } });
+    return { data: null, message: 'Avis supprimé', success: true };
+  }
+
+  async getReturns(limit = 50) {
+    const returns = await this.prisma.returnRequest.findMany({
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        buyer: { select: { id: true, name: true, email: true } },
+        order: { select: { id: true, total: true } },
+      },
+    });
+    return { data: returns, success: true };
+  }
 }
