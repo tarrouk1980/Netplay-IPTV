@@ -18,8 +18,10 @@ export class ProductsService {
     maxPrice?: number;
     isVerifiedSeller?: boolean;
     search?: string;
+    sellerId?: string;
   }) {
     const where: any = { isActive: true };
+    if (query.sellerId) where.sellerId = query.sellerId;
     if (query.category) where.category = query.category;
     if (query.minPrice || query.maxPrice) {
       where.price = {};
