@@ -34,6 +34,7 @@ model User {
   questions         ProductQuestion[]
   referralCode      String?           @unique
   referredById      String?
+  bundles           Bundle[]          @relation("SellerBundles")
 }
 
 model SellerFollow {
@@ -111,6 +112,7 @@ model Product {
   favorites     Favorite[]
   flashSales    FlashSale[]
   questions     ProductQuestion[]
+  bundleItems   BundleItem[]
 }
 
 model ProductQuestion {
@@ -276,4 +278,24 @@ model FlashSale {
   endAt       DateTime
   isActive    Boolean   @default(true)
   createdAt   DateTime  @default(now())
+}
+
+model Bundle {
+  id          String        @id @default(uuid())
+  title       String
+  description String?
+  discount    Float
+  sellerId    String
+  seller      User          @relation("SellerBundles", fields: [sellerId], references: [id])
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  items       BundleItem[]
+}
+
+model BundleItem {
+  id        String  @id @default(uuid())
+  bundleId  String
+  bundle    Bundle  @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
 }
