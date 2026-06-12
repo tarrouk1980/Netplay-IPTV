@@ -29,4 +29,8 @@ export class CreateOrderDto {
   @IsOptional()
   @IsObject()
   deliveryAddress?: Record<string, any>;
+
+  @IsOptional()
+  @IsString()
+  couponCode?: string;
 }

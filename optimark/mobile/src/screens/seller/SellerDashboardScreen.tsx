@@ -116,7 +116,7 @@ const s = StyleSheet.create({
   statLabel: { fontSize: 12, color: "#64748b", fontWeight: "600", marginTop: 2 },
   section: { margin: 16, marginTop: 0, backgroundColor: "#fff", borderRadius: 16, padding: 16, borderWidth: 1, borderColor: "#f1f5f9", marginBottom: 12 },
   sectionTitle: { fontSize: 14, fontWeight: "800", color: "#1e293b", marginBottom: 14 },
-  actionsRow: { flexDirection: "row", gap: 10 },
+  actionsRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   actionBtn: { flex: 1, backgroundColor: "#f8fafc", borderRadius: 14, padding: 14, alignItems: "center", borderWidth: 1, borderColor: "#e2e8f0" },
   actionIcon: { fontSize: 24, marginBottom: 6 },
   actionLabel: { fontSize: 11, fontWeight: "700", color: "#475569", textAlign: "center" },

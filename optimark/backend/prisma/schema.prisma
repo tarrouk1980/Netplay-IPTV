@@ -120,6 +120,7 @@ model Order {
   status          OrderStatus     @default(PENDING)
   paymentMethod   PaymentMethod
   deliveryAddress Json?
+  couponCode      String?
   createdAt       DateTime        @default(now())
   returnRequests  ReturnRequest[]
 }

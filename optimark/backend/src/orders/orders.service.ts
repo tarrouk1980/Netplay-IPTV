@@ -23,12 +23,15 @@ export class OrdersService {
   async createOrder(dto: CreateOrderDto, buyerId: string) {
     let total = 0;
     const itemsData: { productId: string; quantity: number; price: number }[] = [];
+    const products: any[] = [];
 
     for (const item of dto.items) {
       const product = await this.prisma.product.findUnique({ where: { id: item.productId } });
       if (!product) throw new NotFoundException(`Produit ${item.productId} introuvable`);
-      total += product.price * item.quantity;
-      itemsData.push({ productId: item.productId, quantity: item.quantity, price: product.price });
+      const price = product.promoPrice ?? product.price;
+      total += price * item.quantity;
+      itemsData.push({ productId: item.productId, quantity: item.quantity, price });
+      products.push({ ...product, orderedQty: item.quantity });
     }
 
     const order = await this.prisma.order.create({
@@ -37,14 +40,44 @@ export class OrdersService {
         total,
         paymentMethod: dto.paymentMethod as any,
         deliveryAddress: dto.deliveryAddress || undefined,
+        couponCode: dto.couponCode,
         items: { create: itemsData },
       },
       include: { items: { include: { product: true } } },
     });
 
+    // Decrement stock and notify seller if low
+    for (const product of products) {
+      const newStock = Math.max(0, (product.stock ?? 0) - product.orderedQty);
+      await this.prisma.product.update({ where: { id: product.id }, data: { stock: newStock } });
+
+      // Notify seller: out of stock
+      if (newStock === 0 && product.stock > 0) {
+        await this.notifications.create(
+          product.sellerId,
+          'STOCK',
+          `Stock épuisé : "${product.title}" n'est plus disponible.`,
+        );
+      // Notify seller: low stock (below 5)
+      } else if (newStock > 0 && newStock <= 5 && product.stock > 5) {
+        await this.notifications.create(
+          product.sellerId,
+          'STOCK',
+          `Stock faible : "${product.title}" — plus que ${newStock} unité(s).`,
+        );
+      }
+
+      // Notify seller of new order
+      await this.notifications.create(
+        product.sellerId,
+        'ORDER',
+        `Nouvelle commande #${order.id.slice(0, 8)} pour "${product.title}" (×${product.orderedQty}).`,
+      );
+    }
+
     await this.notifications.create(
       buyerId,
-      'ORDER_PLACED',
+      'ORDER',
       `Votre commande #${order.id.slice(0, 8)} a été passée avec succès (${total.toFixed(2)} TND).`,
     );
 
