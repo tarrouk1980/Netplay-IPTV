@@ -15,23 +15,16 @@ function StatCard({ icon, label, value, sub }: { icon: string; label: string; va
   );
 }
 
-function MiniChart({ data }: { data: { date: string; value: number }[] }) {
+function BarChart({ data }: { data: { label: string; value: number }[] }) {
   if (!data?.length) return null;
   const max = Math.max(...data.map(d => d.value), 1);
-  const W = 280, H = 60;
-  const pts = data.map((d, i) => {
-    const x = (i / (data.length - 1)) * W;
-    const y = H - (d.value / max) * H;
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  }).join(" ");
-
   return (
-    <View style={{ marginTop: 12 }}>
-      <View style={{ height: 60 }}>
-        <svg style={{ width: "100%", height: 60 } as any}>
-          <polyline points={pts} fill="none" stroke="#9f1239" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </View>
+    <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 4, height: 60, marginTop: 8 }}>
+      {data.map((d, i) => (
+        <View key={i} style={{ flex: 1, alignItems: "center" }}>
+          <View style={{ width: "100%", height: Math.max(2, (d.value / max) * 52), backgroundColor: "#9f1239", borderRadius: 3, opacity: 0.7 + (d.value / max) * 0.3 }} />
+        </View>
+      ))}
     </View>
   );
 }
