@@ -11,8 +11,8 @@ export default function SellerDashboardScreen({ navigation }: any) {
 
   useEffect(() => {
     Promise.all([
-      api.get("/seller/stats").catch(() => null),
-      api.get("/seller/orders").catch(() => null),
+      api.get("/vendors/dashboard").catch(() => null),
+      api.get("/vendors/orders").catch(() => null),
     ]).then(([sRes, oRes]) => {
       setStats(sRes?.data?.data || null);
       setOrders((oRes?.data?.data || []).slice(0, 5));
@@ -31,10 +31,10 @@ export default function SellerDashboardScreen({ navigation }: any) {
       {/* Stats */}
       <View style={s.statsGrid}>
         {[
-          { label: "Produits", value: stats?.productCount ?? "—", icon: "📦" },
-          { label: "Commandes", value: stats?.orderCount ?? "—", icon: "🛒" },
-          { label: "Revenus", value: stats?.revenue ? `${Number(stats.revenue).toFixed(0)} TND` : "—", icon: "💰" },
-          { label: "En attente", value: stats?.pendingOrders ?? "—", icon: "⏳" },
+          { label: "Produits", value: stats?.totalProducts ?? "—", icon: "📦" },
+          { label: "Commandes", value: stats?.totalOrders ?? "—", icon: "🛒" },
+          { label: "Revenus/mois", value: stats?.monthRevenue != null ? `${Number(stats.monthRevenue).toFixed(0)} TND` : "—", icon: "💰" },
+          { label: "Note moy.", value: stats?.avgRating != null ? `${stats.avgRating}★` : "—", icon: "⭐" },
         ].map(stat => (
           <View key={stat.label} style={s.statCard}>
             <Text style={s.statIcon}>{stat.icon}</Text>
@@ -59,6 +59,10 @@ export default function SellerDashboardScreen({ navigation }: any) {
           <TouchableOpacity style={s.actionBtn} onPress={() => navigation.navigate("SellerOrders")}>
             <Text style={s.actionIcon}>📬</Text>
             <Text style={s.actionLabel}>Commandes</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={s.actionBtn} onPress={() => navigation.navigate("SellerFlashSales")}>
+            <Text style={s.actionIcon}>⚡</Text>
+            <Text style={s.actionLabel}>Flash Sales</Text>
           </TouchableOpacity>
         </View>
       </View>

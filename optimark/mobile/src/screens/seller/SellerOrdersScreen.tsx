@@ -19,7 +19,7 @@ export default function SellerOrdersScreen() {
 
   const load = () => {
     setLoading(true);
-    api.get("/seller/orders").then(r => setOrders(r.data?.data || [])).catch(() => {}).finally(() => setLoading(false));
+    api.get("/vendors/orders").then(r => setOrders(r.data?.data || [])).catch(() => {}).finally(() => setLoading(false));
   };
 
   useFocusEffect(useCallback(() => { load(); }, []));

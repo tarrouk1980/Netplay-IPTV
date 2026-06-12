@@ -11,6 +11,11 @@ export class CouponsController {
     return this.couponsService.validate(code, parseFloat(amount) || 0);
   }
 
+  @Post('validate')
+  validatePost(@Body() body: any) {
+    return this.couponsService.validateCode(body.code);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('my')
   findMy(@Request() req: any) {

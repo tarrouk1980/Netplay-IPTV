@@ -18,6 +18,8 @@ import SellerDashboardScreen from "../screens/seller/SellerDashboardScreen";
 import SellerProductsScreen from "../screens/seller/SellerProductsScreen";
 import SellerProductFormScreen from "../screens/seller/SellerProductFormScreen";
 import SellerOrdersScreen from "../screens/seller/SellerOrdersScreen";
+import SellerFlashSalesScreen from "../screens/seller/SellerFlashSalesScreen";
+import SellerCouponsScreen from "../screens/seller/SellerCouponsScreen";
 import { useCart } from "../contexts/CartContext";
 
 const Tab = createBottomTabNavigator();
@@ -61,6 +63,8 @@ function SellerTabs() {
       <Tab.Screen name="SellerDashboard" component={SellerDashboardScreen} options={{ title: "Dashboard", tabBarLabel: "Dashboard", tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>📊</Text> }} />
       <Tab.Screen name="SellerProducts" component={SellerProductsScreen} options={{ title: "Mes produits", tabBarLabel: "Produits", tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>📋</Text> }} />
       <Tab.Screen name="SellerOrders" component={SellerOrdersScreen} options={{ title: "Commandes", tabBarLabel: "Commandes", tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>📬</Text> }} />
+      <Tab.Screen name="SellerFlashSales" component={SellerFlashSalesScreen} options={{ title: "Flash", tabBarLabel: "Flash", tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>⚡</Text> }} />
+      <Tab.Screen name="SellerCoupons" component={SellerCouponsScreen} options={{ title: "Codes promo", tabBarLabel: "Promos", tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>🏷️</Text> }} />
     </Tab.Navigator>
   );
 }

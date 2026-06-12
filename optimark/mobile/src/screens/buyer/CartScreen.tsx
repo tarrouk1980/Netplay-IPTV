@@ -9,6 +9,26 @@ export default function CartScreen({ navigation }: any) {
   const { user } = useAuth();
   const [address, setAddress] = useState({ street: "", city: "", zip: "", phone: "" });
   const [loading, setLoading] = useState(false);
+  const [coupon, setCoupon] = useState("");
+  const [discount, setDiscount] = useState(0);
+  const [applying, setApplying] = useState(false);
+
+  const applyCoupon = async () => {
+    if (!coupon.trim()) return;
+    setApplying(true);
+    try {
+      const res = await api.post("/coupons/validate", { code: coupon.trim() });
+      const pct = res.data?.data?.discountPercent || 0;
+      setDiscount(pct);
+      Alert.alert("✓ Code appliqué", `Réduction de ${pct}% appliquée !`);
+    } catch {
+      Alert.alert("Code invalide", "Ce code promo n'est pas valide.");
+      setDiscount(0);
+    }
+    setApplying(false);
+  };
+
+  const finalTotal = total * (1 - discount / 100);
 
   const placeOrder = async () => {
     if (!user) { navigation.navigate("Auth"); return; }
@@ -21,6 +41,7 @@ export default function CartScreen({ navigation }: any) {
       await api.post("/orders", {
         items: items.map(i => ({ productId: i.id, quantity: i.qty })),
         deliveryAddress: address,
+        couponCode: coupon.trim() || undefined,
       });
       clear();
       Alert.alert("Commande confirmée ✓", "Votre commande a été passée avec succès !", [
@@ -77,9 +98,27 @@ export default function CartScreen({ navigation }: any) {
       </View>
 
       {/* Total */}
+      {/* Coupon */}
+      <View style={[s.section, { flexDirection: "row", gap: 8, alignItems: "center" }]}>
+        <TextInput
+          style={[s.input, { flex: 1, marginBottom: 0 }]}
+          placeholder="Code promo"
+          value={coupon}
+          onChangeText={setCoupon}
+          autoCapitalize="characters"
+        />
+        <TouchableOpacity style={s.couponBtn} onPress={applyCoupon} disabled={applying}>
+          <Text style={{ color: "#fff", fontWeight: "700", fontSize: 13 }}>{applying ? "..." : "Appliquer"}</Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={s.totalRow}>
         <Text style={s.totalLabel}>Total</Text>
-        <Text style={s.totalVal}>{total.toFixed(2)} TND</Text>
+        <View style={{ alignItems: "flex-end" }}>
+          {discount > 0 && <Text style={{ color: "#94a3b8", fontSize: 13, textDecorationLine: "line-through" }}>{total.toFixed(2)} TND</Text>}
+          <Text style={s.totalVal}>{finalTotal.toFixed(2)} TND</Text>
+          {discount > 0 && <Text style={{ color: "#16a34a", fontSize: 12, fontWeight: "700" }}>-{discount}% appliqué</Text>}
+        </View>
       </View>
 
       <TouchableOpacity style={[s.orderBtn, loading && { opacity: 0.6 }]} onPress={placeOrder} disabled={loading}>
@@ -107,7 +146,8 @@ const s = StyleSheet.create({
   section: { margin: 16, backgroundColor: "#fff", borderRadius: 16, padding: 16, gap: 10, borderWidth: 1, borderColor: "#f1f5f9" },
   sectionTitle: { fontSize: 15, fontWeight: "800", color: "#1e293b", marginBottom: 4 },
   input: { borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: "#1e293b" },
-  totalRow: { flexDirection: "row", justifyContent: "space-between", marginHorizontal: 16, marginTop: 8, paddingVertical: 16, borderTopWidth: 1, borderTopColor: "#e2e8f0" },
+  couponBtn: { backgroundColor: "#9f1239", borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12 },
+  totalRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginHorizontal: 16, marginTop: 8, paddingVertical: 16, borderTopWidth: 1, borderTopColor: "#e2e8f0" },
   totalLabel: { fontSize: 16, fontWeight: "700", color: "#1e293b" },
   totalVal: { fontSize: 20, fontWeight: "900", color: "#9f1239" },
   orderBtn: { backgroundColor: "#9f1239", margin: 16, borderRadius: 16, paddingVertical: 18, alignItems: "center", marginBottom: 40 },

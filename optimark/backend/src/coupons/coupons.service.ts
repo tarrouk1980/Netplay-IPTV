@@ -22,6 +22,17 @@ export class CouponsService {
     return { data: coupons, success: true };
   }
 
+  async validateCode(code: string) {
+    const coupon = await this.prisma.coupon.findUnique({ where: { code: code?.toUpperCase() } });
+    if (!coupon || !coupon.isActive) throw new NotFoundException('Code promo invalide.');
+    if (coupon.expiresAt && new Date() > coupon.expiresAt) throw new BadRequestException('Ce code a expiré.');
+    if (coupon.maxUses && coupon.usedCount >= coupon.maxUses) throw new BadRequestException('Ce code a atteint son nombre maximum d\'utilisations.');
+    return {
+      data: { discountPercent: coupon.type === 'PERCENT' ? coupon.discount : null, coupon },
+      success: true,
+    };
+  }
+
   async validate(code: string, amount: number) {
     const coupon = await this.prisma.coupon.findUnique({ where: { code: code.toUpperCase() } });
     if (!coupon) throw new NotFoundException('Code promo invalide.');
