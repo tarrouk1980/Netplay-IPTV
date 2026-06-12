@@ -60,13 +60,17 @@ export default function SellerDashboardScreen({ navigation }: any) {
             <Text style={s.actionIcon}>📬</Text>
             <Text style={s.actionLabel}>Commandes</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={s.actionBtn} onPress={() => navigation.navigate("SellerFlashSales")}>
+          <TouchableOpacity style={s.actionBtn} onPress={() => navigation.navigate("SellerFlashSalesStack")}>
             <Text style={s.actionIcon}>⚡</Text>
             <Text style={s.actionLabel}>Flash Sales</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={s.actionBtn} onPress={() => navigation.navigate("SellerLive")}>
+          <TouchableOpacity style={s.actionBtn} onPress={() => navigation.navigate("SellerLiveStack")}>
             <Text style={s.actionIcon}>🔴</Text>
             <Text style={s.actionLabel}>Live</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={s.actionBtn} onPress={() => navigation.navigate("SellerCouponsStack")}>
+            <Text style={s.actionIcon}>🏷️</Text>
+            <Text style={s.actionLabel}>Codes promo</Text>
           </TouchableOpacity>
         </View>
       </View>
