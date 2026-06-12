@@ -11,20 +11,23 @@ export default function HomeScreen({ navigation }: any) {
   const [products, setProducts] = useState<any[]>([]);
   const [flashSales, setFlashSales] = useState<any[]>([]);
   const [lives, setLives] = useState<any[]>([]);
+  const [recommended, setRecommended] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [cat, setCat] = useState("Tous");
 
   const load = async () => {
     try {
-      const [pRes, fRes, lRes] = await Promise.all([
+      const [pRes, fRes, lRes, recRes] = await Promise.all([
         api.get("/products"),
         api.get("/flash-sales/active").catch(() => ({ data: { data: [] } })),
         api.get("/live").catch(() => ({ data: { data: [] } })),
+        api.get("/recommendations/trending?limit=8").catch(() => ({ data: { data: [] } })),
       ]);
       setProducts(pRes.data?.data || []);
       setFlashSales((fRes.data?.data || fRes.data || []).slice(0, 4));
       setLives((lRes.data?.data || []).filter((l: any) => l.isActive).slice(0, 5));
+      setRecommended(recRes.data?.data || []);
     } catch {}
   };
 
@@ -152,6 +155,28 @@ export default function HomeScreen({ navigation }: any) {
         ))}
       </ScrollView>
 
+      {/* Trending recommendations */}
+      {recommended.length > 0 && (
+        <View>
+          <View style={s.sectionHeader}><Text style={s.sectionTitle}>🔥 Tendances</Text></View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 12, paddingBottom: 8 }}>
+            {recommended.map(p => {
+              const price = p.promoPrice || p.price;
+              const img = p.images?.[0];
+              return (
+                <TouchableOpacity key={p.id} style={s.recCard} onPress={() => navigation.navigate("ProductDetail", { id: p.id })}>
+                  <View style={s.recImgBox}>
+                    {img ? <Image source={{ uri: img }} style={{ width: "100%", height: "100%" }} resizeMode="cover" /> : <Text style={{ fontSize: 28 }}>📦</Text>}
+                  </View>
+                  <Text style={s.recTitle} numberOfLines={2}>{p.title}</Text>
+                  <Text style={s.recPrice}>{Number(price).toFixed(2)} TND</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+      )}
+
       {/* Products */}
       <View style={s.sectionHeader}>
         <Text style={s.sectionTitle}>
@@ -251,4 +276,8 @@ const s = StyleSheet.create({
   cardSeller: { fontSize: 10, color: "#94a3b8", marginBottom: 5 },
   cardPrice: { fontSize: 14, fontWeight: "900", color: "#9f1239" },
   cardOrigPrice: { fontSize: 10, color: "#94a3b8", textDecorationLine: "line-through" },
+  recCard: { width: 140, backgroundColor: "#fff", borderRadius: 14, overflow: "hidden", borderWidth: 1, borderColor: "#f1f5f9" },
+  recImgBox: { width: "100%", height: 100, backgroundColor: "#f8fafc", alignItems: "center", justifyContent: "center" },
+  recTitle: { fontSize: 11, fontWeight: "700", color: "#1e293b", padding: 8, paddingBottom: 2 },
+  recPrice: { fontSize: 13, fontWeight: "900", color: "#9f1239", paddingHorizontal: 8, paddingBottom: 8 },
 });

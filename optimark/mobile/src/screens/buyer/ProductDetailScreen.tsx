@@ -18,6 +18,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
   const [reviewText, setReviewText] = useState("");
   const [reviewRating, setReviewRating] = useState(5);
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [similar, setSimilar] = useState<any[]>([]);
   const { addItem } = useCart();
   const { user } = useAuth();
 
@@ -26,10 +27,12 @@ export default function ProductDetailScreen({ route, navigation }: any) {
       api.get(`/products/${id}`),
       api.get(`/reviews/product/${id}`).catch(() => null),
       user ? api.get(`/favorites/${id}/status`).catch(() => null) : null,
-    ]).then(([pRes, rRes, fRes]) => {
+      api.get(`/recommendations/similar/${id}?limit=6`).catch(() => null),
+    ]).then(([pRes, rRes, fRes, simRes]) => {
       setProduct(pRes?.data?.data);
       setReviews(rRes?.data?.data || []);
       setFavorited(fRes?.data?.favorited || false);
+      setSimilar(simRes?.data?.data || []);
     }).catch(() => {}).finally(() => setLoading(false));
   }, [id]);
 
@@ -245,6 +248,28 @@ export default function ProductDetailScreen({ route, navigation }: any) {
             </View>
           )}
         </View>
+
+        {/* Similar products */}
+        {similar.length > 0 && (
+          <View style={s.section}>
+            <Text style={s.sectionTitle}>Vous aimerez aussi</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
+              {similar.map(p => {
+                const simPrice = p.promoPrice || p.price;
+                const simImg = p.images?.[0];
+                return (
+                  <TouchableOpacity key={p.id} style={s.simCard} onPress={() => navigation.push("ProductDetail", { id: p.id })}>
+                    <View style={s.simImgBox}>
+                      {simImg ? <Image source={{ uri: simImg }} style={{ width: "100%", height: "100%" }} resizeMode="cover" /> : <Text style={{ fontSize: 28 }}>📦</Text>}
+                    </View>
+                    <Text style={s.simTitle} numberOfLines={2}>{p.title}</Text>
+                    <Text style={s.simPrice}>{Number(simPrice).toFixed(2)} TND</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
       </View>
     </ScrollView>
   );
@@ -303,4 +328,8 @@ const s = StyleSheet.create({
   reviewInput: { backgroundColor: "#f1f5f9", borderRadius: 14, padding: 14, fontSize: 14, color: "#1e293b", minHeight: 80, marginBottom: 12 },
   reviewSubmit: { backgroundColor: "#9f1239", borderRadius: 14, paddingVertical: 13, alignItems: "center" },
   reviewSubmitText: { color: "#fff", fontWeight: "800", fontSize: 14 },
+  simCard: { width: 130, backgroundColor: "#f8fafc", borderRadius: 14, overflow: "hidden", borderWidth: 1, borderColor: "#f1f5f9" },
+  simImgBox: { width: "100%", height: 100, backgroundColor: "#f1f5f9", alignItems: "center", justifyContent: "center" },
+  simTitle: { fontSize: 11, fontWeight: "700", color: "#1e293b", padding: 8, paddingBottom: 4 },
+  simPrice: { fontSize: 12, fontWeight: "900", color: "#9f1239", paddingHorizontal: 8, paddingBottom: 8 },
 });
