@@ -17,13 +17,31 @@ export default function BoutiquePage({ params }: { params: Promise<{ sellerId: s
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<BoutiqueTab>("products");
+  const [following, setFollowing] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [followLoading, setFollowLoading] = useState(false);
 
   useEffect(() => {
     api.get(`/vendors/store/public/${sellerId}`)
       .then(res => setData(res.data?.data))
       .catch(() => setData(null))
       .finally(() => setLoading(false));
+    api.get(`/vendors/${sellerId}/follow/status`)
+      .then(res => {
+        setFollowing(res.data?.data?.following || false);
+        setFollowerCount(res.data?.data?.followerCount || 0);
+      }).catch(() => {});
   }, [sellerId]);
+
+  const toggleFollow = async () => {
+    if (!user) return;
+    setFollowLoading(true);
+    try {
+      const res = await api.post(`/vendors/${sellerId}/follow`);
+      setFollowing(res.data?.data?.following);
+      setFollowerCount(prev => res.data?.data?.following ? prev + 1 : prev - 1);
+    } catch {} finally { setFollowLoading(false); }
+  };
 
   if (loading) {
     return (
@@ -93,12 +111,23 @@ export default function BoutiquePage({ params }: { params: Promise<{ sellerId: s
                 {services.length > 0 && <span>💼 {services.length} service{services.length !== 1 ? "s" : ""}</span>}
               </div>
             </div>
-            {user && user.id !== sellerId && (
-              <Link href={`/messages?with=${store?.seller?.id || sellerId}`}
-                className="mt-6 bg-rose-800 text-white font-bold px-5 py-2.5 rounded-xl hover:bg-rose-900 transition text-sm flex items-center gap-2">
-                💬 Contacter
-              </Link>
-            )}
+            <div className="mt-6 flex gap-2 flex-wrap">
+              {followerCount > 0 && (
+                <span className="text-xs text-slate-400 self-center">{followerCount} abonné{followerCount > 1 ? "s" : ""}</span>
+              )}
+              {user && user.id !== sellerId && (
+                <button onClick={toggleFollow} disabled={followLoading}
+                  className={`font-bold px-5 py-2.5 rounded-xl text-sm transition ${following ? "bg-slate-100 text-slate-700 hover:bg-slate-200" : "bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100"}`}>
+                  {following ? "✓ Abonné" : "🔔 Suivre"}
+                </button>
+              )}
+              {user && user.id !== sellerId && (
+                <Link href={`/messages?with=${store?.seller?.id || sellerId}`}
+                  className="bg-rose-800 text-white font-bold px-5 py-2.5 rounded-xl hover:bg-rose-900 transition text-sm flex items-center gap-2">
+                  💬 Contacter
+                </Link>
+              )}
+            </div>
           </div>
         </div>
 
