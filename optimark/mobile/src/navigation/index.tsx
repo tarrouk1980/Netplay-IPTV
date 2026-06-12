@@ -20,6 +20,7 @@ import SellerProductFormScreen from "../screens/seller/SellerProductFormScreen";
 import SellerOrdersScreen from "../screens/seller/SellerOrdersScreen";
 import SellerFlashSalesScreen from "../screens/seller/SellerFlashSalesScreen";
 import SellerCouponsScreen from "../screens/seller/SellerCouponsScreen";
+import NotificationsScreen from "../screens/buyer/NotificationsScreen";
 import { useCart } from "../contexts/CartContext";
 
 const Tab = createBottomTabNavigator();
@@ -79,6 +80,7 @@ export default function AppNavigator() {
         <Stack.Screen name="Auth" component={AuthScreen} options={{ title: "Connexion" }} />
         <Stack.Screen name="SellerTab" component={SellerTabs} options={{ headerShown: false }} />
         <Stack.Screen name="FlashSales" component={FlashSalesScreen} options={{ title: "⚡ Ventes Flash" }} />
+        <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ title: "Notifications" }} />
         <Stack.Screen name="SellerAddProduct" component={SellerProductFormScreen} options={{ title: "Nouveau produit" }} />
         <Stack.Screen name="SellerEditProduct" component={SellerProductFormScreen} options={{ title: "Modifier le produit" }} />
       </Stack.Navigator>
