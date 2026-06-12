@@ -3,13 +3,20 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
+import ServiceCard from "@/components/ServiceCard";
 import api from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
+import Link from "next/link";
 import { use, useEffect, useState } from "react";
+
+type BoutiqueTab = "products" | "services" | "reviews";
 
 export default function BoutiquePage({ params }: { params: Promise<{ sellerId: string }> }) {
   const { sellerId } = use(params);
+  const { user } = useAuth();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<BoutiqueTab>("products");
 
   useEffect(() => {
     api.get(`/vendors/store/public/${sellerId}`)
@@ -33,9 +40,25 @@ export default function BoutiquePage({ params }: { params: Promise<{ sellerId: s
     );
   }
 
+  if (!data) return (
+    <div className="min-h-screen bg-white flex flex-col"><Header />
+      <main className="flex-1 flex items-center justify-center flex-col gap-4">
+        <p className="text-4xl">🏪</p>
+        <p className="font-bold text-slate-700">Boutique introuvable</p>
+        <Link href="/produits" className="text-rose-800 hover:underline text-sm">← Retour aux produits</Link>
+      </main><Footer />
+    </div>
+  );
+
   const store = data?.store;
-  const products = data?.products || [];
+  const products: any[] = data?.products || [];
+  const services: any[] = data?.services || [];
+  const reviews: any[] = data?.reviews || [];
   const sellerName = store?.seller?.name || store?.name || "Boutique";
+
+  const avgRating = reviews.length
+    ? (reviews.reduce((s: number, r: any) => s + r.rating, 0) / reviews.length).toFixed(1)
+    : null;
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -43,56 +66,115 @@ export default function BoutiquePage({ params }: { params: Promise<{ sellerId: s
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
         {/* Store header */}
         <div className="rounded-2xl border border-slate-100 overflow-hidden mb-8" style={{ boxShadow: "0 2px 16px rgba(0,0,0,0.07)" }}>
-          <div className="h-40 bg-gradient-to-r from-rose-100 to-rose-50 relative overflow-hidden">
+          <div className="h-48 bg-gradient-to-r from-rose-100 to-rose-50 relative overflow-hidden">
             {store?.cover && <img src={store.cover} alt="cover" className="w-full h-full object-cover" />}
           </div>
-          <div className="px-6 pb-6 -mt-10 flex items-end gap-5">
+          <div className="px-6 pb-6 -mt-10 flex items-end gap-5 flex-wrap">
             <div className="w-20 h-20 rounded-xl border-4 border-white bg-rose-800 flex items-center justify-center text-white text-3xl font-black shadow overflow-hidden shrink-0">
               {store?.logo ? <img src={store.logo} alt="logo" className="w-full h-full object-cover" /> : sellerName?.charAt(0)?.toUpperCase()}
             </div>
-            <div className="pt-10">
+            <div className="pt-10 flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-2xl font-black text-slate-900">{store?.name || sellerName}</h1>
                 {store?.seller?.isVerified && (
                   <span className="text-xs font-bold bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full">✓ Vérifié</span>
                 )}
+                {avgRating && (
+                  <span className="text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">
+                    ★ {avgRating} ({reviews.length} avis)
+                  </span>
+                )}
               </div>
-              {store?.description && <p className="text-slate-500 text-sm mt-1">{store.description}</p>}
-              <div className="flex items-center gap-4 mt-2 text-xs text-slate-400">
+              {store?.description && <p className="text-slate-500 text-sm mt-1 max-w-2xl">{store.description}</p>}
+              <div className="flex items-center gap-4 mt-2 text-xs text-slate-400 flex-wrap">
                 {store?.address && <span>📍 {store.address}</span>}
                 {store?.phone && <span>📞 {store.phone}</span>}
-                <span>📦 {products.length} produit{products.length > 1 ? "s" : ""}</span>
+                <span>📦 {products.length} produit{products.length !== 1 ? "s" : ""}</span>
+                {services.length > 0 && <span>💼 {services.length} service{services.length !== 1 ? "s" : ""}</span>}
               </div>
             </div>
+            {user && user.id !== sellerId && (
+              <Link href={`/messages?with=${store?.seller?.id || sellerId}`}
+                className="mt-6 bg-rose-800 text-white font-bold px-5 py-2.5 rounded-xl hover:bg-rose-900 transition text-sm flex items-center gap-2">
+                💬 Contacter
+              </Link>
+            )}
           </div>
         </div>
 
-        {/* Products */}
-        <h2 className="text-xl font-black text-slate-900 mb-4">Produits de la boutique</h2>
-        {products.length === 0 ? (
-          <div className="text-center py-16 bg-slate-50 rounded-2xl border border-slate-100">
-            <span className="text-4xl block mb-3">📦</span>
-            <p className="text-slate-500">Aucun produit disponible pour le moment.</p>
+        {/* Tabs */}
+        <div className="flex gap-2 mb-6 flex-wrap">
+          {([
+            { key: "products", label: `📦 Produits (${products.length})` },
+            ...(services.length > 0 ? [{ key: "services", label: `💼 Services (${services.length})` }] : []),
+            ...(reviews.length > 0 ? [{ key: "reviews", label: `⭐ Avis (${reviews.length})` }] : []),
+          ] as { key: BoutiqueTab; label: string }[]).map(t => (
+            <button key={t.key} onClick={() => setTab(t.key)}
+              className={`px-4 py-2 rounded-xl text-sm font-bold transition ${tab === t.key ? "bg-rose-800 text-white" : "bg-white border border-slate-200 text-slate-600 hover:border-rose-300"}`}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Products tab */}
+        {tab === "products" && (
+          products.length === 0 ? (
+            <div className="text-center py-16 bg-slate-50 rounded-2xl border border-slate-100">
+              <span className="text-4xl block mb-3">📦</span>
+              <p className="text-slate-500">Aucun produit disponible pour le moment.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {products.map((p: any) => (
+                <ProductCard key={p.id} id={p.id} title={p.title}
+                  price={p.promoPrice || p.price}
+                  originalPrice={p.promoPrice ? p.price : undefined}
+                  seller={sellerName} rating={p.averageRating || 0}
+                  reviewCount={p.reviewCount || 0}
+                  isVerified={store?.seller?.isVerified}
+                  category={p.category} image={p.images?.[0]}
+                  isBestSeller={p.isBestSeller} isNewArrival={p.isNewArrival}
+                  stock={p.stock} stockAlert={p.stockAlert} />
+              ))}
+            </div>
+          )
+        )}
+
+        {/* Services tab */}
+        {tab === "services" && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+            {services.map((s: any) => (
+              <ServiceCard key={s.id} id={s.id} title={s.title}
+                provider={sellerName} startingPrice={s.price}
+                rating={s.averageRating || 0} category={s.category}
+                isVerified={store?.seller?.isVerified} />
+            ))}
           </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {products.map((p: any) => (
-              <ProductCard
-                key={p.id}
-                id={p.id}
-                title={p.title}
-                price={p.promoPrice || p.price}
-                originalPrice={p.promoPrice ? p.price : undefined}
-                seller={sellerName}
-                rating={0}
-                isVerified={store?.seller?.isVerified}
-                category={p.category}
-                image={p.images?.[0]}
-                isBestSeller={p.isBestSeller}
-                isNewArrival={p.isNewArrival}
-                stock={p.stock}
-                stockAlert={p.stockAlert}
-              />
+        )}
+
+        {/* Reviews tab */}
+        {tab === "reviews" && (
+          <div className="space-y-4 max-w-3xl">
+            {reviews.map((r: any) => (
+              <div key={r.id} className="bg-white border border-slate-100 rounded-xl p-5 shadow-sm">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center text-rose-800 font-bold text-sm">
+                    {r.user?.name?.[0]?.toUpperCase() || "?"}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-800 text-sm">{r.user?.name || "Client"}</p>
+                    <div className="flex">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <span key={i} className={`text-xs ${i < r.rating ? "text-amber-400" : "text-slate-200"}`}>★</span>
+                      ))}
+                    </div>
+                  </div>
+                  <span className="ml-auto text-xs text-slate-400">
+                    {new Date(r.createdAt).toLocaleDateString("fr-FR")}
+                  </span>
+                </div>
+                {r.comment && <p className="text-slate-600 text-sm">{r.comment}</p>}
+              </div>
             ))}
           </div>
         )}

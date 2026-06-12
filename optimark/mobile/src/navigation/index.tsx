@@ -11,6 +11,7 @@ import CartScreen from "../screens/buyer/CartScreen";
 import OrdersScreen from "../screens/buyer/OrdersScreen";
 import OrderDetailScreen from "../screens/buyer/OrderDetailScreen";
 import ProfileScreen from "../screens/buyer/ProfileScreen";
+import FlashSalesScreen from "../screens/buyer/FlashSalesScreen";
 import AuthScreen from "../screens/AuthScreen";
 import SellerDashboardScreen from "../screens/seller/SellerDashboardScreen";
 import SellerProductsScreen from "../screens/seller/SellerProductsScreen";
@@ -71,6 +72,7 @@ export default function AppNavigator() {
         <Stack.Screen name="OrderDetail" component={OrderDetailScreen} options={{ title: "Commande" }} />
         <Stack.Screen name="Auth" component={AuthScreen} options={{ title: "Connexion" }} />
         <Stack.Screen name="SellerTab" component={SellerTabs} options={{ headerShown: false }} />
+        <Stack.Screen name="FlashSales" component={FlashSalesScreen} options={{ title: "⚡ Ventes Flash" }} />
         <Stack.Screen name="SellerAddProduct" component={SellerProductFormScreen} options={{ title: "Nouveau produit" }} />
         <Stack.Screen name="SellerEditProduct" component={SellerProductFormScreen} options={{ title: "Modifier le produit" }} />
       </Stack.Navigator>

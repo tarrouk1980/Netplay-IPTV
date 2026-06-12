@@ -1,10 +1,33 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, Alert, StyleSheet, ScrollView } from "react-native";
 import { useAuth } from "../../contexts/AuthContext";
+import api from "../../api";
 
 export default function ProfileScreen({ navigation }: any) {
   const { user, logout, upgradeToSeller } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [loyalty, setLoyalty] = useState<{ points: number; valueInTND: string } | null>(null);
+  const [redeeming, setRedeeming] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      api.get("/returns/loyalty").then(r => setLoyalty(r.data?.data)).catch(() => {});
+    }
+  }, [user]);
+
+  const redeemPoints = async () => {
+    if (!loyalty || loyalty.points < 100) return;
+    setRedeeming(true);
+    try {
+      const res = await api.post("/returns/loyalty/redeem", { points: 100 });
+      Alert.alert("✓ Points échangés", `100 points = ${res.data?.data?.discountTND} TND de réduction.`);
+      api.get("/returns/loyalty").then(r => setLoyalty(r.data?.data)).catch(() => {});
+    } catch (e: any) {
+      Alert.alert("Erreur", e.response?.data?.message || "Erreur lors de l'échange.");
+    } finally {
+      setRedeeming(false);
+    }
+  };
 
   const handleUpgrade = async () => {
     Alert.alert(
@@ -58,8 +81,34 @@ export default function ProfileScreen({ navigation }: any) {
         </View>
       </View>
 
+      {/* Loyalty */}
+      {loyalty && (
+        <View style={s.loyaltyCard}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 8 }}>
+            <Text style={{ fontSize: 24 }}>⭐</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={s.loyaltyPoints}>{loyalty.points} points fidélité</Text>
+              <Text style={s.loyaltyValue}>≈ {loyalty.valueInTND} TND</Text>
+            </View>
+          </View>
+          {loyalty.points >= 100 ? (
+            <TouchableOpacity style={s.redeemBtn} onPress={redeemPoints} disabled={redeeming}>
+              <Text style={s.redeemText}>{redeeming ? "Échange..." : "Échanger 100 pts → 1 TND"}</Text>
+            </TouchableOpacity>
+          ) : (
+            <Text style={s.loyaltyHint}>{100 - loyalty.points} pts manquants pour échanger</Text>
+          )}
+        </View>
+      )}
+
       {/* Actions */}
       <View style={s.menu}>
+        <TouchableOpacity style={s.menuItem} onPress={() => navigation.navigate("FlashSales")}>
+          <Text style={s.menuIcon}>⚡</Text>
+          <Text style={s.menuLabel}>Ventes Flash</Text>
+          <Text style={s.menuArrow}>›</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={s.menuItem} onPress={() => navigation.navigate("Orders")}>
           <Text style={s.menuIcon}>📦</Text>
           <Text style={s.menuLabel}>Mes commandes</Text>
@@ -104,6 +153,12 @@ const s = StyleSheet.create({
   email: { fontSize: 13, color: "#fecdd3", marginTop: 4 },
   roleBadge: { marginTop: 10, backgroundColor: "rgba(255,255,255,0.2)", paddingHorizontal: 14, paddingVertical: 4, borderRadius: 999 },
   roleText: { color: "#fff", fontSize: 12, fontWeight: "700" },
+  loyaltyCard: { margin: 16, backgroundColor: "#fffbeb", borderRadius: 16, padding: 16, borderWidth: 1, borderColor: "#fde68a" },
+  loyaltyPoints: { fontWeight: "800", fontSize: 16, color: "#92400e" },
+  loyaltyValue: { fontSize: 12, color: "#b45309", marginTop: 2 },
+  loyaltyHint: { fontSize: 12, color: "#b45309", marginTop: 4 },
+  redeemBtn: { backgroundColor: "#f59e0b", borderRadius: 12, padding: 10, alignItems: "center", marginTop: 4 },
+  redeemText: { color: "#fff", fontWeight: "800", fontSize: 13 },
   menu: { margin: 16, backgroundColor: "#fff", borderRadius: 20, overflow: "hidden", borderWidth: 1, borderColor: "#f1f5f9" },
   menuItem: { flexDirection: "row", alignItems: "center", padding: 16, borderBottomWidth: 1, borderBottomColor: "#f8fafc" },
   menuIcon: { fontSize: 20, marginRight: 14 },
