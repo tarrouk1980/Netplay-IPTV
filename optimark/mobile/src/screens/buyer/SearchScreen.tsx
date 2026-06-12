@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import {
   View, Text, TextInput, FlatList, TouchableOpacity,
-  StyleSheet, ActivityIndicator, Image
+  StyleSheet, ActivityIndicator, Image, ScrollView
 } from "react-native";
 import api from "../../api";
 
@@ -13,15 +13,24 @@ export default function SearchScreen({ navigation }: any) {
   const [results, setResults] = useState<{ products: any[]; services: any[] }>({ products: [], services: [] });
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<"products" | "services">("products");
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const search = (q: string, category: string) => {
+  const doSearch = (q: string, category: string, verified: boolean, min: string, max: string) => {
     if (debounce.current) clearTimeout(debounce.current);
     if (!q.trim()) { setResults({ products: [], services: [] }); return; }
     debounce.current = setTimeout(async () => {
       setLoading(true);
       try {
-        const res = await api.get("/search", { params: { q, type: "all", category: category !== "Tous" ? category : undefined } });
+        const params: any = { q, type: "all" };
+        if (category !== "Tous") params.category = category;
+        if (verified) params.isVerifiedSeller = "true";
+        if (min) params.minPrice = min;
+        if (max) params.maxPrice = max;
+        const res = await api.get("/search", { params });
         const data = res.data?.data || {};
         setResults({ products: data.products || [], services: data.services || [] });
       } catch {}
@@ -31,12 +40,17 @@ export default function SearchScreen({ navigation }: any) {
 
   const handleInput = (v: string) => {
     setQuery(v);
-    search(v, cat);
+    doSearch(v, cat, verifiedOnly, minPrice, maxPrice);
   };
 
   const handleCat = (c: string) => {
     setCat(c);
-    search(query, c);
+    doSearch(query, c, verifiedOnly, minPrice, maxPrice);
+  };
+
+  const applyFilters = () => {
+    setShowFilters(false);
+    doSearch(query, cat, verifiedOnly, minPrice, maxPrice);
   };
 
   const allResults = tab === "products" ? results.products : results.services;
@@ -57,10 +71,29 @@ export default function SearchScreen({ navigation }: any) {
         />
         {query.length > 0 && (
           <TouchableOpacity onPress={() => { setQuery(""); setResults({ products: [], services: [] }); }}>
-            <Text style={{ color: "#94a3b8", fontSize: 18, paddingHorizontal: 8 }}>✕</Text>
+            <Text style={{ color: "#94a3b8", fontSize: 18, paddingHorizontal: 4 }}>✕</Text>
           </TouchableOpacity>
         )}
+        <TouchableOpacity style={[s.filterBtn, showFilters && { backgroundColor: "#9f1239" }]} onPress={() => setShowFilters(v => !v)}>
+          <Text style={{ fontSize: 16 }}>⚙️</Text>
+        </TouchableOpacity>
       </View>
+
+      {/* Filter panel */}
+      {showFilters && (
+        <View style={s.filterPanel}>
+          <View style={{ flexDirection: "row", gap: 8, marginBottom: 10 }}>
+            <TextInput style={[s.priceInput, { flex: 1 }]} value={minPrice} onChangeText={setMinPrice} placeholder="Prix min (TND)" placeholderTextColor="#94a3b8" keyboardType="numeric" />
+            <TextInput style={[s.priceInput, { flex: 1 }]} value={maxPrice} onChangeText={setMaxPrice} placeholder="Prix max (TND)" placeholderTextColor="#94a3b8" keyboardType="numeric" />
+          </View>
+          <TouchableOpacity style={[s.verifiedChip, verifiedOnly && s.verifiedChipActive]} onPress={() => setVerifiedOnly(v => !v)}>
+            <Text style={[{ fontSize: 13, fontWeight: "700" }, verifiedOnly ? { color: "#fff" } : { color: "#475569" }]}>✓ Vendeurs vérifiés uniquement</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={s.applyBtn} onPress={applyFilters}>
+            <Text style={{ color: "#fff", fontWeight: "800", fontSize: 13 }}>Appliquer les filtres</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Categories */}
       <FlatList
@@ -151,4 +184,10 @@ const s = StyleSheet.create({
   resultTitle: { fontSize: 13, fontWeight: "700", color: "#1e293b", marginBottom: 2 },
   resultSeller: { fontSize: 11, color: "#94a3b8", marginBottom: 4 },
   resultPrice: { fontSize: 14, fontWeight: "900", color: "#9f1239" },
+  filterBtn: { width: 36, height: 36, borderRadius: 10, backgroundColor: "#f1f5f9", alignItems: "center", justifyContent: "center" },
+  filterPanel: { backgroundColor: "#fff", padding: 16, borderBottomWidth: 1, borderBottomColor: "#f1f5f9" },
+  priceInput: { borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, fontSize: 13, color: "#1e293b" },
+  verifiedChip: { borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 10 },
+  verifiedChipActive: { backgroundColor: "#9f1239", borderColor: "#9f1239" },
+  applyBtn: { backgroundColor: "#1e293b", borderRadius: 10, paddingVertical: 12, alignItems: "center" },
 });
