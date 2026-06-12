@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AdminModule } from './admin/admin.module';
 import { MessagesModule } from './messages/messages.module';
 import { CouponsModule } from './coupons/coupons.module';
+import { ReturnsModule } from './returns/returns.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { FavoritesModule } from './favorites/favorites.module';
 import { NotificationsModule } from './notifications/notifications.module';
@@ -36,6 +37,7 @@ import { VendorsModule } from './vendors/vendors.module';
     AdminModule,
     MessagesModule,
     CouponsModule,
+    ReturnsModule,
   ],
 })
 export class AppModule {}

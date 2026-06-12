@@ -24,6 +24,10 @@ export default function CommandeDetailPage({ params }: { params: Promise<{ id: s
   const router = useRouter();
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [returnReason, setReturnReason] = useState("");
+  const [showReturnForm, setShowReturnForm] = useState(false);
+  const [returnSent, setReturnSent] = useState(false);
+  const [returnLoading, setReturnLoading] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -54,6 +58,21 @@ export default function CommandeDetailPage({ params }: { params: Promise<{ id: s
 
   const status = STATUS[order.status] || STATUS.PENDING;
   const addr = order.deliveryAddress;
+
+  const submitReturn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!returnReason.trim()) return;
+    setReturnLoading(true);
+    try {
+      await api.post("/returns", { orderId: order.id, reason: returnReason });
+      setReturnSent(true);
+      setShowReturnForm(false);
+    } catch (e: any) {
+      alert(e.response?.data?.message || "Erreur lors de la demande.");
+    } finally {
+      setReturnLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -135,6 +154,47 @@ export default function CommandeDetailPage({ params }: { params: Promise<{ id: s
             <p className="text-slate-500 text-sm">{addr.address}</p>
             <p className="text-slate-500 text-sm">{addr.city}{addr.postalCode ? ` ${addr.postalCode}` : ""}</p>
             {addr.notes && <p className="text-slate-400 text-xs italic mt-1">"{addr.notes}"</p>}
+          </div>
+        )}
+
+        {/* Return request */}
+        {order.status === "DELIVERED" && (
+          <div className="bg-white border border-slate-100 rounded-2xl p-5 mb-4" style={{boxShadow:"0 2px 8px rgba(0,0,0,0.05)"}}>
+            <h2 className="font-black text-slate-900 mb-2">↩️ Demande de retour</h2>
+            {returnSent ? (
+              <p className="text-green-600 font-semibold text-sm">✓ Votre demande de retour a été envoyée. Nous vous contacterons sous 48h.</p>
+            ) : showReturnForm ? (
+              <form onSubmit={submitReturn} className="space-y-3">
+                <textarea value={returnReason} onChange={e => setReturnReason(e.target.value)} required
+                  placeholder="Décrivez la raison du retour (produit défectueux, non conforme, etc.)"
+                  rows={3} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-rose-100 resize-none" />
+                <div className="flex gap-2">
+                  <button type="submit" disabled={returnLoading}
+                    className="bg-rose-800 hover:bg-rose-900 text-white font-bold px-5 py-2 rounded-xl text-sm transition disabled:opacity-50">
+                    {returnLoading ? "Envoi..." : "Envoyer la demande"}
+                  </button>
+                  <button type="button" onClick={() => setShowReturnForm(false)} className="text-slate-500 hover:text-slate-700 text-sm font-semibold px-4">Annuler</button>
+                </div>
+              </form>
+            ) : (
+              <div>
+                <p className="text-slate-500 text-sm mb-3">Vous avez 7 jours après la livraison pour demander un retour.</p>
+                <button onClick={() => setShowReturnForm(true)} className="border border-slate-200 hover:border-rose-300 text-slate-700 hover:text-rose-800 font-semibold px-4 py-2 rounded-xl text-sm transition">
+                  Demander un retour
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Points fidélité gagnés */}
+        {order.status === "DELIVERED" && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-4 flex items-center gap-3">
+            <span className="text-2xl">⭐</span>
+            <div>
+              <p className="font-bold text-amber-800">+{Math.floor(order.total)} points fidélité gagnés !</p>
+              <p className="text-amber-600 text-xs">Utilisez vos points pour obtenir des réductions sur vos prochaines commandes.</p>
+            </div>
           </div>
         )}
 

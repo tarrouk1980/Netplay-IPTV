@@ -16,6 +16,7 @@ model User {
   isVerified        Boolean        @default(false)
   subscriptionPlan  String         @default("FREE")
   subscriptionEnd   DateTime?
+  loyaltyPoints     Int            @default(0)
   createdAt         DateTime       @default(now())
   products          Product[]
   services          Service[]
@@ -28,6 +29,7 @@ model User {
   sentMessages      Message[]      @relation("MessageSender")
   receivedMessages  Message[]      @relation("MessageReceiver")
   coupons           Coupon[]
+  returnRequests    ReturnRequest[]
 }
 
 model Store {
@@ -109,15 +111,36 @@ model Service {
 }
 
 model Order {
-  id              String        @id @default(uuid())
+  id              String          @id @default(uuid())
   buyerId         String
-  buyer           User          @relation(fields: [buyerId], references: [id])
+  buyer           User            @relation(fields: [buyerId], references: [id])
   items           OrderItem[]
   total           Float
-  status          OrderStatus   @default(PENDING)
+  status          OrderStatus     @default(PENDING)
   paymentMethod   PaymentMethod
   deliveryAddress Json?
-  createdAt       DateTime      @default(now())
+  createdAt       DateTime        @default(now())
+  returnRequests  ReturnRequest[]
+}
+
+model ReturnRequest {
+  id          String       @id @default(uuid())
+  orderId     String
+  order       Order        @relation(fields: [orderId], references: [id])
+  buyerId     String
+  buyer       User         @relation(fields: [buyerId], references: [id])
+  reason      String
+  status      ReturnStatus @default(PENDING)
+  adminNote   String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+enum ReturnStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REFUNDED
 }
 
 enum OrderStatus {
