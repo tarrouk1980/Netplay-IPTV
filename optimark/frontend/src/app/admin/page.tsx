@@ -18,6 +18,7 @@ export default function AdminPage() {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("stats");
   const [stats, setStats] = useState<any>(null);
+  const [chartData, setChartData] = useState<{ date: string; revenue: number }[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
@@ -41,8 +42,12 @@ export default function AdminPage() {
 
   const loadStats = async () => {
     setFetching(true);
-    const res = await api.get("/admin/stats").catch(() => null);
-    setStats(res?.data?.data);
+    const [sRes, cRes] = await Promise.all([
+      api.get("/admin/stats").catch(() => null),
+      api.get("/admin/revenue-chart?days=30").catch(() => null),
+    ]);
+    setStats(sRes?.data?.data);
+    setChartData(cRes?.data?.data || []);
     setFetching(false);
   };
 
@@ -135,6 +140,44 @@ export default function AdminPage() {
 
         {/* Stats */}
         {tab === "stats" && stats && !fetching && (
+          <>
+          {chartData.length > 0 && (() => {
+            const max = Math.max(...chartData.map(d => d.revenue), 1);
+            const W = 700, H = 160, PAD = 30;
+            const points = chartData.map((d, i) => {
+              const x = PAD + (i / (chartData.length - 1)) * (W - PAD * 2);
+              const y = H - PAD - (d.revenue / max) * (H - PAD * 2);
+              return `${x},${y}`;
+            }).join(" ");
+            const area = `M ${points.split(" ")[0]} L ${points} L ${PAD + (W - PAD * 2)},${H - PAD} L ${PAD},${H - PAD} Z`;
+            return (
+              <div className="bg-white rounded-2xl border border-slate-100 p-5 mb-6" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold text-slate-800">Revenus — 30 derniers jours</h3>
+                  <span className="text-rose-800 font-black text-sm">{chartData.reduce((s, d) => s + d.revenue, 0).toFixed(2)} TND</span>
+                </div>
+                <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 160 }}>
+                  <defs>
+                    <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#9f1239" stopOpacity="0.2" />
+                      <stop offset="100%" stopColor="#9f1239" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  <path d={area} fill="url(#grad)" />
+                  <polyline points={points} fill="none" stroke="#9f1239" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  {chartData.filter((_, i) => i % 5 === 0).map((d, i, arr) => {
+                    const idx = chartData.findIndex(c => c.date === d.date);
+                    const x = PAD + (idx / (chartData.length - 1)) * (W - PAD * 2);
+                    return (
+                      <text key={d.date} x={x} y={H - 6} textAnchor="middle" fontSize="9" fill="#94a3b8">
+                        {d.date.slice(5)}
+                      </text>
+                    );
+                  })}
+                </svg>
+              </div>
+            );
+          })()}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {[
               { label: "Utilisateurs", value: stats.totalUsers, icon: "👥", color: "text-slate-800" },
@@ -150,6 +193,7 @@ export default function AdminPage() {
               </div>
             ))}
           </div>
+          </>
         )}
 
         {/* Users */}

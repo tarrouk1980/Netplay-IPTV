@@ -68,4 +68,10 @@ export class AdminController {
     if (req.user.role !== 'ADMIN' && req.user.role !== 'SELLER') throw new Error('Accès refusé');
     return this.adminService.getInvoice(id);
   }
+
+  @Get('revenue-chart')
+  revenueChart(@Request() req: any, @Query('days') days = '30') {
+    this.checkAdmin(req);
+    return this.adminService.getRevenueChart(parseInt(days));
+  }
 }

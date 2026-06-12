@@ -127,4 +127,27 @@ export class AdminService {
     });
     return { data: order, success: true };
   }
+
+  async getRevenueChart(days = 30) {
+    const since = new Date();
+    since.setDate(since.getDate() - days);
+    const orders = await this.prisma.order.findMany({
+      where: { createdAt: { gte: since }, status: { not: 'CANCELLED' } },
+      select: { total: true, createdAt: true },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const map: Record<string, number> = {};
+    for (let i = 0; i < days; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() - (days - 1 - i));
+      map[d.toISOString().slice(0, 10)] = 0;
+    }
+    for (const o of orders) {
+      const key = o.createdAt.toISOString().slice(0, 10);
+      if (map[key] !== undefined) map[key] = +(map[key] + Number(o.total)).toFixed(2);
+    }
+    const data = Object.entries(map).map(([date, revenue]) => ({ date, revenue }));
+    return { data, success: true };
+  }
 }
