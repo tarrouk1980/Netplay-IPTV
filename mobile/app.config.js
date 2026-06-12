@@ -15,7 +15,7 @@ module.exports = {
     assetBundlePatterns: ['**/*'],
     ios: {
       supportsTablet: false,
-      bundleIdentifier: 'com.easyway.app',
+      bundleIdentifier: 'com.easyhotels.maghreb',
       scheme: 'easyhotels',
     },
     android: {
@@ -23,7 +23,7 @@ module.exports = {
         foregroundImage: './assets/adaptive-icon.png',
         backgroundColor: '#0A0A0F',
       },
-      package: 'com.easyway.app',
+      package: 'com.easyhotels.maghreb',
       scheme: 'easyhotels',
       compileSdkVersion: 34,
       targetSdkVersion: 34,
