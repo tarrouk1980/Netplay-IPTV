@@ -1,6 +1,7 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateProductDto } from './dtos/create-product.dto';
 
 @Injectable()
@@ -8,6 +9,7 @@ export class ProductsService {
   constructor(
     private prisma: PrismaService,
     private subscriptions: SubscriptionsService,
+    private notifications: NotificationsService,
   ) {}
 
   async findAll(query: {
@@ -68,6 +70,20 @@ export class ProductsService {
     if (product.sellerId !== userId) throw new ForbiddenException('Accès refusé');
 
     const updated = await this.prisma.product.update({ where: { id }, data: dto });
+
+    // Notify users who favorited this product when a promo price is set
+    if (dto.promoPrice && !product.promoPrice) {
+      const favorites = await this.prisma.favorite.findMany({ where: { productId: id } });
+      const discount = Math.round((1 - dto.promoPrice / product.price) * 100);
+      for (const fav of favorites) {
+        await this.notifications.create(
+          fav.userId,
+          'PROMO',
+          `🏷️ Un produit dans vos favoris est en promo ! "${product.title}" est maintenant à -${discount}%.`,
+        );
+      }
+    }
+
     return { data: updated, message: 'Produit mis à jour', success: true };
   }
 
