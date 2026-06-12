@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateReviewDto } from './dtos/create-review.dto';
 
@@ -31,6 +31,41 @@ export class ReviewsService {
       orderBy: { createdAt: 'desc' },
     });
     return { data: reviews, message: 'Avis récupérés', success: true };
+  }
+
+  async getForSeller(sellerId: string) {
+    const reviews = await this.prisma.review.findMany({
+      where: {
+        OR: [
+          { product: { sellerId } },
+          { service: { sellerId } },
+        ],
+      },
+      include: {
+        user: { select: { id: true, name: true } },
+        product: { select: { id: true, title: true } },
+        service: { select: { id: true, title: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return { data: reviews, success: true };
+  }
+
+  async sellerReply(reviewId: string, sellerId: string, reply: string) {
+    const review = await this.prisma.review.findUnique({
+      where: { id: reviewId },
+      include: { product: { select: { sellerId: true } }, service: { select: { sellerId: true } } },
+    });
+    if (!review) throw new NotFoundException('Avis introuvable');
+    const ownerSellerId = review.product?.sellerId || review.service?.sellerId;
+    if (ownerSellerId !== sellerId) throw new ForbiddenException('Accès refusé');
+
+    const updated = await this.prisma.review.update({
+      where: { id: reviewId },
+      data: { sellerReply: reply, repliedAt: new Date() },
+      include: { user: { select: { id: true, name: true } } },
+    });
+    return { data: updated, message: 'Réponse enregistrée', success: true };
   }
 
   async getByService(serviceId: string) {

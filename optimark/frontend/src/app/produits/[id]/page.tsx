@@ -295,6 +295,12 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                     ))}
                   </div>
                   {review.comment && <p className="text-slate-600 text-sm">{review.comment}</p>}
+                  {review.sellerReply && (
+                    <div className="mt-3 ml-4 border-l-4 border-rose-800 bg-rose-50 rounded-r-xl px-3 py-2">
+                      <p className="text-xs font-bold text-rose-800 mb-1">Réponse du vendeur :</p>
+                      <p className="text-sm text-slate-700">{review.sellerReply}</p>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

@@ -1,0 +1,2 @@
+ALTER TABLE "Review" ADD COLUMN "sellerReply" TEXT;
+ALTER TABLE "Review" ADD COLUMN "repliedAt" TIMESTAMP(3);

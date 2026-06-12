@@ -240,6 +240,12 @@ export default function ProductDetailScreen({ route, navigation }: any) {
                 <Text style={s.reviewDate}>{new Date(r.createdAt).toLocaleDateString("fr-FR")}</Text>
               </View>
               {r.comment ? <Text style={s.reviewText}>{r.comment}</Text> : null}
+              {r.sellerReply ? (
+                <View style={s.sellerReplyBox}>
+                  <Text style={s.sellerReplyLabel}>Réponse du vendeur :</Text>
+                  <Text style={s.sellerReplyText}>{r.sellerReply}</Text>
+                </View>
+              ) : null}
             </View>
           ))}
 
@@ -387,6 +393,9 @@ const s = StyleSheet.create({
   reviewName: { fontWeight: "700", color: "#1e293b", fontSize: 13 },
   reviewDate: { color: "#94a3b8", fontSize: 11 },
   reviewText: { fontSize: 13, color: "#475569", lineHeight: 20 },
+  sellerReplyBox: { marginTop: 8, marginLeft: 4, borderLeftWidth: 3, borderLeftColor: "#9f1239", backgroundColor: "#fef2f2", borderRadius: 8, padding: 10 },
+  sellerReplyLabel: { fontSize: 10, fontWeight: "800", color: "#9f1239", marginBottom: 2 },
+  sellerReplyText: { fontSize: 12, color: "#475569" },
   writeReview: { marginTop: 20, borderTopWidth: 1, borderTopColor: "#f1f5f9", paddingTop: 16 },
   stars: { flexDirection: "row", gap: 4, marginBottom: 12 },
   reviewInput: { backgroundColor: "#f1f5f9", borderRadius: 14, padding: 14, fontSize: 14, color: "#1e293b", minHeight: 80, marginBottom: 12 },
