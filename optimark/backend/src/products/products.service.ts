@@ -1,10 +1,14 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { CreateProductDto } from './dtos/create-product.dto';
 
 @Injectable()
 export class ProductsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private subscriptions: SubscriptionsService,
+  ) {}
 
   async findAll(query: {
     category?: string;
@@ -51,6 +55,7 @@ export class ProductsService {
   }
 
   async create(dto: CreateProductDto, sellerId: string) {
+    await this.subscriptions.checkLimit(sellerId);
     const product = await this.prisma.product.create({
       data: { ...dto, sellerId },
     });

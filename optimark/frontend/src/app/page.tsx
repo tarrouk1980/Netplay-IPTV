@@ -24,14 +24,16 @@ export default function HomePage() {
   const [trending, setTrending] = useState<any[]>([]);
   const [lives, setLives] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
+  const [flashSales, setFlashSales] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchAll = async () => {
-      const [tRes, lRes, sRes] = await Promise.all([
+      const [tRes, lRes, sRes, fRes] = await Promise.all([
         api.get("/recommendations/trending", { params: { limit: 8 } }).catch(() => null),
         api.get("/live").catch(() => null),
         api.get("/recommendations/services", { params: { limit: 4 } }).catch(() => null),
+        api.get("/flash-sales/active").catch(() => null),
       ]);
 
       let products = tRes?.data?.data || [];
@@ -43,6 +45,7 @@ export default function HomePage() {
       setTrending(products);
       setLives(lRes?.data?.data || []);
       setServices(sRes?.data?.data || []);
+      setFlashSales((fRes?.data?.data || fRes?.data || []).slice(0, 4));
       setLoading(false);
     };
 
@@ -92,6 +95,49 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ── Flash Sales ── */}
+      {flashSales.length > 0 && (
+        <section className="py-12 px-4 bg-gradient-to-r from-rose-900 to-red-700">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">⚡</span>
+                <div>
+                  <h2 className="text-2xl font-black text-white">Ventes Flash</h2>
+                  <p className="text-rose-200 text-sm">Offres limitées — profitez-en avant la fin !</p>
+                </div>
+              </div>
+              <Link href="/ventes-flash" className="text-white font-bold text-sm hover:underline flex items-center gap-1">
+                Voir tout <span>→</span>
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {flashSales.map((sale: any) => (
+                <Link key={sale.id} href={`/produits/${sale.product?.id}`}
+                  className="group bg-white/10 hover:bg-white/20 backdrop-blur rounded-2xl overflow-hidden transition border border-white/20">
+                  <div className="relative">
+                    <img src={sale.product?.images?.[0] || "/placeholder.png"} alt={sale.product?.name}
+                      className="w-full h-36 object-cover" />
+                    <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-black px-2 py-0.5 rounded-full">
+                      -{sale.discount}%
+                    </span>
+                  </div>
+                  <div className="p-3">
+                    <p className="text-white text-xs font-bold truncate">{sale.product?.name}</p>
+                    <div className="flex items-baseline gap-1.5 mt-1">
+                      <span className="text-white font-black">
+                        {(sale.product?.price * (1 - sale.discount / 100)).toFixed(2)} TND
+                      </span>
+                      <span className="text-rose-200 text-xs line-through">{sale.product?.price} TND</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── Trending Products ── */}
       <section className="py-12 px-4 bg-slate-50">
