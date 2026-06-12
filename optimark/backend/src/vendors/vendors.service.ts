@@ -125,4 +125,25 @@ export class VendorsService {
     const { password, ...rest } = user;
     return { data: rest, message: 'Vérification demandée', success: true };
   }
+
+  async toggleFollow(followerId: string, sellerId: string) {
+    const existing = await this.prisma.sellerFollow.findUnique({
+      where: { followerId_sellerId: { followerId, sellerId } },
+    });
+    if (existing) {
+      await this.prisma.sellerFollow.delete({ where: { id: existing.id } });
+      return { data: { following: false }, message: 'Abonnement annulé', success: true };
+    }
+    await this.prisma.sellerFollow.create({ data: { followerId, sellerId } });
+    return { data: { following: true }, message: 'Abonné avec succès', success: true };
+  }
+
+  async getFollowStatus(followerId: string | undefined, sellerId: string) {
+    if (!followerId) return { data: { following: false, followerCount: await this.prisma.sellerFollow.count({ where: { sellerId } }) }, success: true };
+    const [follow, count] = await Promise.all([
+      this.prisma.sellerFollow.findUnique({ where: { followerId_sellerId: { followerId, sellerId } } }),
+      this.prisma.sellerFollow.count({ where: { sellerId } }),
+    ]);
+    return { data: { following: !!follow, followerCount: count }, success: true };
+  }
 }

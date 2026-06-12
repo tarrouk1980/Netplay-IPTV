@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Put, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Put, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { VendorsService } from './vendors.service';
 
@@ -51,5 +51,17 @@ export class VendorsController {
   @Patch('verify')
   requestVerification(@Request() req: any) {
     return this.vendorsService.requestVerification(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':sellerId/follow')
+  follow(@Param('sellerId') sellerId: string, @Request() req: any) {
+    return this.vendorsService.toggleFollow(req.user.id, sellerId);
+  }
+
+  @Get(':sellerId/follow/status')
+  followStatus(@Param('sellerId') sellerId: string, @Request() req: any) {
+    const followerId = req.user?.id;
+    return this.vendorsService.getFollowStatus(followerId, sellerId);
   }
 }

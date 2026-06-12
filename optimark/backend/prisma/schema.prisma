@@ -30,6 +30,17 @@ model User {
   receivedMessages  Message[]      @relation("MessageReceiver")
   coupons           Coupon[]
   returnRequests    ReturnRequest[]
+  following         SellerFollow[]   @relation("FollowerUser")
+}
+
+model SellerFollow {
+  id         String   @id @default(uuid())
+  followerId String
+  follower   User     @relation("FollowerUser", fields: [followerId], references: [id])
+  sellerId   String
+  createdAt  DateTime @default(now())
+
+  @@unique([followerId, sellerId])
 }
 
 model Store {
