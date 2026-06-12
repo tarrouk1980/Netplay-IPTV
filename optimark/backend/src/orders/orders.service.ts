@@ -2,6 +2,7 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ReturnsService } from '../returns/returns.service';
+import { LoyaltyService } from '../loyalty/loyalty.service';
 import { CreateOrderDto } from './dtos/create-order.dto';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -18,6 +19,7 @@ export class OrdersService {
     private prisma: PrismaService,
     private notifications: NotificationsService,
     private returns: ReturnsService,
+    private loyalty: LoyaltyService,
   ) {}
 
   async createOrder(dto: CreateOrderDto, buyerId: string) {
@@ -139,7 +141,7 @@ export class OrdersService {
 
     // Award loyalty points when order is delivered
     if (status === 'DELIVERED') {
-      await this.returns.addLoyaltyPoints(order.buyerId, order.total);
+      await this.loyalty.awardForOrder(order.buyerId, order.total);
     }
 
     return { data: updated, message: 'Statut mis à jour', success: true };

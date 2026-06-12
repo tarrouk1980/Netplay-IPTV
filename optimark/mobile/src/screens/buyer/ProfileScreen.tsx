@@ -6,22 +6,24 @@ import api from "../../api";
 export default function ProfileScreen({ navigation }: any) {
   const { user, logout, upgradeToSeller } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [loyalty, setLoyalty] = useState<{ points: number; valueInTND: string } | null>(null);
+  const [loyalty, setLoyalty] = useState<{ points: number; equivalentTND: string } | null>(null);
   const [redeeming, setRedeeming] = useState(false);
 
+  const loadLoyalty = () => {
+    api.get("/loyalty/balance").then(r => setLoyalty(r.data?.data)).catch(() => {});
+  };
+
   useEffect(() => {
-    if (user) {
-      api.get("/returns/loyalty").then(r => setLoyalty(r.data?.data)).catch(() => {});
-    }
+    if (user) loadLoyalty();
   }, [user]);
 
   const redeemPoints = async () => {
     if (!loyalty || loyalty.points < 100) return;
     setRedeeming(true);
     try {
-      const res = await api.post("/returns/loyalty/redeem", { points: 100 });
+      const res = await api.post("/loyalty/redeem", { points: 100 });
       Alert.alert("✓ Points échangés", `100 points = ${res.data?.data?.discountTND} TND de réduction.`);
-      api.get("/returns/loyalty").then(r => setLoyalty(r.data?.data)).catch(() => {});
+      loadLoyalty();
     } catch (e: any) {
       Alert.alert("Erreur", e.response?.data?.message || "Erreur lors de l'échange.");
     } finally {
@@ -88,7 +90,7 @@ export default function ProfileScreen({ navigation }: any) {
             <Text style={{ fontSize: 24 }}>⭐</Text>
             <View style={{ flex: 1 }}>
               <Text style={s.loyaltyPoints}>{loyalty.points} points fidélité</Text>
-              <Text style={s.loyaltyValue}>≈ {loyalty.valueInTND} TND</Text>
+              <Text style={s.loyaltyValue}>≈ {loyalty.equivalentTND} TND</Text>
             </View>
           </View>
           {loyalty.points >= 100 ? (
