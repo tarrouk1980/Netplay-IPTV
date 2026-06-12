@@ -28,6 +28,7 @@ import LiveViewScreen from "../screens/buyer/LiveViewScreen";
 import SellerAnalyticsScreen from "../screens/seller/SellerAnalyticsScreen";
 import SellerServicesScreen from "../screens/seller/SellerServicesScreen";
 import SellerSubscriptionScreen from "../screens/seller/SellerSubscriptionScreen";
+import SellerReturnsScreen from "../screens/seller/SellerReturnsScreen";
 import FavoritesScreen from "../screens/buyer/FavoritesScreen";
 import SellerStoreScreen from "../screens/buyer/SellerStoreScreen";
 import { useCart } from "../contexts/CartContext";
@@ -101,6 +102,7 @@ export default function AppNavigator() {
         <Stack.Screen name="Favorites" component={FavoritesScreen} options={{ title: "❤️ Mes favoris" }} />
         <Stack.Screen name="SellerStore" component={SellerStoreScreen} options={{ title: "Boutique" }} />
         <Stack.Screen name="SellerSubscription" component={SellerSubscriptionScreen} options={{ title: "💎 Plans & Tarifs" }} />
+        <Stack.Screen name="SellerReturnsStack" component={SellerReturnsScreen} options={{ title: "↩️ Retours clients" }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
