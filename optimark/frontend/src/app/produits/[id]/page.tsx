@@ -182,9 +182,12 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               {product.stock > 0 && product.stock <= (product.stockAlert || 5) && <span className="bg-orange-100 text-orange-700 text-xs font-bold px-3 py-1 rounded-full">⚠️ Plus que {product.stock} en stock !</span>}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Link href={`/boutique/${product.sellerId}`} className="font-medium text-rose-800 hover:underline">{seller}</Link>
               {isVerified && <span className="text-green-600 text-xs font-semibold bg-green-50 px-2 py-0.5 rounded-full">✓ Vérifié</span>}
+              <Link href={`/messages?with=${product.sellerId}`} className="text-xs font-semibold text-slate-500 hover:text-rose-800 bg-slate-100 hover:bg-rose-50 px-3 py-1 rounded-full transition">
+                💬 Contacter
+              </Link>
             </div>
 
             <div className="flex items-center gap-1">

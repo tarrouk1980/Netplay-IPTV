@@ -25,6 +25,9 @@ model User {
   favorites         Favorite[]
   notifications     Notification[]
   store             Store?
+  sentMessages      Message[]      @relation("MessageSender")
+  receivedMessages  Message[]      @relation("MessageReceiver")
+  coupons           Coupon[]
 }
 
 model Store {
@@ -181,4 +184,31 @@ model Review {
   serviceId String?
   service   Service? @relation(fields: [serviceId], references: [id])
   createdAt DateTime @default(now())
+}
+
+model Message {
+  id          String   @id @default(uuid())
+  senderId    String
+  sender      User     @relation("MessageSender", fields: [senderId], references: [id])
+  receiverId  String
+  receiver    User     @relation("MessageReceiver", fields: [receiverId], references: [id])
+  content     String
+  isRead      Boolean  @default(false)
+  productId   String?
+  createdAt   DateTime @default(now())
+}
+
+model Coupon {
+  id          String    @id @default(uuid())
+  code        String    @unique
+  discount    Float
+  type        String    @default("PERCENT")
+  minAmount   Float?
+  maxUses     Int?
+  usedCount   Int       @default(0)
+  expiresAt   DateTime?
+  isActive    Boolean   @default(true)
+  sellerId    String
+  seller      User      @relation(fields: [sellerId], references: [id])
+  createdAt   DateTime  @default(now())
 }

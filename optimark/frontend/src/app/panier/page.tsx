@@ -15,6 +15,10 @@ export default function PanierPage() {
   const router = useRouter();
   const [selectedPayment, setSelectedPayment] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [couponError, setCouponError] = useState("");
+  const [couponApplied, setCouponApplied] = useState(false);
   const [address, setAddress] = useState({
     fullName: user?.name || "",
     phone: "",
@@ -48,7 +52,7 @@ export default function PanierPage() {
       if (selectedPayment === "konnect" || selectedPayment === "paymee") {
         const payRes = await api.post(`/payments/${selectedPayment}/initiate`, {
           orderId: order.id,
-          amount: total,
+          amount: finalTotal,
           description: `Commande OPTIMARK #${order.id.slice(0, 8)}`,
         });
         const payUrl = payRes.data.data?.payUrl || payRes.data.data?.payment_url || payRes.data.data?.url;
@@ -63,6 +67,22 @@ export default function PanierPage() {
       alert(err?.response?.data?.message || "Erreur lors de la commande");
     } finally {
       setProcessing(false);
+    }
+  };
+
+  const finalTotal = Math.max(0, total - couponDiscount);
+
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setCouponError("");
+    try {
+      const res = await api.get("/coupons/validate", { params: { code: couponCode, amount: total } });
+      setCouponDiscount(res.data?.data?.discountAmount || 0);
+      setCouponApplied(true);
+    } catch (e: any) {
+      setCouponError(e.response?.data?.message || "Code invalide");
+      setCouponDiscount(0);
+      setCouponApplied(false);
     }
   };
 
@@ -159,10 +179,34 @@ export default function PanierPage() {
                     <span>Livraison</span>
                     <span className="text-green-600 font-semibold">Gratuite</span>
                   </div>
+                  {couponDiscount > 0 && (
+                    <div className="flex justify-between text-green-600 font-semibold">
+                      <span>Code promo ({couponCode})</span>
+                      <span>−{couponDiscount.toFixed(2)} TND</span>
+                    </div>
+                  )}
                   <div className="border-t border-slate-100 pt-2 flex justify-between font-black text-base text-slate-900">
                     <span>Total</span>
-                    <span className="text-rose-800">{total.toFixed(2)} TND</span>
+                    <span className="text-rose-800">{finalTotal.toFixed(2)} TND</span>
                   </div>
+                </div>
+
+                {/* Coupon */}
+                <div className="mb-4">
+                  <p className="font-bold text-slate-700 mb-2 text-sm">Code promo</p>
+                  {couponApplied ? (
+                    <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-3 py-2">
+                      <span className="text-green-700 font-bold text-sm">✓ {couponCode} appliqué</span>
+                      <button onClick={() => { setCouponApplied(false); setCouponCode(""); setCouponDiscount(0); }} className="text-xs text-slate-400 hover:text-red-500">✕</button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <input value={couponCode} onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                        placeholder="PROMO20" className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-rose-100" />
+                      <button onClick={applyCoupon} className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-bold px-3 py-2 rounded-lg transition">Appliquer</button>
+                    </div>
+                  )}
+                  {couponError && <p className="text-rose-700 text-xs mt-1">{couponError}</p>}
                 </div>
 
                 {/* Payment method */}
