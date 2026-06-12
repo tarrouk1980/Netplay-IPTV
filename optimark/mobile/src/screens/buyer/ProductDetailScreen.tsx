@@ -134,11 +134,12 @@ export default function ProductDetailScreen({ route, navigation }: any) {
         </View>
 
         {/* Seller */}
-        <View style={s.sellerRow}>
+        <TouchableOpacity style={s.sellerRow} onPress={() => product.seller?.id && navigation.navigate("SellerStore", { sellerId: product.seller.id })}>
           <Text style={s.sellerLabel}>Vendu par </Text>
-          <Text style={s.sellerName}>{product.seller?.name || "Vendeur"}</Text>
+          <Text style={[s.sellerName, { textDecorationLine: "underline" }]}>{product.seller?.name || "Vendeur"}</Text>
           {product.seller?.isVerified && <Text style={s.verified}> ✓</Text>}
-        </View>
+          <Text style={{ color: "#94a3b8", fontSize: 13 }}> →</Text>
+        </TouchableOpacity>
 
         {/* Stock */}
         {product.brand ? <Text style={s.meta}>Marque : <Text style={{ fontWeight: "700" }}>{product.brand}</Text></Text> : null}

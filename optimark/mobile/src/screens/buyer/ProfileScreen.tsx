@@ -109,6 +109,12 @@ export default function ProfileScreen({ navigation }: any) {
           <Text style={s.menuArrow}>›</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity style={s.menuItem} onPress={() => navigation.navigate("Favorites")}>
+          <Text style={s.menuIcon}>❤️</Text>
+          <Text style={s.menuLabel}>Mes favoris</Text>
+          <Text style={s.menuArrow}>›</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={s.menuItem} onPress={() => navigation.navigate("FlashSales")}>
           <Text style={s.menuIcon}>⚡</Text>
           <Text style={s.menuLabel}>Ventes Flash</Text>

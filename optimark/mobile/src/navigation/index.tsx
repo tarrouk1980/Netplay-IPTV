@@ -27,6 +27,8 @@ import ServiceDetailScreen from "../screens/buyer/ServiceDetailScreen";
 import LiveViewScreen from "../screens/buyer/LiveViewScreen";
 import SellerAnalyticsScreen from "../screens/seller/SellerAnalyticsScreen";
 import SellerServicesScreen from "../screens/seller/SellerServicesScreen";
+import FavoritesScreen from "../screens/buyer/FavoritesScreen";
+import SellerStoreScreen from "../screens/buyer/SellerStoreScreen";
 import { useCart } from "../contexts/CartContext";
 
 const Tab = createBottomTabNavigator();
@@ -95,6 +97,8 @@ export default function AppNavigator() {
         <Stack.Screen name="SellerServicesStack" component={SellerServicesScreen} options={{ title: "💼 Mes services" }} />
         <Stack.Screen name="SellerAddProduct" component={SellerProductFormScreen} options={{ title: "Nouveau produit" }} />
         <Stack.Screen name="SellerEditProduct" component={SellerProductFormScreen} options={{ title: "Modifier le produit" }} />
+        <Stack.Screen name="Favorites" component={FavoritesScreen} options={{ title: "❤️ Mes favoris" }} />
+        <Stack.Screen name="SellerStore" component={SellerStoreScreen} options={{ title: "Boutique" }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
