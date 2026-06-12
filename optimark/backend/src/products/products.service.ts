@@ -95,4 +95,14 @@ export class ProductsService {
     await this.prisma.product.delete({ where: { id } });
     return { data: null, message: 'Produit supprimé', success: true };
   }
+
+  async bulkCreate(products: CreateProductDto[], sellerId: string) {
+    const created = await Promise.all(
+      (products || []).map(dto =>
+        this.prisma.product.create({ data: { ...dto, sellerId } }).catch(() => null)
+      )
+    );
+    const successful = created.filter(Boolean);
+    return { data: successful, message: `${successful.length} produit(s) créé(s)`, success: true };
+  }
 }

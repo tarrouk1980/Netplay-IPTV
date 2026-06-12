@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Put,
   Query,
@@ -41,8 +42,20 @@ export class ProductsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Patch(':id')
+  patch(@Param('id') id: string, @Body() dto: Partial<CreateProductDto>, @Request() req: any) {
+    return this.productsService.update(id, dto, req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   remove(@Param('id') id: string, @Request() req: any) {
     return this.productsService.remove(id, req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('bulk')
+  bulkCreate(@Body('products') products: CreateProductDto[], @Request() req: any) {
+    return this.productsService.bulkCreate(products, req.user.id);
   }
 }
