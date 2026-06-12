@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, Alert, StyleSheet, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, Alert, StyleSheet, ScrollView, Share } from "react-native";
 import { useAuth } from "../../contexts/AuthContext";
 import api from "../../api";
 
@@ -8,13 +8,17 @@ export default function ProfileScreen({ navigation }: any) {
   const [loading, setLoading] = useState(false);
   const [loyalty, setLoyalty] = useState<{ points: number; equivalentTND: string } | null>(null);
   const [redeeming, setRedeeming] = useState(false);
+  const [referral, setReferral] = useState<any>(null);
 
   const loadLoyalty = () => {
     api.get("/loyalty/balance").then(r => setLoyalty(r.data?.data)).catch(() => {});
   };
 
   useEffect(() => {
-    if (user) loadLoyalty();
+    if (user) {
+      loadLoyalty();
+      api.get("/referral/my-code").then(r => setReferral(r.data?.data)).catch(() => {});
+    }
   }, [user]);
 
   const redeemPoints = async () => {
@@ -103,6 +107,25 @@ export default function ProfileScreen({ navigation }: any) {
         </View>
       )}
 
+      {/* Referral */}
+      {referral && (
+        <View style={s.referralCard}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 }}>
+            <Text style={{ fontSize: 22 }}>🎁</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={s.referralTitle}>Programme de parrainage</Text>
+              <Text style={s.referralSub}>{referral.referredCount} ami(s) parrainé(s) · +{referral.pointsPerReferral} pts/parrainage</Text>
+            </View>
+          </View>
+          <View style={s.referralCodeRow}>
+            <Text style={s.referralCode}>{referral.code}</Text>
+            <TouchableOpacity style={s.shareBtn} onPress={() => Share.share({ message: referral.shareText })}>
+              <Text style={{ color: "#9f1239", fontWeight: "800", fontSize: 13 }}>Partager</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
       {/* Actions */}
       <View style={s.menu}>
         <TouchableOpacity style={s.menuItem} onPress={() => navigation.navigate("Notifications")}>
@@ -187,4 +210,10 @@ const s = StyleSheet.create({
   menuLabel: { flex: 1, fontSize: 15, fontWeight: "600", color: "#1e293b" },
   menuArrow: { fontSize: 20, color: "#94a3b8" },
   sellerCta: { backgroundColor: "#fff7f7" },
+  referralCard: { marginHorizontal: 16, marginBottom: 12, backgroundColor: "#fefce8", borderRadius: 16, padding: 16, borderWidth: 1, borderColor: "#fde047" },
+  referralTitle: { fontWeight: "800", fontSize: 14, color: "#713f12" },
+  referralSub: { fontSize: 11, color: "#92400e", marginTop: 2 },
+  referralCodeRow: { flexDirection: "row", alignItems: "center", backgroundColor: "#fff", borderRadius: 10, borderWidth: 1, borderColor: "#fde047", overflow: "hidden" },
+  referralCode: { flex: 1, fontWeight: "900", fontSize: 18, color: "#1e293b", textAlign: "center", letterSpacing: 2, paddingVertical: 10 },
+  shareBtn: { backgroundColor: "#fef9c3", paddingHorizontal: 16, paddingVertical: 10, borderLeftWidth: 1, borderLeftColor: "#fde047" },
 });

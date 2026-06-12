@@ -32,6 +32,8 @@ model User {
   returnRequests    ReturnRequest[]
   following         SellerFollow[]    @relation("FollowerUser")
   questions         ProductQuestion[]
+  referralCode      String?           @unique
+  referredById      String?
 }
 
 model SellerFollow {

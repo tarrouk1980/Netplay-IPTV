@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ReturnsService } from '../returns/returns.service';
 import { LoyaltyService } from '../loyalty/loyalty.service';
+import { ReferralService } from '../referral/referral.service';
 import { CreateOrderDto } from './dtos/create-order.dto';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -20,6 +21,7 @@ export class OrdersService {
     private notifications: NotificationsService,
     private returns: ReturnsService,
     private loyalty: LoyaltyService,
+    private referral: ReferralService,
   ) {}
 
   async createOrder(dto: CreateOrderDto, buyerId: string) {
@@ -82,6 +84,9 @@ export class OrdersService {
       'ORDER',
       `Votre commande #${order.id.slice(0, 8)} a été passée avec succès (${total.toFixed(2)} TND).`,
     );
+
+    // Award referral points if this is a referred user's first order
+    await this.referral.onFirstOrder(buyerId).catch(() => {});
 
     return { data: order, message: 'Commande créée', success: true };
   }

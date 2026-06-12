@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ReferralModule } from './referral/referral.module';
 import { LoyaltyModule } from './loyalty/loyalty.module';
 import { QuestionsModule } from './questions/questions.module';
 import { AdminModule } from './admin/admin.module';
@@ -46,6 +47,7 @@ import { VendorsModule } from './vendors/vendors.module';
     FlashSalesModule,
     QuestionsModule,
     LoyaltyModule,
+    ReferralModule,
   ],
 })
 export class AppModule {}
