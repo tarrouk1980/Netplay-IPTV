@@ -11,7 +11,7 @@ const STATUS_LABELS: Record<string, string> = { PENDING: "En attente", CONFIRMED
 const STATUS_COLORS: Record<string, string> = { PENDING: "bg-amber-100 text-amber-800", CONFIRMED: "bg-blue-100 text-blue-800", SHIPPED: "bg-purple-100 text-purple-800", DELIVERED: "bg-green-100 text-green-800", CANCELLED: "bg-rose-100 text-rose-800" };
 const ALL_STATUSES = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"];
 
-type Tab = "stats" | "users" | "orders" | "products";
+type Tab = "stats" | "users" | "orders" | "products" | "returns";
 
 export default function AdminPage() {
   const { user, loading } = useAuth();
@@ -21,6 +21,7 @@ export default function AdminPage() {
   const [users, setUsers] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
+  const [returns, setReturns] = useState<any[]>([]);
   const [fetching, setFetching] = useState(false);
 
   useEffect(() => {
@@ -35,6 +36,7 @@ export default function AdminPage() {
     else if (tab === "users") loadUsers();
     else if (tab === "orders") loadOrders();
     else if (tab === "products") loadProducts();
+    else if (tab === "returns") loadReturns();
   }, [tab]);
 
   const loadStats = async () => {
@@ -65,6 +67,18 @@ export default function AdminPage() {
     setFetching(false);
   };
 
+  const loadReturns = async () => {
+    setFetching(true);
+    const res = await api.get("/returns/all").catch(() => null);
+    setReturns(res?.data?.data || []);
+    setFetching(false);
+  };
+
+  const updateReturnStatus = async (id: string, status: string, adminNote?: string) => {
+    await api.patch(`/returns/${id}/status`, { status, adminNote }).catch(() => {});
+    setReturns(prev => prev.map(r => r.id === id ? { ...r, status, adminNote: adminNote ?? r.adminNote } : r));
+  };
+
   const updateUserRole = async (userId: string, role: string) => {
     await api.patch(`/admin/users/${userId}/role`, { role }).catch(() => {});
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, role } : u));
@@ -92,6 +106,7 @@ export default function AdminPage() {
     { key: "users", label: "Utilisateurs", icon: "👥" },
     { key: "orders", label: "Commandes", icon: "📦" },
     { key: "products", label: "Produits", icon: "🏪" },
+    { key: "returns", label: "Retours", icon: "↩️" },
   ];
 
   return (
@@ -246,6 +261,49 @@ export default function AdminPage() {
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+        {/* Returns */}
+        {tab === "returns" && !fetching && (
+          <div className="space-y-4">
+            {returns.length === 0 && <p className="text-center text-slate-400 py-10">Aucune demande de retour.</p>}
+            {returns.map(r => (
+              <div key={r.id} className="bg-white rounded-xl border border-slate-100 p-5 shadow-sm">
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                  <div>
+                    <p className="font-bold text-slate-800 text-sm">Commande #{r.orderId?.slice(0, 8)}</p>
+                    <p className="text-slate-500 text-xs mt-1">Client : {r.buyer?.name || r.buyerId?.slice(0, 8)}</p>
+                    <p className="text-slate-600 text-sm mt-2 max-w-md">{r.reason}</p>
+                    {r.adminNote && <p className="text-xs text-blue-600 mt-1 italic">Note admin : {r.adminNote}</p>}
+                    <p className="text-xs text-slate-400 mt-2">{new Date(r.createdAt).toLocaleDateString("fr-FR")}</p>
+                  </div>
+                  <div className="flex flex-col gap-2 items-end">
+                    <span className={`text-xs font-black px-3 py-1 rounded-full ${
+                      r.status === "PENDING" ? "bg-amber-100 text-amber-700"
+                      : r.status === "APPROVED" ? "bg-blue-100 text-blue-700"
+                      : r.status === "REFUNDED" ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
+                    }`}>{r.status}</span>
+                    {r.status === "PENDING" && (
+                      <div className="flex gap-2">
+                        <button onClick={() => updateReturnStatus(r.id, "APPROVED")}
+                          className="text-xs font-bold bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition">
+                          Approuver
+                        </button>
+                        <button onClick={() => updateReturnStatus(r.id, "REFUNDED")}
+                          className="text-xs font-bold bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 transition">
+                          Rembourser
+                        </button>
+                        <button onClick={() => updateReturnStatus(r.id, "REJECTED")}
+                          className="text-xs font-bold bg-red-100 text-red-700 px-3 py-1.5 rounded-lg hover:bg-red-200 transition">
+                          Rejeter
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </main>

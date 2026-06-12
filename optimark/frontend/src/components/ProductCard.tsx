@@ -18,6 +18,7 @@ interface ProductCardProps {
   stockAlert?: number;
   onCompare?: (e: React.MouseEvent) => void;
   inCompare?: boolean;
+  flashDiscount?: number;
 }
 
 const categoryColors: Record<string, string> = {
@@ -38,10 +39,11 @@ const categoryIcons: Record<string, string> = {
   SPORT: "⚽",
 };
 
-export default function ProductCard({ id, title, price, originalPrice, seller, rating, reviewCount = 0, isVerified = false, category, image, badge, isBestSeller, isNewArrival, stock, stockAlert = 5, onCompare, inCompare }: ProductCardProps) {
+export default function ProductCard({ id, title, price, originalPrice, seller, rating, reviewCount = 0, isVerified = false, category, image, badge, isBestSeller, isNewArrival, stock, stockAlert = 5, onCompare, inCompare, flashDiscount }: ProductCardProps) {
   const cat = category?.toUpperCase() || "";
   const gradient = categoryColors[cat] || "from-rose-700 to-rose-900";
   const icon = categoryIcons[cat] || "📦";
+  const flashPrice = flashDiscount ? price * (1 - flashDiscount / 100) : null;
   const discount = originalPrice ? Math.round((1 - price / originalPrice) * 100) : 0;
   const isLowStock = stock !== undefined && stock > 0 && stock <= stockAlert;
   const isOutOfStock = stock === 0;
@@ -69,9 +71,10 @@ export default function ProductCard({ id, title, price, originalPrice, seller, r
               {inCompare ? "✓ Comparer" : "+ Comparer"}
             </button>
           )}
+          {flashDiscount && <span className="bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full animate-pulse">⚡ -{flashDiscount}%</span>}
           {isBestSeller && <span className="bg-amber-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">🏆 Best seller</span>}
           {badge && <span className="bg-rose-800 text-white text-[10px] font-black px-2 py-0.5 rounded-full">{badge}</span>}
-          {discount > 0 && <span className="bg-green-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">-{discount}%</span>}
+          {discount > 0 && !flashDiscount && <span className="bg-green-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">-{discount}%</span>}
           {isNewArrival && !isBestSeller && <span className="bg-blue-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">Nouveau</span>}
         </div>
 
@@ -101,8 +104,14 @@ export default function ProductCard({ id, title, price, originalPrice, seller, r
 
           <div className="flex items-end justify-between">
             <div>
-              <p className="text-rose-800 font-black text-base leading-none">{price.toFixed(2)} <span className="text-xs font-semibold">TND</span></p>
-              {originalPrice && <p className="text-slate-400 text-xs line-through mt-0.5">{originalPrice.toFixed(2)} TND</p>}
+              <p className="text-rose-800 font-black text-base leading-none">
+                {flashPrice ? flashPrice.toFixed(2) : price.toFixed(2)}
+                {" "}<span className="text-xs font-semibold">TND</span>
+              </p>
+              {flashPrice
+                ? <p className="text-slate-400 text-xs line-through mt-0.5">{price.toFixed(2)} TND</p>
+                : originalPrice && <p className="text-slate-400 text-xs line-through mt-0.5">{originalPrice.toFixed(2)} TND</p>
+              }
             </div>
             <span className="text-xs text-rose-800 font-semibold bg-rose-50 px-2.5 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
               Voir →
