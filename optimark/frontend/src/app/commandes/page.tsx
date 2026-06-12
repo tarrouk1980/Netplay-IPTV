@@ -23,17 +23,19 @@ export default function CommandesPage() {
   const justOrdered = searchParams.get("payment") === "success";
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [returns, setReturns] = useState<any[]>([]);
+  const tab = searchParams.get("tab") || "orders";
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user) {
-      router.push("/auth/connexion");
-      return;
-    }
-    api.get("/orders/me")
-      .then(res => setOrders(res.data?.data || []))
-      .catch(() => setOrders([]))
-      .finally(() => setLoading(false));
+    if (!user) { router.push("/auth/connexion"); return; }
+    Promise.all([
+      api.get("/orders/me").catch(() => null),
+      api.get("/returns/my").catch(() => null),
+    ]).then(([oRes, rRes]) => {
+      setOrders(oRes?.data?.data || []);
+      setReturns(rRes?.data?.data || []);
+    }).finally(() => setLoading(false));
   }, [user, authLoading, router]);
 
   return (
@@ -42,7 +44,14 @@ export default function CommandesPage() {
 
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-8">
         <h1 className="text-2xl font-black text-slate-900 mb-2">Mes commandes</h1>
-        <p className="text-slate-500 text-sm mb-8">Suivez l&apos;état de vos commandes en temps réel</p>
+        <div className="flex gap-2 mb-8">
+          <Link href="/commandes" className={`px-4 py-2 rounded-xl text-sm font-bold transition ${tab === "orders" ? "bg-rose-800 text-white" : "bg-white border border-slate-200 text-slate-600 hover:border-rose-300"}`}>
+            📦 Commandes
+          </Link>
+          <Link href="/commandes?tab=returns" className={`px-4 py-2 rounded-xl text-sm font-bold transition ${tab === "returns" ? "bg-rose-800 text-white" : "bg-white border border-slate-200 text-slate-600 hover:border-rose-300"}`}>
+            ↩️ Mes retours {returns.length > 0 && `(${returns.length})`}
+          </Link>
+        </div>
 
         {justOrdered && (
           <div className="bg-green-50 border border-green-200 rounded-2xl p-5 mb-8 flex items-center gap-4">
@@ -54,7 +63,45 @@ export default function CommandesPage() {
           </div>
         )}
 
-        {loading ? (
+        {tab === "returns" ? (
+          loading ? (
+            <div className="space-y-4">{Array.from({length:3}).map((_,i)=><div key={i} className="skeleton rounded-2xl h-24"/>)}</div>
+          ) : returns.length === 0 ? (
+            <div className="text-center py-20 bg-white rounded-2xl border border-slate-100">
+              <span className="text-4xl block mb-3">😊</span>
+              <p className="font-bold text-slate-700">Aucun retour effectué</p>
+              <p className="text-slate-400 text-sm mt-1">Vos demandes de retour apparaîtront ici.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {returns.map((ret: any) => {
+                const retStatus: Record<string,{label:string;color:string}> = {
+                  PENDING:  { label: "En attente", color: "bg-amber-50 text-amber-700 border-amber-200" },
+                  APPROVED: { label: "Approuvée",  color: "bg-blue-50 text-blue-700 border-blue-200"   },
+                  REFUNDED: { label: "Remboursée", color: "bg-green-50 text-green-700 border-green-200" },
+                  REJECTED: { label: "Rejetée",    color: "bg-red-50 text-red-700 border-red-200"      },
+                };
+                const s = retStatus[ret.status] || retStatus.PENDING;
+                return (
+                  <div key={ret.id} className="bg-white border border-slate-100 rounded-2xl p-5" style={{boxShadow:"0 2px 12px rgba(0,0,0,0.06)"}}>
+                    <div className="flex items-start justify-between gap-3 flex-wrap">
+                      <div>
+                        <p className="font-bold text-slate-800">Commande #{ret.order?.id?.slice(0,8)}</p>
+                        <p className="text-slate-500 text-xs mt-1">
+                          {new Date(ret.createdAt).toLocaleDateString("fr-FR", {day:"numeric",month:"long",year:"numeric"})}
+                          {ret.order?.total && ` · ${Number(ret.order.total).toFixed(2)} TND`}
+                        </p>
+                        <p className="text-slate-600 text-sm mt-2 max-w-md">{ret.reason}</p>
+                        {ret.adminNote && <p className="text-xs text-blue-600 mt-1 italic">Note : {ret.adminNote}</p>}
+                      </div>
+                      <span className={`text-xs font-bold px-3 py-1 rounded-full border ${s.color}`}>{s.label}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )
+        ) : loading ? (
           <div className="space-y-4">
             {Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="skeleton rounded-2xl h-28" />

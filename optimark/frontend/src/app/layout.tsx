@@ -10,6 +10,19 @@ export const metadata: Metadata = {
   title: "OPTIMARK - La marketplace tunisienne",
   description: "Achetez et vendez des produits, services et créations artisanales tunisiennes sur OPTIMARK, la marketplace made in Tunisia.",
   keywords: ["marketplace", "tunisie", "acheter", "vendre", "produits", "services"],
+  manifest: "/manifest.json",
+  themeColor: "#9f1239",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "OPTIMARK",
+  },
+  openGraph: {
+    title: "OPTIMARK - La marketplace tunisienne",
+    description: "Achetez et vendez des produits, services et créations artisanales tunisiennes.",
+    type: "website",
+    locale: "fr_TN",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
