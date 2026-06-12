@@ -12,6 +12,7 @@ import OrdersScreen from "../screens/buyer/OrdersScreen";
 import OrderDetailScreen from "../screens/buyer/OrderDetailScreen";
 import ProfileScreen from "../screens/buyer/ProfileScreen";
 import FlashSalesScreen from "../screens/buyer/FlashSalesScreen";
+import MessagesScreen from "../screens/buyer/MessagesScreen";
 import AuthScreen from "../screens/AuthScreen";
 import SellerDashboardScreen from "../screens/seller/SellerDashboardScreen";
 import SellerProductsScreen from "../screens/seller/SellerProductsScreen";
@@ -41,6 +42,7 @@ function BuyerTabs() {
         tabBarBadge: items.length > 0 ? items.length : undefined,
       }} />
       <Tab.Screen name="Orders" component={OrdersScreen} options={{ title: "Commandes", tabBarLabel: "Commandes", tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>📦</Text> }} />
+      <Tab.Screen name="Messages" component={MessagesScreen} options={{ title: "Messages", tabBarLabel: "Messages", tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>💬</Text> }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: "Profil", tabBarLabel: "Profil", tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>👤</Text> }} />
     </Tab.Navigator>
   );

@@ -94,15 +94,27 @@ export class VendorsService {
   }
 
   async getPublicStore(sellerId: string) {
-    const store = await this.prisma.store.findUnique({
-      where: { sellerId },
-      include: { seller: { select: { name: true, isVerified: true } } },
-    });
-    const products = await this.prisma.product.findMany({
-      where: { sellerId, isActive: true },
-      orderBy: [{ isBestSeller: 'desc' }, { createdAt: 'desc' }],
-    });
-    return { data: { store, products }, success: true };
+    const [store, products, services, reviews] = await Promise.all([
+      this.prisma.store.findUnique({
+        where: { sellerId },
+        include: { seller: { select: { id: true, name: true, isVerified: true } } },
+      }),
+      this.prisma.product.findMany({
+        where: { sellerId, isActive: true },
+        orderBy: [{ isBestSeller: 'desc' }, { createdAt: 'desc' }],
+      }),
+      this.prisma.service.findMany({
+        where: { sellerId, isActive: true },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.review.findMany({
+        where: { product: { sellerId } },
+        include: { user: { select: { id: true, name: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+      }),
+    ]);
+    return { data: { store, products, services, reviews }, success: true };
   }
 
   async requestVerification(userId: string) {
