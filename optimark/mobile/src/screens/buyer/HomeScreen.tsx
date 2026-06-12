@@ -13,7 +13,6 @@ export default function HomeScreen({ navigation }: any) {
   const [lives, setLives] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [search, setSearch] = useState("");
   const [cat, setCat] = useState("Tous");
 
   const load = async () => {
@@ -39,9 +38,7 @@ export default function HomeScreen({ navigation }: any) {
     setRefreshing(false);
   };
 
-  const filtered = products
-    .filter(p => cat === "Tous" || p.category === cat)
-    .filter(p => !search || p.title.toLowerCase().includes(search.toLowerCase()));
+  const filtered = products.filter(p => cat === "Tous" || p.category === cat);
 
   return (
     <ScrollView
@@ -49,16 +46,12 @@ export default function HomeScreen({ navigation }: any) {
       stickyHeaderIndices={[0]}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#9f1239" />}
     >
-      {/* Sticky search */}
-      <View style={s.searchBar}>
-        <TextInput
-          style={s.searchInput}
-          placeholder="🔍  Rechercher un produit..."
-          value={search}
-          onChangeText={setSearch}
-          placeholderTextColor="#94a3b8"
-        />
-      </View>
+      {/* Sticky search — tappable, navigates to full search */}
+      <TouchableOpacity style={s.searchBar} activeOpacity={0.7} onPress={() => navigation.navigate("Search")}>
+        <View pointerEvents="none" style={s.searchInput}>
+          <Text style={{ color: "#94a3b8", fontSize: 14 }}>🔍  Rechercher un produit...</Text>
+        </View>
+      </TouchableOpacity>
 
       {/* Hero */}
       <View style={s.hero}>
@@ -217,7 +210,7 @@ export default function HomeScreen({ navigation }: any) {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f8fafc" },
   searchBar: { backgroundColor: "#fff", paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: "#e2e8f0" },
-  searchInput: { backgroundColor: "#f1f5f9", borderRadius: 14, paddingHorizontal: 16, paddingVertical: 11, fontSize: 14, color: "#1e293b" },
+  searchInput: { flex: 1, backgroundColor: "#f1f5f9", borderRadius: 14, paddingHorizontal: 16, paddingVertical: 11 },
   hero: { backgroundColor: "#9f1239", padding: 28, alignItems: "center", paddingTop: 32, paddingBottom: 28 },
   heroTitle: { color: "#fff", fontSize: 30, fontWeight: "900", letterSpacing: 3, marginBottom: 6 },
   heroSub: { color: "#fecdd3", fontSize: 13, marginBottom: 16 },

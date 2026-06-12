@@ -22,6 +22,7 @@ import SellerFlashSalesScreen from "../screens/seller/SellerFlashSalesScreen";
 import SellerCouponsScreen from "../screens/seller/SellerCouponsScreen";
 import NotificationsScreen from "../screens/buyer/NotificationsScreen";
 import SellerLiveScreen from "../screens/seller/SellerLiveScreen";
+import SearchScreen from "../screens/buyer/SearchScreen";
 import LiveViewScreen from "../screens/buyer/LiveViewScreen";
 import SellerAnalyticsScreen from "../screens/seller/SellerAnalyticsScreen";
 import { useCart } from "../contexts/CartContext";
@@ -87,6 +88,7 @@ export default function AppNavigator() {
         <Stack.Screen name="SellerFlashSalesStack" component={SellerFlashSalesScreen} options={{ title: "⚡ Ventes Flash" }} />
         <Stack.Screen name="SellerCouponsStack" component={SellerCouponsScreen} options={{ title: "🏷️ Codes promo" }} />
         <Stack.Screen name="SellerLiveStack" component={SellerLiveScreen} options={{ title: "🔴 Live Commerce" }} />
+        <Stack.Screen name="Search" component={SearchScreen} options={{ title: "Recherche" }} />
         <Stack.Screen name="SellerAddProduct" component={SellerProductFormScreen} options={{ title: "Nouveau produit" }} />
         <Stack.Screen name="SellerEditProduct" component={SellerProductFormScreen} options={{ title: "Modifier le produit" }} />
       </Stack.Navigator>
