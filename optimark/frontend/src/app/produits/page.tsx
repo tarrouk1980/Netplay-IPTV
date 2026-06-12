@@ -161,7 +161,7 @@ function ProduitsContent() {
   };
 
   const goCompare = () => {
-    router.push(`/produits/comparer?ids=${compare.map(p => p.id).join(",")}`);
+    router.push(`/comparer?ids=${compare.map(p => p.id).join(",")}`);
   };
 
   const hasFilters = selectedCats.length || selectedBrands.length || selectedSellers.length || verifiedOnly || minPrice || maxPrice;
