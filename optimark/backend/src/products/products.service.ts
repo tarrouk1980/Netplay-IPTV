@@ -63,6 +63,18 @@ export class ProductsService {
     const product = await this.prisma.product.create({
       data: { ...dto, sellerId },
     });
+
+    // Notify followers of new product
+    const seller = await this.prisma.user.findUnique({ where: { id: sellerId }, select: { name: true } });
+    const followers = await this.prisma.sellerFollow.findMany({ where: { sellerId } });
+    for (const follow of followers) {
+      await this.notifications.create(
+        follow.followerId,
+        'PROMO',
+        `🆕 ${seller?.name || 'Un vendeur'} vient d\'ajouter un nouveau produit : "${dto.title}".`,
+      );
+    }
+
     return { data: product, message: 'Produit créé', success: true };
   }
 
