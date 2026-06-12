@@ -45,6 +45,7 @@ export default function PanierPage() {
         items: items.map((i) => ({ productId: i.id, quantity: i.quantity })),
         paymentMethod,
         deliveryAddress: address,
+        ...(couponApplied && couponCode ? { couponCode } : {}),
       });
 
       const order = orderRes.data.data;

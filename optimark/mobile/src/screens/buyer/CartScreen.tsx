@@ -10,25 +10,30 @@ export default function CartScreen({ navigation }: any) {
   const [address, setAddress] = useState({ street: "", city: "", zip: "", phone: "" });
   const [loading, setLoading] = useState(false);
   const [coupon, setCoupon] = useState("");
-  const [discount, setDiscount] = useState(0);
   const [applying, setApplying] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"KONNECT" | "PAYMEE" | "CASH_ON_DELIVERY">("CASH_ON_DELIVERY");
+
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [couponApplied, setCouponApplied] = useState(false);
 
   const applyCoupon = async () => {
     if (!coupon.trim()) return;
     setApplying(true);
     try {
-      const res = await api.post("/coupons/validate", { code: coupon.trim() });
-      const pct = res.data?.data?.discountPercent || 0;
-      setDiscount(pct);
-      Alert.alert("✓ Code appliqué", `Réduction de ${pct}% appliquée !`);
-    } catch {
-      Alert.alert("Code invalide", "Ce code promo n'est pas valide.");
-      setDiscount(0);
+      const res = await api.get("/coupons/validate", { params: { code: coupon.trim(), amount: total } });
+      const amt = res.data?.data?.discountAmount || 0;
+      setDiscountAmount(amt);
+      setCouponApplied(true);
+      Alert.alert("✓ Code appliqué", `Réduction de ${amt.toFixed(2)} TND appliquée !`);
+    } catch (e: any) {
+      Alert.alert("Code invalide", e.response?.data?.message || "Ce code promo n'est pas valide.");
+      setDiscountAmount(0);
+      setCouponApplied(false);
     }
     setApplying(false);
   };
 
-  const finalTotal = total * (1 - discount / 100);
+  const finalTotal = Math.max(0, total - discountAmount);
 
   const placeOrder = async () => {
     if (!user) { navigation.navigate("Auth"); return; }
@@ -41,6 +46,7 @@ export default function CartScreen({ navigation }: any) {
       await api.post("/orders", {
         items: items.map(i => ({ productId: i.id, quantity: i.qty })),
         deliveryAddress: address,
+        paymentMethod,
         couponCode: coupon.trim() || undefined,
       });
       clear();
@@ -112,12 +118,26 @@ export default function CartScreen({ navigation }: any) {
         </TouchableOpacity>
       </View>
 
+      {/* Payment method */}
+      <View style={s.section}>
+        <Text style={s.sectionTitle}>Mode de paiement</Text>
+        {(["CASH_ON_DELIVERY", "KONNECT", "PAYMEE"] as const).map(m => (
+          <TouchableOpacity key={m} style={[s.payOption, paymentMethod === m && s.payOptionActive]} onPress={() => setPaymentMethod(m)}>
+            <Text style={s.payOptionIcon}>{m === "CASH_ON_DELIVERY" ? "💵" : "💳"}</Text>
+            <Text style={[s.payOptionLabel, paymentMethod === m && { color: "#9f1239" }]}>
+              {m === "CASH_ON_DELIVERY" ? "Cash à la livraison" : m === "KONNECT" ? "Konnect" : "Paymee"}
+            </Text>
+            {paymentMethod === m && <Text style={{ color: "#9f1239", fontWeight: "900", marginLeft: "auto" }}>✓</Text>}
+          </TouchableOpacity>
+        ))}
+      </View>
+
       <View style={s.totalRow}>
         <Text style={s.totalLabel}>Total</Text>
         <View style={{ alignItems: "flex-end" }}>
-          {discount > 0 && <Text style={{ color: "#94a3b8", fontSize: 13, textDecorationLine: "line-through" }}>{total.toFixed(2)} TND</Text>}
+          {discountAmount > 0 && <Text style={{ color: "#94a3b8", fontSize: 13, textDecorationLine: "line-through" }}>{total.toFixed(2)} TND</Text>}
           <Text style={s.totalVal}>{finalTotal.toFixed(2)} TND</Text>
-          {discount > 0 && <Text style={{ color: "#16a34a", fontSize: 12, fontWeight: "700" }}>-{discount}% appliqué</Text>}
+          {discountAmount > 0 && <Text style={{ color: "#16a34a", fontSize: 12, fontWeight: "700" }}>-{discountAmount.toFixed(2)} TND ({coupon})</Text>}
         </View>
       </View>
 
@@ -152,4 +172,8 @@ const s = StyleSheet.create({
   totalVal: { fontSize: 20, fontWeight: "900", color: "#9f1239" },
   orderBtn: { backgroundColor: "#9f1239", margin: 16, borderRadius: 16, paddingVertical: 18, alignItems: "center", marginBottom: 40 },
   orderBtnText: { color: "#fff", fontWeight: "800", fontSize: 16 },
+  payOption: { flexDirection: "row", alignItems: "center", gap: 10, borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 12, padding: 12 },
+  payOptionActive: { borderColor: "#9f1239", backgroundColor: "#fff5f7" },
+  payOptionIcon: { fontSize: 20 },
+  payOptionLabel: { fontSize: 14, fontWeight: "600", color: "#475569" },
 });
