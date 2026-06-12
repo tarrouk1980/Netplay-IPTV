@@ -21,6 +21,7 @@ import SellerOrdersScreen from "../screens/seller/SellerOrdersScreen";
 import SellerFlashSalesScreen from "../screens/seller/SellerFlashSalesScreen";
 import SellerCouponsScreen from "../screens/seller/SellerCouponsScreen";
 import NotificationsScreen from "../screens/buyer/NotificationsScreen";
+import SellerLiveScreen from "../screens/seller/SellerLiveScreen";
 import { useCart } from "../contexts/CartContext";
 
 const Tab = createBottomTabNavigator();
@@ -66,6 +67,7 @@ function SellerTabs() {
       <Tab.Screen name="SellerOrders" component={SellerOrdersScreen} options={{ title: "Commandes", tabBarLabel: "Commandes", tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>📬</Text> }} />
       <Tab.Screen name="SellerFlashSales" component={SellerFlashSalesScreen} options={{ title: "Flash", tabBarLabel: "Flash", tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>⚡</Text> }} />
       <Tab.Screen name="SellerCoupons" component={SellerCouponsScreen} options={{ title: "Codes promo", tabBarLabel: "Promos", tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>🏷️</Text> }} />
+      <Tab.Screen name="SellerLive" component={SellerLiveScreen} options={{ title: "Live", tabBarLabel: "Live", tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>🔴</Text> }} />
     </Tab.Navigator>
   );
 }
