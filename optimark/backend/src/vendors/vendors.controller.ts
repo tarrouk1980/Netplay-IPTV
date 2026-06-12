@@ -48,6 +48,12 @@ export class VendorsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('earnings')
+  getEarnings(@Request() req: any) {
+    return this.vendorsService.getEarnings(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Patch('verify')
   requestVerification(@Request() req: any) {
     return this.vendorsService.requestVerification(req.user.id);

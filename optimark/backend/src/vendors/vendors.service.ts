@@ -138,6 +138,54 @@ export class VendorsService {
     return { data: { following: true }, message: 'Abonné avec succès', success: true };
   }
 
+  async getEarnings(userId: string) {
+    const COMMISSION: Record<string, number> = { FREE: 0.10, PRO: 0.07, BUSINESS: 0.05 };
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { subscriptionPlan: true } });
+    const commissionRate = COMMISSION[user?.subscriptionPlan || 'FREE'] ?? 0.10;
+
+    const orders = await this.prisma.order.findMany({
+      where: { items: { some: { product: { sellerId: userId } } } },
+      include: { items: { include: { product: { select: { sellerId: true } } } } },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const now = new Date();
+    let totalGross = 0, totalNet = 0, totalCommission = 0;
+    const monthly: Record<string, { gross: number; net: number; commission: number }> = {};
+
+    for (const order of orders) {
+      const sellerItems = order.items.filter(i => i.product.sellerId === userId);
+      const gross = sellerItems.reduce((s, i) => s + i.price * i.quantity, 0);
+      const commission = gross * commissionRate;
+      const net = gross - commission;
+      totalGross += gross;
+      totalCommission += commission;
+      totalNet += net;
+      const key = `${new Date(order.createdAt).getFullYear()}-${String(new Date(order.createdAt).getMonth() + 1).padStart(2, '0')}`;
+      if (!monthly[key]) monthly[key] = { gross: 0, net: 0, commission: 0 };
+      monthly[key].gross += gross;
+      monthly[key].net += net;
+      monthly[key].commission += commission;
+    }
+
+    const monthlyArray = Object.entries(monthly)
+      .map(([month, v]) => ({ month, gross: parseFloat(v.gross.toFixed(2)), net: parseFloat(v.net.toFixed(2)), commission: parseFloat(v.commission.toFixed(2)) }))
+      .sort((a, b) => b.month.localeCompare(a.month))
+      .slice(0, 6);
+
+    return {
+      data: {
+        subscriptionPlan: user?.subscriptionPlan || 'FREE',
+        commissionRate: commissionRate * 100,
+        totalGross: parseFloat(totalGross.toFixed(2)),
+        totalCommission: parseFloat(totalCommission.toFixed(2)),
+        totalNet: parseFloat(totalNet.toFixed(2)),
+        monthly: monthlyArray,
+      },
+      success: true,
+    };
+  }
+
   async getFollowStatus(followerId: string | undefined, sellerId: string) {
     if (!followerId) return { data: { following: false, followerCount: await this.prisma.sellerFollow.count({ where: { sellerId } }) }, success: true };
     const [follow, count] = await Promise.all([
