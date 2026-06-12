@@ -10,6 +10,7 @@ const CATS = ["Tous", "Électronique", "Mode", "Maison", "Alimentation", "Décor
 export default function HomeScreen({ navigation }: any) {
   const [products, setProducts] = useState<any[]>([]);
   const [flashSales, setFlashSales] = useState<any[]>([]);
+  const [lives, setLives] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState("");
@@ -17,12 +18,14 @@ export default function HomeScreen({ navigation }: any) {
 
   const load = async () => {
     try {
-      const [pRes, fRes] = await Promise.all([
+      const [pRes, fRes, lRes] = await Promise.all([
         api.get("/products"),
         api.get("/flash-sales/active").catch(() => ({ data: { data: [] } })),
+        api.get("/live").catch(() => ({ data: { data: [] } })),
       ]);
       setProducts(pRes.data?.data || []);
       setFlashSales((fRes.data?.data || fRes.data || []).slice(0, 4));
+      setLives((lRes.data?.data || []).filter((l: any) => l.isActive).slice(0, 5));
     } catch {}
   };
 
@@ -111,6 +114,36 @@ export default function HomeScreen({ navigation }: any) {
                 </TouchableOpacity>
               );
             })}
+          </ScrollView>
+        </View>
+      )}
+
+      {/* Lives en direct */}
+      {lives.length > 0 && (
+        <View style={{ paddingTop: 16 }}>
+          <View style={s.sectionHeader}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: "#ef4444" }} />
+              <Text style={s.sectionTitle}>Lives en direct</Text>
+            </View>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 10 }}>
+            {lives.map((live: any) => (
+              <TouchableOpacity key={live.id} style={s.liveCard}
+                onPress={() => navigation.navigate("LiveView", { id: live.id })}>
+                <View style={s.liveImgBox}>
+                  <Text style={{ fontSize: 32 }}>📺</Text>
+                  <View style={s.liveBadge}>
+                    <Text style={s.liveBadgeText}>🔴 LIVE</Text>
+                  </View>
+                </View>
+                <View style={{ padding: 8 }}>
+                  <Text style={s.liveName} numberOfLines={2}>{live.title}</Text>
+                  <Text style={{ fontSize: 10, color: "#94a3b8" }}>{live.vendor?.name || "Vendeur"}</Text>
+                  <Text style={{ fontSize: 10, color: "#64748b", marginTop: 2 }}>👁 {live.viewerCount || 0}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
           </ScrollView>
         </View>
       )}
@@ -205,6 +238,11 @@ const s = StyleSheet.create({
   flashName: { fontSize: 11, fontWeight: "700", color: "#1e293b", marginBottom: 2 },
   flashPrice: { fontSize: 14, fontWeight: "900", color: "#9f1239" },
   flashOrig: { fontSize: 10, color: "#94a3b8", textDecorationLine: "line-through" },
+  liveCard: { width: 130, backgroundColor: "#0f172a", borderRadius: 14, overflow: "hidden", borderWidth: 1, borderColor: "#334155" },
+  liveImgBox: { height: 80, backgroundColor: "#1e293b", alignItems: "center", justifyContent: "center", position: "relative" },
+  liveBadge: { position: "absolute", top: 6, left: 6, backgroundColor: "#dc2626", borderRadius: 999, paddingHorizontal: 6, paddingVertical: 2 },
+  liveBadgeText: { color: "#fff", fontSize: 9, fontWeight: "900" },
+  liveName: { fontSize: 11, fontWeight: "700", color: "#e2e8f0", marginBottom: 2 },
   catRow: { marginVertical: 16 },
   catChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, backgroundColor: "#fff", borderWidth: 1, borderColor: "#e2e8f0" },
   catChipActive: { backgroundColor: "#9f1239", borderColor: "#9f1239" },
