@@ -5,178 +5,171 @@ import Header from "@/components/Header";
 import ProductCard from "@/components/ProductCard";
 import ServiceCard from "@/components/ServiceCard";
 import api from "@/lib/api";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 
 function RechercheContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const initialQuery = searchParams.get("q") || "";
 
-  const [query, setQuery] = useState(initialQuery);
   const [inputValue, setInputValue] = useState(initialQuery);
+  const [query, setQuery] = useState(initialQuery);
   const [tab, setTab] = useState<"all" | "product" | "service">("all");
-  const [results, setResults] = useState<any[]>([]);
-  const [total, setTotal] = useState(0);
+  const [results, setResults] = useState<{ products: any[]; services: any[] } | null>(null);
   const [loading, setLoading] = useState(false);
-  const [filters, setFilters] = useState({
-    category: "",
-    minPrice: "",
-    maxPrice: "",
-    isVerifiedSeller: false,
-  });
+  const [filters, setFilters] = useState({ minPrice: "", maxPrice: "", isVerifiedSeller: false });
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const search = async (q: string, t: string, f: typeof filters) => {
-    if (!q.trim()) return;
+  const doSearch = async (q: string, f: typeof filters) => {
+    if (!q.trim()) { setResults(null); return; }
     setLoading(true);
     try {
-      const params: Record<string, string> = { q, type: t };
-      if (f.category) params.category = f.category;
+      const params: Record<string, string> = { q, type: "all" };
       if (f.minPrice) params.minPrice = f.minPrice;
       if (f.maxPrice) params.maxPrice = f.maxPrice;
       if (f.isVerifiedSeller) params.isVerifiedSeller = "true";
-
       const res = await api.get("/search", { params });
-      setResults(res.data?.data || []);
-      setTotal(res.data?.total || 0);
+      const data = res.data?.data || res.data || {};
+      setResults({
+        products: Array.isArray(data) ? data.filter((r: any) => r.type !== "service") : data.products || [],
+        services: Array.isArray(data) ? data.filter((r: any) => r.type === "service") : data.services || [],
+      });
     } catch {
-      setResults([]);
+      setResults({ products: [], services: [] });
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (query) search(query, tab, filters);
-  }, [query, tab, filters]);
+    doSearch(query, filters);
+  }, [query, filters]);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      setQuery(inputValue);
-    }, 300);
+    debounceRef.current = setTimeout(() => setQuery(inputValue), 350);
   }, [inputValue]);
 
-  const products = results.filter((r) => r.type === "product" || !r.type);
-  const services = results.filter((r) => r.type === "service");
-  const displayed = tab === "all" ? results : tab === "product" ? products : services;
+  const products = results?.products || [];
+  const services = results?.services || [];
+  const displayed = tab === "all" ? [...products, ...services] : tab === "product" ? products : services;
+  const total = products.length + services.length;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setQuery(inputValue);
+    router.replace(`/recherche?q=${encodeURIComponent(inputValue)}`);
+  };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
       <Header />
 
-      <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-10">
-        <div className="mb-6">
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Rechercher..."
-            className="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg"
-          />
-        </div>
-
-        <div className="flex gap-4 mb-8 border-b border-slate-200">
-          {(["all", "product", "service"] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`pb-3 font-semibold text-sm transition border-b-2 ${
-                tab === t ? "border-blue-800 text-blue-800" : "border-transparent text-slate-500 hover:text-slate-700"
-              }`}
-            >
-              {t === "all" ? `Tout (${total})` : t === "product" ? `Produits (${products.length})` : `Services (${services.length})`}
+      <section className="bg-white border-b border-slate-100 px-4 py-6">
+        <div className="max-w-3xl mx-auto">
+          <form onSubmit={handleSubmit} className="flex gap-2">
+            <input
+              type="text"
+              value={inputValue}
+              onChange={e => setInputValue(e.target.value)}
+              placeholder="Rechercher produits, services, artisans..."
+              className="flex-1 border-2 border-slate-200 focus:border-rose-800 rounded-xl px-4 py-3 text-slate-700 outline-none transition text-sm"
+              autoFocus
+            />
+            <button type="submit" className="bg-rose-800 hover:bg-rose-900 text-white font-bold px-6 py-3 rounded-xl text-sm transition">
+              Chercher
             </button>
-          ))}
+          </form>
+          {query && results && !loading && (
+            <p className="text-slate-500 text-sm mt-3">
+              <span className="font-semibold text-slate-800">{total}</span> résultat{total !== 1 ? "s" : ""} pour &laquo;{query}&raquo;
+            </p>
+          )}
         </div>
+      </section>
 
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
         <div className="flex gap-8">
-          <aside className="hidden md:block w-56 shrink-0">
-            <h3 className="font-semibold text-slate-700 mb-4">Filtres</h3>
-            <div className="space-y-4">
+          {/* Sidebar filters */}
+          <aside className="hidden md:block w-52 shrink-0">
+            <h3 className="font-bold text-slate-700 text-sm mb-4 uppercase tracking-wide">Filtres</h3>
+            <div className="space-y-5">
               <div>
-                <label className="text-sm text-slate-600 block mb-1">Catégorie</label>
-                <input
-                  type="text"
-                  value={filters.category}
-                  onChange={(e) => setFilters((f) => ({ ...f, category: e.target.value }))}
-                  placeholder="ex: électronique"
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
-                />
+                <label className="text-xs font-bold text-slate-500 uppercase mb-1.5 block">Prix (TND)</label>
+                <div className="flex gap-2">
+                  <input type="number" value={filters.minPrice} onChange={e => setFilters(f => ({ ...f, minPrice: e.target.value }))}
+                    placeholder="Min" className="w-full border border-slate-200 rounded-lg px-2.5 py-2 text-xs focus:outline-none focus:border-rose-800" />
+                  <input type="number" value={filters.maxPrice} onChange={e => setFilters(f => ({ ...f, maxPrice: e.target.value }))}
+                    placeholder="Max" className="w-full border border-slate-200 rounded-lg px-2.5 py-2 text-xs focus:outline-none focus:border-rose-800" />
+                </div>
               </div>
-              <div>
-                <label className="text-sm text-slate-600 block mb-1">Prix min (TND)</label>
-                <input
-                  type="number"
-                  value={filters.minPrice}
-                  onChange={(e) => setFilters((f) => ({ ...f, minPrice: e.target.value }))}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
-                />
-              </div>
-              <div>
-                <label className="text-sm text-slate-600 block mb-1">Prix max (TND)</label>
-                <input
-                  type="number"
-                  value={filters.maxPrice}
-                  onChange={(e) => setFilters((f) => ({ ...f, maxPrice: e.target.value }))}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
-                />
-              </div>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={filters.isVerifiedSeller}
-                  onChange={(e) => setFilters((f) => ({ ...f, isVerifiedSeller: e.target.checked }))}
-                  className="w-4 h-4 accent-blue-800"
-                />
-                <span className="text-sm text-slate-600">Vendeurs vérifiés</span>
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <div onClick={() => setFilters(f => ({ ...f, isVerifiedSeller: !f.isVerifiedSeller }))}
+                  className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition ${filters.isVerifiedSeller ? "bg-rose-800 border-rose-800" : "border-slate-300 group-hover:border-rose-400"}`}>
+                  {filters.isVerifiedSeller && <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>}
+                </div>
+                <span className="text-xs text-slate-600">Vendeurs vérifiés uniquement</span>
               </label>
+              {(filters.minPrice || filters.maxPrice || filters.isVerifiedSeller) && (
+                <button onClick={() => setFilters({ minPrice: "", maxPrice: "", isVerifiedSeller: false })}
+                  className="text-xs text-rose-700 font-semibold hover:underline">
+                  Réinitialiser les filtres
+                </button>
+              )}
             </div>
           </aside>
 
-          <div className="flex-1">
-            {loading ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="bg-slate-100 rounded-xl h-64 animate-pulse" />
+          {/* Results */}
+          <div className="flex-1 min-w-0">
+            {/* Tabs */}
+            {results && total > 0 && (
+              <div className="flex gap-1 mb-6">
+                {([
+                  { key: "all", label: `Tout (${total})` },
+                  { key: "product", label: `Produits (${products.length})` },
+                  { key: "service", label: `Services (${services.length})` },
+                ] as const).map(t => (
+                  <button key={t.key} onClick={() => setTab(t.key)}
+                    className={`px-4 py-2 rounded-xl text-sm font-bold transition ${tab === t.key ? "bg-rose-800 text-white" : "bg-white border border-slate-200 text-slate-600 hover:border-rose-300"}`}>
+                    {t.label}
+                  </button>
                 ))}
               </div>
-            ) : displayed.length === 0 && query ? (
-              <div className="text-center py-16">
-                <p className="text-slate-500 text-lg mb-2">Aucun résultat pour &ldquo;{query}&rdquo;</p>
-                <p className="text-slate-400 text-sm">Essayez d&apos;autres mots-clés ou élargissez vos filtres.</p>
+            )}
+
+            {loading ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {Array.from({ length: 6 }).map((_, i) => <div key={i} className="skeleton rounded-2xl h-64" />)}
+              </div>
+            ) : !query ? (
+              <div className="text-center py-20 text-slate-400">
+                <p className="text-4xl mb-3">🔍</p>
+                <p className="font-semibold text-slate-600">Que recherchez-vous ?</p>
+                <p className="text-sm mt-1">Tapez un mot-clé pour trouver produits et services.</p>
+              </div>
+            ) : displayed.length === 0 ? (
+              <div className="text-center py-20">
+                <p className="text-4xl mb-3">😕</p>
+                <p className="font-bold text-slate-700 text-lg">Aucun résultat pour &laquo;{query}&raquo;</p>
+                <p className="text-slate-400 text-sm mt-2">Essayez des mots-clés différents ou élargissez vos filtres.</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {displayed.map((item: any) =>
                   item.type === "service" ? (
-                    <ServiceCard
-                      key={item.id}
-                      id={item.id}
-                      title={item.title}
+                    <ServiceCard key={item.id} id={item.id} title={item.title}
                       provider={item.seller?.name || "Prestataire"}
-                      startingPrice={item.price}
-                      rating={0}
-                      category={item.category}
-                      isVerified={item.seller?.isVerified}
-                    />
+                      startingPrice={item.price} rating={item.averageRating || 0}
+                      category={item.category} isVerified={item.seller?.isVerified} />
                   ) : (
-                    <ProductCard
-                      key={item.id}
-                      id={item.id}
-                      title={item.title}
+                    <ProductCard key={item.id} id={item.id} title={item.title}
                       price={item.promoPrice || item.price}
                       originalPrice={item.promoPrice ? item.price : undefined}
-                      seller={item.seller?.name || "Vendeur"}
-                      rating={0}
-                      isVerified={item.seller?.isVerified}
-                      category={item.category}
-                      image={item.images?.[0]}
-                      isBestSeller={item.isBestSeller}
-                      isNewArrival={item.isNewArrival}
-                      stock={item.stock}
-                      stockAlert={item.stockAlert}
-                    />
+                      seller={item.seller?.name || "Vendeur"} rating={item.averageRating || 0}
+                      isVerified={item.seller?.isVerified} category={item.category}
+                      image={item.images?.[0]} isBestSeller={item.isBestSeller}
+                      isNewArrival={item.isNewArrival} stock={item.stock} stockAlert={item.stockAlert} />
                   )
                 )}
               </div>
