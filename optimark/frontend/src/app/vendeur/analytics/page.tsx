@@ -2,6 +2,8 @@
 
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import api from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
@@ -27,21 +29,18 @@ export default function VendeurAnalyticsPage() {
   const [analytics, setAnalytics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<"7d" | "30d" | "3m">("30d");
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) { router.push("/auth/connexion"); return; }
+    if (authLoading) return;
+    if (!user) { router.push("/auth/connexion"); return; }
     setLoading(true);
-    fetch(`/api/analytics/vendor?period=${period}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.text())
-      .then((t) => { try { return JSON.parse(t); } catch { return {}; } })
-      .then((d) => setAnalytics(d.data))
+    api.get(`/analytics/vendor`, { params: { period } })
+      .then(res => setAnalytics(res.data?.data || null))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [period, router]);
+  }, [period, user, authLoading, router]);
 
   const statusData = analytics
     ? Object.entries(analytics.ordersByStatus).map(([name, value]) => ({ name, value }))

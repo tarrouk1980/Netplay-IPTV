@@ -3,6 +3,7 @@
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import LiveCard from "@/components/LiveCard";
+import api from "@/lib/api";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -11,12 +12,7 @@ export default function LivePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch((process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api') + '/live')
-      .then((r) => r.text())
-      .then((t) => { try { return JSON.parse(t); } catch { return {}; } })
-      .then((d) => setSessions(d.data || []))
-      .catch(() => setSessions([]))
-      .finally(() => setLoading(false));
+    api.get("/live").then(r => setSessions(r.data?.data || [])).catch(() => setSessions([])).finally(() => setLoading(false));
   }, []);
 
   return (

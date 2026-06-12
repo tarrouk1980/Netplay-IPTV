@@ -4,6 +4,7 @@ import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import ProductCard from "@/components/ProductCard";
 import ServiceCard from "@/components/ServiceCard";
+import api from "@/lib/api";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 
@@ -29,18 +30,15 @@ function RechercheContent() {
     if (!q.trim()) return;
     setLoading(true);
     try {
-      const params = new URLSearchParams({ q, type: t });
-      if (f.category) params.set("category", f.category);
-      if (f.minPrice) params.set("minPrice", f.minPrice);
-      if (f.maxPrice) params.set("maxPrice", f.maxPrice);
-      if (f.isVerifiedSeller) params.set("isVerifiedSeller", "true");
+      const params: Record<string, string> = { q, type: t };
+      if (f.category) params.category = f.category;
+      if (f.minPrice) params.minPrice = f.minPrice;
+      if (f.maxPrice) params.maxPrice = f.maxPrice;
+      if (f.isVerifiedSeller) params.isVerifiedSeller = "true";
 
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-      const res = await fetch(`${baseUrl}/search?${params}`);
-      const text = await res.text();
-      const json = text ? JSON.parse(text) : {};
-      setResults(json.data || []);
-      setTotal(json.total || 0);
+      const res = await api.get("/search", { params });
+      setResults(res.data?.data || []);
+      setTotal(res.data?.total || 0);
     } catch {
       setResults([]);
     } finally {

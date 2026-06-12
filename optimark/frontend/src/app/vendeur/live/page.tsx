@@ -2,6 +2,8 @@
 
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import api from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -14,40 +16,28 @@ export default function VendeurLivePage() {
   const [error, setError] = useState("");
   const router = useRouter();
 
+  const { user, loading: authLoading } = useAuth();
+
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) { router.push("/auth/connexion"); return; }
-    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-    fetch(`${base}/live/my`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => r.text())
-      .then((t) => { try { return JSON.parse(t); } catch { return {}; } })
-      .then((d) => setHistory(d.data || []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [router]);
+    if (authLoading) return;
+    if (!user) { router.push("/auth/connexion"); return; }
+    api.get("/live/my").then(r => setHistory(r.data?.data || [])).catch(() => {}).finally(() => setLoading(false));
+  }, [user, authLoading, router]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     setError("");
-    const token = localStorage.getItem("token");
     try {
       const productIds = products.split(",").map((s) => s.trim()).filter(Boolean);
-      const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-      const res = await fetch(`${base}/live`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ title, products: productIds }),
-      });
-      const text = await res.text();
-      const json = text ? JSON.parse(text) : {};
-      if (json.success) {
-        router.push(`/live/${json.data.id}`);
+      const res = await api.post("/live", { title, products: productIds });
+      if (res.data?.success) {
+        router.push(`/live/${res.data.data.id}`);
       } else {
-        setError(json.message || "Erreur");
+        setError(res.data?.message || "Erreur");
       }
-    } catch {
-      setError("Erreur réseau");
+    } catch (e: any) {
+      setError(e.response?.data?.message || "Erreur réseau");
     } finally {
       setSubmitting(false);
     }

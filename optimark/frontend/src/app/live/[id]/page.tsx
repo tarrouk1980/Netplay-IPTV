@@ -31,15 +31,12 @@ export default function LiveSessionPage() {
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch(`/api/live/${id}`)
-      .then((r) => r.text())
-      .then((t) => { try { return JSON.parse(t); } catch { return {}; } })
-      .then((d) => {
-        setSession(d.data);
-        setViewers(d.data?.viewerCount || 0);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    import("@/lib/api").then(({ default: api }) =>
+      api.get(`/live/${id}`).then(r => {
+        setSession(r.data?.data);
+        setViewers(r.data?.data?.viewerCount || 0);
+      }).catch(() => {}).finally(() => setLoading(false))
+    );
   }, [id]);
 
   useEffect(() => {

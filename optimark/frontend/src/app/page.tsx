@@ -6,6 +6,7 @@ import HeroSlider from "@/components/HeroSlider";
 import LiveCard from "@/components/LiveCard";
 import ProductCard from "@/components/ProductCard";
 import ServiceCard from "@/components/ServiceCard";
+import api from "@/lib/api";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -26,32 +27,22 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-    const safeFetch = async (url: string) => {
-      try {
-        const r = await fetch(url);
-        const text = await r.text();
-        return text ? JSON.parse(text) : {};
-      } catch { return {}; }
-    };
-
     const fetchAll = async () => {
-      const [tData, lData, sData] = await Promise.all([
-        safeFetch(`${base}/recommendations/trending?limit=8`),
-        safeFetch(`${base}/live`),
-        safeFetch(`${base}/recommendations/services?limit=4`),
+      const [tRes, lRes, sRes] = await Promise.all([
+        api.get("/recommendations/trending", { params: { limit: 8 } }).catch(() => null),
+        api.get("/live").catch(() => null),
+        api.get("/recommendations/services", { params: { limit: 4 } }).catch(() => null),
       ]);
 
-      let products = tData.data || [];
-      // Si trending vide, charger les derniers produits
+      let products = tRes?.data?.data || [];
       if (products.length === 0) {
-        const fallback = await safeFetch(`${base}/products?limit=8`);
-        products = fallback.data || [];
+        const fallback = await api.get("/products", { params: { limit: 8 } }).catch(() => null);
+        products = fallback?.data?.data || [];
       }
 
       setTrending(products);
-      setLives(lData.data || []);
-      setServices(sData.data || []);
+      setLives(lRes?.data?.data || []);
+      setServices(sRes?.data?.data || []);
       setLoading(false);
     };
 
