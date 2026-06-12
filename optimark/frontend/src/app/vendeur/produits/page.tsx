@@ -94,6 +94,10 @@ export default function VendeurProduitsPage() {
               onChange={e => setSearch(e.target.value)}
               className="border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-rose-800 w-44"
             />
+            <Link href="/vendeur/produits/import"
+              className="border border-slate-200 hover:border-rose-300 text-slate-700 font-semibold px-4 py-2.5 rounded-xl text-sm transition">
+              ⬆️ Import CSV
+            </Link>
             <Link href="/vendeur/produits/nouveau"
               className="bg-rose-800 hover:bg-rose-900 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition flex items-center gap-2">
               + Nouveau produit
