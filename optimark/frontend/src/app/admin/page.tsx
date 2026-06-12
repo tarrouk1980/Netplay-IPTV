@@ -11,7 +11,7 @@ const STATUS_LABELS: Record<string, string> = { PENDING: "En attente", CONFIRMED
 const STATUS_COLORS: Record<string, string> = { PENDING: "bg-amber-100 text-amber-800", CONFIRMED: "bg-blue-100 text-blue-800", SHIPPED: "bg-purple-100 text-purple-800", DELIVERED: "bg-green-100 text-green-800", CANCELLED: "bg-rose-100 text-rose-800" };
 const ALL_STATUSES = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"];
 
-type Tab = "stats" | "users" | "orders" | "products" | "returns" | "commissions";
+type Tab = "stats" | "users" | "orders" | "products" | "returns" | "commissions" | "reviews";
 
 export default function AdminPage() {
   const { user, loading } = useAuth();
@@ -24,6 +24,7 @@ export default function AdminPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [returns, setReturns] = useState<any[]>([]);
   const [commissions, setCommissions] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
   const [fetching, setFetching] = useState(false);
 
   useEffect(() => {
@@ -40,6 +41,7 @@ export default function AdminPage() {
     else if (tab === "products") loadProducts();
     else if (tab === "returns") loadReturns();
     else if (tab === "commissions") loadCommissions();
+    else if (tab === "reviews") loadReviews();
   }, [tab]);
 
   const loadStats = async () => {
@@ -79,6 +81,19 @@ export default function AdminPage() {
     const res = await api.get("/admin/commissions").catch(() => null);
     setCommissions(res?.data?.data || []);
     setFetching(false);
+  };
+
+  const loadReviews = async () => {
+    setFetching(true);
+    const res = await api.get("/admin/reviews?limit=100").catch(() => null);
+    setReviews(res?.data?.data || []);
+    setFetching(false);
+  };
+
+  const deleteReview = async (id: string) => {
+    if (!confirm("Supprimer cet avis ?")) return;
+    await api.delete(`/admin/reviews/${id}`).catch(() => {});
+    setReviews(prev => prev.filter(r => r.id !== id));
   };
 
   const loadReturns = async () => {
@@ -122,6 +137,7 @@ export default function AdminPage() {
     { key: "products", label: "Produits", icon: "🏪" },
     { key: "returns", label: "Retours", icon: "↩️" },
     { key: "commissions", label: "Commissions", icon: "💸" },
+    { key: "reviews", label: "Avis", icon: "⭐" },
   ];
 
   return (
@@ -408,6 +424,49 @@ export default function AdminPage() {
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Reviews */}
+        {tab === "reviews" && !fetching && (
+          <div className="bg-white rounded-xl border border-slate-100 overflow-hidden" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <h2 className="font-black text-slate-800">Avis utilisateurs</h2>
+              <span className="text-sm text-slate-400">{reviews.length} avis</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-100">
+                    {["Utilisateur", "Produit", "Note", "Commentaire", "Date", "Action"].map(h => (
+                      <th key={h} className="text-left px-5 py-3 text-slate-500 font-semibold text-xs uppercase">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {reviews.map(r => (
+                    <tr key={r.id} className="border-b border-slate-50 hover:bg-slate-50">
+                      <td className="px-5 py-3">
+                        <p className="font-semibold text-slate-800">{r.user?.name}</p>
+                        <p className="text-xs text-slate-400">{r.user?.email}</p>
+                      </td>
+                      <td className="px-5 py-3 text-slate-600 text-xs max-w-[140px] truncate">{r.product?.title || "—"}</td>
+                      <td className="px-5 py-3">
+                        <span className="text-amber-500 font-black">{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}</span>
+                      </td>
+                      <td className="px-5 py-3 text-slate-500 text-xs max-w-[200px] truncate">{r.comment || "—"}</td>
+                      <td className="px-5 py-3 text-slate-400 text-xs">{new Date(r.createdAt).toLocaleDateString("fr-FR")}</td>
+                      <td className="px-5 py-3">
+                        <button onClick={() => deleteReview(r.id)}
+                          className="text-xs text-rose-600 hover:text-rose-800 font-semibold hover:underline">
+                          Supprimer
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
