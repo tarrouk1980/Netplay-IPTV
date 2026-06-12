@@ -29,6 +29,7 @@ import SellerAnalyticsScreen from "../screens/seller/SellerAnalyticsScreen";
 import SellerServicesScreen from "../screens/seller/SellerServicesScreen";
 import SellerSubscriptionScreen from "../screens/seller/SellerSubscriptionScreen";
 import SellerReturnsScreen from "../screens/seller/SellerReturnsScreen";
+import AdminScreen from "../screens/AdminScreen";
 import FavoritesScreen from "../screens/buyer/FavoritesScreen";
 import SellerStoreScreen from "../screens/buyer/SellerStoreScreen";
 import { useCart } from "../contexts/CartContext";
@@ -103,6 +104,7 @@ export default function AppNavigator() {
         <Stack.Screen name="SellerStore" component={SellerStoreScreen} options={{ title: "Boutique" }} />
         <Stack.Screen name="SellerSubscription" component={SellerSubscriptionScreen} options={{ title: "💎 Plans & Tarifs" }} />
         <Stack.Screen name="SellerReturnsStack" component={SellerReturnsScreen} options={{ title: "↩️ Retours clients" }} />
+        <Stack.Screen name="Admin" component={AdminScreen} options={{ title: "🛡️ Admin Panel", headerStyle: { backgroundColor: "#1e293b" }, headerTintColor: "#fff", headerTitleStyle: { color: "#fff" } }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

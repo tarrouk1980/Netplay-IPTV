@@ -135,6 +135,14 @@ export default function ProfileScreen({ navigation }: any) {
           </TouchableOpacity>
         )}
 
+        {user.role === "ADMIN" && (
+          <TouchableOpacity style={[s.menuItem, { backgroundColor: "#1e293b05" }]} onPress={() => navigation.navigate("Admin")}>
+            <Text style={s.menuIcon}>🛡️</Text>
+            <Text style={[s.menuLabel, { color: "#1e293b" }]}>Admin Panel</Text>
+            <Text style={s.menuArrow}>›</Text>
+          </TouchableOpacity>
+        )}
+
         {!isSeller && (
           <TouchableOpacity style={[s.menuItem, s.sellerCta]} onPress={handleUpgrade} disabled={loading}>
             <Text style={s.menuIcon}>🚀</Text>
