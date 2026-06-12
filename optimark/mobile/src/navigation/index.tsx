@@ -30,6 +30,7 @@ import SellerServicesScreen from "../screens/seller/SellerServicesScreen";
 import SellerSubscriptionScreen from "../screens/seller/SellerSubscriptionScreen";
 import SellerReturnsScreen from "../screens/seller/SellerReturnsScreen";
 import SellerStoreEditorScreen from "../screens/seller/SellerStoreEditorScreen";
+import SellerQuestionsScreen from "../screens/seller/SellerQuestionsScreen";
 import AdminScreen from "../screens/AdminScreen";
 import FavoritesScreen from "../screens/buyer/FavoritesScreen";
 import SellerStoreScreen from "../screens/buyer/SellerStoreScreen";
@@ -107,6 +108,7 @@ export default function AppNavigator() {
         <Stack.Screen name="SellerReturnsStack" component={SellerReturnsScreen} options={{ title: "↩️ Retours clients" }} />
         <Stack.Screen name="Admin" component={AdminScreen} options={{ title: "🛡️ Admin Panel", headerStyle: { backgroundColor: "#1e293b" }, headerTintColor: "#fff", headerTitleStyle: { color: "#fff" } }} />
         <Stack.Screen name="SellerStoreEditor" component={SellerStoreEditorScreen} options={{ title: "🏪 Ma boutique" }} />
+        <Stack.Screen name="SellerQuestionsStack" component={SellerQuestionsScreen} options={{ title: "❓ Questions clients" }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

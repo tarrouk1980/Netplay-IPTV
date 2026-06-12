@@ -16,6 +16,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const [product, setProduct] = useState<any>(null);
   const [similar, setSimilar] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
+  const [questions, setQuestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [qty, setQty] = useState(1);
   const [activeImg, setActiveImg] = useState(0);
@@ -38,12 +39,14 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       api.get(`/recommendations/similar/${id}?limit=4`).catch(() => null),
       user ? api.get(`/favorites/${id}/status`).catch(() => null) : Promise.resolve(null),
       api.get(`/reviews/product/${id}`).catch(() => null),
-    ]).then(([pRes, sRes, fRes, rRes]) => {
+      api.get(`/questions/product/${id}`).catch(() => null),
+    ]).then(([pRes, sRes, fRes, rRes, qRes]) => {
       if (!mounted) return;
       setProduct(pRes?.data?.data || null);
       setSimilar(sRes?.data?.data || []);
       setFavorited(fRes?.data?.favorited || false);
       setReviews(rRes?.data?.data || []);
+      setQuestions(qRes?.data?.data || []);
       setLoading(false);
     });
 
@@ -303,6 +306,50 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           )}
         </section>
 
+        {/* Q&A */}
+        <section className="mt-14">
+          <h2 className="text-xl font-black text-slate-900 mb-6">
+            Questions & Réponses {questions.length > 0 && <span className="text-slate-400 font-normal text-base">({questions.length})</span>}
+          </h2>
+
+          {questions.length === 0 ? (
+            <div className="bg-slate-50 rounded-xl p-6 text-center text-slate-400">
+              <p className="text-3xl mb-2">❓</p>
+              <p>Aucune question pour ce produit.</p>
+            </div>
+          ) : (
+            <div className="space-y-4 mb-6">
+              {questions.map((q: any) => (
+                <div key={q.id} className="bg-white border border-slate-100 rounded-xl p-5" style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center font-bold text-slate-500 text-sm shrink-0">
+                      {q.user?.name?.charAt(0) || "?"}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-800 text-sm">{q.question}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">{q.user?.name} · {new Date(q.createdAt).toLocaleDateString("fr-FR")}</p>
+                    </div>
+                  </div>
+                  {q.answer ? (
+                    <div className="ml-11 bg-rose-50 border-l-4 border-rose-800 rounded-r-xl px-4 py-3">
+                      <p className="text-xs font-bold text-rose-800 mb-1">Réponse du vendeur :</p>
+                      <p className="text-sm text-slate-700">{q.answer}</p>
+                    </div>
+                  ) : (
+                    <div className="ml-11 bg-slate-50 rounded-xl px-4 py-3 text-xs text-slate-400 italic">
+                      En attente de réponse du vendeur...
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {user && (
+            <AskQuestion productId={id} onSubmitted={(q) => setQuestions(prev => [q, ...prev])} />
+          )}
+        </section>
+
         {/* Similar products */}
         {similar.length > 0 && (
           <section className="mt-14">
@@ -318,6 +365,51 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
       <Footer />
     </div>
+  );
+}
+
+function AskQuestion({ productId, onSubmitted }: { productId: string; onSubmitted: (q: any) => void }) {
+  const [question, setQuestion] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!question.trim()) return;
+    setSubmitting(true);
+    try {
+      const res = await api.post("/questions", { productId, question });
+      onSubmitted(res.data?.data);
+      setSubmitted(true);
+      setQuestion("");
+      setTimeout(() => setSubmitted(false), 4000);
+    } catch {
+      alert("Erreur lors de l'envoi de la question");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="bg-white border border-slate-100 rounded-xl p-5" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+      <h3 className="font-bold text-slate-800 mb-3">Poser une question</h3>
+      {submitted ? (
+        <p className="text-green-600 font-semibold text-sm">✓ Votre question a été envoyée au vendeur.</p>
+      ) : (
+        <div className="flex gap-3">
+          <input
+            value={question}
+            onChange={e => setQuestion(e.target.value)}
+            placeholder="Votre question sur ce produit..."
+            className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-rose-100"
+          />
+          <button type="submit" disabled={!question.trim() || submitting}
+            className="bg-rose-800 hover:bg-rose-900 text-white font-bold px-5 py-2 rounded-xl text-sm transition disabled:opacity-50">
+            {submitting ? "..." : "Envoyer"}
+          </button>
+        </div>
+      )}
+    </form>
   );
 }
 

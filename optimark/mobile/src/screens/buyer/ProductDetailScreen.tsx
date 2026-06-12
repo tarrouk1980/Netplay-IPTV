@@ -19,6 +19,9 @@ export default function ProductDetailScreen({ route, navigation }: any) {
   const [reviewRating, setReviewRating] = useState(5);
   const [submittingReview, setSubmittingReview] = useState(false);
   const [similar, setSimilar] = useState<any[]>([]);
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [questionText, setQuestionText] = useState("");
+  const [submittingQ, setSubmittingQ] = useState(false);
   const { addItem } = useCart();
   const { user } = useAuth();
 
@@ -28,11 +31,13 @@ export default function ProductDetailScreen({ route, navigation }: any) {
       api.get(`/reviews/product/${id}`).catch(() => null),
       user ? api.get(`/favorites/${id}/status`).catch(() => null) : null,
       api.get(`/recommendations/similar/${id}?limit=6`).catch(() => null),
-    ]).then(([pRes, rRes, fRes, simRes]) => {
+      api.get(`/questions/product/${id}`).catch(() => null),
+    ]).then(([pRes, rRes, fRes, simRes, qRes]) => {
       setProduct(pRes?.data?.data);
       setReviews(rRes?.data?.data || []);
       setFavorited(fRes?.data?.favorited || false);
       setSimilar(simRes?.data?.data || []);
+      setQuestions(qRes?.data?.data || []);
     }).catch(() => {}).finally(() => setLoading(false));
   }, [id]);
 
@@ -83,6 +88,22 @@ export default function ProductDetailScreen({ route, navigation }: any) {
   };
 
   const avgRating = reviews.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : null;
+
+  const submitQuestion = async () => {
+    if (!user) { Alert.alert("Connexion requise"); return; }
+    if (!questionText.trim()) return;
+    setSubmittingQ(true);
+    try {
+      const res = await api.post("/questions", { productId: id, question: questionText });
+      setQuestions(prev => [res.data?.data, ...prev]);
+      setQuestionText("");
+      Alert.alert("✓ Question envoyée", "Le vendeur vous répondra bientôt.");
+    } catch (e: any) {
+      Alert.alert("Erreur", e.response?.data?.message || "Impossible d'envoyer la question.");
+    } finally {
+      setSubmittingQ(false);
+    }
+  };
 
   return (
     <ScrollView style={s.container} contentContainerStyle={{ paddingBottom: 120 }}>
@@ -249,6 +270,49 @@ export default function ProductDetailScreen({ route, navigation }: any) {
           )}
         </View>
 
+        {/* Q&A */}
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>❓ Questions & Réponses ({questions.length})</Text>
+          {questions.map(q => (
+            <View key={q.id} style={s.qCard}>
+              <View style={s.qRow}>
+                <View style={s.qAvatar}>
+                  <Text style={{ color: "#fff", fontWeight: "800", fontSize: 12 }}>{q.user?.name?.[0] || "?"}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.qText}>{q.question}</Text>
+                  <Text style={s.qMeta}>{q.user?.name} · {new Date(q.createdAt).toLocaleDateString("fr-FR")}</Text>
+                </View>
+              </View>
+              {q.answer ? (
+                <View style={s.answerBox}>
+                  <Text style={s.answerLabel}>Réponse du vendeur :</Text>
+                  <Text style={s.answerText}>{q.answer}</Text>
+                </View>
+              ) : (
+                <View style={s.pendingBox}>
+                  <Text style={s.pendingText}>En attente de réponse...</Text>
+                </View>
+              )}
+            </View>
+          ))}
+          {user && (
+            <View style={s.askBox}>
+              <TextInput
+                style={s.askInput}
+                value={questionText}
+                onChangeText={setQuestionText}
+                placeholder="Posez une question au vendeur..."
+                placeholderTextColor="#94a3b8"
+                multiline
+              />
+              <TouchableOpacity style={[s.askBtn, (!questionText.trim() || submittingQ) && { opacity: 0.5 }]} onPress={submitQuestion} disabled={!questionText.trim() || submittingQ}>
+                <Text style={s.askBtnText}>{submittingQ ? "Envoi..." : "Envoyer la question"}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+
         {/* Similar products */}
         {similar.length > 0 && (
           <View style={s.section}>
@@ -332,4 +396,18 @@ const s = StyleSheet.create({
   simImgBox: { width: "100%", height: 100, backgroundColor: "#f1f5f9", alignItems: "center", justifyContent: "center" },
   simTitle: { fontSize: 11, fontWeight: "700", color: "#1e293b", padding: 8, paddingBottom: 4 },
   simPrice: { fontSize: 12, fontWeight: "900", color: "#9f1239", paddingHorizontal: 8, paddingBottom: 8 },
+  qCard: { backgroundColor: "#f8fafc", borderRadius: 14, padding: 14, marginBottom: 10 },
+  qRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 8 },
+  qAvatar: { width: 30, height: 30, borderRadius: 15, backgroundColor: "#475569", alignItems: "center", justifyContent: "center", marginTop: 2 },
+  qText: { fontSize: 13, fontWeight: "700", color: "#1e293b", lineHeight: 20 },
+  qMeta: { fontSize: 11, color: "#94a3b8", marginTop: 2 },
+  answerBox: { marginLeft: 40, backgroundColor: "#fef2f2", borderLeftWidth: 3, borderLeftColor: "#9f1239", borderRadius: 8, padding: 10 },
+  answerLabel: { fontSize: 10, fontWeight: "800", color: "#9f1239", marginBottom: 4 },
+  answerText: { fontSize: 12, color: "#475569", lineHeight: 18 },
+  pendingBox: { marginLeft: 40, backgroundColor: "#f1f5f9", borderRadius: 8, padding: 8 },
+  pendingText: { fontSize: 11, color: "#94a3b8", fontStyle: "italic" },
+  askBox: { marginTop: 12, borderTopWidth: 1, borderTopColor: "#e2e8f0", paddingTop: 14 },
+  askInput: { backgroundColor: "#f1f5f9", borderRadius: 12, padding: 12, fontSize: 14, color: "#1e293b", minHeight: 70, marginBottom: 10 },
+  askBtn: { backgroundColor: "#9f1239", borderRadius: 12, paddingVertical: 12, alignItems: "center" },
+  askBtnText: { color: "#fff", fontWeight: "800", fontSize: 14 },
 });

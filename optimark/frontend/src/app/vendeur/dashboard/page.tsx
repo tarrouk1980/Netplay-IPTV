@@ -59,6 +59,7 @@ export default function VendeurDashboardPage() {
             <Link href="/vendeur/coupons" className="px-4 py-2 border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 text-sm font-semibold transition">🏷️ Codes promo</Link>
             <Link href="/vendeur/flash-ventes" className="px-4 py-2 border border-amber-300 text-amber-700 rounded-xl hover:bg-amber-50 text-sm font-semibold transition">⚡ Ventes flash</Link>
             <Link href="/vendeur/retours" className="px-4 py-2 border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 text-sm font-semibold transition">↩️ Retours</Link>
+            <Link href="/vendeur/questions" className="px-4 py-2 border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 text-sm font-semibold transition">❓ Questions</Link>
             <Link href="/vendeur/services" className="px-4 py-2 border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 text-sm font-semibold transition">💼 Services</Link>
             {!user?.isVerified && (
               <button onClick={() => api.patch("/vendors/verify")} className="px-4 py-2 border border-amber-400 text-amber-700 rounded-xl hover:bg-amber-50 text-sm font-medium transition">Demander vérification</button>
