@@ -183,6 +183,12 @@ export default function ProfileScreen({ navigation }: any) {
           <Text style={s.menuArrow}>›</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity style={s.menuItem} onPress={() => navigation.navigate("AddressBook")}>
+          <Text style={s.menuIcon}>📍</Text>
+          <Text style={s.menuLabel}>Mes adresses</Text>
+          <Text style={s.menuArrow}>›</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={s.menuItem} onPress={() => navigation.navigate("RecentlyViewed")}>
           <Text style={s.menuIcon}>🕐</Text>
           <Text style={s.menuLabel}>Récemment vus</Text>
