@@ -176,6 +176,13 @@ export default function VendeurProduitsPage() {
                             className={`text-xs font-bold px-2.5 py-1 rounded-full transition ${p.isBestSeller ? "bg-amber-100 text-amber-700 hover:bg-amber-200" : "bg-slate-100 text-slate-400 hover:bg-slate-200"}`}>
                             {p.isBestSeller ? "🏆 Top" : "Top"}
                           </button>
+                          <button onClick={async () => {
+                            await api.patch(`/vendors/products/${p.id}/featured`).catch(() => {});
+                            setProducts(prev => prev.map(x => x.id === p.id ? { ...x, isFeatured: !x.isFeatured } : x));
+                          }}
+                            className={`text-xs font-bold px-2.5 py-1 rounded-full transition ${p.isFeatured ? "bg-purple-100 text-purple-700 hover:bg-purple-200" : "bg-slate-100 text-slate-400 hover:bg-slate-200"}`}>
+                            {p.isFeatured ? "⭐ Vedette" : "Vedette"}
+                          </button>
                         </td>
                         <td className="px-5 py-3">
                           <div className="flex items-center gap-3">

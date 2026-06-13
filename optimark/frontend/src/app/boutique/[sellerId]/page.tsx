@@ -161,7 +161,32 @@ export default function BoutiquePage({ params }: { params: Promise<{ sellerId: s
 
         {/* Products tab */}
         {tab === "products" && (
-          products.length === 0 ? (
+          <>
+          {products.filter((p: any) => p.isFeatured).length > 0 && (
+            <div className="mb-6">
+              <h2 className="font-black text-slate-900 mb-3 flex items-center gap-2">
+                <span className="text-purple-600">⭐</span> Coups de cœur
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {products.filter((p: any) => p.isFeatured).map((p: any) => (
+                  <div key={p.id} className="relative">
+                    <div className="absolute top-2 left-2 z-10 bg-purple-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full">⭐ VEDETTE</div>
+                    <ProductCard id={p.id} title={p.title}
+                      price={p.promoPrice || p.price}
+                      originalPrice={p.promoPrice ? p.price : undefined}
+                      seller={sellerName} rating={p.averageRating || 0}
+                      reviewCount={p.reviewCount || 0}
+                      isVerified={store?.seller?.isVerified}
+                      category={p.category} image={p.images?.[0]}
+                      isBestSeller={p.isBestSeller} isNewArrival={p.isNewArrival}
+                      stock={p.stock} stockAlert={p.stockAlert} />
+                  </div>
+                ))}
+              </div>
+              <hr className="my-6 border-slate-100" />
+            </div>
+          )}
+          {products.length === 0 ? (
             <div className="text-center py-16 bg-slate-50 rounded-2xl border border-slate-100">
               <span className="text-4xl block mb-3">📦</span>
               <p className="text-slate-500">Aucun produit disponible pour le moment.</p>
@@ -181,6 +206,7 @@ export default function BoutiquePage({ params }: { params: Promise<{ sellerId: s
               ))}
             </div>
           )
+          </>
         )}
 
         {/* Collections tab */}

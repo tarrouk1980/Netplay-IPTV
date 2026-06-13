@@ -151,6 +151,7 @@ model Product {
   isActive      Boolean           @default(true)
   isBestSeller  Boolean           @default(false)
   isNewArrival  Boolean           @default(true)
+  isFeatured    Boolean           @default(false)
   sellerId      String
   seller        User              @relation(fields: [sellerId], references: [id])
   createdAt     DateTime          @default(now())

@@ -475,6 +475,13 @@ export class VendorsService {
     };
   }
 
+  async toggleFeatured(sellerId: string, productId: string) {
+    const product = await this.prisma.product.findUnique({ where: { id: productId }, select: { sellerId: true, isFeatured: true } });
+    if (!product || product.sellerId !== sellerId) throw new Error('Accès refusé');
+    const updated = await this.prisma.product.update({ where: { id: productId }, data: { isFeatured: !product.isFeatured } });
+    return { data: { isFeatured: updated.isFeatured }, success: true };
+  }
+
   async getFollowedSellers(userId: string) {
     const follows = await this.prisma.sellerFollow.findMany({
       where: { followerId: userId },

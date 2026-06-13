@@ -126,6 +126,12 @@ export class VendorsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Patch('products/:productId/featured')
+  toggleFeatured(@Param('productId') productId: string, @Request() req: any) {
+    return this.vendorsService.toggleFeatured(req.user.id, productId);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('following/my')
   getFollowing(@Request() req: any) {
     return this.vendorsService.getFollowedSellers(req.user.id);
