@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
 import {
   View, Text, ScrollView, Image, TouchableOpacity,
-  ActivityIndicator, StyleSheet, Alert, TextInput
+  ActivityIndicator, StyleSheet, Alert, TextInput, Modal,
+  Dimensions
 } from "react-native";
+
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 import api from "../../api";
 import { useCart } from "../../contexts/CartContext";
 import { useAuth } from "../../contexts/AuthContext";
@@ -23,6 +26,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
   const [questionText, setQuestionText] = useState("");
   const [submittingQ, setSubmittingQ] = useState(false);
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
+  const [galleryOpen, setGalleryOpen] = useState(false);
   const { addItem } = useCart();
   const { user } = useAuth();
 
@@ -108,7 +112,30 @@ export default function ProductDetailScreen({ route, navigation }: any) {
 
   return (
     <ScrollView style={s.container} contentContainerStyle={{ paddingBottom: 120 }}>
+      {/* Fullscreen gallery modal */}
+      <Modal visible={galleryOpen} transparent animationType="fade" onRequestClose={() => setGalleryOpen(false)}>
+        <View style={{ flex: 1, backgroundColor: "#000", justifyContent: "center", alignItems: "center" }}>
+          <TouchableOpacity style={{ position: "absolute", top: 48, right: 20, zIndex: 10, padding: 10 }} onPress={() => setGalleryOpen(false)}>
+            <Text style={{ color: "#fff", fontSize: 28, fontWeight: "900" }}>✕</Text>
+          </TouchableOpacity>
+          <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ width: SCREEN_W * images.length }}>
+            {images.map((img, i) => (
+              <View key={i} style={{ width: SCREEN_W, height: SCREEN_H, justifyContent: "center", alignItems: "center" }}>
+                <Image source={{ uri: img }} style={{ width: SCREEN_W, height: SCREEN_H * 0.75 }} resizeMode="contain" />
+              </View>
+            ))}
+          </ScrollView>
+          <View style={{ flexDirection: "row", position: "absolute", bottom: 40, gap: 6 }}>
+            {images.map((_, i) => (
+              <View key={i} style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: i === activeImg ? "#fff" : "rgba(255,255,255,0.4)" }} />
+            ))}
+          </View>
+        </View>
+      </Modal>
+
       {/* Image gallery */}
+      <TouchableOpacity activeOpacity={0.95} onPress={() => images.length > 0 && setGalleryOpen(true)}>
       <View style={s.imgBox}>
         {images[activeImg]
           ? <Image source={{ uri: images[activeImg] }} style={s.img} resizeMode="cover" />
@@ -122,6 +149,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
           <Text style={{ fontSize: 24 }}>{favorited ? "♥" : "♡"}</Text>
         </TouchableOpacity>
       </View>
+      </TouchableOpacity>
       {images.length > 1 && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 16, gap: 8, paddingVertical: 10 }}>
