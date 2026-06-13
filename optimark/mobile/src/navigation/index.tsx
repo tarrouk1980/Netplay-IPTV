@@ -33,6 +33,7 @@ import SellerStoreEditorScreen from "../screens/seller/SellerStoreEditorScreen";
 import SellerQuestionsScreen from "../screens/seller/SellerQuestionsScreen";
 import CompareScreen from "../screens/buyer/CompareScreen";
 import SellerPayoutsScreen from "../screens/seller/SellerPayoutsScreen";
+import SellerReviewsScreen from "../screens/seller/SellerReviewsScreen";
 import AdminScreen from "../screens/AdminScreen";
 import FavoritesScreen from "../screens/buyer/FavoritesScreen";
 import SellerStoreScreen from "../screens/buyer/SellerStoreScreen";
@@ -112,6 +113,7 @@ export default function AppNavigator() {
         <Stack.Screen name="SellerStoreEditor" component={SellerStoreEditorScreen} options={{ title: "🏪 Ma boutique" }} />
         <Stack.Screen name="SellerQuestionsStack" component={SellerQuestionsScreen} options={{ title: "❓ Questions clients" }} />
         <Stack.Screen name="SellerPayoutsStack" component={SellerPayoutsScreen} options={{ title: "💸 Virements" }} />
+        <Stack.Screen name="SellerReviewsStack" component={SellerReviewsScreen} options={{ title: "⭐ Avis clients" }} />
         <Stack.Screen name="Compare" component={CompareScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
