@@ -135,4 +135,26 @@ export class SearchService {
       success: true,
     };
   }
+
+  async getSuggestions(query: string, limit = 8) {
+    if (!query || query.trim().length < 2) return { data: [], success: true };
+    const q = query.trim().toLowerCase();
+    const [products, logs] = await Promise.all([
+      this.prisma.product.findMany({
+        where: { title: { contains: q, mode: 'insensitive' }, isActive: true },
+        select: { title: true, category: true },
+        take: limit,
+        orderBy: { isBestSeller: 'desc' },
+      }),
+      this.prisma.searchLog.findMany({
+        where: { query: { contains: q, mode: 'insensitive' } },
+        select: { query: true, results: true },
+        orderBy: { results: 'desc' },
+        take: 4,
+      }),
+    ]);
+    const titles = [...new Set(products.map(p => p.title))].slice(0, 5);
+    const queries = logs.map(l => l.query).filter(q2 => !titles.includes(q2)).slice(0, 3);
+    return { data: [...titles, ...queries].slice(0, limit), success: true };
+  }
 }

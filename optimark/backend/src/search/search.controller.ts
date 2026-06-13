@@ -5,6 +5,11 @@ import { SearchService } from './search.service';
 export class SearchController {
   constructor(private searchService: SearchService) {}
 
+  @Get('suggestions')
+  getSuggestions(@Query('q') q: string, @Query('limit') limit?: string) {
+    return this.searchService.getSuggestions(q || '', limit ? Number(limit) : 8);
+  }
+
   @Get('trending')
   getTrending(@Query('limit') limit?: string) {
     return this.searchService.getTrendingSearches(limit ? Number(limit) : 10);

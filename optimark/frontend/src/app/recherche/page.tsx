@@ -20,7 +20,10 @@ function RechercheContent() {
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({ minPrice: "", maxPrice: "", isVerifiedSeller: false });
   const [trendingQueries, setTrendingQueries] = useState<string[]>([]);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const suggDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const doSearch = async (q: string, f: typeof filters) => {
     if (!q.trim()) { setResults(null); return; }
@@ -56,6 +59,16 @@ function RechercheContent() {
     debounceRef.current = setTimeout(() => setQuery(inputValue), 350);
   }, [inputValue]);
 
+  useEffect(() => {
+    if (suggDebounceRef.current) clearTimeout(suggDebounceRef.current);
+    if (!inputValue.trim() || inputValue.trim().length < 2) { setSuggestions([]); return; }
+    suggDebounceRef.current = setTimeout(() => {
+      api.get("/search/suggestions", { params: { q: inputValue } })
+        .then(r => setSuggestions(r.data?.data || []))
+        .catch(() => setSuggestions([]));
+    }, 200);
+  }, [inputValue]);
+
   const products = results?.products || [];
   const services = results?.services || [];
   const displayed = tab === "all" ? [...products, ...services] : tab === "product" ? products : services;
@@ -73,15 +86,29 @@ function RechercheContent() {
 
       <section className="bg-white border-b border-slate-100 px-4 py-6">
         <div className="max-w-3xl mx-auto">
-          <form onSubmit={handleSubmit} className="flex gap-2">
-            <input
-              type="text"
-              value={inputValue}
-              onChange={e => setInputValue(e.target.value)}
-              placeholder="Rechercher produits, services, artisans..."
-              className="flex-1 border-2 border-slate-200 focus:border-rose-800 rounded-xl px-4 py-3 text-slate-700 outline-none transition text-sm"
-              autoFocus
-            />
+          <form onSubmit={handleSubmit} className="flex gap-2 relative">
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                value={inputValue}
+                onChange={e => { setInputValue(e.target.value); setShowSuggestions(true); }}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                placeholder="Rechercher produits, services, artisans..."
+                className="w-full border-2 border-slate-200 focus:border-rose-800 rounded-xl px-4 py-3 text-slate-700 outline-none transition text-sm"
+                autoFocus
+              />
+              {showSuggestions && suggestions.length > 0 && (
+                <div className="absolute top-full left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-lg mt-1 overflow-hidden z-50">
+                  {suggestions.map((s, i) => (
+                    <button key={i} type="button" onMouseDown={() => { setInputValue(s); setQuery(s); setShowSuggestions(false); }}
+                      className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-rose-50 hover:text-rose-800 flex items-center gap-2 transition">
+                      <span className="text-slate-400">🔍</span> {s}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <button type="submit" className="bg-rose-800 hover:bg-rose-900 text-white font-bold px-6 py-3 rounded-xl text-sm transition">
               Chercher
             </button>

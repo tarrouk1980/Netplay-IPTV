@@ -43,6 +43,7 @@ model User {
   savedAddresses     SavedAddress[]
   collections        Collection[]
   storeFaqs          StoreFaq[]
+  notifPrefs         Json?
 }
 
 model SavedAddress {

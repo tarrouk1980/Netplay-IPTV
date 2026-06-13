@@ -32,4 +32,15 @@ export class NotificationsService {
       data: { isRead: true },
     });
   }
+
+  async getPrefs(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { notifPrefs: true } });
+    const defaults = { orders: true, promos: true, messages: true, system: true, priceAlerts: true };
+    return { data: { ...(user?.notifPrefs as object || {}), ...defaults, ...(user?.notifPrefs as object || {}) }, success: true };
+  }
+
+  async updatePrefs(userId: string, prefs: Record<string, boolean>) {
+    await this.prisma.user.update({ where: { id: userId }, data: { notifPrefs: prefs } });
+    return { data: prefs, message: 'Préférences mises à jour', success: true };
+  }
 }

@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
 import api from "@/lib/api";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -69,11 +70,16 @@ export default function NotificationsPage() {
               </p>
             )}
           </div>
-          {unread > 0 && (
-            <button onClick={markAllRead} className="text-rose-700 font-semibold text-sm hover:underline px-4 py-2 bg-rose-50 rounded-xl hover:bg-rose-100 transition">
-              Tout marquer lu
-            </button>
-          )}
+          <div className="flex gap-2">
+            {unread > 0 && (
+              <button onClick={markAllRead} className="text-rose-700 font-semibold text-sm hover:underline px-4 py-2 bg-rose-50 rounded-xl hover:bg-rose-100 transition">
+                Tout marquer lu
+              </button>
+            )}
+            <Link href="/notifications/preferences" className="text-slate-500 font-semibold text-sm px-3 py-2 bg-slate-100 rounded-xl hover:bg-slate-200 transition">
+              ⚙️ Préférences
+            </Link>
+          </div>
         </div>
 
         {/* Filter chips */}
