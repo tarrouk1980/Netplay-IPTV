@@ -32,10 +32,14 @@ export default function CommandeDetailPage({ params }: { params: Promise<{ id: s
   useEffect(() => {
     if (authLoading) return;
     if (!user) { router.push("/auth/connexion"); return; }
-    api.get(`/orders/${id}/invoice`)
-      .then(res => setOrder(res.data?.data))
-      .catch(() => setOrder(null))
-      .finally(() => setLoading(false));
+    Promise.all([
+      api.get(`/orders/${id}/invoice`).catch(() => null),
+      api.get(`/orders/${id}`).catch(() => null),
+    ]).then(([invoiceRes, orderRes]) => {
+      const invoice = invoiceRes?.data?.data;
+      const order = orderRes?.data?.data;
+      setOrder(invoice ? { ...invoice, statusHistory: order?.statusHistory } : order);
+    }).catch(() => setOrder(null)).finally(() => setLoading(false));
   }, [user, authLoading, id, router]);
 
   if (loading || authLoading) return (
@@ -124,6 +128,28 @@ export default function CommandeDetailPage({ params }: { params: Promise<{ id: s
           <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-4 flex items-center gap-3">
             <span className="text-2xl">❌</span>
             <p className="font-bold text-red-700">Cette commande a été annulée.</p>
+          </div>
+        )}
+
+        {/* Status history timeline */}
+        {order.statusHistory && order.statusHistory.length > 0 && (
+          <div className="bg-white border border-slate-100 rounded-2xl p-5 mb-4" style={{boxShadow:"0 2px 8px rgba(0,0,0,0.05)"}}>
+            <h2 className="font-black text-slate-900 mb-4">Historique du suivi</h2>
+            <div className="space-y-0">
+              {order.statusHistory.map((h: any, i: number) => (
+                <div key={h.id} className="flex gap-3">
+                  <div className="flex flex-col items-center">
+                    <div className="w-3 h-3 rounded-full bg-rose-800 mt-1 shrink-0" />
+                    {i < order.statusHistory.length - 1 && <div className="w-0.5 flex-1 bg-slate-200 my-1" />}
+                  </div>
+                  <div className="pb-4">
+                    <p className="text-sm font-bold text-slate-800">{STATUS[h.status]?.label || h.status}</p>
+                    <p className="text-xs text-slate-400">{new Date(h.createdAt).toLocaleString("fr-FR", { day:"numeric", month:"long", hour:"2-digit", minute:"2-digit" })}</p>
+                    {h.note && <p className="text-xs text-slate-500 mt-0.5">{h.note}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
