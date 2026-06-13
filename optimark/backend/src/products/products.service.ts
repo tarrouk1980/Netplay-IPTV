@@ -254,4 +254,20 @@ export class ProductsService {
     const sorted = ids.map((id: string) => products.find(p => p.id === id)).filter(Boolean);
     return { data: sorted, success: true };
   }
+
+  async getRecentlyViewed(userId: string, limit = 20) {
+    const views = await this.prisma.productView.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      distinct: ['productId'],
+      take: limit,
+      include: {
+        product: {
+          include: { seller: { select: { id: true, name: true } } },
+        },
+      },
+    });
+    const products = views.map(v => v.product).filter(p => p && p.isActive);
+    return { data: products, success: true };
+  }
 }

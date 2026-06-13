@@ -100,4 +100,10 @@ export class ProductsController {
   toggleActive(@Param('id') id: string, @Request() req: any) {
     return this.productsService.toggleActive(id, req.user.id);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('recently-viewed')
+  recentlyViewed(@Request() req: any) {
+    return this.productsService.getRecentlyViewed(req.user.id);
+  }
 }
