@@ -116,6 +116,21 @@ export default function BoutiquePage({ params }: { params: Promise<{ sellerId: s
                 )}
               </div>
               {store?.description && <p className="text-slate-500 text-sm mt-1 max-w-2xl">{store.description}</p>}
+              {store?.businessHours && (() => {
+                const days = ["lun","mar","mer","jeu","ven","sam","dim"] as const;
+                const labels: Record<string, string> = { lun:"Lun", mar:"Mar", mer:"Mer", jeu:"Jeu", ven:"Ven", sam:"Sam", dim:"Dim" };
+                const today = days[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
+                const todayH = store.businessHours[today];
+                return todayH ? (
+                  <p className="text-xs mt-1">
+                    {todayH.closed ? (
+                      <span className="text-red-500 font-semibold">🔴 Fermé aujourd'hui</span>
+                    ) : (
+                      <span className="text-green-600 font-semibold">🟢 Ouvert · {todayH.open}–{todayH.close}</span>
+                    )}
+                  </p>
+                ) : null;
+              })()}
               <div className="flex items-center gap-4 mt-2 text-xs text-slate-400 flex-wrap">
                 {store?.address && <span>📍 {store.address}</span>}
                 {store?.phone && <span>📞 {store.phone}</span>}

@@ -102,10 +102,11 @@ model Store {
   cover       String?
   phone       String?
   address     String?
-  bannerText  String?
-  bannerColor String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  bannerText    String?
+  bannerColor   String?
+  businessHours Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Notification {

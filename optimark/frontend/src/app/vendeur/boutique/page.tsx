@@ -10,7 +10,16 @@ import { useEffect, useState } from "react";
 export default function VendeurBoutiquePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  type DayKey = "lun" | "mar" | "mer" | "jeu" | "ven" | "sam" | "dim";
+  const DAYS: { key: DayKey; label: string }[] = [
+    { key: "lun", label: "Lundi" }, { key: "mar", label: "Mardi" }, { key: "mer", label: "Mercredi" },
+    { key: "jeu", label: "Jeudi" }, { key: "ven", label: "Vendredi" }, { key: "sam", label: "Samedi" }, { key: "dim", label: "Dimanche" },
+  ];
+  type Hours = Record<DayKey, { open: string; close: string; closed: boolean }>;
+  const defaultHours = (): Hours => Object.fromEntries(DAYS.map(d => [d.key, { open: "09:00", close: "18:00", closed: d.key === "dim" }])) as Hours;
+
   const [form, setForm] = useState({ name: "", description: "", logo: "", cover: "", phone: "", address: "", bannerText: "", bannerColor: "#9f1239" });
+  const [hours, setHours] = useState<Hours>(defaultHours());
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -22,6 +31,7 @@ export default function VendeurBoutiquePage() {
       if (res.data?.data) {
         const s = res.data.data;
         setForm({ name: s.name || "", description: s.description || "", logo: s.logo || "", cover: s.cover || "", phone: s.phone || "", address: s.address || "", bannerText: s.bannerText || "", bannerColor: s.bannerColor || "#9f1239" });
+        if (s.businessHours) setHours({ ...defaultHours(), ...s.businessHours });
       }
     }).catch(() => {}).finally(() => setFetching(false));
   }, [user, loading]);
@@ -31,7 +41,7 @@ export default function VendeurBoutiquePage() {
     if (!form.name.trim()) return;
     setSaving(true);
     try {
-      await api.put("/vendors/store", form);
+      await api.put("/vendors/store", { ...form, businessHours: hours });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch {
@@ -99,6 +109,33 @@ export default function VendeurBoutiquePage() {
               <input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="Tunis, Tunisie" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-rose-200" />
             </div>
           </div>
+          <div className="border-t border-slate-100 pt-4">
+            <label className="block text-sm font-bold text-slate-700 mb-3">🕐 Horaires d'ouverture</label>
+            <div className="space-y-2">
+              {DAYS.map(d => (
+                <div key={d.key} className="flex items-center gap-3">
+                  <span className="text-xs font-semibold text-slate-500 w-16">{d.label}</span>
+                  <input type="checkbox" checked={!hours[d.key].closed}
+                    onChange={e => setHours(h => ({ ...h, [d.key]: { ...h[d.key], closed: !e.target.checked } }))}
+                    className="accent-rose-800" />
+                  {!hours[d.key].closed ? (
+                    <>
+                      <input type="time" value={hours[d.key].open}
+                        onChange={e => setHours(h => ({ ...h, [d.key]: { ...h[d.key], open: e.target.value } }))}
+                        className="border border-slate-200 rounded-lg px-2 py-1 text-xs" />
+                      <span className="text-slate-300">–</span>
+                      <input type="time" value={hours[d.key].close}
+                        onChange={e => setHours(h => ({ ...h, [d.key]: { ...h[d.key], close: e.target.value } }))}
+                        className="border border-slate-200 rounded-lg px-2 py-1 text-xs" />
+                    </>
+                  ) : (
+                    <span className="text-xs text-slate-400 italic">Fermé</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div className="border-t border-slate-100 pt-4">
             <label className="block text-sm font-bold text-slate-700 mb-1">📢 Bannière promotionnelle</label>
             <p className="text-xs text-slate-400 mb-3">Affiché en haut de votre boutique publique (laisser vide pour désactiver)</p>
