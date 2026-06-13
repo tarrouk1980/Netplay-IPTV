@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Put, Request, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Put, Query, Request, Res, UseGuards } from '@nestjs/common';
 import { Response } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { VendorsService } from './vendors.service';
@@ -6,6 +6,11 @@ import { VendorsService } from './vendors.service';
 @Controller('vendors')
 export class VendorsController {
   constructor(private vendorsService: VendorsService) {}
+
+  @Get('top')
+  getTopSellers(@Query('limit') limit?: string) {
+    return this.vendorsService.getTopSellers(limit ? Number(limit) : 20);
+  }
 
   @Get('store/public/:sellerId')
   getPublicStore(@Param('sellerId') sellerId: string) {

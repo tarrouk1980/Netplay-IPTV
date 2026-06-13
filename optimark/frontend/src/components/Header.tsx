@@ -84,6 +84,7 @@ export default function Header() {
     { href: "/services", label: "Services" },
     { href: "/pricing", label: "Tarifs" },
     { href: "/ventes-flash", label: "⚡ Flash" },
+    { href: "/boutiques", label: "🏪 Boutiques" },
   ];
 
   return (

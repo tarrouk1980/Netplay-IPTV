@@ -333,6 +333,42 @@ export class VendorsService {
     return { data: result, success: true };
   }
 
+  async getTopSellers(limit = 20) {
+    const stores = await this.prisma.store.findMany({
+      include: {
+        seller: {
+          select: {
+            id: true, name: true, isVerified: true,
+            _count: { select: { products: true, followers: true } },
+          },
+        },
+      },
+      take: limit,
+    });
+
+    const sellerIds = stores.map(s => s.sellerId);
+    const reviewStats = await this.prisma.review.groupBy({
+      by: ['productId'],
+      _avg: { rating: true },
+      _count: { id: true },
+      where: { product: { sellerId: { in: sellerIds } } },
+    });
+
+    const result = stores.map(store => ({
+      id: store.sellerId,
+      storeName: store.name,
+      description: store.description,
+      banner: store.banner,
+      logo: store.logo,
+      category: store.category,
+      isVerified: store.seller.isVerified,
+      productCount: store.seller._count.products,
+      followerCount: store.seller._count.followers,
+    }));
+
+    return { data: result, success: true };
+  }
+
   async getFollowStatus(followerId: string | undefined, sellerId: string) {
     if (!followerId) return { data: { following: false, followerCount: await this.prisma.sellerFollow.count({ where: { sellerId } }) }, success: true };
     const [follow, count] = await Promise.all([
