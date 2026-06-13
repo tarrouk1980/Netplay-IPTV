@@ -81,6 +81,15 @@ export class VendorsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('products/export-csv')
+  async exportProductsCsv(@Request() req: any, @Res() res: Response) {
+    const csv = await this.vendorsService.exportProductsCsv(req.user.id);
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="produits.csv"');
+    res.send(csv);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('revenue/daily')
   getDailyRevenue(@Request() req: any) {
     return this.vendorsService.getDailyRevenue(req.user.id, 30);

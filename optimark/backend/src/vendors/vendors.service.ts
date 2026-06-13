@@ -369,6 +369,29 @@ export class VendorsService {
     return { data: result, success: true };
   }
 
+  async exportProductsCsv(sellerId: string): Promise<string> {
+    const products = await this.prisma.product.findMany({
+      where: { sellerId },
+      orderBy: { createdAt: 'desc' },
+    });
+    const rows: string[] = ['ID,Titre,Catégorie,Marque,Prix,Prix promo,Stock,Actif,Best Seller,Nouveauté'];
+    for (const p of products) {
+      rows.push([
+        p.id.slice(0, 8).toUpperCase(),
+        `"${p.title.replace(/"/g, '""')}"`,
+        p.category || '',
+        p.brand || '',
+        p.price.toFixed(2),
+        p.promoPrice != null ? p.promoPrice.toFixed(2) : '',
+        String(p.stock),
+        p.isActive ? 'Oui' : 'Non',
+        p.isBestSeller ? 'Oui' : 'Non',
+        p.isNewArrival ? 'Oui' : 'Non',
+      ].join(','));
+    }
+    return rows.join('\n');
+  }
+
   async getFollowStatus(followerId: string | undefined, sellerId: string) {
     if (!followerId) return { data: { following: false, followerCount: await this.prisma.sellerFollow.count({ where: { sellerId } }) }, success: true };
     const [follow, count] = await Promise.all([

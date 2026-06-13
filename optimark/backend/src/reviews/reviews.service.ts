@@ -1,10 +1,14 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateReviewDto } from './dtos/create-review.dto';
 
 @Injectable()
 export class ReviewsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notifications: NotificationsService,
+  ) {}
 
   async create(dto: CreateReviewDto, userId: string) {
     if (!dto.productId && !dto.serviceId) {
@@ -22,6 +26,22 @@ export class ReviewsService {
       },
       include: { user: { select: { id: true, name: true } } },
     });
+    // Notify seller
+    try {
+      const product = dto.productId
+        ? await this.prisma.product.findUnique({ where: { id: dto.productId }, select: { sellerId: true, title: true } })
+        : dto.serviceId
+          ? await this.prisma.service.findUnique({ where: { id: dto.serviceId }, select: { sellerId: true, title: true } })
+          : null;
+      if (product?.sellerId && product.sellerId !== userId) {
+        await this.notifications.create(
+          product.sellerId,
+          'NEW_REVIEW',
+          `Nouvel avis ${dto.rating}★ sur "${product.title}"`,
+        );
+      }
+    } catch {}
+
     return { data: review, message: 'Avis créé', success: true };
   }
 
