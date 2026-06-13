@@ -322,7 +322,12 @@ export default function ProductDetailScreen({ route, navigation }: any) {
         {/* Similar products */}
         {similar.length > 0 && (
           <View style={s.section}>
-            <Text style={s.sectionTitle}>Vous aimerez aussi</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+              <Text style={s.sectionTitle}>Vous aimerez aussi</Text>
+              <TouchableOpacity style={s.compareBtn} onPress={() => navigation.navigate("Compare", { ids: [id, ...similar.slice(0, 2).map((p: any) => p.id)] })}>
+                <Text style={s.compareBtnText}>⚖️ Comparer</Text>
+              </TouchableOpacity>
+            </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
               {similar.map(p => {
                 const simPrice = p.promoPrice || p.price;
@@ -419,4 +424,6 @@ const s = StyleSheet.create({
   askInput: { backgroundColor: "#f1f5f9", borderRadius: 12, padding: 12, fontSize: 14, color: "#1e293b", minHeight: 70, marginBottom: 10 },
   askBtn: { backgroundColor: "#9f1239", borderRadius: 12, paddingVertical: 12, alignItems: "center" },
   askBtnText: { color: "#fff", fontWeight: "800", fontSize: 14 },
+  compareBtn: { backgroundColor: "#f1f5f9", borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6 },
+  compareBtnText: { fontSize: 12, fontWeight: "700", color: "#475569" },
 });
