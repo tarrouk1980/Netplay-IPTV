@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet, Alert, TextInput, Modal } from "react-native";
 import api from "../../api";
+import { useCart } from "../../contexts/CartContext";
 
 const STEPS = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED"];
 const STEP_LABELS: Record<string, string> = { PENDING: "Reçue", CONFIRMED: "Confirmée", SHIPPED: "Expédiée", DELIVERED: "Livrée" };
 
 export default function OrderDetailScreen({ route, navigation }: any) {
   const { id } = route.params;
+  const { addItem } = useCart();
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showReturn, setShowReturn] = useState(false);
@@ -140,6 +142,26 @@ export default function OrderDetailScreen({ route, navigation }: any) {
         <Text style={s.totalVal}>{Number(order.total).toFixed(2)} TND</Text>
       </View>
 
+      {/* Re-order */}
+      {order.status === "DELIVERED" && order.items?.length > 0 && (
+        <TouchableOpacity
+          style={s.reorderBtn}
+          onPress={() => {
+            order.items.forEach((item: any) => {
+              if (item.product) {
+                addItem({ id: item.product.id, title: item.product.title, price: item.price, image: item.product.images?.[0] });
+              }
+            });
+            Alert.alert("✓ Produits ajoutés", "Tous les articles ont été ajoutés à votre panier.", [
+              { text: "Voir le panier", onPress: () => navigation.navigate("Cart") },
+              { text: "OK" },
+            ]);
+          }}
+        >
+          <Text style={s.reorderText}>🔄 Commander à nouveau</Text>
+        </TouchableOpacity>
+      )}
+
       {/* Actions */}
       <View style={{ marginHorizontal: 16, gap: 10 }}>
         {order.status === "PENDING" && (
@@ -214,6 +236,8 @@ const s = StyleSheet.create({
   totalLabel: { fontSize: 16, fontWeight: "700", color: "#1e293b" },
   totalVal: { fontSize: 20, fontWeight: "900", color: "#9f1239" },
   reviewBanner: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: "#fffbeb", borderWidth: 1, borderColor: "#fde68a", borderRadius: 14, padding: 14, marginHorizontal: 16, marginBottom: 10 },
+  reorderBtn: { marginHorizontal: 16, marginBottom: 10, backgroundColor: "#f0fdf4", borderWidth: 1, borderColor: "#bbf7d0", borderRadius: 14, paddingVertical: 14, alignItems: "center" },
+  reorderText: { color: "#166534", fontWeight: "800", fontSize: 15 },
   returnBtn: { backgroundColor: "#fff7ed", borderWidth: 1, borderColor: "#fed7aa", borderRadius: 14, paddingVertical: 14, alignItems: "center" },
   returnBtnText: { color: "#ea580c", fontWeight: "800", fontSize: 15 },
   returnSent: { backgroundColor: "#f0fdf4", borderWidth: 1, borderColor: "#bbf7d0", borderRadius: 14, paddingVertical: 12, alignItems: "center" },
