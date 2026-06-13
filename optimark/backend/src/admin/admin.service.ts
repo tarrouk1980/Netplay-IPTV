@@ -212,4 +212,61 @@ export class AdminService {
     });
     return { data: returns, success: true };
   }
+
+  async getSearchAnalytics() {
+    const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const [totalSearches, totalSearches7d, topQueries, zeroResultQueries] = await Promise.all([
+      this.prisma.searchLog.count(),
+      this.prisma.searchLog.count({ where: { createdAt: { gte: since7d } } }),
+      (this.prisma.searchLog as any).groupBy({
+        by: ['query'],
+        _count: { query: true },
+        orderBy: { _count: { query: 'desc' } },
+        take: 20,
+        where: { results: { gt: 0 }, createdAt: { gte: since30d } },
+      }),
+      (this.prisma.searchLog as any).groupBy({
+        by: ['query'],
+        _count: { query: true },
+        orderBy: { _count: { query: 'desc' } },
+        take: 20,
+        where: { results: 0, createdAt: { gte: since30d } },
+      }),
+    ]);
+    return {
+      data: {
+        totalSearches,
+        totalSearches7d,
+        topQueries: topQueries.map((g: any) => ({ query: g.query, count: g._count.query })),
+        zeroResultQueries: zeroResultQueries.map((g: any) => ({ query: g.query, count: g._count.query })),
+      },
+      success: true,
+    };
+  }
+
+  async getPlatformHealth() {
+    const [
+      totalProducts, activeProducts, totalOrders, pendingOrders,
+      totalUsers, sellersCount, totalReviews, avgRating,
+    ] = await Promise.all([
+      this.prisma.product.count(),
+      this.prisma.product.count({ where: { isActive: true } }),
+      this.prisma.order.count(),
+      this.prisma.order.count({ where: { status: 'PENDING' } }),
+      this.prisma.user.count(),
+      this.prisma.user.count({ where: { role: 'SELLER' } }),
+      this.prisma.review.count(),
+      this.prisma.review.aggregate({ _avg: { rating: true } }),
+    ]);
+    return {
+      data: {
+        products: { total: totalProducts, active: activeProducts, inactive: totalProducts - activeProducts },
+        orders: { total: totalOrders, pending: pendingOrders },
+        users: { total: totalUsers, sellers: sellersCount, buyers: totalUsers - sellersCount },
+        reviews: { total: totalReviews, avgRating: parseFloat((avgRating._avg.rating || 0).toFixed(2)) },
+      },
+      success: true,
+    };
+  }
 }

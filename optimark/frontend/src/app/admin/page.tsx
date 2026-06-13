@@ -11,7 +11,7 @@ const STATUS_LABELS: Record<string, string> = { PENDING: "En attente", CONFIRMED
 const STATUS_COLORS: Record<string, string> = { PENDING: "bg-amber-100 text-amber-800", CONFIRMED: "bg-blue-100 text-blue-800", SHIPPED: "bg-purple-100 text-purple-800", DELIVERED: "bg-green-100 text-green-800", CANCELLED: "bg-rose-100 text-rose-800" };
 const ALL_STATUSES = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"];
 
-type Tab = "stats" | "users" | "orders" | "products" | "returns" | "commissions" | "reviews" | "payouts";
+type Tab = "stats" | "users" | "orders" | "products" | "returns" | "commissions" | "reviews" | "payouts" | "search" | "health";
 
 export default function AdminPage() {
   const { user, loading } = useAuth();
@@ -26,6 +26,8 @@ export default function AdminPage() {
   const [commissions, setCommissions] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [payouts, setPayouts] = useState<any[]>([]);
+  const [searchAnalytics, setSearchAnalytics] = useState<any>(null);
+  const [platformHealth, setPlatformHealth] = useState<any>(null);
   const [fetching, setFetching] = useState(false);
 
   useEffect(() => {
@@ -41,6 +43,8 @@ export default function AdminPage() {
     else if (tab === "orders") loadOrders();
     else if (tab === "products") loadProducts();
     else if (tab === "returns") loadReturns();
+    else if (tab === "search") api.get("/admin/search-analytics").then(r => setSearchAnalytics(r.data?.data)).catch(() => {});
+    else if (tab === "health") api.get("/admin/platform-health").then(r => setPlatformHealth(r.data?.data)).catch(() => {});
     else if (tab === "commissions") loadCommissions();
     else if (tab === "reviews") loadReviews();
     else if (tab === "payouts") loadPayouts();
@@ -153,6 +157,8 @@ export default function AdminPage() {
     { key: "commissions", label: "Commissions", icon: "💸" },
     { key: "reviews", label: "Avis", icon: "⭐" },
     { key: "payouts", label: "Virements", icon: "💸" },
+    { key: "search", label: "Recherches", icon: "🔍" },
+    { key: "health", label: "Santé", icon: "🏥" },
   ];
 
   return (
@@ -546,6 +552,75 @@ export default function AdminPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+        {/* Search Analytics */}
+        {tab === "search" && (
+          <div className="space-y-6">
+            {!searchAnalytics ? (
+              <div className="text-center py-10 text-slate-400">Chargement...</div>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-white rounded-xl border border-slate-100 p-5">
+                    <p className="text-slate-400 text-xs mb-1">Recherches totales</p>
+                    <p className="text-3xl font-black text-slate-900">{searchAnalytics.totalSearches.toLocaleString()}</p>
+                  </div>
+                  <div className="bg-white rounded-xl border border-slate-100 p-5">
+                    <p className="text-slate-400 text-xs mb-1">7 derniers jours</p>
+                    <p className="text-3xl font-black text-rose-800">{searchAnalytics.totalSearches7d.toLocaleString()}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-white rounded-xl border border-slate-100 p-5">
+                    <h3 className="font-bold text-slate-800 mb-4">🔥 Top recherches (30j)</h3>
+                    {searchAnalytics.topQueries.map((q: any, i: number) => (
+                      <div key={q.query} className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
+                        <span className="flex items-center gap-2"><span className="text-slate-300 text-xs w-5">#{i+1}</span><span className="text-sm text-slate-700">{q.query}</span></span>
+                        <span className="text-xs font-bold text-slate-500">{q.count} fois</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="bg-white rounded-xl border border-slate-100 p-5">
+                    <h3 className="font-bold text-slate-800 mb-4">❌ Recherches sans résultat (30j)</h3>
+                    {searchAnalytics.zeroResultQueries.length === 0 ? (
+                      <p className="text-slate-400 text-sm">Aucune recherche sans résultat.</p>
+                    ) : searchAnalytics.zeroResultQueries.map((q: any, i: number) => (
+                      <div key={q.query} className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
+                        <span className="flex items-center gap-2"><span className="text-slate-300 text-xs w-5">#{i+1}</span><span className="text-sm text-rose-700">{q.query}</span></span>
+                        <span className="text-xs font-bold text-slate-500">{q.count} fois</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Platform Health */}
+        {tab === "health" && (
+          <div className="space-y-4">
+            {!platformHealth ? (
+              <div className="text-center py-10 text-slate-400">Chargement...</div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  { label: "Produits actifs", value: platformHealth.products.active, sub: `${platformHealth.products.total} total`, color: "text-green-600" },
+                  { label: "Produits inactifs", value: platformHealth.products.inactive, sub: "à publier", color: "text-amber-600" },
+                  { label: "Commandes totales", value: platformHealth.orders.total, sub: `${platformHealth.orders.pending} en attente`, color: "text-blue-600" },
+                  { label: "Vendeurs", value: platformHealth.users.sellers, sub: `${platformHealth.users.total} utilisateurs`, color: "text-purple-600" },
+                  { label: "Acheteurs", value: platformHealth.users.buyers, sub: "inscrits", color: "text-slate-700" },
+                  { label: "Avis publiés", value: platformHealth.reviews.total, sub: `Note moy. ${platformHealth.reviews.avgRating}★`, color: "text-amber-500" },
+                ].map(({ label, value, sub, color }) => (
+                  <div key={label} className="bg-white rounded-xl border border-slate-100 p-5">
+                    <p className="text-xs text-slate-400 mb-1">{label}</p>
+                    <p className={`text-3xl font-black ${color}`}>{value.toLocaleString()}</p>
+                    <p className="text-xs text-slate-400 mt-1">{sub}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </main>

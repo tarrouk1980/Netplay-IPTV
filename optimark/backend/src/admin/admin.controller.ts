@@ -98,4 +98,16 @@ export class AdminController {
     this.checkAdmin(req);
     return this.adminService.getReturns(parseInt(limit));
   }
+
+  @Get('search-analytics')
+  getSearchAnalytics(@Request() req: any) {
+    this.checkAdmin(req);
+    return this.adminService.getSearchAnalytics();
+  }
+
+  @Get('platform-health')
+  getPlatformHealth(@Request() req: any) {
+    this.checkAdmin(req);
+    return this.adminService.getPlatformHealth();
+  }
 }

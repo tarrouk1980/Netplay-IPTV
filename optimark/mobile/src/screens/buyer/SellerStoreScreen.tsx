@@ -35,7 +35,7 @@ export default function SellerStoreScreen({ route, navigation }: any) {
     const price = p.promoPrice || p.price;
     const img = p.images?.[0];
     return (
-      <TouchableOpacity style={s.card} onPress={() => navigation.navigate("ProductDetail", { productId: p.id })}>
+      <TouchableOpacity style={s.card} onPress={() => navigation.navigate("ProductDetail", { id: p.id })}>
         <View style={s.imgBox}>
           {img ? <Image source={{ uri: img }} style={s.img} resizeMode="cover" /> : <Text style={{ fontSize: 32 }}>📦</Text>}
         </View>
