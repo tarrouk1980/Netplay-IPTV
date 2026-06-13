@@ -100,6 +100,7 @@ model Product {
   promoPrice    Float?
   brand         String?
   specs         Json?
+  variants      Json?
   images        String[]
   category      String
   stock         Int               @default(0)

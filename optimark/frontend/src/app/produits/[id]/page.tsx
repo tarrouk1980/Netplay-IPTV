@@ -281,6 +281,24 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               </div>
             )}
 
+            {/* Variants */}
+            {product.variants && Array.isArray(product.variants) && product.variants.length > 0 && (
+              <div className="space-y-3">
+                {(product.variants as {name:string;options:string[]}[]).map((v, i) => (
+                  <div key={i}>
+                    <p className="text-sm font-bold text-slate-700 mb-2">{v.name} :</p>
+                    <div className="flex flex-wrap gap-2">
+                      {v.options.map(opt => (
+                        <button key={opt} className="px-3 py-1.5 border-2 border-slate-200 rounded-lg text-sm font-semibold text-slate-700 hover:border-rose-800 hover:text-rose-800 transition">
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div className="bg-slate-50 rounded-xl p-4 text-sm text-slate-600 space-y-1">
               <p>✅ Livraison disponible partout en Tunisie — OPTIMARK Express 24h</p>
               <p>✅ Paiement sécurisé (Konnect, Paymee, Cash à la livraison)</p>
