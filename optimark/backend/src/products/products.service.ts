@@ -25,6 +25,7 @@ export class ProductsService {
     const where: any = { isActive: true };
     if (query.sellerId) where.sellerId = query.sellerId;
     if ((query as any).isBestSeller) where.isBestSeller = true;
+    if ((query as any).hasPromo === 'true' || (query as any).hasPromo === true) where.promoPrice = { not: null };
     if (query.category) where.category = query.category;
     if (query.minPrice || query.maxPrice) {
       where.price = {};
