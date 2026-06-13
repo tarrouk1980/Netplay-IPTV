@@ -9,6 +9,8 @@ import api from "@/lib/api";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
+import { addToCompare } from "@/app/comparer/page";
+import RecentlyViewed, { trackView } from "@/components/RecentlyViewed";
 
 
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -45,7 +47,9 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       user ? api.get(`/price-alerts/${id}/status`).catch(() => null) : Promise.resolve(null),
     ]).then(([pRes, sRes, fRes, rRes, qRes, paRes]) => {
       if (!mounted) return;
-      setProduct(pRes?.data?.data || null);
+      const prod = pRes?.data?.data || null;
+      if (prod) trackView(prod.id);
+      setProduct(prod);
       setSimilar(sRes?.data?.data || []);
       setFavorited(fRes?.data?.favorited || false);
       setReviews(rRes?.data?.data || []);
@@ -257,7 +261,17 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               >
                 🔔
               </button>
+              <button
+                onClick={() => { addToCompare(product.id); }}
+                className="w-12 h-12 rounded-xl border-2 border-slate-300 text-slate-400 hover:border-blue-300 hover:text-blue-500 flex items-center justify-center text-lg transition shrink-0"
+                title="Ajouter au comparateur"
+              >
+                ⚖️
+              </button>
             </div>
+            <Link href="/comparer" className="text-xs text-slate-400 hover:text-blue-600 transition mt-1 self-start">
+              Voir le comparateur →
+            </Link>
 
             {/* Marque */}
             {product.brand && (
@@ -395,6 +409,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             </div>
           </section>
         )}
+        <RecentlyViewed currentId={id} />
       </main>
 
       <Footer />
