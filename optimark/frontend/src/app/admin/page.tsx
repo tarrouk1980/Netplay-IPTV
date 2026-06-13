@@ -1,0 +1,555 @@
+"use client";
+
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import { useAuth } from "@/contexts/AuthContext";
+import api from "@/lib/api";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+
+const STATUS_LABELS: Record<string, string> = { PENDING: "En attente", CONFIRMED: "Confirmée", SHIPPED: "Expédiée", DELIVERED: "Livrée", CANCELLED: "Annulée" };
+const STATUS_COLORS: Record<string, string> = { PENDING: "bg-amber-100 text-amber-800", CONFIRMED: "bg-blue-100 text-blue-800", SHIPPED: "bg-purple-100 text-purple-800", DELIVERED: "bg-green-100 text-green-800", CANCELLED: "bg-rose-100 text-rose-800" };
+const ALL_STATUSES = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"];
+
+type Tab = "stats" | "users" | "orders" | "products" | "returns" | "commissions" | "reviews" | "payouts";
+
+export default function AdminPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const [tab, setTab] = useState<Tab>("stats");
+  const [stats, setStats] = useState<any>(null);
+  const [chartData, setChartData] = useState<{ date: string; revenue: number }[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [returns, setReturns] = useState<any[]>([]);
+  const [commissions, setCommissions] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [payouts, setPayouts] = useState<any[]>([]);
+  const [fetching, setFetching] = useState(false);
+
+  useEffect(() => {
+    if (loading) return;
+    if (!user || user.role !== "ADMIN") { router.replace("/"); return; }
+    loadStats();
+  }, [user, loading]);
+
+  useEffect(() => {
+    if (!user || user.role !== "ADMIN") return;
+    if (tab === "stats") loadStats();
+    else if (tab === "users") loadUsers();
+    else if (tab === "orders") loadOrders();
+    else if (tab === "products") loadProducts();
+    else if (tab === "returns") loadReturns();
+    else if (tab === "commissions") loadCommissions();
+    else if (tab === "reviews") loadReviews();
+    else if (tab === "payouts") loadPayouts();
+  }, [tab]);
+
+  const loadStats = async () => {
+    setFetching(true);
+    const [sRes, cRes] = await Promise.all([
+      api.get("/admin/stats").catch(() => null),
+      api.get("/admin/revenue-chart?days=30").catch(() => null),
+    ]);
+    setStats(sRes?.data?.data);
+    setChartData(cRes?.data?.data || []);
+    setFetching(false);
+  };
+
+  const loadUsers = async () => {
+    setFetching(true);
+    const res = await api.get("/admin/users?limit=50").catch(() => null);
+    setUsers(res?.data?.data || []);
+    setFetching(false);
+  };
+
+  const loadOrders = async () => {
+    setFetching(true);
+    const res = await api.get("/admin/orders?limit=50").catch(() => null);
+    setOrders(res?.data?.data || []);
+    setFetching(false);
+  };
+
+  const loadProducts = async () => {
+    setFetching(true);
+    const res = await api.get("/admin/products?limit=50").catch(() => null);
+    setProducts(res?.data?.data || []);
+    setFetching(false);
+  };
+
+  const loadCommissions = async () => {
+    setFetching(true);
+    const res = await api.get("/admin/commissions").catch(() => null);
+    setCommissions(res?.data?.data || []);
+    setFetching(false);
+  };
+
+  const loadReviews = async () => {
+    setFetching(true);
+    const res = await api.get("/admin/reviews?limit=100").catch(() => null);
+    setReviews(res?.data?.data || []);
+    setFetching(false);
+  };
+
+  const loadPayouts = async () => {
+    setFetching(true);
+    const res = await api.get("/payouts").catch(() => null);
+    setPayouts(res?.data?.data || []);
+    setFetching(false);
+  };
+
+  const updatePayoutStatus = async (id: string, status: string, adminNote?: string) => {
+    await api.patch(`/payouts/${id}/status`, { status, adminNote }).catch(() => {});
+    setPayouts(prev => prev.map(p => p.id === id ? { ...p, status, adminNote: adminNote ?? p.adminNote } : p));
+  };
+
+  const deleteReview = async (id: string) => {
+    if (!confirm("Supprimer cet avis ?")) return;
+    await api.delete(`/admin/reviews/${id}`).catch(() => {});
+    setReviews(prev => prev.filter(r => r.id !== id));
+  };
+
+  const loadReturns = async () => {
+    setFetching(true);
+    const res = await api.get("/returns/all").catch(() => null);
+    setReturns(res?.data?.data || []);
+    setFetching(false);
+  };
+
+  const updateReturnStatus = async (id: string, status: string, adminNote?: string) => {
+    await api.patch(`/returns/${id}/status`, { status, adminNote }).catch(() => {});
+    setReturns(prev => prev.map(r => r.id === id ? { ...r, status, adminNote: adminNote ?? r.adminNote } : r));
+  };
+
+  const updateUserRole = async (userId: string, role: string) => {
+    await api.patch(`/admin/users/${userId}/role`, { role }).catch(() => {});
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, role } : u));
+  };
+
+  const toggleVerified = async (userId: string) => {
+    const res = await api.patch(`/admin/users/${userId}/verify`).catch(() => null);
+    if (res?.data?.data) setUsers(prev => prev.map(u => u.id === userId ? { ...u, isVerified: res.data.data.isVerified } : u));
+  };
+
+  const updateOrderStatus = async (orderId: string, status: string) => {
+    await api.patch(`/admin/orders/${orderId}/status`, { status }).catch(() => {});
+    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
+  };
+
+  const toggleProduct = async (productId: string) => {
+    const res = await api.patch(`/admin/products/${productId}/toggle`).catch(() => null);
+    if (res?.data?.data) setProducts(prev => prev.map(p => p.id === productId ? { ...p, isActive: res.data.data.isActive } : p));
+  };
+
+  if (loading || !user) return null;
+
+  const tabs: { key: Tab; label: string; icon: string }[] = [
+    { key: "stats", label: "Vue d'ensemble", icon: "📊" },
+    { key: "users", label: "Utilisateurs", icon: "👥" },
+    { key: "orders", label: "Commandes", icon: "📦" },
+    { key: "products", label: "Produits", icon: "🏪" },
+    { key: "returns", label: "Retours", icon: "↩️" },
+    { key: "commissions", label: "Commissions", icon: "💸" },
+    { key: "reviews", label: "Avis", icon: "⭐" },
+    { key: "payouts", label: "Virements", icon: "💸" },
+  ];
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <Header />
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-8">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-black text-slate-900">Panneau Admin</h1>
+            <p className="text-slate-500 text-sm">OPTIMARK — Gestion de la plateforme</p>
+          </div>
+          <span className="bg-rose-100 text-rose-800 text-xs font-black px-3 py-1 rounded-full">ADMIN</span>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-2 mb-6 flex-wrap">
+          {tabs.map(t => (
+            <button key={t.key} onClick={() => setTab(t.key)}
+              className={`px-4 py-2 rounded-xl text-sm font-bold transition ${tab === t.key ? "bg-rose-800 text-white" : "bg-white border border-slate-200 text-slate-600 hover:border-rose-300"}`}>
+              {t.icon} {t.label}
+            </button>
+          ))}
+        </div>
+
+        {fetching && <div className="grid grid-cols-2 md:grid-cols-4 gap-4">{Array.from({length:4}).map((_,i)=><div key={i} className="skeleton rounded-xl h-24"/>)}</div>}
+
+        {/* Stats */}
+        {tab === "stats" && stats && !fetching && (
+          <>
+          {chartData.length > 0 && (() => {
+            const max = Math.max(...chartData.map(d => d.revenue), 1);
+            const W = 700, H = 160, PAD = 30;
+            const points = chartData.map((d, i) => {
+              const x = PAD + (i / (chartData.length - 1)) * (W - PAD * 2);
+              const y = H - PAD - (d.revenue / max) * (H - PAD * 2);
+              return `${x},${y}`;
+            }).join(" ");
+            const area = `M ${points.split(" ")[0]} L ${points} L ${PAD + (W - PAD * 2)},${H - PAD} L ${PAD},${H - PAD} Z`;
+            return (
+              <div className="bg-white rounded-2xl border border-slate-100 p-5 mb-6" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold text-slate-800">Revenus — 30 derniers jours</h3>
+                  <span className="text-rose-800 font-black text-sm">{chartData.reduce((s, d) => s + d.revenue, 0).toFixed(2)} TND</span>
+                </div>
+                <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 160 }}>
+                  <defs>
+                    <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#9f1239" stopOpacity="0.2" />
+                      <stop offset="100%" stopColor="#9f1239" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  <path d={area} fill="url(#grad)" />
+                  <polyline points={points} fill="none" stroke="#9f1239" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  {chartData.filter((_, i) => i % 5 === 0).map((d, i, arr) => {
+                    const idx = chartData.findIndex(c => c.date === d.date);
+                    const x = PAD + (idx / (chartData.length - 1)) * (W - PAD * 2);
+                    return (
+                      <text key={d.date} x={x} y={H - 6} textAnchor="middle" fontSize="9" fill="#94a3b8">
+                        {d.date.slice(5)}
+                      </text>
+                    );
+                  })}
+                </svg>
+              </div>
+            );
+          })()}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {[
+              { label: "Utilisateurs", value: stats.totalUsers, icon: "👥", color: "text-slate-800" },
+              { label: "Vendeurs", value: stats.totalSellers, icon: "🏪", color: "text-blue-700" },
+              { label: "Produits", value: stats.totalProducts, icon: "📦", color: "text-slate-800" },
+              { label: "Commandes", value: stats.totalOrders, icon: "🛒", color: "text-slate-800" },
+              { label: "En attente", value: stats.pendingOrders, icon: "⏳", color: "text-amber-600" },
+              { label: "Revenu total", value: `${Number(stats.totalRevenue).toFixed(2)} TND`, icon: "💰", color: "text-rose-800" },
+            ].map(({ label, value, icon, color }) => (
+              <div key={label} className="bg-white rounded-xl p-5 border border-slate-100" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
+                <p className="text-slate-500 text-xs mb-1">{icon} {label}</p>
+                <p className={`text-2xl font-black ${color}`}>{value}</p>
+              </div>
+            ))}
+          </div>
+          </>
+        )}
+
+        {/* Users */}
+        {tab === "users" && !fetching && (
+          <div className="bg-white rounded-xl border border-slate-100 overflow-hidden" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-100">
+                    {["Nom", "Email", "Rôle", "Vérifié", "Inscrit le", "Actions"].map(h => (
+                      <th key={h} className="text-left px-5 py-3 text-slate-500 font-semibold text-xs uppercase">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map(u => (
+                    <tr key={u.id} className="border-b border-slate-50 hover:bg-slate-50">
+                      <td className="px-5 py-3 font-semibold text-slate-800">{u.name}</td>
+                      <td className="px-5 py-3 text-slate-500">{u.email}</td>
+                      <td className="px-5 py-3">
+                        <select value={u.role} onChange={e => updateUserRole(u.id, e.target.value)}
+                          className="text-xs font-bold bg-slate-100 rounded-lg px-2 py-1 outline-none cursor-pointer">
+                          <option value="BUYER">Acheteur</option>
+                          <option value="SELLER">Vendeur</option>
+                          <option value="ADMIN">Admin</option>
+                        </select>
+                      </td>
+                      <td className="px-5 py-3">
+                        <button onClick={() => toggleVerified(u.id)}
+                          className={`text-xs font-bold px-2 py-1 rounded-full ${u.isVerified ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"}`}>
+                          {u.isVerified ? "✓ Vérifié" : "Non vérifié"}
+                        </button>
+                      </td>
+                      <td className="px-5 py-3 text-slate-400 text-xs">{new Date(u.createdAt).toLocaleDateString("fr-FR")}</td>
+                      <td className="px-5 py-3 text-slate-400 text-xs font-mono">{u.id.slice(0, 8)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Orders */}
+        {tab === "orders" && !fetching && (
+          <div className="bg-white rounded-xl border border-slate-100 overflow-hidden" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-100">
+                    {["Commande", "Client", "Montant", "Statut", "Date", "Facture"].map(h => (
+                      <th key={h} className="text-left px-5 py-3 text-slate-500 font-semibold text-xs uppercase">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.map(o => (
+                    <tr key={o.id} className="border-b border-slate-50 hover:bg-slate-50">
+                      <td className="px-5 py-3 font-mono text-xs text-slate-500">#{o.id?.slice(0, 8)}</td>
+                      <td className="px-5 py-3 text-slate-700">{o.buyer?.name}</td>
+                      <td className="px-5 py-3 font-black text-rose-800">{Number(o.total).toFixed(2)} TND</td>
+                      <td className="px-5 py-3">
+                        <select value={o.status} onChange={e => updateOrderStatus(o.id, e.target.value)}
+                          className={`text-xs font-bold px-2 py-1 rounded-full border-0 outline-none cursor-pointer ${STATUS_COLORS[o.status] || "bg-slate-100"}`}>
+                          {ALL_STATUSES.map(s => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
+                        </select>
+                      </td>
+                      <td className="px-5 py-3 text-slate-400 text-xs">{new Date(o.createdAt).toLocaleDateString("fr-FR")}</td>
+                      <td className="px-5 py-3">
+                        <a href={`/commandes/${o.id}/facture`} target="_blank"
+                          className="text-xs text-rose-800 font-semibold hover:underline">🧾 Voir</a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Products */}
+        {tab === "products" && !fetching && (
+          <div className="bg-white rounded-xl border border-slate-100 overflow-hidden" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-100">
+                    {["Titre", "Vendeur", "Prix", "Stock", "Statut", "Action"].map(h => (
+                      <th key={h} className="text-left px-5 py-3 text-slate-500 font-semibold text-xs uppercase">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {products.map(p => (
+                    <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50">
+                      <td className="px-5 py-3 font-medium text-slate-800 max-w-[200px] truncate">{p.title}</td>
+                      <td className="px-5 py-3 text-slate-500">{p.seller?.name}</td>
+                      <td className="px-5 py-3 font-semibold text-rose-800">{Number(p.promoPrice || p.price).toFixed(2)} TND</td>
+                      <td className="px-5 py-3 text-slate-600">{p.stock}</td>
+                      <td className="px-5 py-3">
+                        <button onClick={() => toggleProduct(p.id)}
+                          className={`text-xs font-bold px-2 py-1 rounded-full ${p.isActive ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"}`}>
+                          {p.isActive ? "Actif" : "Inactif"}
+                        </button>
+                      </td>
+                      <td className="px-5 py-3 text-xs font-mono text-slate-400">{p.id.slice(0, 8)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+        {/* Returns */}
+        {tab === "returns" && !fetching && (
+          <div className="space-y-4">
+            {returns.length === 0 && <p className="text-center text-slate-400 py-10">Aucune demande de retour.</p>}
+            {returns.map(r => (
+              <div key={r.id} className="bg-white rounded-xl border border-slate-100 p-5 shadow-sm">
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                  <div>
+                    <p className="font-bold text-slate-800 text-sm">Commande #{r.orderId?.slice(0, 8)}</p>
+                    <p className="text-slate-500 text-xs mt-1">Client : {r.buyer?.name || r.buyerId?.slice(0, 8)}</p>
+                    <p className="text-slate-600 text-sm mt-2 max-w-md">{r.reason}</p>
+                    {r.adminNote && <p className="text-xs text-blue-600 mt-1 italic">Note admin : {r.adminNote}</p>}
+                    <p className="text-xs text-slate-400 mt-2">{new Date(r.createdAt).toLocaleDateString("fr-FR")}</p>
+                  </div>
+                  <div className="flex flex-col gap-2 items-end">
+                    <span className={`text-xs font-black px-3 py-1 rounded-full ${
+                      r.status === "PENDING" ? "bg-amber-100 text-amber-700"
+                      : r.status === "APPROVED" ? "bg-blue-100 text-blue-700"
+                      : r.status === "REFUNDED" ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
+                    }`}>{r.status}</span>
+                    {r.status === "PENDING" && (
+                      <div className="flex gap-2">
+                        <button onClick={() => updateReturnStatus(r.id, "APPROVED")}
+                          className="text-xs font-bold bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition">
+                          Approuver
+                        </button>
+                        <button onClick={() => updateReturnStatus(r.id, "REFUNDED")}
+                          className="text-xs font-bold bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 transition">
+                          Rembourser
+                        </button>
+                        <button onClick={() => updateReturnStatus(r.id, "REJECTED")}
+                          className="text-xs font-bold bg-red-100 text-red-700 px-3 py-1.5 rounded-lg hover:bg-red-200 transition">
+                          Rejeter
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Commissions */}
+        {tab === "commissions" && !fetching && (
+          <div>
+            <div className="bg-rose-50 border border-rose-100 rounded-xl px-5 py-3 mb-4 flex items-center justify-between flex-wrap gap-2">
+              <p className="text-rose-800 font-bold text-sm">
+                Total commissions : {commissions.reduce((s, c) => s + c.commission, 0).toFixed(2)} TND
+              </p>
+              <p className="text-slate-500 text-xs">{commissions.length} vendeurs</p>
+            </div>
+            <div className="bg-white rounded-xl border border-slate-100 overflow-hidden" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-100">
+                      {["Vendeur", "Plan", "Produits", "Revenu généré", "Commission", "Taux", "Vérifié"].map(h => (
+                        <th key={h} className="text-left px-5 py-3 text-slate-500 font-semibold text-xs uppercase">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {commissions.map(c => (
+                      <tr key={c.id} className="border-b border-slate-50 hover:bg-slate-50">
+                        <td className="px-5 py-3">
+                          <p className="font-semibold text-slate-800">{c.name}</p>
+                          <p className="text-xs text-slate-400">{c.email}</p>
+                        </td>
+                        <td className="px-5 py-3">
+                          <span className={`text-xs font-black px-2 py-1 rounded-full ${
+                            c.plan === "BUSINESS" ? "bg-purple-100 text-purple-700"
+                            : c.plan === "PRO" ? "bg-rose-100 text-rose-700"
+                            : "bg-slate-100 text-slate-600"
+                          }`}>{c.plan}</span>
+                        </td>
+                        <td className="px-5 py-3 text-slate-600">{c.productCount}</td>
+                        <td className="px-5 py-3 font-black text-slate-800">{c.revenue.toFixed(2)} TND</td>
+                        <td className="px-5 py-3 font-black text-rose-800">{c.commission.toFixed(2)} TND</td>
+                        <td className="px-5 py-3 text-slate-500">{c.commissionRate}%</td>
+                        <td className="px-5 py-3">
+                          <span className={`text-xs font-bold px-2 py-1 rounded-full ${c.isVerified ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-400"}`}>
+                            {c.isVerified ? "✓" : "—"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Reviews */}
+        {tab === "reviews" && !fetching && (
+          <div className="bg-white rounded-xl border border-slate-100 overflow-hidden" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <h2 className="font-black text-slate-800">Avis utilisateurs</h2>
+              <span className="text-sm text-slate-400">{reviews.length} avis</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-100">
+                    {["Utilisateur", "Produit", "Note", "Commentaire", "Date", "Action"].map(h => (
+                      <th key={h} className="text-left px-5 py-3 text-slate-500 font-semibold text-xs uppercase">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {reviews.map(r => (
+                    <tr key={r.id} className="border-b border-slate-50 hover:bg-slate-50">
+                      <td className="px-5 py-3">
+                        <p className="font-semibold text-slate-800">{r.user?.name}</p>
+                        <p className="text-xs text-slate-400">{r.user?.email}</p>
+                      </td>
+                      <td className="px-5 py-3 text-slate-600 text-xs max-w-[140px] truncate">{r.product?.title || "—"}</td>
+                      <td className="px-5 py-3">
+                        <span className="text-amber-500 font-black">{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}</span>
+                      </td>
+                      <td className="px-5 py-3 text-slate-500 text-xs max-w-[200px] truncate">{r.comment || "—"}</td>
+                      <td className="px-5 py-3 text-slate-400 text-xs">{new Date(r.createdAt).toLocaleDateString("fr-FR")}</td>
+                      <td className="px-5 py-3">
+                        <button onClick={() => deleteReview(r.id)}
+                          className="text-xs text-rose-600 hover:text-rose-800 font-semibold hover:underline">
+                          Supprimer
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+        {/* Payouts */}
+        {tab === "payouts" && !fetching && (
+          <div className="space-y-4">
+            <div className="bg-rose-50 border border-rose-100 rounded-xl px-5 py-3 flex items-center justify-between flex-wrap gap-2">
+              <p className="text-rose-800 font-bold text-sm">
+                Total en attente : {payouts.filter(p => p.status === "PENDING").reduce((s, p) => s + p.amount, 0).toFixed(2)} TND
+              </p>
+              <p className="text-slate-500 text-xs">{payouts.length} demandes</p>
+            </div>
+            {payouts.length === 0 && <p className="text-center text-slate-400 py-10">Aucune demande de virement.</p>}
+            {payouts.map(p => (
+              <div key={p.id} className="bg-white rounded-xl border border-slate-100 p-5 shadow-sm">
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                  <div>
+                    <p className="font-black text-rose-800 text-lg">{Number(p.amount).toFixed(2)} TND</p>
+                    <p className="font-semibold text-slate-800 text-sm mt-0.5">{p.seller?.name}</p>
+                    <p className="text-slate-400 text-xs">{p.seller?.email}</p>
+                    <div className="mt-2 text-xs text-slate-500 space-y-0.5">
+                      <p>🏦 {p.bankInfo?.bankName}</p>
+                      <p>💳 RIB : <span className="font-mono">{p.bankInfo?.rib}</span></p>
+                      <p>👤 {p.bankInfo?.accountHolder}</p>
+                    </div>
+                    {p.adminNote && <p className="text-xs text-blue-600 mt-2 italic">Note : {p.adminNote}</p>}
+                    <p className="text-xs text-slate-400 mt-2">{new Date(p.createdAt).toLocaleDateString("fr-FR")}</p>
+                  </div>
+                  <div className="flex flex-col gap-2 items-end">
+                    <span className={`text-xs font-black px-3 py-1 rounded-full ${
+                      p.status === "PENDING" ? "bg-amber-100 text-amber-700"
+                      : p.status === "APPROVED" ? "bg-blue-100 text-blue-700"
+                      : p.status === "PAID" ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
+                    }`}>{p.status}</span>
+                    {p.status === "PENDING" && (
+                      <div className="flex gap-2 flex-wrap justify-end">
+                        <button onClick={() => updatePayoutStatus(p.id, "APPROVED")}
+                          className="text-xs font-bold bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition">
+                          Approuver
+                        </button>
+                        <button onClick={() => updatePayoutStatus(p.id, "PAID")}
+                          className="text-xs font-bold bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 transition">
+                          Marquer payé
+                        </button>
+                        <button onClick={() => {
+                          const note = prompt("Raison du rejet (optionnel) :");
+                          updatePayoutStatus(p.id, "REJECTED", note || undefined);
+                        }}
+                          className="text-xs font-bold bg-red-100 text-red-700 px-3 py-1.5 rounded-lg hover:bg-red-200 transition">
+                          Rejeter
+                        </button>
+                      </div>
+                    )}
+                    {p.status === "APPROVED" && (
+                      <button onClick={() => updatePayoutStatus(p.id, "PAID")}
+                        className="text-xs font-bold bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 transition">
+                        Marquer payé
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
+      <Footer />
+    </div>
+  );
+}

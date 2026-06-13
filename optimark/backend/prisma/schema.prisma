@@ -39,7 +39,10 @@ model User {
   payoutRequests    PayoutRequest[]   @relation("SellerPayouts")
   priceAlerts       PriceAlert[]
   purchasedGiftCards GiftCard[]   @relation("PurchasedGiftCards")
+<<<<<<< HEAD
   adCampaigns        AdCampaign[] @relation("SellerAdCampaigns")
+=======
+>>>>>>> origin/claude/pensive-lovelace-AxPxy
 }
 
 model SellerFollow {
@@ -121,7 +124,10 @@ model Product {
   bundleItems   BundleItem[]
   wishlistItems WishlistItem[]
   priceAlerts   PriceAlert[]
+<<<<<<< HEAD
   adCampaigns   AdCampaign[] @relation("ProductAdCampaigns")
+=======
+>>>>>>> origin/claude/pensive-lovelace-AxPxy
 }
 
 model ProductQuestion {
@@ -355,6 +361,7 @@ model GiftCard {
   createdAt   DateTime  @default(now())
 }
 
+<<<<<<< HEAD
 model AdCampaign {
   id          String   @id @default(uuid())
   sellerId    String
@@ -372,6 +379,8 @@ model AdCampaign {
   createdAt   DateTime @default(now())
 }
 
+=======
+>>>>>>> origin/claude/pensive-lovelace-AxPxy
 model PriceAlert {
   id        String   @id @default(uuid())
   userId    String

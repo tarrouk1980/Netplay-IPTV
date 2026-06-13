@@ -25,24 +25,6 @@ export class SearchService {
     return translated;
   }
 
-  async getTrendingSearches(limit = 10) {
-    const grouped = await (this.prisma.searchLog as any).groupBy({
-      by: ['query'],
-      _count: { query: true },
-      _sum: { results: true },
-      orderBy: { _count: { query: 'desc' } },
-      take: limit,
-      where: {
-        createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
-        results: { gt: 0 },
-      },
-    });
-    return {
-      data: grouped.map((g: any) => ({ query: g.query, count: g._count.query, totalResults: g._sum.results })),
-      success: true,
-    };
-  }
-
   async smartSearch(
     query: string,
     filters: {
@@ -122,11 +104,9 @@ export class SearchService {
     const results = [...products, ...services].sort((a, b) => b.score - a.score);
     const total = results.length;
 
-    if (query.trim()) {
-      await this.prisma.searchLog.create({
-        data: { query: query.trim().toLowerCase(), results: total },
-      }).catch(() => {});
-    }
+    await this.prisma.searchLog.create({
+      data: { query, results: total },
+    });
 
     return {
       data: results,

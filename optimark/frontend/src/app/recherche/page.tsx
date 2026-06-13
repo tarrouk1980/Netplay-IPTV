@@ -19,7 +19,6 @@ function RechercheContent() {
   const [results, setResults] = useState<{ products: any[]; services: any[] } | null>(null);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({ minPrice: "", maxPrice: "", isVerifiedSeller: false });
-  const [trending, setTrending] = useState<string[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const doSearch = async (q: string, f: typeof filters) => {
@@ -42,10 +41,6 @@ function RechercheContent() {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    api.get("/search/trending").then(r => setTrending((r.data?.data || []).map((t: any) => t.query).slice(0, 10))).catch(() => {});
-  }, []);
 
   useEffect(() => {
     doSearch(query, filters);
@@ -148,23 +143,10 @@ function RechercheContent() {
                 {Array.from({ length: 6 }).map((_, i) => <div key={i} className="skeleton rounded-2xl h-64" />)}
               </div>
             ) : !query ? (
-              <div className="py-10 text-slate-400">
-                <p className="text-4xl mb-3 text-center">🔍</p>
-                <p className="font-semibold text-slate-600 text-center">Que recherchez-vous ?</p>
-                <p className="text-sm mt-1 text-center">Tapez un mot-clé pour trouver produits et services.</p>
-                {trending.length > 0 && (
-                  <div className="mt-8">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">🔥 Tendances cette semaine</p>
-                    <div className="flex flex-wrap gap-2">
-                      {trending.map(t => (
-                        <button key={t} onClick={() => setInputValue(t)}
-                          className="px-4 py-2 bg-white border border-slate-200 rounded-full text-sm text-slate-700 font-medium hover:border-rose-800 hover:text-rose-800 transition">
-                          {t}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+              <div className="text-center py-20 text-slate-400">
+                <p className="text-4xl mb-3">🔍</p>
+                <p className="font-semibold text-slate-600">Que recherchez-vous ?</p>
+                <p className="text-sm mt-1">Tapez un mot-clé pour trouver produits et services.</p>
               </div>
             ) : displayed.length === 0 ? (
               <div className="text-center py-20">

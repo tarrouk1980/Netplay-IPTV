@@ -1,0 +1,31 @@
+ALTER TABLE "Message" ADD COLUMN IF NOT EXISTS "id" TEXT NOT NULL;
+CREATE TABLE IF NOT EXISTS "Message" (
+  "id" TEXT NOT NULL,
+  "senderId" TEXT NOT NULL,
+  "receiverId" TEXT NOT NULL,
+  "content" TEXT NOT NULL,
+  "isRead" BOOLEAN NOT NULL DEFAULT false,
+  "productId" TEXT,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "Message_pkey" PRIMARY KEY ("id"),
+  CONSTRAINT "Message_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT "Message_receiverId_fkey" FOREIGN KEY ("receiverId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS "Coupon" (
+  "id" TEXT NOT NULL,
+  "code" TEXT NOT NULL,
+  "discount" DOUBLE PRECISION NOT NULL,
+  "type" TEXT NOT NULL DEFAULT 'PERCENT',
+  "minAmount" DOUBLE PRECISION,
+  "maxUses" INTEGER,
+  "usedCount" INTEGER NOT NULL DEFAULT 0,
+  "expiresAt" TIMESTAMP(3),
+  "isActive" BOOLEAN NOT NULL DEFAULT true,
+  "sellerId" TEXT NOT NULL,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "Coupon_pkey" PRIMARY KEY ("id"),
+  CONSTRAINT "Coupon_sellerId_fkey" FOREIGN KEY ("sellerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "Coupon_code_key" ON "Coupon"("code");
