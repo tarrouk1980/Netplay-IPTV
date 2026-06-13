@@ -35,6 +35,10 @@ import CompareScreen from "../screens/buyer/CompareScreen";
 import SellerPayoutsScreen from "../screens/seller/SellerPayoutsScreen";
 import SellerReviewsScreen from "../screens/seller/SellerReviewsScreen";
 import SellerEarningsScreen from "../screens/seller/SellerEarningsScreen";
+import SellerBundlesScreen from "../screens/seller/SellerBundlesScreen";
+import GiftCardsScreen from "../screens/buyer/GiftCardsScreen";
+import PriceAlertsScreen from "../screens/buyer/PriceAlertsScreen";
+import LoyaltyScreen from "../screens/buyer/LoyaltyScreen";
 import AdminScreen from "../screens/AdminScreen";
 import FavoritesScreen from "../screens/buyer/FavoritesScreen";
 import SellerStoreScreen from "../screens/buyer/SellerStoreScreen";
@@ -117,6 +121,10 @@ export default function AppNavigator() {
         <Stack.Screen name="SellerReviewsStack" component={SellerReviewsScreen} options={{ title: "⭐ Avis clients" }} />
         <Stack.Screen name="SellerEarningsStack" component={SellerEarningsScreen} options={{ title: "💰 Revenus" }} />
         <Stack.Screen name="Compare" component={CompareScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="GiftCards" component={GiftCardsScreen} options={{ title: "🎁 Cartes cadeaux" }} />
+        <Stack.Screen name="PriceAlerts" component={PriceAlertsScreen} options={{ title: "🔔 Alertes de prix" }} />
+        <Stack.Screen name="SellerBundlesStack" component={SellerBundlesScreen} options={{ title: "📦 Mes bundles" }} />
+        <Stack.Screen name="Loyalty" component={LoyaltyScreen} options={{ title: "⭐ Points fidélité" }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

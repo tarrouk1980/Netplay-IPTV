@@ -152,6 +152,24 @@ export default function ProfileScreen({ navigation }: any) {
           <Text style={s.menuArrow}>›</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity style={s.menuItem} onPress={() => navigation.navigate("GiftCards")}>
+          <Text style={s.menuIcon}>🎁</Text>
+          <Text style={s.menuLabel}>Cartes cadeaux</Text>
+          <Text style={s.menuArrow}>›</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={s.menuItem} onPress={() => navigation.navigate("PriceAlerts")}>
+          <Text style={s.menuIcon}>🔔</Text>
+          <Text style={s.menuLabel}>Alertes de prix</Text>
+          <Text style={s.menuArrow}>›</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={s.menuItem} onPress={() => navigation.navigate("Loyalty")}>
+          <Text style={s.menuIcon}>⭐</Text>
+          <Text style={s.menuLabel}>Points fidélité</Text>
+          <Text style={s.menuArrow}>›</Text>
+        </TouchableOpacity>
+
         {isSeller && (
           <TouchableOpacity style={s.menuItem} onPress={() => navigation.navigate("SellerTab")}>
             <Text style={s.menuIcon}>🏪</Text>

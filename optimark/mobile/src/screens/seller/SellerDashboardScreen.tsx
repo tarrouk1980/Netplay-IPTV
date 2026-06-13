@@ -104,6 +104,10 @@ export default function SellerDashboardScreen({ navigation }: any) {
             <Text style={s.actionIcon}>💰</Text>
             <Text style={s.actionLabel}>Revenus</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={s.actionBtn} onPress={() => navigation.navigate("SellerBundlesStack")}>
+            <Text style={s.actionIcon}>🎁</Text>
+            <Text style={s.actionLabel}>Bundles</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
