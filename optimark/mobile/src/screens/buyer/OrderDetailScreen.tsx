@@ -110,6 +110,20 @@ export default function OrderDetailScreen({ route, navigation }: any) {
         ))}
       </View>
 
+      {/* Review prompt for delivered orders */}
+      {order.status === "DELIVERED" && order.items?.length > 0 && (
+        <View style={s.reviewBanner}>
+          <Text style={{ fontSize: 22 }}>⭐</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 14, fontWeight: "800", color: "#92400e" }}>Partagez votre avis !</Text>
+            <Text style={{ fontSize: 12, color: "#b45309", marginTop: 2 }}>Votre commande est livrée — laissez un avis sur vos produits.</Text>
+          </View>
+          <TouchableOpacity onPress={() => navigation.navigate("ProductDetail", { id: order.items[0].product?.id })}>
+            <Text style={{ color: "#9f1239", fontWeight: "800", fontSize: 12 }}>Évaluer →</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* Delivery address */}
       {order.deliveryAddress && (
         <View style={s.section}>
@@ -199,6 +213,7 @@ const s = StyleSheet.create({
   totalRow: { flexDirection: "row", justifyContent: "space-between", marginHorizontal: 16, paddingVertical: 16, borderTopWidth: 1, borderTopColor: "#e2e8f0", marginBottom: 16 },
   totalLabel: { fontSize: 16, fontWeight: "700", color: "#1e293b" },
   totalVal: { fontSize: 20, fontWeight: "900", color: "#9f1239" },
+  reviewBanner: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: "#fffbeb", borderWidth: 1, borderColor: "#fde68a", borderRadius: 14, padding: 14, marginHorizontal: 16, marginBottom: 10 },
   returnBtn: { backgroundColor: "#fff7ed", borderWidth: 1, borderColor: "#fed7aa", borderRadius: 14, paddingVertical: 14, alignItems: "center" },
   returnBtnText: { color: "#ea580c", fontWeight: "800", fontSize: 15 },
   returnSent: { backgroundColor: "#f0fdf4", borderWidth: 1, borderColor: "#bbf7d0", borderRadius: 14, paddingVertical: 12, alignItems: "center" },
