@@ -148,4 +148,10 @@ export class VendorsController {
   getTopCustomers(@Request() req: any) {
     return this.vendorsService.getTopCustomers(req.user.id);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('stock/alerts')
+  getLowStockProducts(@Request() req: any) {
+    return this.vendorsService.getLowStockProducts(req.user.id);
+  }
 }

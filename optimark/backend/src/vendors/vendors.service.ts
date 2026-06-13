@@ -506,6 +506,20 @@ export class VendorsService {
     return { data, success: true };
   }
 
+  async getLowStockProducts(sellerId: string) {
+    const products = await this.prisma.product.findMany({
+      where: { sellerId, isActive: true },
+      select: { id: true, title: true, stock: true, stockAlert: true, category: true, images: true },
+      orderBy: { stock: 'asc' },
+    });
+    const lowStock = products.filter(p => p.stock > 0 && p.stock <= (p.stockAlert || 5));
+    const outOfStock = products.filter(p => p.stock === 0);
+    return {
+      data: { lowStock, outOfStock, total: lowStock.length + outOfStock.length },
+      success: true,
+    };
+  }
+
   async getTopCustomers(sellerId: string, limit = 10) {
     const orders = await this.prisma.order.findMany({
       where: { items: { some: { product: { sellerId } } } },
