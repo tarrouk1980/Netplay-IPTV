@@ -43,6 +43,7 @@ export default function Footer() {
             <p className="font-bold text-white mb-4 text-sm uppercase tracking-wider">Contact</p>
             <ul className="space-y-2.5 text-sm">
               <li><a href="mailto:contact@optimark.tn" className="hover:text-rose-600 transition">contact@optimark.tn</a></li>
+              <li><Link href="/support" className="hover:text-rose-600 transition">Centre d'aide</Link></li>
               <li className="text-slate-500">Tunis, Tunisie 🇹🇳</li>
             </ul>
             <div className="mt-5 p-3 bg-slate-800 rounded-xl">
