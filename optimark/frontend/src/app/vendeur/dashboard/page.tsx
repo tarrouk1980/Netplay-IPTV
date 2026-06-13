@@ -16,6 +16,7 @@ export default function VendeurDashboardPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [stats, setStats] = useState<any>(null);
+  const [visits, setVisits] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [fetching, setFetching] = useState(true);
   const [updatingOrder, setUpdatingOrder] = useState<string | null>(null);
@@ -23,10 +24,15 @@ export default function VendeurDashboardPage() {
   useEffect(() => {
     if (loading) return;
     if (!user || user.role !== "SELLER") { router.replace("/auth/connexion"); return; }
-    Promise.all([api.get("/vendors/dashboard"), api.get("/vendors/orders")])
-      .then(([d, o]) => { setStats(d.data.data); setOrders(o.data.data); })
-      .catch(() => {})
-      .finally(() => setFetching(false));
+    Promise.all([
+      api.get("/vendors/dashboard"),
+      api.get("/vendors/orders"),
+      api.get("/vendors/store-visits").catch(() => null),
+    ]).then(([d, o, v]) => {
+      setStats(d.data.data);
+      setOrders(o.data.data);
+      setVisits(v?.data?.data || null);
+    }).catch(() => {}).finally(() => setFetching(false));
   }, [user, loading]);
 
   const updateStatus = async (orderId: string, status: string) => {
@@ -85,6 +91,10 @@ export default function VendeurDashboardPage() {
               { label: "Note moy.", value: stats.avgRating > 0 ? `${stats.avgRating}★` : "—", color: "text-amber-500" },
               { label: "Stock limité", value: stats.lowStockCount, color: stats.lowStockCount > 0 ? "text-orange-600" : "text-slate-400" },
               { label: "Épuisé", value: stats.outOfStockCount, color: stats.outOfStockCount > 0 ? "text-red-600" : "text-slate-400" },
+              ...(visits ? [
+                { label: "Vues boutique", value: visits.totalViews, color: "text-indigo-600" },
+                { label: "Abonnés", value: visits.followers, color: "text-purple-600" },
+              ] : []),
             ].map(({ label, value, color }) => (
               <div key={label} className="bg-white rounded-xl p-4 border border-slate-100" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
                 <p className="text-slate-500 text-xs mb-1">{label}</p>

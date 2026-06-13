@@ -268,6 +268,16 @@ export class VendorsService {
     };
   }
 
+  async getStoreVisits(sellerId: string) {
+    const since30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const [total, last30, followers] = await Promise.all([
+      this.prisma.productView.count({ where: { product: { sellerId } } }),
+      this.prisma.productView.count({ where: { product: { sellerId }, createdAt: { gte: since30 } } }),
+      this.prisma.sellerFollow.count({ where: { sellerId } }),
+    ]);
+    return { data: { totalViews: total, last30Days: last30, followers }, success: true };
+  }
+
   async exportOrdersCsv(sellerId: string): Promise<string> {
     const orders = await this.prisma.order.findMany({
       where: { items: { some: { product: { sellerId } } } },

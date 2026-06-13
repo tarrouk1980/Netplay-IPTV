@@ -61,6 +61,12 @@ export class VendorsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('store-visits')
+  getStoreVisits(@Request() req: any) {
+    return this.vendorsService.getStoreVisits(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('orders/export-csv')
   async exportOrdersCsv(@Request() req: any, @Res() res: Response) {
     const csv = await this.vendorsService.exportOrdersCsv(req.user.id);
