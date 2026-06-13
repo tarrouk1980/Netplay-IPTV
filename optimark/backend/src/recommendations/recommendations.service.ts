@@ -6,10 +6,16 @@ export class RecommendationsService {
   constructor(private prisma: PrismaService) {}
 
   async getPersonalizedProducts(userId: string, limit = 8) {
-    const userOrders = await this.prisma.order.findMany({
-      where: { buyerId: userId },
-      include: { items: { include: { product: true } } },
-    });
+    const [userOrders, favorites] = await Promise.all([
+      this.prisma.order.findMany({
+        where: { buyerId: userId },
+        include: { items: { include: { product: true } } },
+      }),
+      this.prisma.favorite.findMany({
+        where: { userId },
+        include: { product: true },
+      }),
+    ]);
 
     const boughtProductIds: string[] = [];
     const categories: string[] = [];
@@ -23,22 +29,32 @@ export class RecommendationsService {
       }
     }
 
+    for (const fav of favorites) {
+      if (!boughtProductIds.includes(fav.productId)) {
+        categories.push(fav.product.category);
+        prices.push(fav.product.price);
+      }
+    }
+
     if (categories.length === 0) {
       return this.getTrendingProducts(limit);
     }
 
     const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
 
+    const excludeIds = [...new Set([...boughtProductIds, ...favorites.map(f => f.productId)])];
+    const uniqueCategories = [...new Set(categories)];
+
     const products = await this.prisma.product.findMany({
       where: {
         isActive: true,
-        id: { notIn: boughtProductIds },
-        category: { in: categories },
-        price: { gte: avgPrice * 0.5, lte: avgPrice * 2 },
+        id: { notIn: excludeIds },
+        category: { in: uniqueCategories },
+        price: { gte: avgPrice * 0.4, lte: avgPrice * 2.5 },
       },
       include: { seller: { select: { id: true, name: true, isVerified: true } } },
       take: limit,
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ isBestSeller: 'desc' }, { createdAt: 'desc' }],
     });
 
     return { data: products, message: 'Recommandations personnalisées', success: true };
