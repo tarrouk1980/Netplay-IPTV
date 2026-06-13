@@ -7,6 +7,7 @@ import api from "@/lib/api";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
+import { useCart } from "@/contexts/CartContext";
 
 const STATUS: Record<string, { label: string; color: string; step: number }> = {
   PENDING:   { label: "En attente",  color: "text-amber-600",  step: 0 },
@@ -21,6 +22,7 @@ const STEPS = ["En attente", "Confirmée", "Expédiée", "Livrée"];
 export default function CommandeDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { user, loading: authLoading } = useAuth();
+  const { addItem } = useCart();
   const router = useRouter();
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -246,11 +248,20 @@ export default function CommandeDetailPage({ params }: { params: Promise<{ id: s
         )}
 
         {/* Actions */}
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap">
           <a href={`/commandes/${order.id}/facture`} target="_blank"
             className="flex-1 text-center bg-white border border-slate-200 hover:border-rose-300 text-slate-700 font-bold py-3 rounded-xl text-sm transition">
             🧾 Voir la facture
           </a>
+          {order.status === "DELIVERED" && order.items?.length > 0 && (
+            <button onClick={() => {
+              order.items.forEach((item: any) => {
+                if (item.product?.id) addItem({ id: item.product.id, title: item.product.title, price: item.product.promoPrice || item.product.price || item.price, seller: item.product.seller?.name || "", image: item.product.images?.[0] });
+              });
+            }} className="flex-1 text-center bg-amber-50 border border-amber-300 hover:bg-amber-100 text-amber-800 font-bold py-3 rounded-xl text-sm transition">
+              🔄 Commander à nouveau
+            </button>
+          )}
           <Link href="/commandes" className="flex-1 text-center bg-rose-800 hover:bg-rose-900 text-white font-bold py-3 rounded-xl text-sm transition">
             ← Mes commandes
           </Link>

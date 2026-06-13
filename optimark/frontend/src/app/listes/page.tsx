@@ -104,7 +104,7 @@ export default function WishlistsPage() {
                   <h2 className="font-black text-slate-900 text-lg">{activeList.name}</h2>
                   <div className="flex gap-2">
                     {activeList.isPublic && (
-                      <button onClick={() => navigator.clipboard.writeText(`${window.location.origin}/listes/public/${activeList.id}`)} className="text-xs font-semibold text-slate-500 border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-50">
+                      <button onClick={() => navigator.clipboard.writeText(`${window.location.origin}/liste-publique/${activeList.id}`)} className="text-xs font-semibold text-slate-500 border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-50">
                         🔗 Partager
                       </button>
                     )}
