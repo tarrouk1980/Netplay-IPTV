@@ -59,6 +59,16 @@ export default function CommandeDetailPage({ params }: { params: Promise<{ id: s
   const status = STATUS[order.status] || STATUS.PENDING;
   const addr = order.deliveryAddress;
 
+  const cancelOrder = async () => {
+    if (!confirm("Annuler cette commande ?")) return;
+    try {
+      const res = await api.patch(`/orders/${order.id}/cancel`);
+      setOrder((prev: any) => ({ ...prev, status: "CANCELLED" }));
+    } catch (e: any) {
+      alert(e.response?.data?.message || "Impossible d'annuler la commande.");
+    }
+  };
+
   const submitReturn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!returnReason.trim()) return;
@@ -154,6 +164,17 @@ export default function CommandeDetailPage({ params }: { params: Promise<{ id: s
             <p className="text-slate-500 text-sm">{addr.address}</p>
             <p className="text-slate-500 text-sm">{addr.city}{addr.postalCode ? ` ${addr.postalCode}` : ""}</p>
             {addr.notes && <p className="text-slate-400 text-xs italic mt-1">"{addr.notes}"</p>}
+          </div>
+        )}
+
+        {/* Cancel order */}
+        {order.status === "PENDING" && (
+          <div className="bg-white border border-slate-100 rounded-2xl p-5 mb-4" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
+            <h2 className="font-black text-slate-900 mb-2">❌ Annuler la commande</h2>
+            <p className="text-slate-500 text-sm mb-3">Vous pouvez annuler cette commande tant qu&apos;elle est en attente de confirmation.</p>
+            <button onClick={cancelOrder} className="bg-red-100 text-red-700 font-bold px-4 py-2 rounded-xl text-sm hover:bg-red-200 transition">
+              Annuler la commande
+            </button>
           </div>
         )}
 

@@ -32,4 +32,9 @@ export class OrdersController {
   updateStatus(@Param('id') id: string, @Body('status') status: string, @Request() req: any) {
     return this.ordersService.updateStatus(id, status, req.user.id);
   }
+
+  @Patch(':id/cancel')
+  cancelByBuyer(@Param('id') id: string, @Request() req: any) {
+    return this.ordersService.cancelByBuyer(id, req.user.id);
+  }
 }

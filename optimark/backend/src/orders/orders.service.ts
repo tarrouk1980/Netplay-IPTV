@@ -132,6 +132,17 @@ export class OrdersService {
     return { data: order, success: true };
   }
 
+  async cancelByBuyer(id: string, buyerId: string) {
+    const order = await this.prisma.order.findUnique({ where: { id } });
+    if (!order) throw new NotFoundException('Commande introuvable');
+    if (order.buyerId !== buyerId) throw new ForbiddenException('Accès refusé');
+    if (order.status !== 'PENDING') throw new ForbiddenException('Seules les commandes en attente peuvent être annulées.');
+
+    const updated = await this.prisma.order.update({ where: { id }, data: { status: 'CANCELLED' } });
+    await this.notifications.create(buyerId, 'ORDER_STATUS', `Votre commande #${id.slice(0, 8)} a été annulée.`);
+    return { data: updated, message: 'Commande annulée', success: true };
+  }
+
   async updateStatus(id: string, status: string, userId: string) {
     const order = await this.prisma.order.findUnique({ where: { id } });
     if (!order) throw new NotFoundException('Commande introuvable');

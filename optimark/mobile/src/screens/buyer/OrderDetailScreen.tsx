@@ -18,6 +18,21 @@ export default function OrderDetailScreen({ route, navigation }: any) {
     api.get(`/orders/${id}`).then(r => setOrder(r.data?.data)).catch(() => {}).finally(() => setLoading(false));
   }, [id]);
 
+  const cancelOrder = async () => {
+    Alert.alert("Annuler la commande", "Êtes-vous sûr ?", [
+      { text: "Non" },
+      { text: "Oui, annuler", style: "destructive", onPress: async () => {
+        try {
+          await api.patch(`/orders/${id}/cancel`);
+          setOrder((prev: any) => ({ ...prev, status: "CANCELLED" }));
+          Alert.alert("✅", "Commande annulée.");
+        } catch (e: any) {
+          Alert.alert("Erreur", e.response?.data?.message || "Impossible d'annuler.");
+        }
+      }},
+    ]);
+  };
+
   const sendReturn = async () => {
     if (!returnReason.trim()) { Alert.alert("Raison requise"); return; }
     setSendingReturn(true);
@@ -103,6 +118,11 @@ export default function OrderDetailScreen({ route, navigation }: any) {
 
       {/* Actions */}
       <View style={{ marginHorizontal: 16, gap: 10 }}>
+        {order.status === "PENDING" && (
+          <TouchableOpacity style={{ backgroundColor: "#fef2f2", borderWidth: 1, borderColor: "#fecaca", borderRadius: 14, paddingVertical: 14, alignItems: "center" }} onPress={cancelOrder}>
+            <Text style={{ color: "#dc2626", fontWeight: "800", fontSize: 15 }}>❌ Annuler la commande</Text>
+          </TouchableOpacity>
+        )}
         {canReturn && (
           <TouchableOpacity style={s.returnBtn} onPress={() => setShowReturn(true)}>
             <Text style={s.returnBtnText}>↩️ Demander un retour</Text>
