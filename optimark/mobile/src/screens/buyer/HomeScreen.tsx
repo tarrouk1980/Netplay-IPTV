@@ -14,24 +14,27 @@ export default function HomeScreen({ navigation }: any) {
   const [recommended, setRecommended] = useState<any[]>([]);
   const [bundles, setBundles] = useState<any[]>([]);
   const [newArrivals, setNewArrivals] = useState<any[]>([]);
+  const [trendingProducts, setTrendingProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [cat, setCat] = useState("Tous");
 
   const load = async () => {
     try {
-      const [pRes, fRes, lRes, recRes, bRes] = await Promise.all([
+      const [pRes, fRes, lRes, recRes, bRes, trRes] = await Promise.all([
         api.get("/products"),
         api.get("/flash-sales/active").catch(() => ({ data: { data: [] } })),
         api.get("/live").catch(() => ({ data: { data: [] } })),
         api.get("/recommendations/trending?limit=8").catch(() => ({ data: { data: [] } })),
         api.get("/bundles").catch(() => ({ data: { data: [] } })),
+        api.get("/products/trending").catch(() => ({ data: { data: [] } })),
       ]);
       setProducts(pRes.data?.data || []);
       setFlashSales((fRes.data?.data || fRes.data || []).slice(0, 4));
       setLives((lRes.data?.data || []).filter((l: any) => l.isActive).slice(0, 5));
       setRecommended(recRes.data?.data || []);
       setBundles((bRes.data?.data || []).slice(0, 4));
+      setTrendingProducts((trRes.data?.data || []).slice(0, 8));
       const all = pRes.data?.data || [];
       setNewArrivals(all.filter((p: any) => p.isNewArrival).slice(0, 8));
     } catch {}
@@ -179,6 +182,29 @@ export default function HomeScreen({ navigation }: any) {
                 </TouchableOpacity>
               );
             })}
+          </ScrollView>
+        </View>
+      )}
+
+      {/* Trending */}
+      {trendingProducts.length > 0 && (
+        <View style={{ paddingTop: 16 }}>
+          <View style={s.sectionHeader}>
+            <Text style={s.sectionTitle}>🔥 Tendances</Text>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 12, paddingBottom: 8 }}>
+            {trendingProducts.map((p: any) => (
+              <TouchableOpacity key={p.id} style={s.recCard} onPress={() => navigation.navigate("ProductDetail", { id: p.id })}>
+                <View style={s.recImgBox}>
+                  {p.images?.[0] ? <Image source={{ uri: p.images[0] }} style={{ width: "100%", height: "100%" }} resizeMode="cover" /> : <Text style={{ fontSize: 28 }}>📦</Text>}
+                </View>
+                <View style={{ position: "absolute", top: 4, left: 4, backgroundColor: "#9f1239", borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 }}>
+                  <Text style={{ color: "#fff", fontSize: 9, fontWeight: "900" }}>🔥</Text>
+                </View>
+                <Text style={s.recTitle} numberOfLines={2}>{p.title}</Text>
+                <Text style={s.recPrice}>{Number(p.promoPrice || p.price).toFixed(2)} TND</Text>
+              </TouchableOpacity>
+            ))}
           </ScrollView>
         </View>
       )}
