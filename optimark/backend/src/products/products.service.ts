@@ -2,6 +2,7 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { PrismaService } from '../prisma/prisma.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { PriceAlertsService } from '../price-alerts/price-alerts.service';
 import { CreateProductDto } from './dtos/create-product.dto';
 
 @Injectable()
@@ -10,6 +11,7 @@ export class ProductsService {
     private prisma: PrismaService,
     private subscriptions: SubscriptionsService,
     private notifications: NotificationsService,
+    private priceAlerts: PriceAlertsService,
   ) {}
 
   async findAll(query: {
@@ -97,6 +99,13 @@ export class ProductsService {
           `🏷️ Un produit dans vos favoris est en promo ! "${product.title}" est maintenant à -${discount}%.`,
         );
       }
+    }
+
+    // Notify price alert subscribers when price drops
+    const effectiveOld = product.promoPrice ?? product.price;
+    const effectiveNew = dto.promoPrice ?? dto.price ?? effectiveOld;
+    if (effectiveNew < effectiveOld) {
+      await this.priceAlerts.notifyPriceDrop(id, effectiveNew).catch(() => {});
     }
 
     return { data: updated, message: 'Produit mis à jour', success: true };

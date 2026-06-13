@@ -37,6 +37,7 @@ model User {
   bundles           Bundle[]          @relation("SellerBundles")
   wishlists         Wishlist[]
   payoutRequests    PayoutRequest[]   @relation("SellerPayouts")
+  priceAlerts       PriceAlert[]
 }
 
 model SellerFollow {
@@ -116,6 +117,7 @@ model Product {
   questions     ProductQuestion[]
   bundleItems   BundleItem[]
   wishlistItems WishlistItem[]
+  priceAlerts   PriceAlert[]
 }
 
 model ProductQuestion {
@@ -334,4 +336,16 @@ model BundleItem {
   bundle    Bundle  @relation(fields: [bundleId], references: [id], onDelete: Cascade)
   productId String
   product   Product @relation(fields: [productId], references: [id])
+}
+
+model PriceAlert {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  targetPrice Float?
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
 }

@@ -142,6 +142,18 @@ export default function ComptePage() {
           </Link>
 
           <Link
+            href="/alertes-prix"
+            className="bg-white border border-slate-100 rounded-2xl p-5 flex items-center gap-4 hover:border-amber-300 transition"
+            style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
+          >
+            <span className="text-3xl">🔔</span>
+            <div>
+              <p className="font-bold text-slate-800">Alertes de prix</p>
+              <p className="text-slate-500 text-xs">Soyez notifié quand un prix baisse</p>
+            </div>
+          </Link>
+
+          <Link
             href="/notifications"
             className="bg-white border border-slate-100 rounded-2xl p-5 flex items-center gap-4 hover:border-rose-300 transition"
             style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}

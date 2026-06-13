@@ -23,6 +23,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const [added, setAdded] = useState(false);
   const [favorited, setFavorited] = useState(false);
   const [favLoading, setFavLoading] = useState(false);
+  const [alertActive, setAlertActive] = useState(false);
+  const [alertLoading, setAlertLoading] = useState(false);
   const { addItem } = useCart();
   const { user } = useAuth();
   const router = useRouter();
@@ -40,13 +42,15 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       user ? api.get(`/favorites/${id}/status`).catch(() => null) : Promise.resolve(null),
       api.get(`/reviews/product/${id}`).catch(() => null),
       api.get(`/questions/product/${id}`).catch(() => null),
-    ]).then(([pRes, sRes, fRes, rRes, qRes]) => {
+      user ? api.get(`/price-alerts/${id}/status`).catch(() => null) : Promise.resolve(null),
+    ]).then(([pRes, sRes, fRes, rRes, qRes, paRes]) => {
       if (!mounted) return;
       setProduct(pRes?.data?.data || null);
       setSimilar(sRes?.data?.data || []);
       setFavorited(fRes?.data?.favorited || false);
       setReviews(rRes?.data?.data || []);
       setQuestions(qRes?.data?.data || []);
+      setAlertActive(paRes?.data?.data?.subscribed || false);
       setLoading(false);
     });
 
@@ -111,6 +115,22 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       setFavorited(res.data?.favorited ?? !favorited);
     } finally {
       setFavLoading(false);
+    }
+  };
+
+  const handleToggleAlert = async () => {
+    if (!user) { router.push("/auth/connexion"); return; }
+    setAlertLoading(true);
+    try {
+      if (alertActive) {
+        await api.delete(`/price-alerts/${product.id}`);
+        setAlertActive(false);
+      } else {
+        await api.post(`/price-alerts/${product.id}`, {});
+        setAlertActive(true);
+      }
+    } finally {
+      setAlertLoading(false);
     }
   };
 
@@ -228,6 +248,14 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                 title={favorited ? "Retirer des favoris" : "Ajouter aux favoris"}
               >
                 {favorited ? "♥" : "♡"}
+              </button>
+              <button
+                onClick={handleToggleAlert}
+                disabled={alertLoading}
+                className={`w-12 h-12 rounded-xl border-2 flex items-center justify-center text-lg transition shrink-0 ${alertActive ? "bg-amber-50 border-amber-400 text-amber-600" : "border-slate-300 text-slate-400 hover:border-amber-300 hover:text-amber-500"}`}
+                title={alertActive ? "Désactiver l'alerte prix" : "Activer l'alerte prix"}
+              >
+                🔔
               </button>
             </div>
 
