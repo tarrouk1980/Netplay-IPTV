@@ -19,12 +19,41 @@ export default function ComptePage() {
   const router = useRouter();
   const [loyalty, setLoyalty] = useState<any>(null);
   const [redeeming, setRedeeming] = useState(false);
+  const [addresses, setAddresses] = useState<any[]>([]);
+  const [showAddrForm, setShowAddrForm] = useState(false);
+  const [addrForm, setAddrForm] = useState({ label: "", street: "", city: "", zip: "", phone: "", isDefault: false });
+  const [savingAddr, setSavingAddr] = useState(false);
 
   useEffect(() => {
     if (loading) return;
     if (!user) router.push("/auth/connexion?redirect=/compte");
-    else api.get("/returns/loyalty").then(r => setLoyalty(r.data?.data)).catch(() => {});
+    else {
+      api.get("/returns/loyalty").then(r => setLoyalty(r.data?.data)).catch(() => {});
+      api.get("/addresses").then(r => setAddresses(r.data?.data || [])).catch(() => {});
+    }
   }, [user, loading, router]);
+
+  const saveAddress = async () => {
+    if (!addrForm.label.trim() || !addrForm.street.trim() || !addrForm.city.trim()) return;
+    setSavingAddr(true);
+    try {
+      const res = await api.post("/addresses", addrForm);
+      setAddresses(prev => addrForm.isDefault ? [res.data.data, ...prev.map(a => ({ ...a, isDefault: false }))] : [res.data.data, ...prev]);
+      setShowAddrForm(false);
+      setAddrForm({ label: "", street: "", city: "", zip: "", phone: "", isDefault: false });
+    } catch { } finally { setSavingAddr(false); }
+  };
+
+  const deleteAddress = async (id: string) => {
+    if (!confirm("Supprimer cette adresse ?")) return;
+    await api.delete(`/addresses/${id}`).catch(() => {});
+    setAddresses(prev => prev.filter(a => a.id !== id));
+  };
+
+  const setDefault = async (id: string) => {
+    await api.patch(`/addresses/${id}`, { isDefault: true }).catch(() => {});
+    setAddresses(prev => prev.map(a => ({ ...a, isDefault: a.id === id })));
+  };
 
   const redeem = async () => {
     if (!loyalty || loyalty.points < 100) return;
@@ -239,6 +268,57 @@ export default function ComptePage() {
             )}
           </div>
         )}
+
+        {/* Address Book */}
+        <div className="bg-white border border-slate-100 rounded-2xl p-6 mb-6" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-black text-slate-800">📍 Carnet d'adresses</h2>
+            <button onClick={() => setShowAddrForm(v => !v)} className="text-sm font-bold text-rose-800 hover:underline">+ Ajouter</button>
+          </div>
+          {showAddrForm && (
+            <div className="bg-slate-50 rounded-xl p-4 mb-4 space-y-2 border border-slate-200">
+              <div className="grid grid-cols-2 gap-2">
+                <input placeholder="Libellé (ex: Maison)" value={addrForm.label} onChange={e => setAddrForm(f => ({ ...f, label: e.target.value }))} className="col-span-2 border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+                <input placeholder="Rue *" value={addrForm.street} onChange={e => setAddrForm(f => ({ ...f, street: e.target.value }))} className="col-span-2 border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+                <input placeholder="Ville *" value={addrForm.city} onChange={e => setAddrForm(f => ({ ...f, city: e.target.value }))} className="border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+                <input placeholder="Code postal" value={addrForm.zip} onChange={e => setAddrForm(f => ({ ...f, zip: e.target.value }))} className="border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+                <input placeholder="Téléphone" value={addrForm.phone} onChange={e => setAddrForm(f => ({ ...f, phone: e.target.value }))} className="col-span-2 border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+              </div>
+              <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
+                <input type="checkbox" checked={addrForm.isDefault} onChange={e => setAddrForm(f => ({ ...f, isDefault: e.target.checked }))} className="accent-rose-800" />
+                Adresse par défaut
+              </label>
+              <div className="flex gap-2">
+                <button onClick={saveAddress} disabled={savingAddr} className="bg-rose-800 text-white font-bold px-4 py-2 rounded-lg text-sm hover:bg-rose-900 transition disabled:opacity-50">
+                  {savingAddr ? "Sauvegarde..." : "Sauvegarder"}
+                </button>
+                <button onClick={() => setShowAddrForm(false)} className="text-slate-500 text-sm hover:underline">Annuler</button>
+              </div>
+            </div>
+          )}
+          {addresses.length === 0 ? (
+            <p className="text-slate-400 text-sm text-center py-4">Aucune adresse enregistrée</p>
+          ) : (
+            <div className="space-y-3">
+              {addresses.map(addr => (
+                <div key={addr.id} className={`flex items-start justify-between p-3 rounded-xl border ${addr.isDefault ? "border-rose-200 bg-rose-50" : "border-slate-100"}`}>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-slate-800 text-sm">{addr.label}</span>
+                      {addr.isDefault && <span className="text-[10px] font-black text-rose-700 bg-rose-100 px-2 py-0.5 rounded-full">Défaut</span>}
+                    </div>
+                    <p className="text-slate-500 text-xs mt-0.5">{addr.street}, {addr.city}{addr.zip ? ` ${addr.zip}` : ""}</p>
+                    {addr.phone && <p className="text-slate-400 text-xs">📞 {addr.phone}</p>}
+                  </div>
+                  <div className="flex gap-2 shrink-0 ml-3">
+                    {!addr.isDefault && <button onClick={() => setDefault(addr.id)} className="text-xs text-rose-700 hover:underline">Par défaut</button>}
+                    <button onClick={() => deleteAddress(addr.id)} className="text-xs text-slate-400 hover:text-red-500">✕</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         <button
           onClick={() => { logout(); router.push("/"); }}

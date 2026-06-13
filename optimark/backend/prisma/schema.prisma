@@ -40,6 +40,20 @@ model User {
   priceAlerts       PriceAlert[]
   purchasedGiftCards GiftCard[]   @relation("PurchasedGiftCards")
   adCampaigns        AdCampaign[] @relation("SellerAdCampaigns")
+  savedAddresses     SavedAddress[]
+}
+
+model SavedAddress {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  label     String
+  street    String
+  city      String
+  zip       String?
+  phone     String?
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
 
 model SellerFollow {

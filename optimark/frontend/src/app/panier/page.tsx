@@ -23,6 +23,7 @@ export default function PanierPage() {
   const [giftDiscount, setGiftDiscount] = useState(0);
   const [giftError, setGiftError] = useState("");
   const [giftApplied, setGiftApplied] = useState(false);
+  const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
   const [loyaltyBalance, setLoyaltyBalance] = useState<{ points: number; equivalentTND: string } | null>(null);
   const [loyaltyDiscount, setLoyaltyDiscount] = useState(0);
   const [pointsUsed, setPointsUsed] = useState(0);
@@ -82,6 +83,12 @@ export default function PanierPage() {
   useEffect(() => {
     if (!user) return;
     api.get("/loyalty/balance").then(r => setLoyaltyBalance(r.data?.data)).catch(() => {});
+    api.get("/addresses").then(r => {
+      const addrs = r.data?.data || [];
+      setSavedAddresses(addrs);
+      const def = addrs.find((a: any) => a.isDefault);
+      if (def) setAddress({ fullName: user?.name || "", phone: def.phone || "", address: def.street, city: def.city, postalCode: def.zip || "", notes: "" });
+    }).catch(() => {});
   }, [user]);
 
   const applyLoyalty = async () => {
@@ -180,6 +187,19 @@ export default function PanierPage() {
               {/* Delivery address */}
               <div className="bg-white border border-slate-100 rounded-2xl p-6" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
                 <h2 className="font-black text-slate-900 mb-4 flex items-center gap-2">📍 Adresse de livraison</h2>
+                {savedAddresses.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-xs font-semibold text-slate-500 mb-2">Adresses sauvegardées :</p>
+                    <div className="flex flex-wrap gap-2">
+                      {savedAddresses.map(addr => (
+                        <button key={addr.id} onClick={() => setAddress(a => ({ ...a, phone: addr.phone || "", address: addr.street, city: addr.city, postalCode: addr.zip || "" }))}
+                          className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 hover:border-rose-300 hover:bg-rose-50 transition text-slate-700">
+                          {addr.isDefault ? "⭐ " : ""}{addr.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="col-span-2 sm:col-span-1">
                     <label className="block text-xs font-semibold text-slate-500 mb-1">Nom complet *</label>

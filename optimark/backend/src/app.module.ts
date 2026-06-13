@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AddressesModule } from './addresses/addresses.module';
 import { AdsModule } from './ads/ads.module';
 import { GiftCardsModule } from './gift-cards/gift-cards.module';
 import { PriceAlertsModule } from './price-alerts/price-alerts.module';
@@ -60,6 +61,7 @@ import { VendorsModule } from './vendors/vendors.module';
     PriceAlertsModule,
     GiftCardsModule,
     AdsModule,
+    AddressesModule,
   ],
 })
 export class AppModule {}
