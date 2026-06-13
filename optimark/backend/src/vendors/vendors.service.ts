@@ -400,4 +400,63 @@ export class VendorsService {
     ]);
     return { data: { following: !!follow, followerCount: count }, success: true };
   }
+
+  async getPerformanceScore(sellerId: string) {
+    const [myOrders, allSellerOrders, myProducts, myReviews, myFollowers] = await Promise.all([
+      this.prisma.order.findMany({
+        where: { status: 'DELIVERED', items: { some: { product: { sellerId } } } },
+        include: { items: { include: { product: { select: { sellerId: true } } } } },
+      }),
+      this.prisma.order.count({ where: { status: 'DELIVERED' } }),
+      this.prisma.product.count({ where: { sellerId, isActive: true } }),
+      this.prisma.review.findMany({ where: { product: { sellerId } } }),
+      this.prisma.sellerFollow.count({ where: { sellerId } }),
+    ]);
+
+    const myRevenue = myOrders.reduce((sum, o) => {
+      return sum + o.items.filter(i => i.product.sellerId === sellerId).reduce((s, i) => s + (i as any).price * (i as any).quantity, 0);
+    }, 0);
+    const avgRating = myReviews.length ? myReviews.reduce((s, r) => s + r.rating, 0) / myReviews.length : 0;
+
+    // Platform averages
+    const totalSellers = await this.prisma.user.count({ where: { role: 'SELLER' } });
+    const avgProductsPerSeller = await this.prisma.product.count({ where: { isActive: true } });
+
+    // Simple score: 0-100
+    const ratingScore = (avgRating / 5) * 30;
+    const reviewScore = Math.min(myReviews.length / 20, 1) * 20;
+    const productScore = Math.min(myProducts / 10, 1) * 20;
+    const followerScore = Math.min(myFollowers / 50, 1) * 15;
+    const revenueScore = Math.min(myRevenue / 5000, 1) * 15;
+    const totalScore = Math.round(ratingScore + reviewScore + productScore + followerScore + revenueScore);
+
+    let badge = 'Débutant';
+    if (totalScore >= 80) badge = 'Élite ⭐';
+    else if (totalScore >= 60) badge = 'Pro 💪';
+    else if (totalScore >= 40) badge = 'Confirmé 📈';
+    else if (totalScore >= 20) badge = 'En progression 🚀';
+
+    return {
+      data: {
+        score: totalScore,
+        badge,
+        stats: {
+          deliveredOrders: myOrders.length,
+          avgRating: parseFloat(avgRating.toFixed(2)),
+          totalReviews: myReviews.length,
+          activeProducts: myProducts,
+          followers: myFollowers,
+          revenue: parseFloat(myRevenue.toFixed(2)),
+        },
+        breakdown: {
+          rating: Math.round(ratingScore),
+          reviews: Math.round(reviewScore),
+          products: Math.round(productScore),
+          followers: Math.round(followerScore),
+          revenue: Math.round(revenueScore),
+        },
+      },
+      success: true,
+    };
+  }
 }

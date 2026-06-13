@@ -107,6 +107,12 @@ export class VendorsController {
     return this.vendorsService.toggleFollow(req.user.id, sellerId);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('performance')
+  getPerformance(@Request() req: any) {
+    return this.vendorsService.getPerformanceScore(req.user.id);
+  }
+
   @Get(':sellerId/follow/status')
   followStatus(@Param('sellerId') sellerId: string, @Request() req: any) {
     const followerId = req.user?.id;
