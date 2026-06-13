@@ -142,4 +142,10 @@ export class VendorsController {
   bulkUpdatePrices(@Request() req: any, @Body('updates') updates: { id: string; price?: number; promoPrice?: number | null }[]) {
     return this.vendorsService.bulkUpdatePrices(req.user.id, updates);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('customers/top')
+  getTopCustomers(@Request() req: any) {
+    return this.vendorsService.getTopCustomers(req.user.id);
+  }
 }

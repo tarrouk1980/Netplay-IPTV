@@ -506,6 +506,35 @@ export class VendorsService {
     return { data, success: true };
   }
 
+  async getTopCustomers(sellerId: string, limit = 10) {
+    const orders = await this.prisma.order.findMany({
+      where: { items: { some: { product: { sellerId } } } },
+      include: {
+        user: { select: { id: true, name: true, email: true, createdAt: true } },
+        items: { include: { product: { select: { sellerId: true } } } },
+      },
+    });
+
+    const customerMap: Record<string, { name: string; email: string; spend: number; orders: number; since: Date }> = {};
+    for (const order of orders) {
+      const sellerItems = order.items.filter(i => i.product.sellerId === sellerId);
+      const spend = sellerItems.reduce((s, i) => s + i.price * i.quantity, 0);
+      const uid = order.user.id;
+      if (!customerMap[uid]) {
+        customerMap[uid] = { name: order.user.name, email: order.user.email, spend: 0, orders: 0, since: order.user.createdAt };
+      }
+      customerMap[uid].spend += spend;
+      customerMap[uid].orders += 1;
+    }
+
+    const customers = Object.entries(customerMap)
+      .map(([id, v]) => ({ id, ...v, spend: parseFloat(v.spend.toFixed(2)) }))
+      .sort((a, b) => b.spend - a.spend)
+      .slice(0, limit);
+
+    return { data: customers, success: true };
+  }
+
   async bulkUpdatePrices(sellerId: string, updates: { id: string; price?: number; promoPrice?: number | null }[]) {
     const results = await Promise.all(updates.map(async ({ id, price, promoPrice }) => {
       const product = await this.prisma.product.findUnique({ where: { id }, select: { sellerId: true } });
