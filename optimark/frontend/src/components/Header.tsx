@@ -17,6 +17,7 @@ export default function Header() {
   const [unread, setUnread] = useState(0);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [trendingQueries, setTrendingQueries] = useState<string[]>([]);
   const suggestTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
@@ -51,6 +52,12 @@ export default function Header() {
       } catch {}
     }, 250);
   };
+
+  useEffect(() => {
+    api.get("/search/trending").then(res => {
+      setTrendingQueries((res.data?.data || []).map((t: any) => t.query).slice(0, 8));
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -128,7 +135,7 @@ export default function Header() {
                   type="text"
                   value={search}
                   onChange={(e) => handleSearchInput(e.target.value)}
-                  onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                  onFocus={() => setShowSuggestions(suggestions.length > 0 || trendingQueries.length > 0)}
                   placeholder="Rechercher produits, services, artisans..."
                   className="flex-1 px-4 py-2.5 bg-white text-slate-700 placeholder-slate-400 outline-none text-sm"
                   autoComplete="off"
@@ -140,9 +147,22 @@ export default function Header() {
                   Chercher
                 </button>
               </form>
-              {showSuggestions && suggestions.length > 0 && (
+              {showSuggestions && (suggestions.length > 0 || (search.trim().length < 2 && trendingQueries.length > 0)) && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
-                  {suggestions.map((s, i) => (
+                  {search.trim().length < 2 && trendingQueries.length > 0 && (
+                    <div className="px-4 pt-3 pb-2">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">🔥 Tendances</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {trendingQueries.map((t) => (
+                          <button key={t} onClick={() => { setSearch(t); setShowSuggestions(false); router.push(`/recherche?q=${encodeURIComponent(t)}`); }}
+                            className="px-3 py-1 bg-rose-50 text-rose-800 rounded-full text-xs font-semibold hover:bg-rose-100 transition">
+                            {t}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {suggestions.map((s) => (
                     <Link key={`${s.type}-${s.id}`} href={s.href}
                       onClick={() => { setSearch(s.label); setShowSuggestions(false); }}
                       className="flex items-center gap-3 px-4 py-3 hover:bg-rose-50 transition border-b border-slate-50 last:border-b-0">
@@ -153,6 +173,7 @@ export default function Header() {
                       <span className="text-xs text-slate-400 flex-shrink-0">{s.sub}</span>
                     </Link>
                   ))}
+                  {search.trim().length >= 2 && (
                   <Link href={`/recherche?q=${encodeURIComponent(search)}`}
                     onClick={() => setShowSuggestions(false)}
                     className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 text-rose-800 text-xs font-bold hover:bg-rose-50 transition">
@@ -161,6 +182,7 @@ export default function Header() {
                     </svg>
                     Voir tous les résultats pour &quot;{search}&quot;
                   </Link>
+                  )}
                 </div>
               )}
             </div>

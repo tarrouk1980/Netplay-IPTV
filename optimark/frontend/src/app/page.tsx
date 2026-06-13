@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import HeroSlider from "@/components/HeroSlider";
 import LiveCard from "@/components/LiveCard";
 import ProductCard from "@/components/ProductCard";
+import RecentlyViewed from "@/components/RecentlyViewed";
 import ServiceCard from "@/components/ServiceCard";
 import api from "@/lib/api";
 import Link from "next/link";
@@ -63,6 +64,8 @@ export default function HomePage() {
 
       {/* ── Hero Slider ── */}
       <HeroSlider />
+
+      <RecentlyViewed />
 
       {/* ── Stats ── */}
       <section className="bg-white border-b border-slate-100">
