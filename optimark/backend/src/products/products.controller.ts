@@ -39,6 +39,16 @@ export class ProductsController {
     return this.productsService.getSuggestions(q);
   }
 
+  @Get(':id/similar')
+  getSimilar(@Param('id') id: string) {
+    return this.productsService.getSimilar(id);
+  }
+
+  @Get(':id/also-bought')
+  getAlsoBought(@Param('id') id: string) {
+    return this.productsService.getAlsoBought(id);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.productsService.findOne(id);

@@ -193,6 +193,41 @@ export class ProductsService {
     return { data: updated, message: updated.isActive ? 'Produit activé' : 'Produit désactivé', success: true };
   }
 
+  async getSimilar(productId: string, limit = 8) {
+    const product = await this.prisma.product.findUnique({ where: { id: productId }, select: { category: true, sellerId: true } });
+    if (!product) return { data: [], success: true };
+    const similar = await this.prisma.product.findMany({
+      where: { isActive: true, id: { not: productId }, category: product.category },
+      include: { seller: { select: { id: true, name: true, isVerified: true } } },
+      orderBy: [{ isBestSeller: 'desc' }, { createdAt: 'desc' }],
+      take: limit,
+    });
+    return { data: similar, success: true };
+  }
+
+  async getAlsoBought(productId: string, limit = 6) {
+    const orderItems = await this.prisma.orderItem.findMany({
+      where: { productId },
+      select: { orderId: true },
+      take: 200,
+    });
+    const orderIds = [...new Set(orderItems.map((o: any) => o.orderId))];
+    if (!orderIds.length) return { data: [], success: true };
+    const coItems = await this.prisma.orderItem.findMany({
+      where: { orderId: { in: orderIds }, productId: { not: productId } },
+      select: { productId: true },
+    });
+    const counts: Record<string, number> = {};
+    for (const item of coItems) counts[item.productId] = (counts[item.productId] || 0) + 1;
+    const topIds = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, limit).map(([id]) => id);
+    if (!topIds.length) return { data: [], success: true };
+    const products = await this.prisma.product.findMany({
+      where: { id: { in: topIds }, isActive: true },
+      include: { seller: { select: { id: true, name: true } } },
+    });
+    return { data: topIds.map(id => products.find(p => p.id === id)).filter(Boolean), success: true };
+  }
+
   async getTrending(limit = 12) {
     const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const grouped = await (this.prisma.productView as any).groupBy({

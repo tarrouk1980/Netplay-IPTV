@@ -17,6 +17,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const { id } = use(params);
   const [product, setProduct] = useState<any>(null);
   const [similar, setSimilar] = useState<any[]>([]);
+  const [alsoBought, setAlsoBought] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [questions, setQuestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,11 +43,12 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     Promise.all([
       api.get(`/products/${id}`).catch(() => null),
       api.get(`/recommendations/similar/${id}?limit=4`).catch(() => null),
+      api.get(`/products/${id}/also-bought`).catch(() => null),
       user ? api.get(`/favorites/${id}/status`).catch(() => null) : Promise.resolve(null),
       api.get(`/reviews/product/${id}`).catch(() => null),
       api.get(`/questions/product/${id}`).catch(() => null),
       user ? api.get(`/price-alerts/${id}/status`).catch(() => null) : Promise.resolve(null),
-    ]).then(([pRes, sRes, fRes, rRes, qRes, paRes]) => {
+    ]).then(([pRes, sRes, abRes, fRes, rRes, qRes, paRes]) => {
       if (!mounted) return;
       const prod = pRes?.data?.data || null;
       if (prod) {
@@ -55,6 +57,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       }
       setProduct(prod);
       setSimilar(sRes?.data?.data || []);
+      setAlsoBought(abRes?.data?.data || []);
       setFavorited(fRes?.data?.favorited || false);
       setReviews(rRes?.data?.data || []);
       setQuestions(qRes?.data?.data || []);
@@ -459,6 +462,21 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               </div>
             )}
           </div>
+        )}
+
+        {/* Also bought */}
+        {alsoBought.length > 0 && (
+          <section className="mt-14">
+            <div className="flex items-center gap-2 mb-6">
+              <span className="text-2xl">🛒</span>
+              <h2 className="text-xl font-black text-slate-900">Achetés ensemble</h2>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {alsoBought.map((p: any) => (
+                <ProductCard key={p.id} id={p.id} title={p.title} price={p.promoPrice || p.price} originalPrice={p.promoPrice ? p.price : undefined} seller={p.seller?.name || "Vendeur"} rating={0} isVerified={p.seller?.isVerified} category={p.category} image={p.images?.[0]} isBestSeller={p.isBestSeller} stock={p.stock} stockAlert={p.stockAlert} />
+              ))}
+            </div>
+          </section>
         )}
 
         {/* Similar products */}

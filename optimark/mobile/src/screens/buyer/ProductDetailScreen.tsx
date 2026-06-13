@@ -22,6 +22,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
   const [reviewRating, setReviewRating] = useState(5);
   const [submittingReview, setSubmittingReview] = useState(false);
   const [similar, setSimilar] = useState<any[]>([]);
+  const [alsoBought, setAlsoBought] = useState<any[]>([]);
   const [questions, setQuestions] = useState<any[]>([]);
   const [questionText, setQuestionText] = useState("");
   const [submittingQ, setSubmittingQ] = useState(false);
@@ -37,12 +38,14 @@ export default function ProductDetailScreen({ route, navigation }: any) {
       user ? api.get(`/favorites/${id}/status`).catch(() => null) : null,
       api.get(`/recommendations/similar/${id}?limit=6`).catch(() => null),
       api.get(`/questions/product/${id}`).catch(() => null),
-    ]).then(([pRes, rRes, fRes, simRes, qRes]) => {
+      api.get(`/products/${id}/also-bought`).catch(() => null),
+    ]).then(([pRes, rRes, fRes, simRes, qRes, abRes]) => {
       setProduct(pRes?.data?.data);
       setReviews(rRes?.data?.data || []);
       setFavorited(fRes?.data?.favorited || false);
       setSimilar(simRes?.data?.data || []);
       setQuestions(qRes?.data?.data || []);
+      setAlsoBought(abRes?.data?.data || []);
     }).catch(() => {}).finally(() => setLoading(false));
   }, [id]);
 
@@ -380,6 +383,28 @@ export default function ProductDetailScreen({ route, navigation }: any) {
             </View>
           )}
         </View>
+
+        {/* Also bought */}
+        {alsoBought.length > 0 && (
+          <View style={s.section}>
+            <Text style={s.sectionTitle}>🛒 Achetés ensemble</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingTop: 12 }}>
+              {alsoBought.map((p: any) => {
+                const abPrice = p.promoPrice || p.price;
+                const abImg = p.images?.[0];
+                return (
+                  <TouchableOpacity key={p.id} style={s.simCard} onPress={() => navigation.push("ProductDetail", { id: p.id })}>
+                    <View style={s.simImgBox}>
+                      {abImg ? <Image source={{ uri: abImg }} style={{ width: "100%", height: "100%" }} resizeMode="cover" /> : <Text style={{ fontSize: 28 }}>📦</Text>}
+                    </View>
+                    <Text style={s.simTitle} numberOfLines={2}>{p.title}</Text>
+                    <Text style={s.simPrice}>{Number(abPrice).toFixed(2)} TND</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
 
         {/* Similar products */}
         {similar.length > 0 && (
