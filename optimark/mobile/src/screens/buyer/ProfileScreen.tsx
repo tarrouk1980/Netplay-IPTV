@@ -176,6 +176,12 @@ export default function ProfileScreen({ navigation }: any) {
           <Text style={s.menuArrow}>›</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity style={s.menuItem} onPress={() => navigation.navigate("Referral")}>
+          <Text style={s.menuIcon}>🤝</Text>
+          <Text style={s.menuLabel}>Parrainage</Text>
+          <Text style={s.menuArrow}>›</Text>
+        </TouchableOpacity>
+
         {isSeller && (
           <TouchableOpacity style={s.menuItem} onPress={() => navigation.navigate("SellerTab")}>
             <Text style={s.menuIcon}>🏪</Text>
