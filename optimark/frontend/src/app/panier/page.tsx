@@ -19,6 +19,10 @@ export default function PanierPage() {
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [couponError, setCouponError] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
+  const [giftCode, setGiftCode] = useState("");
+  const [giftDiscount, setGiftDiscount] = useState(0);
+  const [giftError, setGiftError] = useState("");
+  const [giftApplied, setGiftApplied] = useState(false);
   const [address, setAddress] = useState({
     fullName: user?.name || "",
     phone: "",
@@ -71,7 +75,22 @@ export default function PanierPage() {
     }
   };
 
-  const finalTotal = Math.max(0, total - couponDiscount);
+  const finalTotal = Math.max(0, total - couponDiscount - giftDiscount);
+
+  const applyGiftCard = async () => {
+    if (!giftCode.trim()) return;
+    setGiftError("");
+    try {
+      const res = await api.post("/gift-cards/validate", { code: giftCode.trim().toUpperCase() });
+      const balance = res.data?.data?.balance || 0;
+      setGiftDiscount(Math.min(balance, total - couponDiscount));
+      setGiftApplied(true);
+    } catch (e: any) {
+      setGiftError(e.response?.data?.message || "Code invalide");
+      setGiftDiscount(0);
+      setGiftApplied(false);
+    }
+  };
 
   const applyCoupon = async () => {
     if (!couponCode.trim()) return;
@@ -186,6 +205,12 @@ export default function PanierPage() {
                       <span>−{couponDiscount.toFixed(2)} TND</span>
                     </div>
                   )}
+                  {giftDiscount > 0 && (
+                    <div className="flex justify-between text-purple-600 font-semibold">
+                      <span>🎁 Carte cadeau</span>
+                      <span>−{giftDiscount.toFixed(2)} TND</span>
+                    </div>
+                  )}
                   <div className="border-t border-slate-100 pt-2 flex justify-between font-black text-base text-slate-900">
                     <span>Total</span>
                     <span className="text-rose-800">{finalTotal.toFixed(2)} TND</span>
@@ -208,6 +233,24 @@ export default function PanierPage() {
                     </div>
                   )}
                   {couponError && <p className="text-rose-700 text-xs mt-1">{couponError}</p>}
+                </div>
+
+                {/* Gift card */}
+                <div className="mb-4">
+                  <p className="font-bold text-slate-700 mb-2 text-sm">🎁 Carte cadeau</p>
+                  {giftApplied ? (
+                    <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-3 py-2">
+                      <span className="text-green-700 font-bold text-sm">✓ -{giftDiscount.toFixed(2)} TND appliqués</span>
+                      <button onClick={() => { setGiftApplied(false); setGiftCode(""); setGiftDiscount(0); }} className="text-xs text-slate-400 hover:text-red-500">✕</button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <input value={giftCode} onChange={e => setGiftCode(e.target.value.toUpperCase())}
+                        placeholder="XXXX-XXXX-XXXX-XXXX" className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-rose-100" />
+                      <button onClick={applyGiftCard} className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-bold px-3 py-2 rounded-lg transition">Appliquer</button>
+                    </div>
+                  )}
+                  {giftError && <p className="text-rose-700 text-xs mt-1">{giftError}</p>}
                 </div>
 
                 {/* Payment method */}

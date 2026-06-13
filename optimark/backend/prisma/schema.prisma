@@ -38,6 +38,7 @@ model User {
   wishlists         Wishlist[]
   payoutRequests    PayoutRequest[]   @relation("SellerPayouts")
   priceAlerts       PriceAlert[]
+  purchasedGiftCards GiftCard[]   @relation("PurchasedGiftCards")
 }
 
 model SellerFollow {
@@ -336,6 +337,18 @@ model BundleItem {
   bundle    Bundle  @relation(fields: [bundleId], references: [id], onDelete: Cascade)
   productId String
   product   Product @relation(fields: [productId], references: [id])
+}
+
+model GiftCard {
+  id          String    @id @default(uuid())
+  code        String    @unique
+  amount      Float
+  balance     Float
+  purchasedBy String
+  buyer       User      @relation("PurchasedGiftCards", fields: [purchasedBy], references: [id])
+  isActive    Boolean   @default(true)
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
 }
 
 model PriceAlert {
