@@ -1,152 +1,165 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
-import api from "../../api";
+import React, { useCallback, useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import api from '../../lib/api';
 
-type Period = "7d" | "30d" | "3m";
-
-function StatCard({ icon, label, value, sub }: { icon: string; label: string; value: string | number; sub?: string }) {
-  return (
-    <View style={s.statCard}>
-      <Text style={s.statIcon}>{icon}</Text>
-      <Text style={s.statVal}>{value}</Text>
-      <Text style={s.statLabel}>{label}</Text>
-      {sub && <Text style={s.statSub}>{sub}</Text>}
-    </View>
-  );
-}
-
-function BarChart({ data }: { data: { label: string; value: number }[] }) {
-  if (!data?.length) return null;
-  const max = Math.max(...data.map(d => d.value), 1);
-  return (
-    <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 4, height: 60, marginTop: 8 }}>
-      {data.map((d, i) => (
-        <View key={i} style={{ flex: 1, alignItems: "center" }}>
-          <View style={{ width: "100%", height: Math.max(2, (d.value / max) * 52), backgroundColor: "#9f1239", borderRadius: 3, opacity: 0.7 + (d.value / max) * 0.3 }} />
-        </View>
-      ))}
-    </View>
-  );
-}
+const STATUS_LABELS: Record<string, string> = {
+  PENDING: 'En attente', CONFIRMED: 'Confirmée', SHIPPED: 'Expédiée',
+  DELIVERED: 'Livrée', CANCELLED: 'Annulée',
+};
+const STATUS_COLORS: Record<string, string> = {
+  PENDING: '#f59e0b', CONFIRMED: '#3b82f6', SHIPPED: '#8b5cf6',
+  DELIVERED: '#22c55e', CANCELLED: '#f43f5e',
+};
 
 export default function SellerAnalyticsScreen() {
-  const [period, setPeriod] = useState<Period>("30d");
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  const load = async (p: Period) => {
+  useFocusEffect(useCallback(() => {
     setLoading(true);
-    const res = await api.get(`/analytics/vendor?period=${p}`).catch(() => null);
-    setData(res?.data?.data || null);
-    setLoading(false);
-  };
+    api.get('/vendors/analytics')
+      .then(r => setData(r.data.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []));
 
-  useEffect(() => { load(period); }, [period]);
+  if (loading) return (
+    <View style={styles.center}><ActivityIndicator color="#9f1239" size="large" /></View>
+  );
 
-  const periods: { key: Period; label: string }[] = [
-    { key: "7d", label: "7 jours" },
-    { key: "30d", label: "30 jours" },
-    { key: "3m", label: "3 mois" },
-  ];
+  if (!data) return (
+    <View style={styles.center}><Text style={styles.empty}>Erreur de chargement</Text></View>
+  );
+
+  const maxWeek = Math.max(...(data.weeklyOrders?.map((w: any) => w.count) || [1]), 1);
+  const maxCat = Math.max(...(data.byCategory?.map((c: any) => c.revenue) || [1]), 1);
+  const statusEntries: [string, number][] = Object.entries(data.statusBreakdown || {}) as [string, number][];
+  const totalOrders = statusEntries.reduce((s, [, v]) => s + v, 0);
+  const maxRating = Math.max(...(data.ratingDist?.map((d: any) => d.count) || [1]), 1);
 
   return (
-    <ScrollView style={s.container}>
-      <View style={s.header}>
-        <Text style={s.title}>📊 Analytiques</Text>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+      <Text style={styles.title}>📊 Analytiques</Text>
+
+      {/* KPIs */}
+      <View style={styles.kpiRow}>
+        <View style={styles.kpiCard}>
+          <Text style={styles.kpiLabel}>Vues</Text>
+          <Text style={styles.kpiValue}>{data.totalViews}</Text>
+          <Text style={styles.kpiSub}>{data.viewsLast30} (30j)</Text>
+        </View>
+        <View style={styles.kpiCard}>
+          <Text style={styles.kpiLabel}>Commandes</Text>
+          <Text style={styles.kpiValue}>{totalOrders}</Text>
+        </View>
+        <View style={styles.kpiCard}>
+          <Text style={styles.kpiLabel}>Note moy.</Text>
+          <Text style={[styles.kpiValue, { color: '#f59e0b' }]}>{data.avgRating > 0 ? `${data.avgRating}★` : '—'}</Text>
+          <Text style={styles.kpiSub}>{data.totalReviews} avis</Text>
+        </View>
       </View>
 
-      {/* Period selector */}
-      <View style={s.periodRow}>
-        {periods.map(p => (
-          <TouchableOpacity key={p.key} style={[s.periodBtn, period === p.key && s.periodBtnActive]}
-            onPress={() => setPeriod(p.key)}>
-            <Text style={[s.periodLabel, period === p.key && s.periodLabelActive]}>{p.label}</Text>
-          </TouchableOpacity>
+      {/* Weekly orders bar chart */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Commandes par semaine</Text>
+        {data.weeklyOrders?.length === 0 ? (
+          <Text style={styles.empty}>Pas de données</Text>
+        ) : (
+          <View style={{ flexDirection: 'row', alignItems: 'flex-end', height: 100, gap: 4 }}>
+            {data.weeklyOrders?.map((w: any) => (
+              <View key={w.week} style={{ flex: 1, alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
+                <Text style={{ fontSize: 9, color: '#9f1239', fontWeight: '900', marginBottom: 2 }}>{w.count}</Text>
+                <View style={{ width: '100%', height: Math.max(4, (w.count / maxWeek) * 72), backgroundColor: '#9f1239', borderRadius: 4 }} />
+                <Text style={{ fontSize: 8, color: '#94a3b8', marginTop: 3 }}>{w.week.slice(5)}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+      </View>
+
+      {/* Status breakdown */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Répartition des statuts</Text>
+        {statusEntries.map(([status, count]) => (
+          <View key={status} style={{ marginBottom: 10 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+              <Text style={{ fontSize: 13, color: '#334155', fontWeight: '600' }}>{STATUS_LABELS[status] || status}</Text>
+              <Text style={{ fontSize: 13, color: '#0f172a', fontWeight: '900' }}>{count} ({totalOrders > 0 ? Math.round((count / totalOrders) * 100) : 0}%)</Text>
+            </View>
+            <View style={{ height: 8, backgroundColor: '#f1f5f9', borderRadius: 4, overflow: 'hidden' }}>
+              <View style={{ height: '100%', borderRadius: 4, width: `${totalOrders > 0 ? (count / totalOrders) * 100 : 0}%`, backgroundColor: STATUS_COLORS[status] || '#94a3b8' }} />
+            </View>
+          </View>
         ))}
       </View>
 
-      {loading ? (
-        <ActivityIndicator color="#9f1239" style={{ marginTop: 40 }} />
-      ) : !data ? (
-        <View style={s.empty}>
-          <Text style={{ fontSize: 40, marginBottom: 8 }}>📊</Text>
-          <Text style={{ color: "#64748b", fontWeight: "600" }}>Aucune donnée disponible</Text>
-          <Text style={{ color: "#94a3b8", fontSize: 12, marginTop: 4 }}>Créez des produits et ventes pour voir vos stats.</Text>
-        </View>
-      ) : (
-        <>
-          {/* KPIs */}
-          <View style={s.statsGrid}>
-            <StatCard icon="💰" label="Revenus" value={`${Number(data.totalRevenue || 0).toFixed(0)} TND`} />
-            <StatCard icon="🛒" label="Commandes" value={data.totalOrders || 0} />
-            <StatCard icon="📦" label="Produits vendus" value={data.totalItemsSold || 0} />
-            <StatCard icon="⭐" label="Note moyenne" value={`${Number(data.avgRating || 0).toFixed(1)}/5`} />
-            <StatCard icon="👁" label="Vues produits" value={data.totalViews || 0} />
-            <StatCard icon="📈" label="Conversion" value={`${data.totalViews > 0 ? ((data.totalOrders / data.totalViews) * 100).toFixed(1) : 0}%`} />
+      {/* Top products */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Top 5 produits</Text>
+        {data.topProducts?.length === 0 ? (
+          <Text style={styles.empty}>Pas de ventes encore</Text>
+        ) : data.topProducts?.map((p: any, i: number) => (
+          <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#f8fafc', gap: 10 }}>
+            <Text style={{ fontSize: 14, fontWeight: '900', color: '#94a3b8', width: 24 }}>#{i + 1}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: '#0f172a' }} numberOfLines={1}>{p.title}</Text>
+              <Text style={{ fontSize: 11, color: '#94a3b8' }}>{p.quantity} ventes</Text>
+            </View>
+            <Text style={{ fontSize: 13, fontWeight: '900', color: '#9f1239' }}>{p.revenue.toFixed(2)} TND</Text>
           </View>
+        ))}
+      </View>
 
-          {/* Top products */}
-          {data.topProducts?.length > 0 && (
-            <View style={s.section}>
-              <Text style={s.sectionTitle}>🏆 Top produits</Text>
-              {data.topProducts.slice(0, 5).map((p: any, i: number) => (
-                <View key={p.id || i} style={s.topRow}>
-                  <View style={s.rankBadge}>
-                    <Text style={s.rankText}>{i + 1}</Text>
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={s.topName} numberOfLines={1}>{p.title || p.name}</Text>
-                    <Text style={s.topSub}>{p.sales || p.ordersCount || 0} ventes · {Number(p.revenue || 0).toFixed(0)} TND</Text>
-                  </View>
-                </View>
-              ))}
+      {/* Revenue by category */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Revenus par catégorie</Text>
+        {data.byCategory?.map((c: any) => (
+          <View key={c.category} style={{ marginBottom: 10 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+              <Text style={{ fontSize: 13, color: '#334155', fontWeight: '600' }}>{c.category}</Text>
+              <Text style={{ fontSize: 13, color: '#9f1239', fontWeight: '900' }}>{c.revenue.toFixed(2)} TND</Text>
             </View>
-          )}
-
-          {/* Revenue by status */}
-          {data.ordersByStatus && (
-            <View style={s.section}>
-              <Text style={s.sectionTitle}>📦 Commandes par statut</Text>
-              {Object.entries(data.ordersByStatus).map(([status, count]: any) => (
-                <View key={status} style={s.statusRow}>
-                  <Text style={s.statusLabel}>{status}</Text>
-                  <Text style={s.statusCount}>{count}</Text>
-                </View>
-              ))}
+            <View style={{ height: 8, backgroundColor: '#f1f5f9', borderRadius: 4, overflow: 'hidden' }}>
+              <View style={{ height: '100%', borderRadius: 4, width: `${(c.revenue / maxCat) * 100}%`, backgroundColor: '#9f1239' }} />
             </View>
-          )}
-        </>
-      )}
+          </View>
+        ))}
+      </View>
 
-      <View style={{ height: 40 }} />
+      {/* Rating distribution */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Distribution des notes</Text>
+        {data.totalReviews === 0 ? (
+          <Text style={styles.empty}>Pas d'avis encore</Text>
+        ) : [5, 4, 3, 2, 1].map(r => {
+          const entry = data.ratingDist?.find((d: any) => d.rating === r);
+          const count = entry?.count || 0;
+          return (
+            <View key={r} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 8 }}>
+              <Text style={{ color: '#f59e0b', fontWeight: '900', width: 52, fontSize: 11 }}>{'★'.repeat(r)}</Text>
+              <View style={{ flex: 1, height: 8, backgroundColor: '#f1f5f9', borderRadius: 4, overflow: 'hidden' }}>
+                <View style={{ height: '100%', borderRadius: 4, width: `${maxRating > 0 ? (count / maxRating) * 100 : 0}%`, backgroundColor: '#f59e0b' }} />
+              </View>
+              <Text style={{ color: '#94a3b8', fontSize: 12, width: 20, textAlign: 'right' }}>{count}</Text>
+            </View>
+          );
+        })}
+      </View>
     </ScrollView>
   );
 }
 
-const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8fafc" },
-  header: { backgroundColor: "#9f1239", paddingHorizontal: 20, paddingVertical: 18, paddingTop: 22 },
-  title: { color: "#fff", fontSize: 20, fontWeight: "900" },
-  periodRow: { flexDirection: "row", gap: 8, padding: 16 },
-  periodBtn: { flex: 1, paddingVertical: 8, borderRadius: 999, borderWidth: 1.5, borderColor: "#e2e8f0", alignItems: "center", backgroundColor: "#fff" },
-  periodBtnActive: { backgroundColor: "#9f1239", borderColor: "#9f1239" },
-  periodLabel: { fontSize: 13, fontWeight: "700", color: "#64748b" },
-  periodLabelActive: { color: "#fff" },
-  statsGrid: { flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 12, gap: 10, marginBottom: 8 },
-  statCard: { width: "30%", flex: 1, backgroundColor: "#fff", borderRadius: 16, padding: 14, alignItems: "center", borderWidth: 1, borderColor: "#f1f5f9", minWidth: "30%" },
-  statIcon: { fontSize: 24, marginBottom: 6 },
-  statVal: { fontSize: 18, fontWeight: "900", color: "#1e293b" },
-  statLabel: { fontSize: 10, color: "#64748b", fontWeight: "600", marginTop: 2, textAlign: "center" },
-  statSub: { fontSize: 10, color: "#94a3b8", marginTop: 2 },
-  empty: { alignItems: "center", paddingTop: 60 },
-  section: { margin: 16, marginTop: 4, backgroundColor: "#fff", borderRadius: 16, padding: 16, borderWidth: 1, borderColor: "#f1f5f9", marginBottom: 8 },
-  sectionTitle: { fontSize: 14, fontWeight: "800", color: "#1e293b", marginBottom: 12 },
-  topRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: "#f8fafc" },
-  rankBadge: { width: 28, height: 28, borderRadius: 14, backgroundColor: "#9f1239", alignItems: "center", justifyContent: "center" },
-  rankText: { color: "#fff", fontSize: 12, fontWeight: "900" },
-  topName: { fontSize: 13, fontWeight: "700", color: "#1e293b" },
-  topSub: { fontSize: 11, color: "#94a3b8", marginTop: 1 },
-  statusRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: "#f8fafc" },
-  statusLabel: { fontSize: 13, color: "#475569", fontWeight: "600" },
-  statusCount: { fontSize: 13, fontWeight: "800", color: "#1e293b" },
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#f8fafc', padding: 16 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  title: { fontSize: 22, fontWeight: '900', color: '#0f172a', marginBottom: 16 },
+  kpiRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
+  kpiCard: { flex: 1, backgroundColor: '#fff', borderRadius: 14, padding: 12, borderWidth: 1, borderColor: '#f1f5f9' },
+  kpiLabel: { fontSize: 10, color: '#94a3b8', marginBottom: 2 },
+  kpiValue: { fontSize: 18, fontWeight: '900', color: '#0f172a' },
+  kpiSub: { fontSize: 9, color: '#94a3b8', marginTop: 2 },
+  card: { backgroundColor: '#fff', borderRadius: 16, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: '#f1f5f9' },
+  cardTitle: { fontSize: 15, fontWeight: '900', color: '#0f172a', marginBottom: 14 },
+  empty: { color: '#94a3b8', textAlign: 'center', paddingVertical: 20 },
 });

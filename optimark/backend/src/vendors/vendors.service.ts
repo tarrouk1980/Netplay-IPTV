@@ -186,6 +186,88 @@ export class VendorsService {
     };
   }
 
+  async getAnalytics(sellerId: string) {
+    const [orders, products, reviews, views] = await Promise.all([
+      this.prisma.order.findMany({
+        where: { items: { some: { product: { sellerId } } } },
+        include: { items: { include: { product: { select: { sellerId: true, title: true, category: true } } } } },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.product.findMany({ where: { sellerId }, select: { id: true, title: true, stock: true, category: true } }),
+      this.prisma.review.findMany({ where: { product: { sellerId } }, select: { rating: true, createdAt: true } }),
+      this.prisma.productView.findMany({ where: { product: { sellerId } }, select: { createdAt: true, productId: true } }),
+    ]);
+
+    // Top products by revenue
+    const productRevenue: Record<string, { title: string; revenue: number; quantity: number }> = {};
+    for (const order of orders) {
+      for (const item of order.items.filter(i => i.product.sellerId === sellerId)) {
+        if (!productRevenue[item.productId]) productRevenue[item.productId] = { title: item.product.title, revenue: 0, quantity: 0 };
+        productRevenue[item.productId].revenue += item.price * item.quantity;
+        productRevenue[item.productId].quantity += item.quantity;
+      }
+    }
+    const topProducts = Object.entries(productRevenue)
+      .map(([id, v]) => ({ id, ...v, revenue: parseFloat(v.revenue.toFixed(2)) }))
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 5);
+
+    // Revenue by category
+    const categoryRevenue: Record<string, number> = {};
+    for (const order of orders) {
+      for (const item of order.items.filter(i => i.product.sellerId === sellerId)) {
+        const cat = item.product.category || 'Autre';
+        categoryRevenue[cat] = (categoryRevenue[cat] || 0) + item.price * item.quantity;
+      }
+    }
+    const byCategory = Object.entries(categoryRevenue)
+      .map(([category, revenue]) => ({ category, revenue: parseFloat(revenue.toFixed(2)) }))
+      .sort((a, b) => b.revenue - a.revenue);
+
+    // Weekly order counts (last 8 weeks)
+    const weeks: Record<string, number> = {};
+    for (const order of orders) {
+      const d = new Date(order.createdAt);
+      const monday = new Date(d);
+      monday.setDate(d.getDate() - d.getDay() + 1);
+      const key = monday.toISOString().slice(0, 10);
+      weeks[key] = (weeks[key] || 0) + 1;
+    }
+    const weeklyOrders = Object.entries(weeks)
+      .map(([week, count]) => ({ week, count }))
+      .sort((a, b) => a.week.localeCompare(b.week))
+      .slice(-8);
+
+    // Order status breakdown
+    const statusCount: Record<string, number> = {};
+    for (const order of orders) { statusCount[order.status] = (statusCount[order.status] || 0) + 1; }
+
+    // View count last 30 days
+    const since30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const viewsLast30 = views.filter(v => new Date(v.createdAt) >= since30).length;
+
+    // Rating distribution
+    const ratingDist = [1, 2, 3, 4, 5].map(r => ({
+      rating: r,
+      count: reviews.filter(rv => rv.rating === r).length,
+    }));
+
+    return {
+      data: {
+        topProducts,
+        byCategory,
+        weeklyOrders,
+        statusBreakdown: statusCount,
+        totalViews: views.length,
+        viewsLast30,
+        ratingDist,
+        totalReviews: reviews.length,
+        avgRating: reviews.length ? parseFloat((reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)) : 0,
+      },
+      success: true,
+    };
+  }
+
   async getFollowStatus(followerId: string | undefined, sellerId: string) {
     if (!followerId) return { data: { following: false, followerCount: await this.prisma.sellerFollow.count({ where: { sellerId } }) }, success: true };
     const [follow, count] = await Promise.all([

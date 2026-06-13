@@ -64,6 +64,7 @@ export default function VendeurDashboardPage() {
             <Link href="/vendeur/revenus" className="px-4 py-2 border border-green-300 text-green-700 rounded-xl hover:bg-green-50 text-sm font-semibold transition">💰 Revenus</Link>
             <Link href="/vendeur/bundles" className="px-4 py-2 border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 text-sm font-semibold transition">🎁 Bundles</Link>
             <Link href="/vendeur/virements" className="px-4 py-2 border border-indigo-200 text-indigo-700 rounded-xl hover:bg-indigo-50 text-sm font-semibold transition">💸 Virements</Link>
+            <Link href="/vendeur/analytiques" className="px-4 py-2 border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 text-sm font-semibold transition">📊 Analytiques</Link>
             <Link href="/vendeur/inventaire" className="px-4 py-2 border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 text-sm font-semibold transition">📦 Inventaire</Link>
             <Link href="/vendeur/services" className="px-4 py-2 border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 text-sm font-semibold transition">💼 Services</Link>
             {!user?.isVerified && (

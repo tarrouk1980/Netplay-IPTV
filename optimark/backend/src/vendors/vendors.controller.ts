@@ -54,6 +54,12 @@ export class VendorsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('analytics')
+  getAnalytics(@Request() req: any) {
+    return this.vendorsService.getAnalytics(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Patch('verify')
   requestVerification(@Request() req: any) {
     return this.vendorsService.requestVerification(req.user.id);
