@@ -337,6 +337,13 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                     ))}
                   </div>
                   {review.comment && <p className="text-slate-600 text-sm">{review.comment}</p>}
+                  {review.images?.length > 0 && (
+                    <div className="flex gap-2 mt-2 flex-wrap">
+                      {review.images.map((img: string, i: number) => (
+                        <img key={i} src={img} alt="" className="w-16 h-16 object-cover rounded-lg border border-slate-100" />
+                      ))}
+                    </div>
+                  )}
                   {review.sellerReply && (
                     <div className="mt-3 ml-4 border-l-4 border-rose-800 bg-rose-50 rounded-r-xl px-3 py-2">
                       <p className="text-xs font-bold text-rose-800 mb-1">Réponse du vendeur :</p>
@@ -466,6 +473,7 @@ function WriteReview({ productId, onSubmitted }: { productId: string; onSubmitte
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
   const [comment, setComment] = useState("");
+  const [imageUrls, setImageUrls] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -473,8 +481,9 @@ function WriteReview({ productId, onSubmitted }: { productId: string; onSubmitte
     e.preventDefault();
     if (!rating) return;
     setSubmitting(true);
+    const images = imageUrls.split("\n").map(u => u.trim()).filter(Boolean);
     try {
-      const res = await api.post("/reviews", { productId, rating, comment });
+      const res = await api.post("/reviews", { productId, rating, comment, images });
       onSubmitted(res.data?.data);
       setSubmitted(true);
       setRating(0);
@@ -512,6 +521,13 @@ function WriteReview({ productId, onSubmitted }: { productId: string; onSubmitte
         onChange={e => setComment(e.target.value)}
         placeholder="Partagez votre expérience avec ce produit... (optionnel)"
         rows={3}
+        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-rose-100 resize-none mb-3"
+      />
+      <textarea
+        value={imageUrls}
+        onChange={e => setImageUrls(e.target.value)}
+        placeholder="Photos (URLs, une par ligne) — optionnel"
+        rows={2}
         className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-rose-100 resize-none mb-3"
       />
       <button type="submit" disabled={!rating || submitting}

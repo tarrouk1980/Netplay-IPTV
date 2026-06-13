@@ -15,6 +15,7 @@ export class ReviewsService {
       data: {
         rating: dto.rating,
         comment: dto.comment,
+        images: (dto as any).images || [],
         userId,
         productId: dto.productId,
         serviceId: dto.serviceId,

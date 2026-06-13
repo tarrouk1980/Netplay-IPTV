@@ -237,6 +237,7 @@ model Review {
   id           String    @id @default(uuid())
   rating       Int
   comment      String?
+  images       String[]
   sellerReply  String?
   repliedAt    DateTime?
   userId       String
