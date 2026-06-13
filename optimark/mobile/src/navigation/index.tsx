@@ -38,6 +38,7 @@ import SellerEarningsScreen from "../screens/seller/SellerEarningsScreen";
 import BundlesScreen from "../screens/buyer/BundlesScreen";
 import SellerInventoryScreen from "../screens/seller/SellerInventoryScreen";
 import SellerAdsScreen from "../screens/seller/SellerAdsScreen";
+import SellerPerformanceScreen from "../screens/seller/SellerPerformanceScreen";
 import SellerBundlesScreen from "../screens/seller/SellerBundlesScreen";
 import GiftCardsScreen from "../screens/buyer/GiftCardsScreen";
 import PriceAlertsScreen from "../screens/buyer/PriceAlertsScreen";
@@ -136,6 +137,7 @@ export default function AppNavigator() {
         <Stack.Screen name="Wishlist" component={WishlistScreen} options={{ title: "📋 Mes listes" }} />
         <Stack.Screen name="Referral" component={ReferralScreen} options={{ title: "🤝 Parrainage" }} />
         <Stack.Screen name="Loyalty" component={LoyaltyScreen} options={{ title: "⭐ Points fidélité" }} />
+        <Stack.Screen name="SellerPerformance" component={SellerPerformanceScreen} options={{ title: "🏆 Mon score vendeur" }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

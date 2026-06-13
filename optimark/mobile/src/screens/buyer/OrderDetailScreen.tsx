@@ -65,17 +65,27 @@ export default function OrderDetailScreen({ route, navigation }: any) {
       {order.status !== "CANCELLED" ? (
         <View style={s.trackerCard}>
           <Text style={s.sectionTitle}>Suivi de commande</Text>
-          {STEPS.map((step, i) => (
-            <View key={step} style={{ flexDirection: "row", alignItems: "flex-start" }}>
-              <View style={{ alignItems: "center", width: 36 }}>
-                <View style={[s.dot, i <= currentStep ? s.dotActive : s.dotInactive]}>
-                  {i <= currentStep && <Text style={{ color: "#fff", fontSize: 12, fontWeight: "700" }}>✓</Text>}
+          {STEPS.map((step, i) => {
+            const histEntry = order.statusHistory?.find((h: any) => h.status === step);
+            return (
+              <View key={step} style={{ flexDirection: "row", alignItems: "flex-start" }}>
+                <View style={{ alignItems: "center", width: 36 }}>
+                  <View style={[s.dot, i <= currentStep ? s.dotActive : s.dotInactive]}>
+                    {i <= currentStep && <Text style={{ color: "#fff", fontSize: 12, fontWeight: "700" }}>✓</Text>}
+                  </View>
+                  {i < STEPS.length - 1 && <View style={[s.line, i < currentStep ? s.lineActive : s.lineInactive]} />}
                 </View>
-                {i < STEPS.length - 1 && <View style={[s.line, i < currentStep ? s.lineActive : s.lineInactive]} />}
+                <View style={{ paddingBottom: 32, paddingTop: 4, marginLeft: 12 }}>
+                  <Text style={[{ fontSize: 14, color: "#94a3b8" }, i <= currentStep ? s.stepLabelActive : {}]}>{STEP_LABELS[step]}</Text>
+                  {histEntry && (
+                    <Text style={{ fontSize: 10, color: "#94a3b8", marginTop: 2 }}>
+                      {new Date(histEntry.createdAt).toLocaleDateString("fr-TN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                    </Text>
+                  )}
+                </View>
               </View>
-              <Text style={[s.stepLabel, i <= currentStep ? s.stepLabelActive : {}]}>{STEP_LABELS[step]}</Text>
-            </View>
-          ))}
+            );
+          })}
         </View>
       ) : (
         <View style={[s.trackerCard, { backgroundColor: "#fef2f2" }]}>

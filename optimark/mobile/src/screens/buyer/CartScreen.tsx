@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, StyleSheet } from "react-native";
 import { useCart } from "../../contexts/CartContext";
 import { useAuth } from "../../contexts/AuthContext";
@@ -8,13 +8,40 @@ export default function CartScreen({ navigation }: any) {
   const { items, updateQty, removeItem, clear, total } = useCart();
   const { user } = useAuth();
   const [address, setAddress] = useState({ street: "", city: "", zip: "", phone: "" });
+  const [orderNote, setOrderNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [coupon, setCoupon] = useState("");
   const [applying, setApplying] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"KONNECT" | "PAYMEE" | "CASH_ON_DELIVERY">("CASH_ON_DELIVERY");
-
   const [discountAmount, setDiscountAmount] = useState(0);
   const [couponApplied, setCouponApplied] = useState(false);
+  const [loyaltyBalance, setLoyaltyBalance] = useState<{ points: number; equivalentTND: string } | null>(null);
+  const [loyaltyDiscount, setLoyaltyDiscount] = useState(0);
+  const [pointsUsed, setPointsUsed] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    api.get("/loyalty/balance").then(r => setLoyaltyBalance(r.data?.data)).catch(() => {});
+  }, [user]);
+
+  const applyLoyalty = async () => {
+    if (!loyaltyBalance || loyaltyBalance.points < 100) {
+      Alert.alert("Points insuffisants", "Il faut au moins 100 points pour bénéficier d'une réduction.");
+      return;
+    }
+    const maxRedeemable = Math.min(loyaltyBalance.points, Math.floor(total * 100));
+    const rounded = Math.floor(maxRedeemable / 100) * 100;
+    try {
+      const res = await api.post("/loyalty/redeem", { points: rounded });
+      const disc = res.data?.data?.discountTND || 0;
+      setLoyaltyDiscount(disc);
+      setPointsUsed(rounded);
+      setLoyaltyBalance(prev => prev ? { ...prev, points: prev.points - rounded } : null);
+      Alert.alert("✓ Points appliqués", `${rounded} points = -${disc} TND sur votre commande.`);
+    } catch (e: any) {
+      Alert.alert("Erreur", e.response?.data?.message || "Impossible d'appliquer les points.");
+    }
+  };
 
   const applyCoupon = async () => {
     if (!coupon.trim()) return;
@@ -33,7 +60,7 @@ export default function CartScreen({ navigation }: any) {
     setApplying(false);
   };
 
-  const finalTotal = Math.max(0, total - discountAmount);
+  const finalTotal = Math.max(0, total - discountAmount - loyaltyDiscount);
 
   const placeOrder = async () => {
     if (!user) { navigation.navigate("Auth"); return; }
@@ -48,6 +75,7 @@ export default function CartScreen({ navigation }: any) {
         deliveryAddress: address,
         paymentMethod,
         couponCode: coupon.trim() || undefined,
+        note: orderNote.trim() || undefined,
       });
       clear();
       Alert.alert("Commande confirmée ✓", "Votre commande a été passée avec succès !", [
@@ -103,7 +131,36 @@ export default function CartScreen({ navigation }: any) {
         <TextInput style={s.input} placeholder="Téléphone" value={address.phone} onChangeText={t => setAddress(a => ({ ...a, phone: t }))} keyboardType="phone-pad" />
       </View>
 
-      {/* Total */}
+      {/* Order note */}
+      <View style={s.section}>
+        <Text style={s.sectionTitle}>Note pour le vendeur (optionnel)</Text>
+        <TextInput
+          style={[s.input, { minHeight: 70, textAlignVertical: "top" }]}
+          placeholder="Instructions de livraison, couleur souhaitée..."
+          value={orderNote}
+          onChangeText={setOrderNote}
+          multiline
+        />
+      </View>
+
+      {/* Loyalty points */}
+      {loyaltyBalance && loyaltyBalance.points >= 100 && loyaltyDiscount === 0 && (
+        <TouchableOpacity style={s.loyaltyBanner} onPress={applyLoyalty}>
+          <Text style={{ fontSize: 18 }}>⭐</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={s.loyaltyTitle}>Utiliser vos points fidélité</Text>
+            <Text style={s.loyaltySub}>{loyaltyBalance.points} pts disponibles = {loyaltyBalance.equivalentTND} TND</Text>
+          </View>
+          <Text style={s.loyaltyAction}>Appliquer</Text>
+        </TouchableOpacity>
+      )}
+      {loyaltyDiscount > 0 && (
+        <View style={[s.loyaltyBanner, { backgroundColor: "#f0fdf4", borderColor: "#bbf7d0" }]}>
+          <Text style={{ fontSize: 18 }}>✓</Text>
+          <Text style={[s.loyaltyTitle, { color: "#16a34a", flex: 1 }]}>{pointsUsed} points appliqués (-{loyaltyDiscount.toFixed(2)} TND)</Text>
+        </View>
+      )}
+
       {/* Coupon */}
       <View style={[s.section, { flexDirection: "row", gap: 8, alignItems: "center" }]}>
         <TextInput
@@ -135,9 +192,10 @@ export default function CartScreen({ navigation }: any) {
       <View style={s.totalRow}>
         <Text style={s.totalLabel}>Total</Text>
         <View style={{ alignItems: "flex-end" }}>
-          {discountAmount > 0 && <Text style={{ color: "#94a3b8", fontSize: 13, textDecorationLine: "line-through" }}>{total.toFixed(2)} TND</Text>}
+          {(discountAmount > 0 || loyaltyDiscount > 0) && <Text style={{ color: "#94a3b8", fontSize: 13, textDecorationLine: "line-through" }}>{total.toFixed(2)} TND</Text>}
+          {discountAmount > 0 && <Text style={{ color: "#16a34a", fontSize: 11, fontWeight: "700" }}>-{discountAmount.toFixed(2)} TND (code promo)</Text>}
+          {loyaltyDiscount > 0 && <Text style={{ color: "#16a34a", fontSize: 11, fontWeight: "700" }}>-{loyaltyDiscount.toFixed(2)} TND (points)</Text>}
           <Text style={s.totalVal}>{finalTotal.toFixed(2)} TND</Text>
-          {discountAmount > 0 && <Text style={{ color: "#16a34a", fontSize: 12, fontWeight: "700" }}>-{discountAmount.toFixed(2)} TND ({coupon})</Text>}
         </View>
       </View>
 
@@ -176,4 +234,8 @@ const s = StyleSheet.create({
   payOptionActive: { borderColor: "#9f1239", backgroundColor: "#fff5f7" },
   payOptionIcon: { fontSize: 20 },
   payOptionLabel: { fontSize: 14, fontWeight: "600", color: "#475569" },
+  loyaltyBanner: { flexDirection: "row", alignItems: "center", gap: 10, marginHorizontal: 16, marginBottom: 10, backgroundColor: "#fef9ec", borderWidth: 1, borderColor: "#fde68a", borderRadius: 14, padding: 14 },
+  loyaltyTitle: { fontSize: 13, fontWeight: "800", color: "#92400e" },
+  loyaltySub: { fontSize: 11, color: "#a16207", marginTop: 1 },
+  loyaltyAction: { fontSize: 12, fontWeight: "800", color: "#9f1239" },
 });
