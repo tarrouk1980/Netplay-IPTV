@@ -474,4 +474,17 @@ export class VendorsService {
       success: true,
     };
   }
+
+  async bulkUpdatePrices(sellerId: string, updates: { id: string; price?: number; promoPrice?: number | null }[]) {
+    const results = await Promise.all(updates.map(async ({ id, price, promoPrice }) => {
+      const product = await this.prisma.product.findUnique({ where: { id }, select: { sellerId: true } });
+      if (!product || product.sellerId !== sellerId) return null;
+      const data: any = {};
+      if (price !== undefined) data.price = price;
+      if (promoPrice !== undefined) data.promoPrice = promoPrice;
+      return this.prisma.product.update({ where: { id }, data, select: { id: true, title: true, price: true, promoPrice: true } });
+    }));
+    const updated = results.filter(Boolean);
+    return { data: updated, message: `${updated.length} produit(s) mis à jour`, success: true };
+  }
 }

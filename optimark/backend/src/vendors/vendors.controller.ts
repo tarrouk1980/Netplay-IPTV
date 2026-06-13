@@ -124,4 +124,10 @@ export class VendorsController {
     const followerId = req.user?.id;
     return this.vendorsService.getFollowStatus(followerId, sellerId);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('products/bulk-price')
+  bulkUpdatePrices(@Request() req: any, @Body('updates') updates: { id: string; price?: number; promoPrice?: number | null }[]) {
+    return this.vendorsService.bulkUpdatePrices(req.user.id, updates);
+  }
 }

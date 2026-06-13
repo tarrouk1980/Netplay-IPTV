@@ -44,6 +44,16 @@ export default function LoyaltePage() {
   const inputPoints = parseInt(pointsInput, 10) || 0;
   const discountPreview = (Math.min(inputPoints, maxPoints) * 0.01).toFixed(2);
 
+  const TIERS = [
+    { name: "Bronze", min: 0, max: 999, color: "#b45309", bg: "#fef3c7", icon: "🥉" },
+    { name: "Argent", min: 1000, max: 4999, color: "#475569", bg: "#f1f5f9", icon: "🥈" },
+    { name: "Or", min: 5000, max: 19999, color: "#b45309", bg: "#fef9ec", icon: "🥇" },
+    { name: "Platine", min: 20000, max: Infinity, color: "#7c3aed", bg: "#f5f3ff", icon: "💎" },
+  ];
+  const currentTier = TIERS.findLast(t => points >= t.min) || TIERS[0];
+  const nextTier = TIERS[TIERS.indexOf(currentTier) + 1];
+  const tierProgress = nextTier ? Math.min(100, ((points - currentTier.min) / (nextTier.min - currentTier.min)) * 100) : 100;
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <Header />
@@ -58,6 +68,38 @@ export default function LoyaltePage() {
           <p className="text-rose-200 font-semibold mb-4">points</p>
           <div className="bg-rose-950 bg-opacity-40 rounded-xl px-4 py-2.5 inline-block">
             <p className="text-sm text-rose-100">Équivalent : <span className="font-black text-white">{balance?.equivalentTND || "0.00"} TND</span></p>
+          </div>
+        </div>
+
+        {/* Tier card */}
+        <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6" style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
+          <div className="flex items-center gap-3 mb-4">
+            <span className="text-3xl">{currentTier.icon}</span>
+            <div>
+              <p className="text-xs text-slate-400 font-semibold uppercase tracking-wide">Votre niveau</p>
+              <p className="text-xl font-black" style={{ color: currentTier.color }}>{currentTier.name}</p>
+            </div>
+          </div>
+          {nextTier && (
+            <>
+              <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+                <span>{points.toLocaleString("fr-FR")} pts</span>
+                <span>{nextTier.min.toLocaleString("fr-FR")} pts → {nextTier.icon} {nextTier.name}</span>
+              </div>
+              <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-full rounded-full transition-all" style={{ width: `${tierProgress}%`, backgroundColor: currentTier.color }} />
+              </div>
+              <p className="text-xs text-slate-400 mt-1">{(nextTier.min - points).toLocaleString("fr-FR")} points pour atteindre {nextTier.name}</p>
+            </>
+          )}
+          <div className="grid grid-cols-4 gap-2 mt-4">
+            {TIERS.map(t => (
+              <div key={t.name} className="rounded-xl p-2 text-center" style={{ backgroundColor: t.bg }}>
+                <p className="text-lg">{t.icon}</p>
+                <p className="text-[10px] font-bold mt-0.5" style={{ color: t.color }}>{t.name}</p>
+                <p className="text-[9px] text-slate-400">{t.min >= 20000 ? "20 000+" : `${t.min === 0 ? "0" : t.min.toLocaleString("fr-FR")}${t.max !== Infinity ? "–" + t.max.toLocaleString("fr-FR") : "+"}`}</p>
+              </div>
+            ))}
           </div>
         </div>
 
