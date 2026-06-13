@@ -11,7 +11,7 @@ const STATUS_LABELS: Record<string, string> = { PENDING: "En attente", CONFIRMED
 const STATUS_COLORS: Record<string, string> = { PENDING: "bg-amber-100 text-amber-800", CONFIRMED: "bg-blue-100 text-blue-800", SHIPPED: "bg-purple-100 text-purple-800", DELIVERED: "bg-green-100 text-green-800", CANCELLED: "bg-rose-100 text-rose-800" };
 const ALL_STATUSES = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"];
 
-type Tab = "stats" | "users" | "orders" | "products" | "returns" | "commissions" | "reviews";
+type Tab = "stats" | "users" | "orders" | "products" | "returns" | "commissions" | "reviews" | "payouts";
 
 export default function AdminPage() {
   const { user, loading } = useAuth();
@@ -25,6 +25,7 @@ export default function AdminPage() {
   const [returns, setReturns] = useState<any[]>([]);
   const [commissions, setCommissions] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
+  const [payouts, setPayouts] = useState<any[]>([]);
   const [fetching, setFetching] = useState(false);
 
   useEffect(() => {
@@ -42,6 +43,7 @@ export default function AdminPage() {
     else if (tab === "returns") loadReturns();
     else if (tab === "commissions") loadCommissions();
     else if (tab === "reviews") loadReviews();
+    else if (tab === "payouts") loadPayouts();
   }, [tab]);
 
   const loadStats = async () => {
@@ -88,6 +90,18 @@ export default function AdminPage() {
     const res = await api.get("/admin/reviews?limit=100").catch(() => null);
     setReviews(res?.data?.data || []);
     setFetching(false);
+  };
+
+  const loadPayouts = async () => {
+    setFetching(true);
+    const res = await api.get("/payouts").catch(() => null);
+    setPayouts(res?.data?.data || []);
+    setFetching(false);
+  };
+
+  const updatePayoutStatus = async (id: string, status: string, adminNote?: string) => {
+    await api.patch(`/payouts/${id}/status`, { status, adminNote }).catch(() => {});
+    setPayouts(prev => prev.map(p => p.id === id ? { ...p, status, adminNote: adminNote ?? p.adminNote } : p));
   };
 
   const deleteReview = async (id: string) => {
@@ -138,6 +152,7 @@ export default function AdminPage() {
     { key: "returns", label: "Retours", icon: "↩️" },
     { key: "commissions", label: "Commissions", icon: "💸" },
     { key: "reviews", label: "Avis", icon: "⭐" },
+    { key: "payouts", label: "Virements", icon: "💸" },
   ];
 
   return (
@@ -468,6 +483,69 @@ export default function AdminPage() {
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+        {/* Payouts */}
+        {tab === "payouts" && !fetching && (
+          <div className="space-y-4">
+            <div className="bg-rose-50 border border-rose-100 rounded-xl px-5 py-3 flex items-center justify-between flex-wrap gap-2">
+              <p className="text-rose-800 font-bold text-sm">
+                Total en attente : {payouts.filter(p => p.status === "PENDING").reduce((s, p) => s + p.amount, 0).toFixed(2)} TND
+              </p>
+              <p className="text-slate-500 text-xs">{payouts.length} demandes</p>
+            </div>
+            {payouts.length === 0 && <p className="text-center text-slate-400 py-10">Aucune demande de virement.</p>}
+            {payouts.map(p => (
+              <div key={p.id} className="bg-white rounded-xl border border-slate-100 p-5 shadow-sm">
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                  <div>
+                    <p className="font-black text-rose-800 text-lg">{Number(p.amount).toFixed(2)} TND</p>
+                    <p className="font-semibold text-slate-800 text-sm mt-0.5">{p.seller?.name}</p>
+                    <p className="text-slate-400 text-xs">{p.seller?.email}</p>
+                    <div className="mt-2 text-xs text-slate-500 space-y-0.5">
+                      <p>🏦 {p.bankInfo?.bankName}</p>
+                      <p>💳 RIB : <span className="font-mono">{p.bankInfo?.rib}</span></p>
+                      <p>👤 {p.bankInfo?.accountHolder}</p>
+                    </div>
+                    {p.adminNote && <p className="text-xs text-blue-600 mt-2 italic">Note : {p.adminNote}</p>}
+                    <p className="text-xs text-slate-400 mt-2">{new Date(p.createdAt).toLocaleDateString("fr-FR")}</p>
+                  </div>
+                  <div className="flex flex-col gap-2 items-end">
+                    <span className={`text-xs font-black px-3 py-1 rounded-full ${
+                      p.status === "PENDING" ? "bg-amber-100 text-amber-700"
+                      : p.status === "APPROVED" ? "bg-blue-100 text-blue-700"
+                      : p.status === "PAID" ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
+                    }`}>{p.status}</span>
+                    {p.status === "PENDING" && (
+                      <div className="flex gap-2 flex-wrap justify-end">
+                        <button onClick={() => updatePayoutStatus(p.id, "APPROVED")}
+                          className="text-xs font-bold bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition">
+                          Approuver
+                        </button>
+                        <button onClick={() => updatePayoutStatus(p.id, "PAID")}
+                          className="text-xs font-bold bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 transition">
+                          Marquer payé
+                        </button>
+                        <button onClick={() => {
+                          const note = prompt("Raison du rejet (optionnel) :");
+                          updatePayoutStatus(p.id, "REJECTED", note || undefined);
+                        }}
+                          className="text-xs font-bold bg-red-100 text-red-700 px-3 py-1.5 rounded-lg hover:bg-red-200 transition">
+                          Rejeter
+                        </button>
+                      </div>
+                    )}
+                    {p.status === "APPROVED" && (
+                      <button onClick={() => updatePayoutStatus(p.id, "PAID")}
+                        className="text-xs font-bold bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 transition">
+                        Marquer payé
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </main>

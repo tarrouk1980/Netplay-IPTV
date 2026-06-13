@@ -36,6 +36,7 @@ model User {
   referredById      String?
   bundles           Bundle[]          @relation("SellerBundles")
   wishlists         Wishlist[]
+  payoutRequests    PayoutRequest[]   @relation("SellerPayouts")
 }
 
 model SellerFollow {
@@ -301,6 +302,18 @@ model WishlistItem {
   addedAt    DateTime @default(now())
 
   @@unique([wishlistId, productId])
+}
+
+model PayoutRequest {
+  id          String   @id @default(uuid())
+  sellerId    String
+  seller      User     @relation("SellerPayouts", fields: [sellerId], references: [id])
+  amount      Float
+  bankInfo    Json
+  status      String   @default("PENDING")
+  adminNote   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Bundle {
