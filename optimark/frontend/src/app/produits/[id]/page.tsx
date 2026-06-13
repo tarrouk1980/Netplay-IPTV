@@ -22,6 +22,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const [loading, setLoading] = useState(true);
   const [qty, setQty] = useState(1);
   const [activeImg, setActiveImg] = useState(0);
+  const [activeTab, setActiveTab] = useState<"desc" | "specs" | "reviews" | "qa">("desc");
   const [added, setAdded] = useState(false);
   const [favorited, setFavorited] = useState(false);
   const [favLoading, setFavLoading] = useState(false);
@@ -227,10 +228,6 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               <span className="text-slate-500 text-sm ml-1">{rating}/5 ({reviewCount} avis)</span>
             </div>
 
-            <p className="text-slate-600 leading-relaxed">
-              {product.description || "Aucune description fournie pour ce produit."}
-            </p>
-
             {/* Quantity selector */}
             <div className="flex items-center gap-3">
               <span className="text-sm font-semibold text-slate-700">Quantité :</span>
@@ -310,10 +307,26 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           </div>
         </div>
 
-        {/* Fiche technique */}
-        {product.specs && typeof product.specs === 'object' && Object.keys(product.specs).length > 0 && (
-          <section className="mt-10">
-            <h2 className="text-xl font-black text-slate-900 mb-4">Fiche technique</h2>
+        {/* Tab nav */}
+        <div className="mt-10 border-b border-slate-200">
+          <div className="flex gap-0 overflow-x-auto no-scrollbar">
+            {[
+              { key: "desc", label: "Description" },
+              { key: "specs", label: "Fiche technique", show: product.specs && Object.keys(product.specs).length > 0 },
+              { key: "reviews", label: `Avis (${reviews.length})` },
+              { key: "qa", label: `Q&A (${questions.length})` },
+            ].filter(t => t.show !== false).map(t => (
+              <button key={t.key} onClick={() => setActiveTab(t.key as any)}
+                className={`px-5 py-3 text-sm font-bold whitespace-nowrap border-b-2 transition ${activeTab === t.key ? "border-rose-800 text-rose-800" : "border-transparent text-slate-500 hover:text-slate-800"}`}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Tab content */}
+        {activeTab === "specs" && product.specs && typeof product.specs === 'object' && Object.keys(product.specs).length > 0 && (
+          <section className="mt-6">
             <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden" style={{boxShadow:"0 2px 8px rgba(0,0,0,0.05)"}}>
               <table className="w-full text-sm">
                 <tbody>
@@ -330,7 +343,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         )}
 
         {/* Reviews */}
-        <section className="mt-14">
+        {activeTab === "reviews" && <section className="mt-6">
           <h2 className="text-xl font-black text-slate-900 mb-6">
             Avis clients {reviews.length > 0 && <span className="text-slate-400 font-normal text-base">({reviews.length})</span>}
           </h2>
@@ -380,10 +393,10 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           {user && (
             <WriteReview productId={id} onSubmitted={(r) => setReviews(prev => [r, ...prev])} />
           )}
-        </section>
+        </section>}
 
         {/* Q&A */}
-        <section className="mt-14">
+        {activeTab === "qa" && <section className="mt-6">
           <h2 className="text-xl font-black text-slate-900 mb-6">
             Questions & Réponses {questions.length > 0 && <span className="text-slate-400 font-normal text-base">({questions.length})</span>}
           </h2>
@@ -424,7 +437,29 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           {user && (
             <AskQuestion productId={id} onSubmitted={(q) => setQuestions(prev => [q, ...prev])} />
           )}
-        </section>
+        </section>}
+
+        {/* Description tab */}
+        {activeTab === "desc" && (
+          <div className="mt-6 prose prose-slate max-w-none">
+            <p className="text-slate-600 leading-relaxed text-base">
+              {product.description || "Aucune description fournie pour ce produit."}
+            </p>
+            {Array.isArray(product.variants) && product.variants.length > 0 && (
+              <div className="mt-6">
+                <h3 className="font-bold text-slate-800 mb-3">Variantes disponibles</h3>
+                {product.variants.map((v: any) => (
+                  <div key={v.name} className="mb-3">
+                    <span className="text-sm font-semibold text-slate-500 uppercase tracking-wide">{v.name} : </span>
+                    {(v.options || []).map((opt: string) => (
+                      <span key={opt} className="inline-block bg-slate-100 text-slate-700 text-sm font-medium px-3 py-1 rounded-full mr-2 mb-2">{opt}</span>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Similar products */}
         {similar.length > 0 && (
