@@ -15,6 +15,7 @@ export default function ModifierProduitPage({ params }: { params: Promise<{ id: 
   const router = useRouter();
   const [form, setForm] = useState({ title: "", description: "", price: "", promoPrice: "", brand: "", category: "", stock: "", stockAlert: "5", images: "", isBestSeller: false, isNewArrival: false });
   const [specs, setSpecs] = useState<{key:string;val:string}[]>([{key:"",val:""}]);
+  const [variants, setVariants] = useState<{name:string;options:string}[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [fetching, setFetching] = useState(true);
 
@@ -41,6 +42,9 @@ export default function ModifierProduitPage({ params }: { params: Promise<{ id: 
         const entries = Object.entries(p.specs as Record<string,string>);
         setSpecs(entries.length ? entries.map(([key,val]) => ({key,val})) : [{key:"",val:""}]);
       }
+      if (Array.isArray(p.variants) && p.variants.length > 0) {
+        setVariants(p.variants.map((v: any) => ({ name: v.name, options: (v.options || []).join(', ') })));
+      }
     }).catch(() => router.back()).finally(() => setFetching(false));
   }, [user, loading, id]);
 
@@ -61,6 +65,7 @@ export default function ModifierProduitPage({ params }: { params: Promise<{ id: 
         isBestSeller: form.isBestSeller,
         isNewArrival: form.isNewArrival,
         specs: Object.fromEntries(specs.filter(s => s.key.trim()).map(s => [s.key.trim(), s.val.trim()])),
+        variants: variants.filter(v => v.name.trim()).map(v => ({ name: v.name.trim(), options: v.options.split(',').map((o: string) => o.trim()).filter(Boolean) })),
       });
       router.push("/vendeur/produits");
     } catch {
@@ -167,6 +172,22 @@ export default function ModifierProduitPage({ params }: { params: Promise<{ id: 
             ))}
             <button type="button" onClick={() => setSpecs(prev => [...prev, {key:"",val:""}])}
               className="text-sm text-rose-800 font-semibold hover:underline">+ Ajouter une ligne</button>
+          </div>
+
+          <div className="bg-slate-50 rounded-xl p-4 space-y-3">
+            <p className="text-sm font-semibold text-slate-700">Variantes</p>
+            <p className="text-xs text-slate-400">Ex: Taille → S, M, L, XL · Couleur → Rouge, Bleu</p>
+            {variants.map((v, i) => (
+              <div key={i} className="flex gap-2">
+                <input value={v.name} onChange={e => setVariants(prev => prev.map((x,j) => j===i ? {...x,name:e.target.value} : x))}
+                  placeholder="Nom (ex: Taille)" className="w-1/3 border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-rose-200" />
+                <input value={v.options} onChange={e => setVariants(prev => prev.map((x,j) => j===i ? {...x,options:e.target.value} : x))}
+                  placeholder="Options séparées par virgule" className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-rose-200" />
+                <button type="button" onClick={() => setVariants(prev => prev.filter((_,j) => j!==i))} className="text-slate-400 hover:text-red-500 px-1">✕</button>
+              </div>
+            ))}
+            <button type="button" onClick={() => setVariants(prev => [...prev, {name:"",options:""}])}
+              className="text-sm text-rose-800 font-semibold hover:underline">+ Ajouter une variante</button>
           </div>
 
           <div className="flex gap-3 pt-2">

@@ -222,12 +222,17 @@ export default function ProductDetailScreen({ route, navigation }: any) {
           </TouchableOpacity>
         </View>
 
-        {/* Contact seller */}
-        {product.sellerId && (
-          <TouchableOpacity style={s.contactBtn} onPress={() => navigation.navigate("Messages")}>
-            <Text style={s.contactBtnText}>💬 Contacter le vendeur</Text>
+        {/* Contact seller + Price alert */}
+        <View style={s.secondaryBtnsRow}>
+          {product.sellerId && (
+            <TouchableOpacity style={[s.contactBtn, { flex: 1 }]} onPress={() => navigation.navigate("Messages")}>
+              <Text style={s.contactBtnText}>💬 Contacter</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={[s.contactBtn, { flex: 1 }]} onPress={() => navigation.navigate("PriceAlerts", { productId: product.id, productTitle: product.title, currentPrice: price })}>
+            <Text style={s.contactBtnText}>🔔 Alerte prix</Text>
           </TouchableOpacity>
-        )}
+        </View>
 
         {/* Description */}
         {product.description ? (
@@ -418,8 +423,9 @@ const s = StyleSheet.create({
   buyBtnText: { color: "#fff", fontWeight: "800", fontSize: 15 },
   cartBtn: { flex: 1, borderWidth: 2, borderColor: "#9f1239", borderRadius: 16, paddingVertical: 16, alignItems: "center" },
   cartBtnText: { color: "#9f1239", fontWeight: "800", fontSize: 15 },
-  contactBtn: { borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 14, paddingVertical: 12, alignItems: "center", marginBottom: 8 },
-  contactBtnText: { color: "#64748b", fontWeight: "700", fontSize: 14 },
+  secondaryBtnsRow: { flexDirection: "row", gap: 8, marginBottom: 8 },
+  contactBtn: { borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 14, paddingVertical: 12, alignItems: "center" },
+  contactBtnText: { color: "#64748b", fontWeight: "700", fontSize: 13 },
   section: { marginTop: 20, borderTopWidth: 1, borderTopColor: "#f1f5f9", paddingTop: 20 },
   sectionTitle: { fontSize: 15, fontWeight: "800", color: "#1e293b", marginBottom: 12 },
   desc: { fontSize: 14, color: "#475569", lineHeight: 22 },
