@@ -97,4 +97,24 @@ export class ReviewsService {
     });
     return { data: reviews, message: 'Avis récupérés', success: true };
   }
+
+  async getMyReviews(userId: string) {
+    const reviews = await this.prisma.review.findMany({
+      where: { userId },
+      include: {
+        product: { select: { id: true, title: true, images: true } },
+        service: { select: { id: true, title: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return { data: reviews, success: true };
+  }
+
+  async delete(reviewId: string, userId: string) {
+    const review = await this.prisma.review.findUnique({ where: { id: reviewId } });
+    if (!review) throw new NotFoundException('Avis introuvable');
+    if (review.userId !== userId) throw new ForbiddenException('Accès refusé');
+    await this.prisma.review.delete({ where: { id: reviewId } });
+    return { data: null, message: 'Avis supprimé', success: true };
+  }
 }
