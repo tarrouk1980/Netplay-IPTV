@@ -22,6 +22,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
   const [questions, setQuestions] = useState<any[]>([]);
   const [questionText, setQuestionText] = useState("");
   const [submittingQ, setSubmittingQ] = useState(false);
+  const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
   const { addItem } = useCart();
   const { user } = useAuth();
 
@@ -172,6 +173,31 @@ export default function ProductDetailScreen({ route, navigation }: any) {
             {product.stock > 0 ? `✓ ${product.stock} en stock` : "✗ Épuisé"}
             {product.stock > 0 && product.stock <= (product.stockAlert || 5) && " (stock limité !)"}
           </Text>
+        )}
+
+        {/* Variants */}
+        {Array.isArray(product.variants) && product.variants.length > 0 && (
+          <View style={s.variantsSection}>
+            {product.variants.map((v: any) => (
+              <View key={v.name} style={s.variantGroup}>
+                <Text style={s.variantGroupLabel}>{v.name} :</Text>
+                <View style={s.variantOptions}>
+                  {(v.options || []).map((opt: string) => {
+                    const selected = selectedVariants[v.name] === opt;
+                    return (
+                      <TouchableOpacity
+                        key={opt}
+                        style={[s.variantPill, selected && s.variantPillSelected]}
+                        onPress={() => setSelectedVariants(prev => ({ ...prev, [v.name]: opt }))}
+                      >
+                        <Text style={[s.variantPillText, selected && s.variantPillTextSelected]}>{opt}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+            ))}
+          </View>
         )}
 
         {/* Qty */}
@@ -374,6 +400,14 @@ const s = StyleSheet.create({
   sellerName: { fontSize: 13, fontWeight: "700", color: "#1e293b" },
   verified: { fontSize: 13, color: "#16a34a", fontWeight: "800" },
   meta: { fontSize: 13, color: "#64748b", marginBottom: 6 },
+  variantsSection: { marginVertical: 12, gap: 12 },
+  variantGroup: { gap: 6 },
+  variantGroupLabel: { fontSize: 13, fontWeight: "700", color: "#475569" },
+  variantOptions: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  variantPill: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 100, borderWidth: 1.5, borderColor: "#e2e8f0", backgroundColor: "#f8fafc" },
+  variantPillSelected: { borderColor: "#9f1239", backgroundColor: "#9f1239" },
+  variantPillText: { fontSize: 13, fontWeight: "600", color: "#475569" },
+  variantPillTextSelected: { color: "#fff" },
   qtyRow: { flexDirection: "row", alignItems: "center", gap: 14, marginVertical: 16 },
   qtyLabel: { fontSize: 14, color: "#64748b", fontWeight: "600", marginRight: 4 },
   qtyBtn: { width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: "#9f1239", alignItems: "center", justifyContent: "center" },
