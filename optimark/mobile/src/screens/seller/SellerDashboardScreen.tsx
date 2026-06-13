@@ -156,6 +156,10 @@ export default function SellerDashboardScreen({ navigation }: any) {
             <Text style={s.actionIcon}>⚠️</Text>
             <Text style={s.actionLabel}>Stocks</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={s.actionBtn} onPress={() => navigation.navigate("SellerReport")}>
+            <Text style={s.actionIcon}>📋</Text>
+            <Text style={s.actionLabel}>Rapport</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
