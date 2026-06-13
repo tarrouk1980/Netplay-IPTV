@@ -1,0 +1,385 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                String         @id @default(uuid())
+  email             String         @unique
+  password          String
+  name              String
+  phone             String?
+  role              Role           @default(BUYER)
+  isVerified        Boolean        @default(false)
+  subscriptionPlan  String         @default("FREE")
+  subscriptionEnd   DateTime?
+  loyaltyPoints     Int            @default(0)
+  createdAt         DateTime       @default(now())
+  products          Product[]
+  services          Service[]
+  orders            Order[]
+  reviews           Review[]
+  lives             LiveSession[]  @relation("VendorLives")
+  favorites         Favorite[]
+  notifications     Notification[]
+  store             Store?
+  sentMessages      Message[]      @relation("MessageSender")
+  receivedMessages  Message[]      @relation("MessageReceiver")
+  coupons           Coupon[]
+  returnRequests    ReturnRequest[]
+  following         SellerFollow[]    @relation("FollowerUser")
+  questions         ProductQuestion[]
+  referralCode      String?           @unique
+  referredById      String?
+  bundles           Bundle[]          @relation("SellerBundles")
+  wishlists         Wishlist[]
+  payoutRequests    PayoutRequest[]   @relation("SellerPayouts")
+  priceAlerts       PriceAlert[]
+  purchasedGiftCards GiftCard[]   @relation("PurchasedGiftCards")
+  adCampaigns        AdCampaign[] @relation("SellerAdCampaigns")
+}
+
+model SellerFollow {
+  id         String   @id @default(uuid())
+  followerId String
+  follower   User     @relation("FollowerUser", fields: [followerId], references: [id])
+  sellerId   String
+  createdAt  DateTime @default(now())
+
+  @@unique([followerId, sellerId])
+}
+
+model Store {
+  id          String   @id @default(uuid())
+  sellerId    String   @unique
+  seller      User     @relation(fields: [sellerId], references: [id])
+  name        String
+  description String?
+  logo        String?
+  cover       String?
+  phone       String?
+  address     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Favorite {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+}
+
+enum Role {
+  BUYER
+  SELLER
+  ADMIN
+}
+
+model Product {
+  id            String            @id @default(uuid())
+  title         String
+  description   String
+  price         Float
+  promoPrice    Float?
+  brand         String?
+  specs         Json?
+  variants      Json?
+  images        String[]
+  category      String
+  stock         Int               @default(0)
+  stockAlert    Int               @default(5)
+  isActive      Boolean           @default(true)
+  isBestSeller  Boolean           @default(false)
+  isNewArrival  Boolean           @default(true)
+  sellerId      String
+  seller        User              @relation(fields: [sellerId], references: [id])
+  createdAt     DateTime          @default(now())
+  orderItems    OrderItem[]
+  reviews       Review[]
+  views         ProductView[]
+  favorites     Favorite[]
+  flashSales    FlashSale[]
+  questions     ProductQuestion[]
+  bundleItems   BundleItem[]
+  wishlistItems WishlistItem[]
+  priceAlerts   PriceAlert[]
+  adCampaigns   AdCampaign[] @relation("ProductAdCampaigns")
+}
+
+model ProductQuestion {
+  id          String    @id @default(uuid())
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  question    String
+  answer      String?
+  answeredAt  DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model Service {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  price       Float
+  category    String
+  sellerId    String
+  seller      User     @relation(fields: [sellerId], references: [id])
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  reviews     Review[]
+}
+
+model Order {
+  id              String          @id @default(uuid())
+  buyerId         String
+  buyer           User            @relation(fields: [buyerId], references: [id])
+  items           OrderItem[]
+  total           Float
+  status          OrderStatus     @default(PENDING)
+  paymentMethod   PaymentMethod
+  deliveryAddress Json?
+  couponCode      String?
+  createdAt       DateTime        @default(now())
+  returnRequests  ReturnRequest[]
+}
+
+model ReturnRequest {
+  id          String       @id @default(uuid())
+  orderId     String
+  order       Order        @relation(fields: [orderId], references: [id])
+  buyerId     String
+  buyer       User         @relation(fields: [buyerId], references: [id])
+  reason      String
+  status      ReturnStatus @default(PENDING)
+  adminNote   String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+enum ReturnStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REFUNDED
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  KONNECT
+  PAYMEE
+  CASH_ON_DELIVERY
+  CARD
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float
+}
+
+model ProductView {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  userId    String?
+  createdAt DateTime @default(now())
+}
+
+model SearchLog {
+  id        String   @id @default(uuid())
+  query     String
+  userId    String?
+  results   Int
+  createdAt DateTime @default(now())
+}
+
+model LiveSession {
+  id          String    @id @default(uuid())
+  title       String
+  vendorId    String
+  vendor      User      @relation("VendorLives", fields: [vendorId], references: [id])
+  isActive    Boolean   @default(true)
+  viewerCount Int       @default(0)
+  products    String[]
+  startedAt   DateTime  @default(now())
+  endedAt     DateTime?
+}
+
+model Review {
+  id           String    @id @default(uuid())
+  rating       Int
+  comment      String?
+  images       String[]
+  sellerReply  String?
+  repliedAt    DateTime?
+  userId       String
+  user         User      @relation(fields: [userId], references: [id])
+  productId    String?
+  product      Product?  @relation(fields: [productId], references: [id])
+  serviceId String?
+  service   Service? @relation(fields: [serviceId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Message {
+  id          String   @id @default(uuid())
+  senderId    String
+  sender      User     @relation("MessageSender", fields: [senderId], references: [id])
+  receiverId  String
+  receiver    User     @relation("MessageReceiver", fields: [receiverId], references: [id])
+  content     String
+  isRead      Boolean  @default(false)
+  productId   String?
+  createdAt   DateTime @default(now())
+}
+
+model Coupon {
+  id          String    @id @default(uuid())
+  code        String    @unique
+  discount    Float
+  type        String    @default("PERCENT")
+  minAmount   Float?
+  maxUses     Int?
+  usedCount   Int       @default(0)
+  expiresAt   DateTime?
+  isActive    Boolean   @default(true)
+  sellerId    String
+  seller      User      @relation(fields: [sellerId], references: [id])
+  createdAt   DateTime  @default(now())
+}
+
+model FlashSale {
+  id          String    @id @default(uuid())
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id])
+  discount    Float
+  startAt     DateTime
+  endAt       DateTime
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+}
+
+model Wishlist {
+  id        String         @id @default(uuid())
+  name      String
+  userId    String
+  user      User           @relation(fields: [userId], references: [id])
+  isPublic  Boolean        @default(false)
+  createdAt DateTime       @default(now())
+  items     WishlistItem[]
+}
+
+model WishlistItem {
+  id         String   @id @default(uuid())
+  wishlistId String
+  wishlist   Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+  addedAt    DateTime @default(now())
+
+  @@unique([wishlistId, productId])
+}
+
+model PayoutRequest {
+  id          String   @id @default(uuid())
+  sellerId    String
+  seller      User     @relation("SellerPayouts", fields: [sellerId], references: [id])
+  amount      Float
+  bankInfo    Json
+  status      String   @default("PENDING")
+  adminNote   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Bundle {
+  id          String        @id @default(uuid())
+  title       String
+  description String?
+  discount    Float
+  sellerId    String
+  seller      User          @relation("SellerBundles", fields: [sellerId], references: [id])
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  items       BundleItem[]
+}
+
+model BundleItem {
+  id        String  @id @default(uuid())
+  bundleId  String
+  bundle    Bundle  @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model GiftCard {
+  id          String    @id @default(uuid())
+  code        String    @unique
+  amount      Float
+  balance     Float
+  purchasedBy String
+  buyer       User      @relation("PurchasedGiftCards", fields: [purchasedBy], references: [id])
+  isActive    Boolean   @default(true)
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model AdCampaign {
+  id          String   @id @default(uuid())
+  sellerId    String
+  seller      User     @relation("SellerAdCampaigns", fields: [sellerId], references: [id])
+  productId   String?
+  product     Product? @relation("ProductAdCampaigns", fields: [productId], references: [id])
+  type        String   @default("PRODUCT_BOOST")
+  budget      Float    @default(0)
+  spent       Float    @default(0)
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  isActive    Boolean  @default(true)
+  startsAt    DateTime @default(now())
+  endsAt      DateTime
+  createdAt   DateTime @default(now())
+}
+
+model PriceAlert {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  targetPrice Float?
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+}

@@ -1,0 +1,18 @@
+CREATE TABLE "AdCampaign" (
+  "id"          TEXT NOT NULL,
+  "sellerId"    TEXT NOT NULL,
+  "productId"   TEXT,
+  "type"        TEXT NOT NULL DEFAULT 'PRODUCT_BOOST',
+  "budget"      DOUBLE PRECISION NOT NULL DEFAULT 0,
+  "spent"       DOUBLE PRECISION NOT NULL DEFAULT 0,
+  "impressions" INTEGER NOT NULL DEFAULT 0,
+  "clicks"      INTEGER NOT NULL DEFAULT 0,
+  "isActive"    BOOLEAN NOT NULL DEFAULT true,
+  "startsAt"    TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "endsAt"      TIMESTAMP(3) NOT NULL,
+  "createdAt"   TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "AdCampaign_pkey" PRIMARY KEY ("id")
+);
+
+ALTER TABLE "AdCampaign" ADD CONSTRAINT "AdCampaign_sellerId_fkey" FOREIGN KEY ("sellerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "AdCampaign" ADD CONSTRAINT "AdCampaign_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE SET NULL ON UPDATE CASCADE;
