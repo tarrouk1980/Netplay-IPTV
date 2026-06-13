@@ -16,14 +16,25 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function AnalytiquesPage() {
   const [data, setData] = useState<any>(null);
+  const [daily, setDaily] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get("/vendors/analytics")
-      .then(r => setData(r.data.data))
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    Promise.all([
+      api.get("/vendors/analytics"),
+      api.get("/vendors/revenue/daily"),
+    ]).then(([aRes, dRes]) => {
+      setData(aRes.data.data);
+      setDaily(dRes.data.data || []);
+    }).catch(() => {}).finally(() => setLoading(false));
   }, []);
+
+  const exportCsv = async () => {
+    const res = await api.get("/vendors/orders/export-csv", { responseType: "blob" });
+    const url = URL.createObjectURL(new Blob([res.data], { type: "text/csv" }));
+    const a = document.createElement("a"); a.href = url; a.download = "commandes.csv"; a.click();
+    URL.revokeObjectURL(url);
+  };
 
   if (loading) return (
     <div className="min-h-screen bg-slate-50 flex flex-col"><Header />
@@ -47,7 +58,12 @@ export default function AnalytiquesPage() {
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <Header />
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
-        <h1 className="text-2xl font-black text-slate-900 mb-1">📊 Analytiques</h1>
+        <div className="flex items-center justify-between mb-1 flex-wrap gap-3">
+          <h1 className="text-2xl font-black text-slate-900">📊 Analytiques</h1>
+          <button onClick={exportCsv} className="text-sm font-bold text-slate-700 border border-slate-200 px-4 py-2 rounded-xl hover:bg-slate-50 transition">
+            ⬇️ Exporter commandes CSV
+          </button>
+        </div>
         <p className="text-slate-500 text-sm mb-8">Performances de votre boutique</p>
 
         {/* KPI row */}
@@ -65,6 +81,37 @@ export default function AnalytiquesPage() {
             </div>
           ))}
         </div>
+
+        {/* Daily revenue chart */}
+        {daily.length > 0 && (() => {
+          const maxRev = Math.max(...daily.map(d => d.revenue), 1);
+          const last7 = daily.slice(-7);
+          return (
+            <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6" style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
+              <h2 className="font-black text-slate-800 mb-1">Revenus journaliers (30 derniers jours)</h2>
+              <p className="text-slate-400 text-xs mb-5">Revenus nets hors commissions</p>
+              <div className="flex items-end gap-0.5 h-32 mb-2">
+                {daily.map((d, i) => (
+                  <div key={i} title={`${d.date}: ${d.revenue} TND`}
+                    className="flex-1 rounded-t transition hover:opacity-80"
+                    style={{ height: `${Math.max(4, (d.revenue / maxRev) * 100)}%`, backgroundColor: d.revenue > 0 ? "#9f1239" : "#f1f5f9" }} />
+                ))}
+              </div>
+              <div className="flex justify-between text-xs text-slate-400 mt-1">
+                <span>{daily[0]?.date?.slice(5)}</span>
+                <span>{daily[daily.length - 1]?.date?.slice(5)}</span>
+              </div>
+              <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
+                {last7.map(d => (
+                  <div key={d.date} className="text-center shrink-0">
+                    <p className="text-xs font-bold text-slate-800">{d.revenue > 0 ? `${d.revenue.toFixed(0)} TND` : "—"}</p>
+                    <p className="text-xs text-slate-400">{d.date.slice(5)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           {/* Weekly orders bar chart */}

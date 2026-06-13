@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Param, Patch, Post, Put, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Put, Request, Res, UseGuards } from '@nestjs/common';
+import { Response } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { VendorsService } from './vendors.service';
 
@@ -57,6 +58,21 @@ export class VendorsController {
   @Get('analytics')
   getAnalytics(@Request() req: any) {
     return this.vendorsService.getAnalytics(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('orders/export-csv')
+  async exportOrdersCsv(@Request() req: any, @Res() res: Response) {
+    const csv = await this.vendorsService.exportOrdersCsv(req.user.id);
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="commandes.csv"');
+    res.send(csv);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('revenue/daily')
+  getDailyRevenue(@Request() req: any) {
+    return this.vendorsService.getDailyRevenue(req.user.id, 30);
   }
 
   @UseGuards(JwtAuthGuard)

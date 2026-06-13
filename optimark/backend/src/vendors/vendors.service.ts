@@ -268,6 +268,61 @@ export class VendorsService {
     };
   }
 
+  async exportOrdersCsv(sellerId: string): Promise<string> {
+    const orders = await this.prisma.order.findMany({
+      where: { items: { some: { product: { sellerId } } } },
+      include: {
+        buyer: { select: { name: true, email: true } },
+        items: { include: { product: { select: { title: true, sellerId: true } } } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const rows: string[] = ['ID,Date,Client,Email,Statut,Produits,Total TND'];
+    for (const o of orders) {
+      const sellerItems = o.items.filter(i => i.product.sellerId === sellerId);
+      const products = sellerItems.map(i => `${i.product.title}(x${i.quantity})`).join('; ');
+      const total = sellerItems.reduce((s, i) => s + i.price * i.quantity, 0);
+      rows.push([
+        o.id.slice(0, 8).toUpperCase(),
+        new Date(o.createdAt).toLocaleDateString('fr-FR'),
+        `"${o.buyer.name}"`,
+        o.buyer.email,
+        o.status,
+        `"${products}"`,
+        total.toFixed(2),
+      ].join(','));
+    }
+    return rows.join('\n');
+  }
+
+  async getDailyRevenue(sellerId: string, days = 30) {
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    const orders = await this.prisma.order.findMany({
+      where: {
+        createdAt: { gte: since },
+        status: { not: 'CANCELLED' },
+        items: { some: { product: { sellerId } } },
+      },
+      include: { items: { include: { product: { select: { sellerId: true } } } } },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const dayMap: Record<string, number> = {};
+    for (const o of orders) {
+      const day = o.createdAt.toISOString().slice(0, 10);
+      const rev = o.items.filter(i => i.product.sellerId === sellerId).reduce((s, i) => s + i.price * i.quantity, 0);
+      dayMap[day] = (dayMap[day] || 0) + rev;
+    }
+
+    const result: { date: string; revenue: number }[] = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      result.push({ date: d, revenue: parseFloat((dayMap[d] || 0).toFixed(2)) });
+    }
+    return { data: result, success: true };
+  }
+
   async getFollowStatus(followerId: string | undefined, sellerId: string) {
     if (!followerId) return { data: { following: false, followerCount: await this.prisma.sellerFollow.count({ where: { sellerId } }) }, success: true };
     const [follow, count] = await Promise.all([
