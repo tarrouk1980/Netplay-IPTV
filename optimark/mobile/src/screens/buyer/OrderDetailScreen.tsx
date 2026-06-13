@@ -120,7 +120,7 @@ export default function OrderDetailScreen({ route, navigation }: any) {
             <Text style={{ fontSize: 14, fontWeight: "800", color: "#92400e" }}>Partagez votre avis !</Text>
             <Text style={{ fontSize: 12, color: "#b45309", marginTop: 2 }}>Votre commande est livrée — laissez un avis sur vos produits.</Text>
           </View>
-          <TouchableOpacity onPress={() => navigation.navigate("ProductDetail", { id: order.items[0].product?.id })}>
+          <TouchableOpacity onPress={() => navigation.navigate("WriteReview", { productId: order.items[0].product?.id, productTitle: order.items[0].product?.title })}>
             <Text style={{ color: "#9f1239", fontWeight: "800", fontSize: 12 }}>Évaluer →</Text>
           </TouchableOpacity>
         </View>
