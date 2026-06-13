@@ -147,6 +147,11 @@ export class ProductsService {
     return { data: sorted, success: true };
   }
 
+  async trackView(productId: string, userId?: string) {
+    await this.prisma.productView.create({ data: { productId, userId } }).catch(() => {});
+    return { success: true };
+  }
+
   async getSuggestions(q: string) {
     if (!q || q.trim().length < 2) return { data: [], success: true };
     const results = await this.prisma.product.findMany({

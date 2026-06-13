@@ -48,7 +48,10 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     ]).then(([pRes, sRes, fRes, rRes, qRes, paRes]) => {
       if (!mounted) return;
       const prod = pRes?.data?.data || null;
-      if (prod) trackView(prod.id);
+      if (prod) {
+        trackView(prod.id);
+        api.post(`/products/${prod.id}/view`).catch(() => {});
+      }
       setProduct(prod);
       setSimilar(sRes?.data?.data || []);
       setFavorited(fRes?.data?.favorited || false);

@@ -44,6 +44,11 @@ export class ProductsController {
     return this.productsService.findOne(id);
   }
 
+  @Post(':id/view')
+  trackView(@Param('id') id: string, @Request() req: any) {
+    return this.productsService.trackView(id, req.user?.id);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Post()
   create(@Body() dto: CreateProductDto, @Request() req: any) {

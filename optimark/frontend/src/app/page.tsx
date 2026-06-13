@@ -28,17 +28,19 @@ export default function HomePage() {
   const [services, setServices] = useState<any[]>([]);
   const [flashSales, setFlashSales] = useState<any[]>([]);
   const [forYou, setForYou] = useState<any[]>([]);
+  const [topSellers, setTopSellers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
   useEffect(() => {
     const fetchAll = async () => {
-      const [tRes, lRes, sRes, fRes, fyRes] = await Promise.all([
+      const [tRes, lRes, sRes, fRes, fyRes, tsRes] = await Promise.all([
         api.get("/products/trending").catch(() => null),
         api.get("/live").catch(() => null),
         api.get("/recommendations/services", { params: { limit: 4 } }).catch(() => null),
         api.get("/flash-sales/active").catch(() => null),
         api.get("/recommendations/personalized?limit=8").catch(() => null),
+        api.get("/vendors/top", { params: { limit: 8 } }).catch(() => null),
       ]);
 
       let products = tRes?.data?.data || [];
@@ -52,6 +54,7 @@ export default function HomePage() {
       setServices(sRes?.data?.data || []);
       setFlashSales((fRes?.data?.data || fRes?.data || []).slice(0, 4));
       setForYou(fyRes?.data?.data || []);
+      setTopSellers(tsRes?.data?.data || []);
       setLoading(false);
     };
 
@@ -244,6 +247,41 @@ export default function HomePage() {
           )}
         </div>
       </section>
+
+      {/* ── Top Sellers ── */}
+      {topSellers.length > 0 && (
+        <section className="py-12 px-4 bg-white border-t border-slate-100">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-black text-slate-900">🏪 Boutiques à la une</h2>
+                <p className="text-slate-500 text-sm mt-0.5">Vendeurs vérifiés et recommandés</p>
+              </div>
+              <Link href="/boutiques" className="text-rose-800 font-bold text-sm hover:underline flex items-center gap-1">
+                Voir tout <span>→</span>
+              </Link>
+            </div>
+            <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+              {topSellers.map((s: any) => (
+                <Link key={s.id} href={`/boutique/${s.id}`}
+                  className="flex-shrink-0 w-44 bg-white border border-slate-100 rounded-2xl overflow-hidden hover:shadow-md hover:border-rose-100 transition group">
+                  <div className="h-20 bg-gradient-to-r from-rose-100 to-slate-100 relative overflow-hidden">
+                    {s.banner && <img src={s.banner} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />}
+                    {s.isVerified && <span className="absolute top-1.5 right-1.5 bg-rose-800 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">✓</span>}
+                  </div>
+                  <div className="p-3">
+                    <div className="w-9 h-9 rounded-lg bg-white border border-slate-100 shadow -mt-6 mb-2 flex items-center justify-center text-lg overflow-hidden">
+                      {s.logo ? <img src={s.logo} alt="" className="w-full h-full object-cover" /> : "🏪"}
+                    </div>
+                    <p className="font-black text-slate-800 text-xs truncate">{s.storeName}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">📦 {s.productCount} produits</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── Popular Services ── */}
       <section className="py-12 px-4 bg-slate-50">
