@@ -147,6 +147,20 @@ export class ProductsService {
     return { data: sorted, success: true };
   }
 
+  async getSuggestions(q: string) {
+    if (!q || q.trim().length < 2) return { data: [], success: true };
+    const results = await this.prisma.product.findMany({
+      where: {
+        isActive: true,
+        title: { contains: q.trim(), mode: 'insensitive' },
+      },
+      select: { id: true, title: true, category: true, price: true, promoPrice: true, images: true },
+      take: 8,
+      orderBy: { createdAt: 'desc' },
+    });
+    return { data: results, success: true };
+  }
+
   async bulkCreate(products: CreateProductDto[], sellerId: string) {
     const created = await Promise.all(
       (products || []).map(dto =>

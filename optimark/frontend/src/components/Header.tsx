@@ -36,16 +36,20 @@ export default function Header() {
     if (val.trim().length < 2) { setSuggestions([]); setShowSuggestions(false); return; }
     suggestTimeout.current = setTimeout(async () => {
       try {
-        const res = await api.get("/search", { params: { q: val, type: "all" } });
-        const data = res.data?.data || {};
+        const [prodRes, svcRes] = await Promise.allSettled([
+          api.get("/products/suggestions", { params: { q: val } }),
+          api.get("/search", { params: { q: val, type: "services" } }),
+        ]);
+        const products = prodRes.status === "fulfilled" ? (prodRes.value.data?.data || []) : [];
+        const services = svcRes.status === "fulfilled" ? (svcRes.value.data?.data?.services || []) : [];
         const items = [
-          ...(data.products || []).slice(0, 3).map((p: any) => ({ type: "product", id: p.id, label: p.title, sub: `${Number(p.price).toFixed(0)} TND`, href: `/produits/${p.id}` })),
-          ...(data.services || []).slice(0, 2).map((s: any) => ({ type: "service", id: s.id, label: s.title, sub: "Service", href: `/services/${s.id}` })),
+          ...products.slice(0, 5).map((p: any) => ({ type: "product", id: p.id, label: p.title, sub: `${Number(p.promoPrice ?? p.price).toFixed(0)} TND`, href: `/produits/${p.id}` })),
+          ...services.slice(0, 2).map((s: any) => ({ type: "service", id: s.id, label: s.title, sub: "Service", href: `/services/${s.id}` })),
         ];
         setSuggestions(items);
         setShowSuggestions(items.length > 0);
       } catch {}
-    }, 300);
+    }, 250);
   };
 
   useEffect(() => {
