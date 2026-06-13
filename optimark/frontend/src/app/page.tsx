@@ -9,6 +9,7 @@ import ServiceCard from "@/components/ServiceCard";
 import api from "@/lib/api";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const CATEGORIES = [
   { icon: "📱", label: "Électronique", href: "/produits?cat=electronique" },
@@ -25,15 +26,18 @@ export default function HomePage() {
   const [lives, setLives] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
   const [flashSales, setFlashSales] = useState<any[]>([]);
+  const [forYou, setForYou] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchAll = async () => {
-      const [tRes, lRes, sRes, fRes] = await Promise.all([
+      const [tRes, lRes, sRes, fRes, fyRes] = await Promise.all([
         api.get("/products/trending").catch(() => null),
         api.get("/live").catch(() => null),
         api.get("/recommendations/services", { params: { limit: 4 } }).catch(() => null),
         api.get("/flash-sales/active").catch(() => null),
+        api.get("/recommendations/personalized?limit=8").catch(() => null),
       ]);
 
       let products = tRes?.data?.data || [];
@@ -46,6 +50,7 @@ export default function HomePage() {
       setLives(lRes?.data?.data || []);
       setServices(sRes?.data?.data || []);
       setFlashSales((fRes?.data?.data || fRes?.data || []).slice(0, 4));
+      setForYou(fyRes?.data?.data || []);
       setLoading(false);
     };
 
@@ -172,6 +177,28 @@ export default function HomePage() {
           )}
         </div>
       </section>
+
+      {/* ── For You (personalized) ── */}
+      {user && forYou.length > 0 && (
+        <section className="py-12 px-4 bg-white border-t border-slate-100">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-black text-slate-900">✨ Pour vous</h2>
+                <p className="text-slate-500 text-sm mt-0.5">Sélectionné selon vos préférences</p>
+              </div>
+              <Link href="/produits" className="text-rose-800 font-bold text-sm hover:underline flex items-center gap-1">
+                Voir tout <span>→</span>
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {forYou.map((p: any) => (
+                <ProductCard key={p.id} id={p.id} title={p.title} price={p.promoPrice || p.price} originalPrice={p.promoPrice ? p.price : undefined} seller={p.seller?.name || "Vendeur"} rating={0} isVerified={p.seller?.isVerified} category={p.category} image={p.images?.[0]} isBestSeller={p.isBestSeller} isNewArrival={p.isNewArrival} stock={p.stock} stockAlert={p.stockAlert} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── Live Commerce ── */}
       <section className="py-12 px-4 bg-white">
