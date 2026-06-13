@@ -91,6 +91,7 @@ function SellerTabs() {
       <Tab.Screen name="SellerProducts" component={SellerProductsScreen} options={{ title: "Mes produits", tabBarLabel: "Produits", tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>📋</Text> }} />
       <Tab.Screen name="SellerOrders" component={SellerOrdersScreen} options={{ title: "Commandes", tabBarLabel: "Commandes", tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>📬</Text> }} />
       <Tab.Screen name="SellerAnalytics" component={SellerAnalyticsScreen} options={{ title: "Analytiques", tabBarLabel: "Stats", tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>📊</Text> }} />
+      <Tab.Screen name="SellerMessages" component={MessagesScreen} options={{ title: "Messages", tabBarLabel: "Messages", tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>💬</Text> }} />
     </Tab.Navigator>
   );
 }
