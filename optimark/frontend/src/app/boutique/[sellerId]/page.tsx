@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
 
-type BoutiqueTab = "products" | "services" | "reviews";
+type BoutiqueTab = "products" | "services" | "reviews" | "collections";
 
 export default function BoutiquePage({ params }: { params: Promise<{ sellerId: string }> }) {
   const { sellerId } = use(params);
@@ -17,6 +17,7 @@ export default function BoutiquePage({ params }: { params: Promise<{ sellerId: s
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<BoutiqueTab>("products");
+  const [collections, setCollections] = useState<any[]>([]);
   const [following, setFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
   const [followLoading, setFollowLoading] = useState(false);
@@ -26,6 +27,7 @@ export default function BoutiquePage({ params }: { params: Promise<{ sellerId: s
       .then(res => setData(res.data?.data))
       .catch(() => setData(null))
       .finally(() => setLoading(false));
+    api.get(`/collections/seller/${sellerId}`).then(res => setCollections(res.data?.data || [])).catch(() => {});
     api.get(`/vendors/${sellerId}/follow/status`)
       .then(res => {
         setFollowing(res.data?.data?.following || false);
@@ -135,6 +137,7 @@ export default function BoutiquePage({ params }: { params: Promise<{ sellerId: s
         <div className="flex gap-2 mb-6 flex-wrap">
           {([
             { key: "products", label: `📦 Produits (${products.length})` },
+            ...(collections.length > 0 ? [{ key: "collections", label: `🗂️ Collections (${collections.length})` }] : []),
             ...(services.length > 0 ? [{ key: "services", label: `💼 Services (${services.length})` }] : []),
             ...(reviews.length > 0 ? [{ key: "reviews", label: `⭐ Avis (${reviews.length})` }] : []),
           ] as { key: BoutiqueTab; label: string }[]).map(t => (
@@ -167,6 +170,40 @@ export default function BoutiquePage({ params }: { params: Promise<{ sellerId: s
               ))}
             </div>
           )
+        )}
+
+        {/* Collections tab */}
+        {tab === "collections" && (
+          <div className="space-y-6">
+            {collections.map((col: any) => (
+              <div key={col.id} className="bg-white rounded-2xl border border-slate-100 p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  {col.cover && <img src={col.cover} alt={col.name} className="w-12 h-12 rounded-xl object-cover" />}
+                  <div>
+                    <h2 className="font-black text-slate-900">{col.name}</h2>
+                    {col.description && <p className="text-slate-500 text-xs">{col.description}</p>}
+                  </div>
+                </div>
+                {col.items?.length > 0 ? (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {col.items.map((item: any) => (
+                      <Link key={item.id} href={`/produits/${item.product.id}`} className="group">
+                        <div className="aspect-square rounded-xl overflow-hidden bg-slate-100 mb-2">
+                          {item.product.images?.[0] ? (
+                            <img src={item.product.images[0]} alt={item.product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                          ) : <div className="w-full h-full flex items-center justify-center text-3xl">📦</div>}
+                        </div>
+                        <p className="text-sm font-semibold text-slate-800 truncate">{item.product.title}</p>
+                        <p className="text-sm font-black text-rose-800">{(item.product.promoPrice || item.product.price).toFixed(2)} TND</p>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-slate-400 text-sm">Aucun produit dans cette collection.</p>
+                )}
+              </div>
+            ))}
+          </div>
         )}
 
         {/* Services tab */}
