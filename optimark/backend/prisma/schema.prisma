@@ -161,6 +161,16 @@ model Order {
   couponCode      String?
   createdAt       DateTime        @default(now())
   returnRequests  ReturnRequest[]
+  statusHistory   OrderStatusHistory[]
+}
+
+model OrderStatusHistory {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id])
+  status    String
+  note      String?
+  createdAt DateTime @default(now())
 }
 
 model ReturnRequest {

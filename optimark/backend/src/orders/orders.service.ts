@@ -106,10 +106,11 @@ export class OrdersService {
       include: {
         items: { include: { product: true } },
         buyer: { select: { id: true, name: true, email: true } },
+        statusHistory: { orderBy: { createdAt: 'asc' } },
       },
-    });
+    } as any);
     if (!order) throw new NotFoundException('Commande introuvable');
-    if (order.buyerId !== userId) throw new ForbiddenException('Accès refusé');
+    if ((order as any).buyerId !== userId) throw new ForbiddenException('Accès refusé');
     return { data: order, message: 'Commande récupérée', success: true };
   }
 
@@ -139,7 +140,10 @@ export class OrdersService {
     if (order.status !== 'PENDING') throw new ForbiddenException('Seules les commandes en attente peuvent être annulées.');
 
     const updated = await this.prisma.order.update({ where: { id }, data: { status: 'CANCELLED' } });
-    await this.notifications.create(buyerId, 'ORDER_STATUS', `Votre commande #${id.slice(0, 8)} a été annulée.`);
+    await Promise.all([
+      this.notifications.create(buyerId, 'ORDER_STATUS', `Votre commande #${id.slice(0, 8)} a été annulée.`),
+      (this.prisma.orderStatusHistory as any).create({ data: { orderId: id, status: 'CANCELLED' } }).catch(() => {}),
+    ]);
     return { data: updated, message: 'Commande annulée', success: true };
   }
 
@@ -149,11 +153,10 @@ export class OrdersService {
 
     const updated = await this.prisma.order.update({ where: { id }, data: { status: status as any } });
 
-    await this.notifications.create(
-      order.buyerId,
-      'ORDER_STATUS',
-      `Votre commande #${id.slice(0, 8)} est maintenant : ${STATUS_LABELS[status] || status}.`,
-    );
+    await Promise.all([
+      this.notifications.create(order.buyerId, 'ORDER_STATUS', `Votre commande #${id.slice(0, 8)} est maintenant : ${STATUS_LABELS[status] || status}.`),
+      (this.prisma.orderStatusHistory as any).create({ data: { orderId: id, status } }).catch(() => {}),
+    ]);
 
     // Award loyalty points when order is delivered
     if (status === 'DELIVERED') {
