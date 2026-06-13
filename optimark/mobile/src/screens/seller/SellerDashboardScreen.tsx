@@ -136,6 +136,14 @@ export default function SellerDashboardScreen({ navigation }: any) {
             <Text style={s.actionIcon}>🏆</Text>
             <Text style={s.actionLabel}>Mon score</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={s.actionBtn} onPress={() => navigation.navigate("SellerCollections")}>
+            <Text style={s.actionIcon}>🗂️</Text>
+            <Text style={s.actionLabel}>Collections</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={s.actionBtn} onPress={() => navigation.navigate("SellerFaq")}>
+            <Text style={s.actionIcon}>❓</Text>
+            <Text style={s.actionLabel}>FAQ</Text>
+          </TouchableOpacity>
         </View>
       </View>
 

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AddressesModule } from './addresses/addresses.module';
 import { CollectionsModule } from './collections/collections.module';
+import { StoreFaqModule } from './store-faq/store-faq.module';
 import { AdsModule } from './ads/ads.module';
 import { GiftCardsModule } from './gift-cards/gift-cards.module';
 import { PriceAlertsModule } from './price-alerts/price-alerts.module';
@@ -64,6 +65,7 @@ import { VendorsModule } from './vendors/vendors.module';
     AdsModule,
     AddressesModule,
     CollectionsModule,
+    StoreFaqModule,
   ],
 })
 export class AppModule {}

@@ -42,6 +42,7 @@ model User {
   adCampaigns        AdCampaign[] @relation("SellerAdCampaigns")
   savedAddresses     SavedAddress[]
   collections        Collection[]
+  storeFaqs          StoreFaq[]
 }
 
 model SavedAddress {
@@ -100,6 +101,8 @@ model Store {
   cover       String?
   phone       String?
   address     String?
+  bannerText  String?
+  bannerColor String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -432,4 +435,14 @@ model PriceAlert {
   createdAt DateTime @default(now())
 
   @@unique([userId, productId])
+}
+
+model StoreFaq {
+  id        String   @id @default(uuid())
+  sellerId  String
+  seller    User     @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  question  String
+  answer    String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
 }

@@ -1,0 +1,10 @@
+CREATE TABLE "StoreFaq" (
+  "id" TEXT NOT NULL,
+  "sellerId" TEXT NOT NULL,
+  "question" TEXT NOT NULL,
+  "answer" TEXT NOT NULL,
+  "position" INTEGER NOT NULL DEFAULT 0,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "StoreFaq_pkey" PRIMARY KEY ("id")
+);
+ALTER TABLE "StoreFaq" ADD CONSTRAINT "StoreFaq_sellerId_fkey" FOREIGN KEY ("sellerId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

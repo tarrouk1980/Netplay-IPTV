@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator,
 import api from "../../api";
 
 export default function SellerStoreEditorScreen({ navigation }: any) {
-  const [form, setForm] = useState({ name: "", description: "", logo: "", cover: "", phone: "", address: "" });
+  const [form, setForm] = useState({ name: "", description: "", logo: "", cover: "", phone: "", address: "", bannerText: "", bannerColor: "#9f1239" });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -18,6 +18,8 @@ export default function SellerStoreEditorScreen({ navigation }: any) {
           cover: s.cover || "",
           phone: s.phone || "",
           address: s.address || "",
+          bannerText: s.bannerText || "",
+          bannerColor: s.bannerColor || "#9f1239",
         });
       })
       .catch(() => {})
@@ -83,7 +85,29 @@ export default function SellerStoreEditorScreen({ navigation }: any) {
         <Field label="Téléphone" field="phone" placeholder="+216 XX XXX XXX" />
         <Field label="Adresse" field="address" placeholder="Ex: 23 Avenue Habib Bourguiba, Tunis" />
         <Field label="URL du logo" field="logo" placeholder="https://..." />
-        <Field label="URL de la bannière" field="cover" placeholder="https://..." />
+        <Field label="URL de la photo de couverture" field="cover" placeholder="https://..." />
+        <View style={s.field}>
+          <Text style={s.label}>📢 Bannière promotionnelle</Text>
+          <TextInput
+            value={form.bannerText}
+            onChangeText={v => setForm(f => ({ ...f, bannerText: v.slice(0, 120) }))}
+            placeholder="Ex: 🎉 Soldes d'été — -30% sur tout !"
+            placeholderTextColor="#94a3b8"
+            style={s.input}
+            maxLength={120}
+          />
+          <View style={{ flexDirection: "row", gap: 10, marginTop: 8, flexWrap: "wrap" }}>
+            {["#9f1239", "#1e3a5f", "#065f46", "#92400e", "#1e293b"].map(c => (
+              <TouchableOpacity key={c} onPress={() => setForm(f => ({ ...f, bannerColor: c }))}
+                style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: c, borderWidth: form.bannerColor === c ? 3 : 0, borderColor: "#fff" }} />
+            ))}
+          </View>
+          {!!form.bannerText && (
+            <View style={{ marginTop: 8, borderRadius: 10, paddingVertical: 10, paddingHorizontal: 14, backgroundColor: form.bannerColor }}>
+              <Text style={{ color: "#fff", fontWeight: "700", fontSize: 13, textAlign: "center" }}>{form.bannerText}</Text>
+            </View>
+          )}
+        </View>
       </View>
 
       <TouchableOpacity style={[s.saveBtn, saving && { opacity: 0.6 }]} onPress={save} disabled={saving}>

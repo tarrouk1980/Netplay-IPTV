@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
 
-type BoutiqueTab = "products" | "services" | "reviews" | "collections";
+type BoutiqueTab = "products" | "services" | "reviews" | "collections" | "faq";
 
 export default function BoutiquePage({ params }: { params: Promise<{ sellerId: string }> }) {
   const { sellerId } = use(params);
@@ -18,6 +18,8 @@ export default function BoutiquePage({ params }: { params: Promise<{ sellerId: s
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<BoutiqueTab>("products");
   const [collections, setCollections] = useState<any[]>([]);
+  const [faqs, setFaqs] = useState<any[]>([]);
+  const [openFaq, setOpenFaq] = useState<string | null>(null);
   const [following, setFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
   const [followLoading, setFollowLoading] = useState(false);
@@ -28,6 +30,7 @@ export default function BoutiquePage({ params }: { params: Promise<{ sellerId: s
       .catch(() => setData(null))
       .finally(() => setLoading(false));
     api.get(`/collections/seller/${sellerId}`).then(res => setCollections(res.data?.data || [])).catch(() => {});
+    api.get(`/store-faq/seller/${sellerId}`).then(res => setFaqs(res.data?.data || [])).catch(() => {});
     api.get(`/vendors/${sellerId}/follow/status`)
       .then(res => {
         setFollowing(res.data?.data?.following || false);
@@ -84,6 +87,13 @@ export default function BoutiquePage({ params }: { params: Promise<{ sellerId: s
     <div className="min-h-screen bg-white flex flex-col">
       <Header />
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
+        {/* Promo banner */}
+        {store?.bannerText && (
+          <div className="rounded-xl px-5 py-3 mb-4 text-white text-sm font-semibold text-center" style={{ backgroundColor: store.bannerColor || "#9f1239" }}>
+            {store.bannerText}
+          </div>
+        )}
+
         {/* Store header */}
         <div className="rounded-2xl border border-slate-100 overflow-hidden mb-8" style={{ boxShadow: "0 2px 16px rgba(0,0,0,0.07)" }}>
           <div className="h-48 bg-gradient-to-r from-rose-100 to-rose-50 relative overflow-hidden">
@@ -140,6 +150,7 @@ export default function BoutiquePage({ params }: { params: Promise<{ sellerId: s
             ...(collections.length > 0 ? [{ key: "collections", label: `🗂️ Collections (${collections.length})` }] : []),
             ...(services.length > 0 ? [{ key: "services", label: `💼 Services (${services.length})` }] : []),
             ...(reviews.length > 0 ? [{ key: "reviews", label: `⭐ Avis (${reviews.length})` }] : []),
+            ...(faqs.length > 0 ? [{ key: "faq", label: `❓ FAQ (${faqs.length})` }] : []),
           ] as { key: BoutiqueTab; label: string }[]).map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
               className={`px-4 py-2 rounded-xl text-sm font-bold transition ${tab === t.key ? "bg-rose-800 text-white" : "bg-white border border-slate-200 text-slate-600 hover:border-rose-300"}`}>
@@ -240,6 +251,25 @@ export default function BoutiquePage({ params }: { params: Promise<{ sellerId: s
                   </span>
                 </div>
                 {r.comment && <p className="text-slate-600 text-sm">{r.comment}</p>}
+              </div>
+            ))}
+          </div>
+        )}
+        {/* FAQ tab */}
+        {tab === "faq" && (
+          <div className="max-w-2xl space-y-3">
+            {faqs.map((faq: any) => (
+              <div key={faq.id} className="bg-white rounded-xl border border-slate-100 overflow-hidden">
+                <button onClick={() => setOpenFaq(openFaq === faq.id ? null : faq.id)}
+                  className="w-full text-left px-5 py-4 flex items-center justify-between gap-3 hover:bg-slate-50 transition">
+                  <span className="font-semibold text-slate-800 text-sm">{faq.question}</span>
+                  <span className="text-slate-400 shrink-0 text-lg">{openFaq === faq.id ? "−" : "+"}</span>
+                </button>
+                {openFaq === faq.id && (
+                  <div className="px-5 pb-4 text-slate-500 text-sm leading-relaxed border-t border-slate-50">
+                    {faq.answer}
+                  </div>
+                )}
               </div>
             ))}
           </div>

@@ -11,6 +11,8 @@ export default function SellerStoreScreen({ route, navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [following, setFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
+  const [faqs, setFaqs] = useState<any[]>([]);
+  const [openFaq, setOpenFaq] = useState<string | null>(null);
   const { addItem } = useCart();
   const { user } = useAuth();
 
@@ -19,11 +21,13 @@ export default function SellerStoreScreen({ route, navigation }: any) {
       api.get(`/vendors/store/public/${sellerId}`).catch(() => null),
       api.get(`/products?sellerId=${sellerId}`).catch(() => null),
       api.get(`/vendors/${sellerId}/follow/status`).catch(() => null),
-    ]).then(([storeRes, prodRes, followRes]) => {
+      api.get(`/store-faq/seller/${sellerId}`).catch(() => null),
+    ]).then(([storeRes, prodRes, followRes, faqRes]) => {
       setSeller(storeRes?.data?.data || storeRes?.data || null);
       setProducts(prodRes?.data?.data || []);
       setFollowing(followRes?.data?.data?.following || false);
       setFollowerCount(followRes?.data?.data?.followerCount || 0);
+      setFaqs(faqRes?.data?.data || []);
     }).finally(() => setLoading(false));
   }, [sellerId]);
 
@@ -62,6 +66,11 @@ export default function SellerStoreScreen({ route, navigation }: any) {
       renderItem={renderProduct}
       ListHeaderComponent={
         <View style={s.header}>
+          {seller?.bannerText ? (
+            <View style={[s.bannerBox, { backgroundColor: seller.bannerColor || "#9f1239" }]}>
+              <Text style={s.bannerText}>{seller.bannerText}</Text>
+            </View>
+          ) : null}
           <View style={s.sellerAvatar}>
             <Text style={s.sellerAvatarText}>{seller?.name?.charAt(0)?.toUpperCase() || "V"}</Text>
           </View>
@@ -118,12 +127,31 @@ export default function SellerStoreScreen({ route, navigation }: any) {
           <Text style={s.emptyText}>Aucun produit pour l'instant</Text>
         </View>
       }
+      ListFooterComponent={faqs.length > 0 ? (
+        <View style={{ marginTop: 24, gap: 8 }}>
+          <Text style={s.sectionTitle}>❓ FAQ</Text>
+          {faqs.map((faq: any) => (
+            <TouchableOpacity key={faq.id} onPress={() => setOpenFaq(openFaq === faq.id ? null : faq.id)}
+              style={{ backgroundColor: '#fff', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#f1f5f9' }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text style={{ flex: 1, fontSize: 13, fontWeight: '700', color: '#1e293b', marginRight: 8 }}>{faq.question}</Text>
+                <Text style={{ color: '#9f1239', fontSize: 18, fontWeight: '700' }}>{openFaq === faq.id ? '−' : '+'}</Text>
+              </View>
+              {openFaq === faq.id && (
+                <Text style={{ fontSize: 13, color: '#64748b', marginTop: 8, lineHeight: 20 }}>{faq.answer}</Text>
+              )}
+            </TouchableOpacity>
+          ))}
+        </View>
+      ) : null}
     />
   );
 }
 
 const s = StyleSheet.create({
   header: { marginBottom: 8 },
+  bannerBox: { borderRadius: 12, paddingVertical: 10, paddingHorizontal: 16, marginBottom: 14, alignItems: "center" },
+  bannerText: { color: "#fff", fontWeight: "700", fontSize: 13, textAlign: "center" },
   sellerAvatar: { width: 80, height: 80, borderRadius: 40, backgroundColor: "#9f1239", alignItems: "center", justifyContent: "center", alignSelf: "center", marginBottom: 12 },
   sellerAvatarText: { fontSize: 36, color: "#fff", fontWeight: "900" },
   sellerName: { fontSize: 22, fontWeight: "900", color: "#1e293b", textAlign: "center" },
