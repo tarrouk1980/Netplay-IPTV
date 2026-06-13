@@ -475,6 +475,30 @@ export class VendorsService {
     };
   }
 
+  async getFollowedSellers(userId: string) {
+    const follows = await this.prisma.sellerFollow.findMany({
+      where: { followerId: userId },
+      include: {
+        seller: {
+          select: {
+            id: true,
+            name: true,
+            store: { select: { name: true, logo: true, description: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    const data = follows.map(f => ({
+      sellerId: f.sellerId,
+      name: f.seller.store?.name || f.seller.name,
+      logo: f.seller.store?.logo,
+      description: f.seller.store?.description,
+      followedAt: f.createdAt,
+    }));
+    return { data, success: true };
+  }
+
   async bulkUpdatePrices(sellerId: string, updates: { id: string; price?: number; promoPrice?: number | null }[]) {
     const results = await Promise.all(updates.map(async ({ id, price, promoPrice }) => {
       const product = await this.prisma.product.findUnique({ where: { id }, select: { sellerId: true } });

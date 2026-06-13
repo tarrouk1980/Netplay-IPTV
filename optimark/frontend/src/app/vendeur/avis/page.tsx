@@ -30,10 +30,41 @@ export default function SellerReviewsPage() {
 
   const STARS = (n: number) => Array.from({ length: 5 }, (_, i) => i < n ? "★" : "☆").join("");
 
+  const avgRating = reviews.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) : 0;
+  const distribution = [5, 4, 3, 2, 1].map(star => ({
+    star,
+    count: reviews.filter(r => r.rating === star).length,
+    pct: reviews.length ? (reviews.filter(r => r.rating === star).length / reviews.length) * 100 : 0,
+  }));
+
   return (
     <div className="min-h-screen bg-slate-50 p-6">
       <div className="max-w-3xl mx-auto">
         <h1 className="text-2xl font-black text-slate-900 mb-6">⭐ Avis clients</h1>
+
+        {!loading && reviews.length > 0 && (
+          <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6" style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
+            <div className="flex items-center gap-8 flex-wrap">
+              <div className="text-center">
+                <p className="text-5xl font-black text-amber-500">{avgRating.toFixed(1)}</p>
+                <p className="text-amber-400 text-lg mt-1">{"★".repeat(Math.round(avgRating))}{"☆".repeat(5 - Math.round(avgRating))}</p>
+                <p className="text-slate-400 text-xs mt-1">{reviews.length} avis</p>
+              </div>
+              <div className="flex-1 min-w-[200px] space-y-1.5">
+                {distribution.map(({ star, count, pct }) => (
+                  <div key={star} className="flex items-center gap-2">
+                    <span className="text-xs text-slate-500 w-4">{star}</span>
+                    <span className="text-amber-400 text-xs">★</span>
+                    <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-amber-400 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                    </div>
+                    <span className="text-xs text-slate-400 w-6">{count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="space-y-4">{[...Array(3)].map((_, i) => <div key={i} className="h-32 skeleton rounded-xl" />)}</div>

@@ -126,6 +126,12 @@ export class VendorsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('following/my')
+  getFollowing(@Request() req: any) {
+    return this.vendorsService.getFollowedSellers(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post('products/bulk-price')
   bulkUpdatePrices(@Request() req: any, @Body('updates') updates: { id: string; price?: number; promoPrice?: number | null }[]) {
     return this.vendorsService.bulkUpdatePrices(req.user.id, updates);

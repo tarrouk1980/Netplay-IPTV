@@ -183,6 +183,12 @@ export default function ProfileScreen({ navigation }: any) {
           <Text style={s.menuArrow}>›</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity style={s.menuItem} onPress={() => navigation.navigate("FollowedSellers")}>
+          <Text style={s.menuIcon}>🔔</Text>
+          <Text style={s.menuLabel}>Boutiques suivies</Text>
+          <Text style={s.menuArrow}>›</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={s.menuItem} onPress={() => navigation.navigate("Referral")}>
           <Text style={s.menuIcon}>🤝</Text>
           <Text style={s.menuLabel}>Parrainage</Text>
