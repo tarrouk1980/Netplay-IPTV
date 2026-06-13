@@ -170,6 +170,12 @@ export default function ProfileScreen({ navigation }: any) {
           <Text style={s.menuArrow}>›</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity style={s.menuItem} onPress={() => navigation.navigate("Wishlist")}>
+          <Text style={s.menuIcon}>📋</Text>
+          <Text style={s.menuLabel}>Mes listes</Text>
+          <Text style={s.menuArrow}>›</Text>
+        </TouchableOpacity>
+
         {isSeller && (
           <TouchableOpacity style={s.menuItem} onPress={() => navigation.navigate("SellerTab")}>
             <Text style={s.menuIcon}>🏪</Text>
