@@ -44,6 +44,7 @@ import SellerFaqScreen from "../screens/seller/SellerFaqScreen";
 import FollowedSellersScreen from "../screens/buyer/FollowedSellersScreen";
 import MyReviewsScreen from "../screens/buyer/MyReviewsScreen";
 import NotifPreferencesScreen from "../screens/buyer/NotifPreferencesScreen";
+import SellerBulkPriceScreen from "../screens/seller/SellerBulkPriceScreen";
 import SellerBundlesScreen from "../screens/seller/SellerBundlesScreen";
 import GiftCardsScreen from "../screens/buyer/GiftCardsScreen";
 import PriceAlertsScreen from "../screens/buyer/PriceAlertsScreen";
@@ -148,6 +149,7 @@ export default function AppNavigator() {
         <Stack.Screen name="FollowedSellers" component={FollowedSellersScreen} options={{ title: "🔔 Boutiques suivies" }} />
         <Stack.Screen name="MyReviews" component={MyReviewsScreen} options={{ title: "⭐ Mes avis" }} />
         <Stack.Screen name="NotifPreferences" component={NotifPreferencesScreen} options={{ title: "⚙️ Préférences notifs" }} />
+        <Stack.Screen name="SellerBulkPrice" component={SellerBulkPriceScreen} options={{ title: "💲 Prix en masse" }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

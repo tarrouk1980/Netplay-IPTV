@@ -29,4 +29,16 @@ export class AuthController {
   upgradeToSeller(@Request() req: any) {
     return this.authService.upgradeToSeller(req.user.id);
   }
+
+  @Patch('change-password')
+  @UseGuards(JwtAuthGuard)
+  changePassword(@Request() req: any, @Body('currentPassword') curr: string, @Body('newPassword') next: string) {
+    return this.authService.changePassword(req.user.id, curr, next);
+  }
+
+  @Patch('profile')
+  @UseGuards(JwtAuthGuard)
+  updateProfile(@Request() req: any, @Body() dto: { name?: string; phone?: string }) {
+    return this.authService.updateProfile(req.user.id, dto);
+  }
 }
