@@ -69,9 +69,14 @@ export default function HomeScreen({ navigation }: any) {
       <View style={s.hero}>
         <Text style={s.heroTitle}>OPTIMARK</Text>
         <Text style={s.heroSub}>Le meilleur du commerce tunisien 🇹🇳</Text>
-        <TouchableOpacity style={s.heroBtn} onPress={() => navigation.navigate("FlashSales")}>
-          <Text style={s.heroBtnText}>⚡ Voir les ventes flash</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: "row", gap: 8 }}>
+          <TouchableOpacity style={s.heroBtn} onPress={() => navigation.navigate("FlashSales")}>
+            <Text style={s.heroBtnText}>⚡ Flash</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[s.heroBtn, { backgroundColor: "rgba(255,255,255,0.15)" }]} onPress={() => navigation.navigate("Promotions")}>
+            <Text style={s.heroBtnText}>🏷️ Promos</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Stats strip */}

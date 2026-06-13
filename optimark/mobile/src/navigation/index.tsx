@@ -47,6 +47,7 @@ import NotifPreferencesScreen from "../screens/buyer/NotifPreferencesScreen";
 import SellerBulkPriceScreen from "../screens/seller/SellerBulkPriceScreen";
 import RecentlyViewedScreen from "../screens/buyer/RecentlyViewedScreen";
 import SellerCustomersScreen from "../screens/seller/SellerCustomersScreen";
+import PromotionsScreen from "../screens/buyer/PromotionsScreen";
 import SellerBundlesScreen from "../screens/seller/SellerBundlesScreen";
 import GiftCardsScreen from "../screens/buyer/GiftCardsScreen";
 import PriceAlertsScreen from "../screens/buyer/PriceAlertsScreen";
@@ -154,6 +155,7 @@ export default function AppNavigator() {
         <Stack.Screen name="SellerBulkPrice" component={SellerBulkPriceScreen} options={{ title: "💲 Prix en masse" }} />
         <Stack.Screen name="RecentlyViewed" component={RecentlyViewedScreen} options={{ title: "🕐 Récemment vus" }} />
         <Stack.Screen name="SellerCustomers" component={SellerCustomersScreen} options={{ title: "👥 Mes clients" }} />
+        <Stack.Screen name="Promotions" component={PromotionsScreen} options={{ title: "🏷️ Promotions" }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
