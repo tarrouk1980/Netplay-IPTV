@@ -35,6 +35,7 @@ model User {
   referralCode      String?           @unique
   referredById      String?
   bundles           Bundle[]          @relation("SellerBundles")
+  wishlists         Wishlist[]
 }
 
 model SellerFollow {
@@ -113,6 +114,7 @@ model Product {
   flashSales    FlashSale[]
   questions     ProductQuestion[]
   bundleItems   BundleItem[]
+  wishlistItems WishlistItem[]
 }
 
 model ProductQuestion {
@@ -278,6 +280,27 @@ model FlashSale {
   endAt       DateTime
   isActive    Boolean   @default(true)
   createdAt   DateTime  @default(now())
+}
+
+model Wishlist {
+  id        String         @id @default(uuid())
+  name      String
+  userId    String
+  user      User           @relation(fields: [userId], references: [id])
+  isPublic  Boolean        @default(false)
+  createdAt DateTime       @default(now())
+  items     WishlistItem[]
+}
+
+model WishlistItem {
+  id         String   @id @default(uuid())
+  wishlistId String
+  wishlist   Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+  addedAt    DateTime @default(now())
+
+  @@unique([wishlistId, productId])
 }
 
 model Bundle {

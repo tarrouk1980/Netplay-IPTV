@@ -11,6 +11,12 @@ export class BundlesController {
     return this.bundlesService.findAll(sellerId);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('my')
+  findMy(@Request() req: any) {
+    return this.bundlesService.findAll(req.user.id);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.bundlesService.findOne(id);

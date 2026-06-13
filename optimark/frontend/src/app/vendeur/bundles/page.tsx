@@ -14,14 +14,14 @@ export default function SellerBundlesPage() {
   useEffect(() => {
     Promise.all([
       api.get("/vendors/products"),
-      api.get("/bundles?sellerId=me").catch(() => api.get("/bundles")),
+      api.get("/bundles/my"),
     ]).then(([pRes, bRes]) => {
       setProducts(pRes.data?.data || []);
       setBundles(bRes.data?.data || []);
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
-  const loadBundles = () => api.get("/bundles").then(r => setBundles(r.data?.data || [])).catch(() => {});
+  const loadBundles = () => api.get("/bundles/my").then(r => setBundles(r.data?.data || [])).catch(() => {});
 
   const toggleProduct = (id: string) => {
     setForm(f => ({
