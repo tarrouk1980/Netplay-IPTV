@@ -12,22 +12,28 @@ export default function HomeScreen({ navigation }: any) {
   const [flashSales, setFlashSales] = useState<any[]>([]);
   const [lives, setLives] = useState<any[]>([]);
   const [recommended, setRecommended] = useState<any[]>([]);
+  const [bundles, setBundles] = useState<any[]>([]);
+  const [newArrivals, setNewArrivals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [cat, setCat] = useState("Tous");
 
   const load = async () => {
     try {
-      const [pRes, fRes, lRes, recRes] = await Promise.all([
+      const [pRes, fRes, lRes, recRes, bRes] = await Promise.all([
         api.get("/products"),
         api.get("/flash-sales/active").catch(() => ({ data: { data: [] } })),
         api.get("/live").catch(() => ({ data: { data: [] } })),
         api.get("/recommendations/trending?limit=8").catch(() => ({ data: { data: [] } })),
+        api.get("/bundles").catch(() => ({ data: { data: [] } })),
       ]);
       setProducts(pRes.data?.data || []);
       setFlashSales((fRes.data?.data || fRes.data || []).slice(0, 4));
       setLives((lRes.data?.data || []).filter((l: any) => l.isActive).slice(0, 5));
       setRecommended(recRes.data?.data || []);
+      setBundles((bRes.data?.data || []).slice(0, 4));
+      const all = pRes.data?.data || [];
+      setNewArrivals(all.filter((p: any) => p.isNewArrival).slice(0, 8));
     } catch {}
   };
 
@@ -177,6 +183,55 @@ export default function HomeScreen({ navigation }: any) {
         </View>
       )}
 
+      {/* New Arrivals */}
+      {newArrivals.length > 0 && (
+        <View style={{ paddingTop: 16 }}>
+          <View style={s.sectionHeader}>
+            <Text style={s.sectionTitle}>🆕 Nouveautés</Text>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 12, paddingBottom: 8 }}>
+            {newArrivals.map((p: any) => (
+              <TouchableOpacity key={p.id} style={s.recCard} onPress={() => navigation.navigate("ProductDetail", { id: p.id })}>
+                <View style={s.recImgBox}>
+                  {p.images?.[0] ? <Image source={{ uri: p.images[0] }} style={{ width: "100%", height: "100%" }} resizeMode="cover" /> : <Text style={{ fontSize: 28 }}>📦</Text>}
+                </View>
+                <Text style={s.recTitle} numberOfLines={2}>{p.title}</Text>
+                <Text style={s.recPrice}>{Number(p.promoPrice || p.price).toFixed(2)} TND</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+
+      {/* Bundles */}
+      {bundles.length > 0 && (
+        <View style={{ paddingTop: 16 }}>
+          <View style={s.sectionHeader}>
+            <Text style={s.sectionTitle}>🎁 Offres groupées</Text>
+            <TouchableOpacity onPress={() => navigation.navigate("Bundles")}>
+              <Text style={s.sectionLink}>Tout voir →</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 10, paddingBottom: 8 }}>
+            {bundles.map((b: any) => {
+              const originalTotal = (b.items || []).reduce((sum: number, i: any) => sum + (i.product?.price || 0), 0);
+              const discounted = originalTotal * (1 - (b.discount || 0) / 100);
+              return (
+                <TouchableOpacity key={b.id} style={s.bundleCard} onPress={() => navigation.navigate("Bundles")}>
+                  <View style={s.bundleHeader}>
+                    <Text style={s.bundleTitle} numberOfLines={1}>{b.title}</Text>
+                    <View style={s.bundleBadge}><Text style={s.bundleBadgeText}>-{b.discount}%</Text></View>
+                  </View>
+                  <Text style={s.bundleItems}>{(b.items || []).length} produits</Text>
+                  <Text style={s.bundlePrice}>{discounted.toFixed(2)} TND</Text>
+                  <Text style={s.bundleOrig}>{originalTotal.toFixed(2)} TND</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+      )}
+
       {/* Products */}
       <View style={s.sectionHeader}>
         <Text style={s.sectionTitle}>
@@ -280,4 +335,12 @@ const s = StyleSheet.create({
   recImgBox: { width: "100%", height: 100, backgroundColor: "#f8fafc", alignItems: "center", justifyContent: "center" },
   recTitle: { fontSize: 11, fontWeight: "700", color: "#1e293b", padding: 8, paddingBottom: 2 },
   recPrice: { fontSize: 13, fontWeight: "900", color: "#9f1239", paddingHorizontal: 8, paddingBottom: 8 },
+  bundleCard: { width: 160, backgroundColor: "#fff", borderRadius: 14, padding: 12, borderWidth: 1.5, borderColor: "#fecdd3" },
+  bundleHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 },
+  bundleTitle: { flex: 1, fontSize: 13, fontWeight: "800", color: "#1e293b", marginRight: 6 },
+  bundleBadge: { backgroundColor: "#9f1239", borderRadius: 100, paddingHorizontal: 6, paddingVertical: 2 },
+  bundleBadgeText: { color: "#fff", fontSize: 10, fontWeight: "900" },
+  bundleItems: { fontSize: 11, color: "#64748b", marginBottom: 6 },
+  bundlePrice: { fontSize: 16, fontWeight: "900", color: "#9f1239" },
+  bundleOrig: { fontSize: 11, color: "#94a3b8", textDecorationLine: "line-through" },
 });
