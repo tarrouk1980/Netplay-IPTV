@@ -120,6 +120,33 @@ export class ProductsService {
     return { data: null, message: 'Produit supprimé', success: true };
   }
 
+  async getTrending(limit = 8) {
+    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const views = await this.prisma.productView.groupBy({
+      by: ['productId'],
+      where: { createdAt: { gte: since } },
+      _count: { productId: true },
+      orderBy: { _count: { productId: 'desc' } },
+      take: limit,
+    });
+
+    const productIds = views.map(v => v.productId);
+    if (productIds.length === 0) {
+      return this.findAll({});
+    }
+
+    const products = await this.prisma.product.findMany({
+      where: { id: { in: productIds }, isActive: true },
+      include: { seller: { select: { id: true, name: true, isVerified: true } } },
+    });
+
+    const sorted = productIds
+      .map(id => products.find(p => p.id === id))
+      .filter(Boolean);
+
+    return { data: sorted, success: true };
+  }
+
   async bulkCreate(products: CreateProductDto[], sellerId: string) {
     const created = await Promise.all(
       (products || []).map(dto =>

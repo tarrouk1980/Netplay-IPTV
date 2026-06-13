@@ -30,7 +30,7 @@ export default function HomePage() {
   useEffect(() => {
     const fetchAll = async () => {
       const [tRes, lRes, sRes, fRes] = await Promise.all([
-        api.get("/recommendations/trending", { params: { limit: 8 } }).catch(() => null),
+        api.get("/products/trending").catch(() => null),
         api.get("/live").catch(() => null),
         api.get("/recommendations/services", { params: { limit: 4 } }).catch(() => null),
         api.get("/flash-sales/active").catch(() => null),

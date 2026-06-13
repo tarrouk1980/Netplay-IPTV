@@ -29,6 +29,11 @@ export class ProductsController {
     return this.productsService.findAll({ isBestSeller: true } as any);
   }
 
+  @Get('trending')
+  getTrending() {
+    return this.productsService.getTrending(8);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.productsService.findOne(id);
