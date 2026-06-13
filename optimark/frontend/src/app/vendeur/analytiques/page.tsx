@@ -82,30 +82,49 @@ export default function AnalytiquesPage() {
           ))}
         </div>
 
-        {/* Daily revenue chart */}
+        {/* Daily revenue SVG line chart */}
         {daily.length > 0 && (() => {
-          const maxRev = Math.max(...daily.map(d => d.revenue), 1);
+          const maxRev = Math.max(...daily.map((d: any) => d.revenue), 1);
+          const W = 700, H = 160, PAD = 30;
+          const pts = daily.map((d: any, i: number) => {
+            const x = PAD + (i / Math.max(daily.length - 1, 1)) * (W - PAD * 2);
+            const y = H - PAD - (d.revenue / maxRev) * (H - PAD * 2);
+            return `${x},${y}`;
+          });
+          const polyline = pts.join(" ");
+          const area = `M ${pts[0]} L ${polyline} L ${PAD + (W - PAD * 2)},${H - PAD} L ${PAD},${H - PAD} Z`;
+          const totalRevenue = daily.reduce((s: number, d: any) => s + d.revenue, 0);
           const last7 = daily.slice(-7);
           return (
             <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6" style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
-              <h2 className="font-black text-slate-800 mb-1">Revenus journaliers (30 derniers jours)</h2>
-              <p className="text-slate-400 text-xs mb-5">Revenus nets hors commissions</p>
-              <div className="flex items-end gap-0.5 h-32 mb-2">
-                {daily.map((d, i) => (
-                  <div key={i} title={`${d.date}: ${d.revenue} TND`}
-                    className="flex-1 rounded-t transition hover:opacity-80"
-                    style={{ height: `${Math.max(4, (d.revenue / maxRev) * 100)}%`, backgroundColor: d.revenue > 0 ? "#9f1239" : "#f1f5f9" }} />
-                ))}
+              <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
+                <h2 className="font-black text-slate-800">Revenus journaliers (30 derniers jours)</h2>
+                <span className="text-rose-800 font-black text-lg">{totalRevenue.toFixed(2)} TND total</span>
               </div>
-              <div className="flex justify-between text-xs text-slate-400 mt-1">
+              <p className="text-slate-400 text-xs mb-4">Évolution quotidienne des ventes</p>
+              <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 160 }}>
+                <defs>
+                  <linearGradient id="rev-grad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#9f1239" stopOpacity="0.15" />
+                    <stop offset="100%" stopColor="#9f1239" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                <path d={area} fill="url(#rev-grad)" />
+                <polyline points={polyline} fill="none" stroke="#9f1239" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                {daily.map((d: any, i: number) => {
+                  const [x, y] = pts[i].split(",").map(Number);
+                  return d.revenue > 0 ? <circle key={i} cx={x} cy={y} r="3" fill="#9f1239" /> : null;
+                })}
+              </svg>
+              <div className="flex justify-between text-xs text-slate-400 -mt-1">
                 <span>{daily[0]?.date?.slice(5)}</span>
                 <span>{daily[daily.length - 1]?.date?.slice(5)}</span>
               </div>
-              <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
-                {last7.map(d => (
-                  <div key={d.date} className="text-center shrink-0">
-                    <p className="text-xs font-bold text-slate-800">{d.revenue > 0 ? `${d.revenue.toFixed(0)} TND` : "—"}</p>
-                    <p className="text-xs text-slate-400">{d.date.slice(5)}</p>
+              <div className="mt-4 grid grid-cols-7 gap-1">
+                {last7.map((d: any) => (
+                  <div key={d.date} className="text-center bg-slate-50 rounded-lg p-2">
+                    <p className="text-xs font-black text-slate-800">{d.revenue > 0 ? `${d.revenue.toFixed(0)}` : "—"}</p>
+                    <p className="text-[10px] text-slate-400">{d.date.slice(5)}</p>
                   </div>
                 ))}
               </div>
