@@ -45,6 +45,7 @@ export class OrdersService {
         paymentMethod: dto.paymentMethod as any,
         deliveryAddress: dto.deliveryAddress || undefined,
         couponCode: dto.couponCode,
+        note: dto.note,
         items: { create: itemsData },
       },
       include: { items: { include: { product: true } } },

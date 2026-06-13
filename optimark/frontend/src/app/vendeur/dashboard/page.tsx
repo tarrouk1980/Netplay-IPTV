@@ -118,7 +118,7 @@ export default function VendeurDashboardPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50">
-                    {["Commande", "Client", "Montant", "Statut", "Date"].map(h => (
+                    {["Commande", "Client", "Montant", "Statut", "Date", "Note"].map(h => (
                       <th key={h} className="text-left px-5 py-3 text-slate-500 font-semibold text-xs uppercase tracking-wide">{h}</th>
                     ))}
                   </tr>
@@ -140,6 +140,7 @@ export default function VendeurDashboardPage() {
                         </select>
                       </td>
                       <td className="px-5 py-4 text-slate-400 text-xs">{new Date(order.createdAt).toLocaleDateString("fr-FR")}</td>
+                      <td className="px-5 py-4 text-slate-400 text-xs max-w-[140px] truncate" title={order.note || ""}>{order.note || "—"}</td>
                     </tr>
                   ))}
                 </tbody>

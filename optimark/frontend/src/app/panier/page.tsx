@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import api from "@/lib/api";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function PanierPage() {
   const { items, removeItem, updateQuantity, clearCart, total } = useCart();
@@ -23,6 +23,10 @@ export default function PanierPage() {
   const [giftDiscount, setGiftDiscount] = useState(0);
   const [giftError, setGiftError] = useState("");
   const [giftApplied, setGiftApplied] = useState(false);
+  const [loyaltyBalance, setLoyaltyBalance] = useState<{ points: number; equivalentTND: string } | null>(null);
+  const [loyaltyDiscount, setLoyaltyDiscount] = useState(0);
+  const [pointsUsed, setPointsUsed] = useState(0);
+  const [loyaltyError, setLoyaltyError] = useState("");
   const [address, setAddress] = useState({
     fullName: user?.name || "",
     phone: "",
@@ -75,7 +79,29 @@ export default function PanierPage() {
     }
   };
 
-  const finalTotal = Math.max(0, total - couponDiscount - giftDiscount);
+  useEffect(() => {
+    if (!user) return;
+    api.get("/loyalty/balance").then(r => setLoyaltyBalance(r.data?.data)).catch(() => {});
+  }, [user]);
+
+  const applyLoyalty = async () => {
+    if (!loyaltyBalance || loyaltyBalance.points < 100) { setLoyaltyError("Il faut au moins 100 points."); return; }
+    const maxRedeemable = Math.min(loyaltyBalance.points, Math.floor((total - couponDiscount - giftDiscount) * 100));
+    const rounded = Math.floor(maxRedeemable / 100) * 100;
+    if (rounded === 0) { setLoyaltyError("Solde insuffisant par rapport au montant restant."); return; }
+    setLoyaltyError("");
+    try {
+      const res = await api.post("/loyalty/redeem", { points: rounded });
+      const disc = res.data?.data?.discountTND || 0;
+      setLoyaltyDiscount(disc);
+      setPointsUsed(rounded);
+      setLoyaltyBalance(prev => prev ? { ...prev, points: prev.points - rounded } : null);
+    } catch (e: any) {
+      setLoyaltyError(e.response?.data?.message || "Erreur");
+    }
+  };
+
+  const finalTotal = Math.max(0, total - couponDiscount - giftDiscount - loyaltyDiscount);
 
   const applyGiftCard = async () => {
     if (!giftCode.trim()) return;
@@ -211,6 +237,12 @@ export default function PanierPage() {
                       <span>−{giftDiscount.toFixed(2)} TND</span>
                     </div>
                   )}
+                  {loyaltyDiscount > 0 && (
+                    <div className="flex justify-between text-amber-600 font-semibold">
+                      <span>⭐ Points fidélité</span>
+                      <span>−{loyaltyDiscount.toFixed(2)} TND</span>
+                    </div>
+                  )}
                   <div className="border-t border-slate-100 pt-2 flex justify-between font-black text-base text-slate-900">
                     <span>Total</span>
                     <span className="text-rose-800">{finalTotal.toFixed(2)} TND</span>
@@ -252,6 +284,27 @@ export default function PanierPage() {
                   )}
                   {giftError && <p className="text-rose-700 text-xs mt-1">{giftError}</p>}
                 </div>
+
+                {/* Loyalty points */}
+                {loyaltyBalance && loyaltyBalance.points >= 100 && (
+                  <div className="mb-4">
+                    <p className="font-bold text-slate-700 mb-2 text-sm">⭐ Points fidélité</p>
+                    {loyaltyDiscount > 0 ? (
+                      <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                        <span className="text-amber-700 font-bold text-sm">✓ {pointsUsed} pts = -{loyaltyDiscount.toFixed(2)} TND</span>
+                        <button onClick={() => { setLoyaltyDiscount(0); setPointsUsed(0); setLoyaltyBalance(prev => prev ? { ...prev, points: prev.points + pointsUsed } : null); }} className="text-xs text-slate-400 hover:text-red-500">✕</button>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="flex items-center justify-between bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 mb-2">
+                          <span className="text-amber-700 text-sm">{loyaltyBalance.points} pts disponibles ({loyaltyBalance.equivalentTND} TND)</span>
+                          <button onClick={applyLoyalty} className="text-xs font-bold text-amber-700 hover:text-amber-900 bg-amber-100 hover:bg-amber-200 px-2 py-1 rounded-lg transition">Utiliser</button>
+                        </div>
+                        {loyaltyError && <p className="text-rose-600 text-xs">{loyaltyError}</p>}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Payment method */}
                 <div className="mb-4">

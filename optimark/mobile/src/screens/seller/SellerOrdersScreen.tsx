@@ -71,6 +71,11 @@ export default function SellerOrdersScreen() {
               📍 {item.deliveryAddress.street}, {item.deliveryAddress.city}
             </Text>
           )}
+          {item.note && (
+            <View style={s.noteBanner}>
+              <Text style={s.noteText}>📝 {item.note}</Text>
+            </View>
+          )}
 
           {item.status !== "DELIVERED" && item.status !== "CANCELLED" && (
             <TouchableOpacity style={s.updateBtn} onPress={() => updateStatus(item.id, item.status)}>
@@ -94,4 +99,6 @@ const s = StyleSheet.create({
   addr: { fontSize: 12, color: "#64748b", marginTop: 4 },
   updateBtn: { marginTop: 12, backgroundColor: "#9f1239", borderRadius: 10, paddingVertical: 10, alignItems: "center" },
   updateBtnText: { color: "#fff", fontWeight: "700", fontSize: 13 },
+  noteBanner: { backgroundColor: "#fef9ec", borderWidth: 1, borderColor: "#fde68a", borderRadius: 8, padding: 8, marginTop: 6 },
+  noteText: { fontSize: 12, color: "#92400e" },
 });

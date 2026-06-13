@@ -159,6 +159,7 @@ model Order {
   paymentMethod   PaymentMethod
   deliveryAddress Json?
   couponCode      String?
+  note            String?
   createdAt       DateTime        @default(now())
   returnRequests  ReturnRequest[]
   statusHistory   OrderStatusHistory[]
