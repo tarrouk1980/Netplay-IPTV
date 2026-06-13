@@ -57,6 +57,13 @@ export default function VendeurProduitsPage() {
     setProducts(prev => prev.filter(p => p.id !== id));
   };
 
+  const cloneProduct = async (id: string) => {
+    try {
+      const res = await api.post(`/products/${id}/clone`);
+      setProducts(prev => [res.data.data, ...prev]);
+    } catch { alert("Erreur lors de la duplication"); }
+  };
+
   const filtered = products.filter(p => !search || p.title.toLowerCase().includes(search.toLowerCase()));
 
   const lowStock = products.filter(p => p.stock > 0 && p.stock <= (p.stockAlert || 5)).length;
@@ -176,6 +183,10 @@ export default function VendeurProduitsPage() {
                               className="text-rose-700 hover:text-rose-900 text-xs font-semibold transition">
                               Modifier
                             </Link>
+                            <button onClick={() => cloneProduct(p.id)}
+                              className="text-slate-500 hover:text-slate-800 text-xs font-semibold transition" title="Dupliquer">
+                              📋
+                            </button>
                             <button onClick={() => handleDelete(p.id)}
                               className="text-slate-400 hover:text-rose-700 text-xs font-semibold transition">
                               Suppr.

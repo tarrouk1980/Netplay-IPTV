@@ -175,4 +175,21 @@ export class ProductsService {
     const successful = created.filter(Boolean);
     return { data: successful, message: `${successful.length} produit(s) créé(s)`, success: true };
   }
+
+  async clone(id: string, userId: string) {
+    const original = await this.prisma.product.findFirst({ where: { id, sellerId: userId } });
+    if (!original) throw new Error('Produit introuvable');
+    const { id: _id, createdAt, updatedAt, isBestSeller, isNewArrival, ...rest } = original as any;
+    const cloned = await this.prisma.product.create({
+      data: { ...rest, title: `${rest.title} (copie)`, isActive: false, sellerId: userId },
+    });
+    return { data: cloned, message: 'Produit dupliqué (inactif)', success: true };
+  }
+
+  async toggleActive(id: string, userId: string) {
+    const product = await this.prisma.product.findFirst({ where: { id, sellerId: userId } });
+    if (!product) throw new Error('Produit introuvable');
+    const updated = await this.prisma.product.update({ where: { id }, data: { isActive: !product.isActive } });
+    return { data: updated, message: updated.isActive ? 'Produit activé' : 'Produit désactivé', success: true };
+  }
 }

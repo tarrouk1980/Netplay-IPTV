@@ -78,4 +78,16 @@ export class ProductsController {
   bulkCreate(@Body('products') products: CreateProductDto[], @Request() req: any) {
     return this.productsService.bulkCreate(products, req.user.id);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/clone')
+  clone(@Param('id') id: string, @Request() req: any) {
+    return this.productsService.clone(id, req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/toggle-active')
+  toggleActive(@Param('id') id: string, @Request() req: any) {
+    return this.productsService.toggleActive(id, req.user.id);
+  }
 }
