@@ -1,9 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class VendorsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notifications: NotificationsService,
+  ) {}
 
   async getDashboard(userId: string) {
     const [products, orders, reviews] = await Promise.all([
@@ -390,6 +394,17 @@ export class VendorsService {
       ].join(','));
     }
     return rows.join('\n');
+  }
+
+  async broadcastToFollowers(sellerId: string, message: string) {
+    if (!message?.trim()) throw new BadRequestException('Message requis.');
+    if (message.trim().length > 280) throw new BadRequestException('Message trop long (280 caractères max).');
+    const seller = await this.prisma.user.findUnique({ where: { id: sellerId }, select: { name: true } });
+    const followers = await this.prisma.sellerFollow.findMany({ where: { sellerId }, select: { followerId: true } });
+    for (const f of followers) {
+      await this.notifications.create(f.followerId, 'PROMO', `📣 ${seller?.name || 'Vendeur'} : ${message.trim()}`);
+    }
+    return { data: { sent: followers.length }, message: `Message envoyé à ${followers.length} abonné(s)`, success: true };
   }
 
   async getFollowStatus(followerId: string | undefined, sellerId: string) {

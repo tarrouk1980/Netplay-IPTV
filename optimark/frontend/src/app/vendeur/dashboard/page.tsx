@@ -20,6 +20,9 @@ export default function VendeurDashboardPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [fetching, setFetching] = useState(true);
   const [updatingOrder, setUpdatingOrder] = useState<string | null>(null);
+  const [broadcastMsg, setBroadcastMsg] = useState("");
+  const [broadcasting, setBroadcasting] = useState(false);
+  const [broadcastResult, setBroadcastResult] = useState<string | null>(null);
 
   useEffect(() => {
     if (loading) return;
@@ -34,6 +37,21 @@ export default function VendeurDashboardPage() {
       setVisits(v?.data?.data || null);
     }).catch(() => {}).finally(() => setFetching(false));
   }, [user, loading]);
+
+  const sendBroadcast = async () => {
+    if (!broadcastMsg.trim()) return;
+    setBroadcasting(true);
+    try {
+      const res = await api.post("/vendors/broadcast", { message: broadcastMsg });
+      setBroadcastResult(res.data?.message || "Message envoyé !");
+      setBroadcastMsg("");
+    } catch (e: any) {
+      setBroadcastResult(e.response?.data?.message || "Erreur");
+    } finally {
+      setBroadcasting(false);
+      setTimeout(() => setBroadcastResult(null), 4000);
+    }
+  };
 
   const updateStatus = async (orderId: string, status: string) => {
     setUpdatingOrder(orderId);
@@ -105,6 +123,31 @@ export default function VendeurDashboardPage() {
             ))}
           </div>
         )}
+
+        {/* Broadcast to followers */}
+        <div className="bg-white rounded-xl border border-slate-100 p-5 mb-6" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+          <h2 className="font-black text-slate-800 mb-1">📣 Message à vos abonnés</h2>
+          <p className="text-slate-400 text-xs mb-3">Envoyez une notification à tous vos followers (max 280 caractères)</p>
+          <div className="flex gap-3 flex-wrap">
+            <input
+              value={broadcastMsg}
+              onChange={e => setBroadcastMsg(e.target.value.slice(0, 280))}
+              placeholder="Nouvelle collection disponible ! Profitez de -20% aujourd'hui..."
+              className="flex-1 border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-100 min-w-0"
+            />
+            <button
+              onClick={sendBroadcast}
+              disabled={broadcasting || !broadcastMsg.trim()}
+              className="bg-rose-800 text-white font-bold px-5 py-2 rounded-xl text-sm hover:bg-rose-900 transition disabled:opacity-50"
+            >
+              {broadcasting ? "Envoi..." : "Envoyer"}
+            </button>
+          </div>
+          <div className="flex items-center justify-between mt-1">
+            <span className={`text-xs ${broadcastMsg.length > 250 ? "text-orange-500" : "text-slate-400"}`}>{broadcastMsg.length}/280</span>
+            {broadcastResult && <span className="text-xs font-semibold text-green-600">{broadcastResult}</span>}
+          </div>
+        </div>
 
         <div className="bg-white rounded-xl border border-slate-100 overflow-hidden" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
           <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">

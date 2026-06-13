@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet, TextInput, Alert } from "react-native";
 import api from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -8,6 +8,8 @@ export default function SellerDashboardScreen({ navigation }: any) {
   const [stats, setStats] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [broadcastMsg, setBroadcastMsg] = useState("");
+  const [broadcasting, setBroadcasting] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -18,6 +20,20 @@ export default function SellerDashboardScreen({ navigation }: any) {
       setOrders((oRes?.data?.data || []).slice(0, 5));
     }).finally(() => setLoading(false));
   }, []);
+
+  const sendBroadcast = async () => {
+    if (!broadcastMsg.trim()) return;
+    setBroadcasting(true);
+    try {
+      const res = await api.post("/vendors/broadcast", { message: broadcastMsg });
+      setBroadcastMsg("");
+      Alert.alert("✓ Envoyé", res.data?.message || "Message diffusé !");
+    } catch (e: any) {
+      Alert.alert("Erreur", e.response?.data?.message || "Impossible d'envoyer.");
+    } finally {
+      setBroadcasting(false);
+    }
+  };
 
   if (loading) return <ActivityIndicator color="#9f1239" size="large" style={{ flex: 1, marginTop: 80 }} />;
 
@@ -123,6 +139,22 @@ export default function SellerDashboardScreen({ navigation }: any) {
         </View>
       </View>
 
+      {/* Broadcast to followers */}
+      <View style={s.section}>
+        <Text style={s.sectionTitle}>📣 Message à vos abonnés</Text>
+        <TextInput
+          style={s.broadcastInput}
+          value={broadcastMsg}
+          onChangeText={t => setBroadcastMsg(t.slice(0, 280))}
+          placeholder="Nouvelle collection, promo flash..."
+          placeholderTextColor="#94a3b8"
+          multiline
+        />
+        <TouchableOpacity style={[s.broadcastBtn, (!broadcastMsg.trim() || broadcasting) && { opacity: 0.5 }]} onPress={sendBroadcast} disabled={!broadcastMsg.trim() || broadcasting}>
+          <Text style={{ color: "#fff", fontWeight: "800", fontSize: 14 }}>{broadcasting ? "Envoi..." : "Envoyer à mes abonnés"}</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* Recent orders */}
       {orders.length > 0 && (
         <View style={s.section}>
@@ -160,4 +192,6 @@ const s = StyleSheet.create({
   orderRef: { fontSize: 13, fontWeight: "700", color: "#1e293b" },
   orderTotal: { fontSize: 13, fontWeight: "700", color: "#9f1239" },
   orderStatus: { fontSize: 11, color: "#64748b", fontWeight: "600" },
+  broadcastInput: { borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 12, padding: 12, fontSize: 14, color: "#1e293b", minHeight: 70, marginBottom: 10 },
+  broadcastBtn: { backgroundColor: "#9f1239", borderRadius: 12, paddingVertical: 13, alignItems: "center" },
 });

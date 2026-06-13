@@ -113,6 +113,12 @@ export class VendorsController {
     return this.vendorsService.getPerformanceScore(req.user.id);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Post('broadcast')
+  broadcast(@Request() req: any, @Body('message') message: string) {
+    return this.vendorsService.broadcastToFollowers(req.user.id, message);
+  }
+
   @Get(':sellerId/follow/status')
   followStatus(@Param('sellerId') sellerId: string, @Request() req: any) {
     const followerId = req.user?.id;
