@@ -9,6 +9,7 @@ export default function ProfileScreen({ navigation }: any) {
   const [loyalty, setLoyalty] = useState<{ points: number; equivalentTND: string } | null>(null);
   const [redeeming, setRedeeming] = useState(false);
   const [referral, setReferral] = useState<any>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const loadLoyalty = () => {
     api.get("/loyalty/balance").then(r => setLoyalty(r.data?.data)).catch(() => {});
@@ -18,6 +19,7 @@ export default function ProfileScreen({ navigation }: any) {
     if (user) {
       loadLoyalty();
       api.get("/referral/my-code").then(r => setReferral(r.data?.data)).catch(() => {});
+      api.get("/notifications").then(r => setUnreadCount(r.data?.unreadCount || 0)).catch(() => {});
     }
   }, [user]);
 
@@ -131,6 +133,11 @@ export default function ProfileScreen({ navigation }: any) {
         <TouchableOpacity style={s.menuItem} onPress={() => navigation.navigate("Notifications")}>
           <Text style={s.menuIcon}>🔔</Text>
           <Text style={s.menuLabel}>Notifications</Text>
+          {unreadCount > 0 && (
+            <View style={{ backgroundColor: "#9f1239", borderRadius: 10, paddingHorizontal: 7, paddingVertical: 2, marginRight: 6 }}>
+              <Text style={{ color: "#fff", fontSize: 11, fontWeight: "900" }}>{unreadCount}</Text>
+            </View>
+          )}
           <Text style={s.menuArrow}>›</Text>
         </TouchableOpacity>
 

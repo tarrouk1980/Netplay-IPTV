@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import {
   View, Text, ScrollView, Image, TouchableOpacity,
   ActivityIndicator, StyleSheet, Alert, TextInput, Modal,
-  Dimensions
+  Dimensions, Share
 } from "react-native";
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
@@ -147,6 +147,9 @@ export default function ProductDetailScreen({ route, navigation }: any) {
         )}
         <TouchableOpacity style={s.favBtn} onPress={toggleFav}>
           <Text style={{ fontSize: 24 }}>{favorited ? "♥" : "♡"}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[s.favBtn, { right: 62 }]} onPress={() => Share.share({ title: product.title, message: `${product.title} — ${Number(product.promoPrice || product.price).toFixed(2)} TND\nhttps://optimark.tn/produits/${product.id}` })}>
+          <Text style={{ fontSize: 18 }}>↗</Text>
         </TouchableOpacity>
       </View>
       </TouchableOpacity>
