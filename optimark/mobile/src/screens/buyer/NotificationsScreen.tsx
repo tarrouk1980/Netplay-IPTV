@@ -13,7 +13,7 @@ const TYPE_ICON: Record<string, string> = {
   SYSTEM: "🔔",
 };
 
-export default function NotificationsScreen() {
+export default function NotificationsScreen({ navigation }: any) {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unread, setUnread] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -49,11 +49,16 @@ export default function NotificationsScreen() {
           <Text style={s.title}>Notifications</Text>
           {unread > 0 && <Text style={s.subtitle}>{unread} non lue(s)</Text>}
         </View>
-        {unread > 0 && (
-          <TouchableOpacity style={s.markAllBtn} onPress={markAllRead}>
-            <Text style={{ color: "#9f1239", fontWeight: "700", fontSize: 12 }}>Tout lire</Text>
+        <View style={{ flexDirection: "row", gap: 8 }}>
+          {unread > 0 && (
+            <TouchableOpacity style={s.markAllBtn} onPress={markAllRead}>
+              <Text style={{ color: "#9f1239", fontWeight: "700", fontSize: 12 }}>Tout lire</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={s.markAllBtn} onPress={() => navigation.navigate("NotifPreferences")}>
+            <Text style={{ color: "#64748b", fontWeight: "700", fontSize: 12 }}>⚙️ Préfs</Text>
           </TouchableOpacity>
-        )}
+        </View>
       </View>
 
       {notifications.length === 0 ? (
