@@ -2,7 +2,7 @@ import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const api = axios.create({
-  baseURL: "http://192.168.1.7:3001/api", // change to your machine IP
+  baseURL: "https://optimark-api.onrender.com/api",
   timeout: 10000,
 });
 
