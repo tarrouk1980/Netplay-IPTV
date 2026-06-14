@@ -52,7 +52,7 @@ export class ReturnsService {
 
     const updated = await this.prisma.returnRequest.update({
       where: { id },
-      data: { status, adminNote, updatedAt: new Date() },
+      data: { status: status as import('@prisma/client').ReturnStatus, adminNote, updatedAt: new Date() },
     });
 
     // If refunded, deduct loyalty points earned from that order

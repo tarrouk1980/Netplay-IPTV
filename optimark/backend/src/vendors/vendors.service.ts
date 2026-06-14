@@ -343,7 +343,7 @@ export class VendorsService {
         seller: {
           select: {
             id: true, name: true, isVerified: true,
-            _count: { select: { products: true, followers: true } },
+            _count: { select: { products: true } },
           },
         },
       },
@@ -362,12 +362,9 @@ export class VendorsService {
       id: store.sellerId,
       storeName: store.name,
       description: store.description,
-      banner: store.banner,
       logo: store.logo,
-      category: store.category,
       isVerified: store.seller.isVerified,
       productCount: store.seller._count.products,
-      followerCount: store.seller._count.followers,
     }));
 
     return { data: result, success: true };
@@ -485,24 +482,28 @@ export class VendorsService {
   async getFollowedSellers(userId: string) {
     const follows = await this.prisma.sellerFollow.findMany({
       where: { followerId: userId },
-      include: {
-        seller: {
-          select: {
-            id: true,
-            name: true,
-            store: { select: { name: true, logo: true, description: true } },
-          },
-        },
-      },
       orderBy: { createdAt: 'desc' },
     });
-    const data = follows.map(f => ({
-      sellerId: f.sellerId,
-      name: f.seller.store?.name || f.seller.name,
-      logo: f.seller.store?.logo,
-      description: f.seller.store?.description,
-      followedAt: f.createdAt,
-    }));
+    const sellerIds = follows.map(f => f.sellerId);
+    const sellers = await this.prisma.user.findMany({
+      where: { id: { in: sellerIds } },
+      select: {
+        id: true,
+        name: true,
+        store: { select: { name: true, logo: true, description: true } },
+      },
+    });
+    const sellerMap = Object.fromEntries(sellers.map(s => [s.id, s]));
+    const data = follows.map(f => {
+      const seller = sellerMap[f.sellerId];
+      return {
+        sellerId: f.sellerId,
+        name: seller?.store?.name || seller?.name,
+        logo: seller?.store?.logo,
+        description: seller?.store?.description,
+        followedAt: f.createdAt,
+      };
+    });
     return { data, success: true };
   }
 
@@ -524,7 +525,7 @@ export class VendorsService {
     const orders = await this.prisma.order.findMany({
       where: { items: { some: { product: { sellerId } } } },
       include: {
-        user: { select: { id: true, name: true, email: true, createdAt: true } },
+        buyer: { select: { id: true, name: true, email: true, createdAt: true } },
         items: { include: { product: { select: { sellerId: true } } } },
       },
     });
@@ -533,9 +534,9 @@ export class VendorsService {
     for (const order of orders) {
       const sellerItems = order.items.filter(i => i.product.sellerId === sellerId);
       const spend = sellerItems.reduce((s, i) => s + i.price * i.quantity, 0);
-      const uid = order.user.id;
+      const uid = order.buyer.id;
       if (!customerMap[uid]) {
-        customerMap[uid] = { name: order.user.name, email: order.user.email, spend: 0, orders: 0, since: order.user.createdAt };
+        customerMap[uid] = { name: order.buyer.name, email: order.buyer.email, spend: 0, orders: 0, since: order.buyer.createdAt };
       }
       customerMap[uid].spend += spend;
       customerMap[uid].orders += 1;

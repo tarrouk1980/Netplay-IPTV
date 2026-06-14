@@ -229,32 +229,6 @@ export class ProductsService {
     return { data: topIds.map(id => products.find(p => p.id === id)).filter(Boolean), success: true };
   }
 
-  async getTrending(limit = 12) {
-    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const grouped = await (this.prisma.productView as any).groupBy({
-      by: ['productId'],
-      _count: { productId: true },
-      where: { createdAt: { gte: since } },
-      orderBy: { _count: { productId: 'desc' } },
-      take: limit,
-    });
-    const ids = grouped.map((g: any) => g.productId);
-    if (!ids.length) {
-      const products = await this.prisma.product.findMany({
-        where: { isActive: true },
-        include: { seller: { select: { id: true, name: true, isVerified: true } } },
-        orderBy: { createdAt: 'desc' },
-        take: limit,
-      });
-      return { data: products, success: true };
-    }
-    const products = await this.prisma.product.findMany({
-      where: { id: { in: ids }, isActive: true },
-      include: { seller: { select: { id: true, name: true, isVerified: true } } },
-    });
-    const sorted = ids.map((id: string) => products.find(p => p.id === id)).filter(Boolean);
-    return { data: sorted, success: true };
-  }
 
   async getRecentlyViewed(userId: string, limit = 20) {
     const views = await this.prisma.productView.findMany({
