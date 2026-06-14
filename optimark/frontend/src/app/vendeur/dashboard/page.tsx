@@ -105,6 +105,7 @@ export default function VendeurDashboardPage() {
             <Link href="/vendeur/qualite" className="px-4 py-2 border border-yellow-200 text-yellow-700 rounded-xl hover:bg-yellow-50 text-sm font-semibold transition">✅ Qualité boutique</Link>
             <Link href="/vendeur/rapport" className="px-4 py-2 border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 text-sm font-semibold transition">📋 Rapport mensuel</Link>
             <Link href="/vendeur/diffusion" className="px-4 py-2 border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 text-sm font-semibold transition">📢 Diffusion</Link>
+            <Link href="/vendeur/promotions" className="px-4 py-2 border border-rose-200 text-rose-700 rounded-xl hover:bg-rose-50 text-sm font-semibold transition">🏷️ Promotions</Link>
             {!user?.isVerified && (
               <button onClick={() => api.patch("/vendors/verify")} className="px-4 py-2 border border-amber-400 text-amber-700 rounded-xl hover:bg-amber-50 text-sm font-medium transition">Demander vérification</button>
             )}
