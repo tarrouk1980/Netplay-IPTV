@@ -69,6 +69,7 @@ import SellerPromotionsScreen from "../screens/seller/SellerPromotionsScreen";
 import DashboardScreen from "../screens/buyer/DashboardScreen";
 import MyReturnsScreen from "../screens/buyer/MyReturnsScreen";
 import SellerBadgesScreen from "../screens/seller/SellerBadgesScreen";
+import LeaderboardScreen from "../screens/buyer/LeaderboardScreen";
 import { useCart } from "../contexts/CartContext";
 
 const Tab = createBottomTabNavigator();
@@ -180,6 +181,7 @@ export default function AppNavigator() {
         <Stack.Screen name="Dashboard" component={DashboardScreen} options={{ headerShown: false }} />
         <Stack.Screen name="MyReturns" component={MyReturnsScreen} options={{ title: "↩️ Mes retours" }} />
         <Stack.Screen name="SellerBadges" component={SellerBadgesScreen} options={{ title: "🏆 Mes badges" }} />
+        <Stack.Screen name="Leaderboard" component={LeaderboardScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

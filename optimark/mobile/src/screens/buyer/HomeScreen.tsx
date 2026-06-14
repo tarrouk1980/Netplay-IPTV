@@ -76,6 +76,9 @@ export default function HomeScreen({ navigation }: any) {
           <TouchableOpacity style={[s.heroBtn, { backgroundColor: "rgba(255,255,255,0.15)" }]} onPress={() => navigation.navigate("Promotions")}>
             <Text style={s.heroBtnText}>🏷️ Promos</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={[s.heroBtn, { backgroundColor: "rgba(255,255,255,0.1)" }]} onPress={() => navigation.navigate("Leaderboard")}>
+            <Text style={s.heroBtnText}>🏆 Top</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
