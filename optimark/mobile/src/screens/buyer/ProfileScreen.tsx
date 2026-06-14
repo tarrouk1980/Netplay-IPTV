@@ -130,6 +130,12 @@ export default function ProfileScreen({ navigation }: any) {
 
       {/* Actions */}
       <View style={s.menu}>
+        <TouchableOpacity style={s.menuItem} onPress={() => navigation.navigate("Dashboard")}>
+          <Text style={s.menuIcon}>🏠</Text>
+          <Text style={s.menuLabel}>Tableau de bord</Text>
+          <Text style={s.menuArrow}>›</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={s.menuItem} onPress={() => navigation.navigate("Notifications")}>
           <Text style={s.menuIcon}>🔔</Text>
           <Text style={s.menuLabel}>Notifications</Text>
