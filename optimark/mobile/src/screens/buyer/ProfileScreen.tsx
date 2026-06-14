@@ -213,6 +213,12 @@ export default function ProfileScreen({ navigation }: any) {
           <Text style={s.menuArrow}>›</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity style={s.menuItem} onPress={() => navigation.navigate("MyReturns")}>
+          <Text style={s.menuIcon}>↩️</Text>
+          <Text style={s.menuLabel}>Mes retours</Text>
+          <Text style={s.menuArrow}>›</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={s.menuItem} onPress={() => navigation.navigate("FollowedSellers")}>
           <Text style={s.menuIcon}>🔔</Text>
           <Text style={s.menuLabel}>Boutiques suivies</Text>
