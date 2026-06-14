@@ -38,7 +38,7 @@ export default function LiveViewScreen({ route, navigation }: any) {
   };
 
   const addToCart = (product: any) => {
-    addItem({ id: product.id, title: product.title, price: product.price, seller: session?.vendor?.name || "Vendeur", qty: 1 });
+    addItem({ id: product.id, title: product.title, price: product.price, seller: session?.vendor?.name || "Vendeur" });
     navigation.navigate("Cart");
   };
 

@@ -31,7 +31,6 @@ export default function BundlesScreen() {
         price: p.promoPrice ?? p.price,
         seller: bundle.seller?.name || 'Vendeur',
         image: p.images?.[0],
-        quantity: 1,
       });
       count++;
     }

@@ -8,14 +8,14 @@ interface Props {
   navigation: any;
 }
 
-export default function CompareScreen({ route, navigation }: Props) {
+export default function CompareScreen({ route, navigation }: any) {
   const { ids } = route.params;
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { addItem } = useCart();
 
   useEffect(() => {
-    Promise.all(ids.map(id => api.get(`/products/${id}`).then(r => r.data?.data).catch(() => null)))
+    Promise.all(ids.map((id: string) => api.get(`/products/${id}`).then(r => r.data?.data).catch(() => null)))
       .then(results => setProducts(results.filter(Boolean)))
       .finally(() => setLoading(false));
   }, []);

@@ -149,7 +149,7 @@ export default function OrderDetailScreen({ route, navigation }: any) {
           onPress={() => {
             order.items.forEach((item: any) => {
               if (item.product) {
-                addItem({ id: item.product.id, title: item.product.title, price: item.price, image: item.product.images?.[0] });
+                addItem({ id: item.product.id, title: item.product.title, price: item.price, image: item.product.images?.[0], seller: item.product.seller?.name || "Vendeur" });
               }
             });
             Alert.alert("✓ Produits ajoutés", "Tous les articles ont été ajoutés à votre panier.", [

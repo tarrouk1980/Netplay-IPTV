@@ -67,7 +67,7 @@ export default function FollowedSellersScreen({ navigation }: any) {
 
 const s = StyleSheet.create({
   card: { backgroundColor: '#fff', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: '#f1f5f9', flexDirection: 'row', alignItems: 'center', gap: 12 },
-  avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#9f1239', alignItems: 'center', justifyContent: 'center', shrink: 0 },
+  avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#9f1239', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   avatarText: { color: '#fff', fontSize: 20, fontWeight: '900' },
   name: { fontSize: 14, fontWeight: '800', color: '#1e293b' },
   desc: { fontSize: 12, color: '#64748b', marginTop: 2 },
