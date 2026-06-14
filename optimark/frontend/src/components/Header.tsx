@@ -85,6 +85,7 @@ export default function Header() {
     { href: "/pricing", label: "Tarifs" },
     { href: "/ventes-flash", label: "⚡ Flash" },
     { href: "/promotions", label: "🏷️ Promos" },
+    { href: "/tendances", label: "🔥 Tendances" },
     { href: "/boutiques", label: "🏪 Boutiques" },
   ];
 

@@ -160,6 +160,10 @@ export default function SellerDashboardScreen({ navigation }: any) {
             <Text style={s.actionIcon}>📋</Text>
             <Text style={s.actionLabel}>Rapport</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={s.actionBtn} onPress={() => navigation.navigate("SellerBroadcast")}>
+            <Text style={s.actionIcon}>📣</Text>
+            <Text style={s.actionLabel}>Diffusion</Text>
+          </TouchableOpacity>
         </View>
       </View>
 

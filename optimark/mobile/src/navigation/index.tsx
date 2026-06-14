@@ -62,6 +62,8 @@ import ReferralScreen from "../screens/buyer/ReferralScreen";
 import AdminScreen from "../screens/AdminScreen";
 import FavoritesScreen from "../screens/buyer/FavoritesScreen";
 import SellerStoreScreen from "../screens/buyer/SellerStoreScreen";
+import TendancesScreen from "../screens/buyer/TendancesScreen";
+import SellerBroadcastScreen from "../screens/seller/SellerBroadcastScreen";
 import { useCart } from "../contexts/CartContext";
 
 const Tab = createBottomTabNavigator();
@@ -166,6 +168,8 @@ export default function AppNavigator() {
         <Stack.Screen name="SellerReport" component={SellerReportScreen} options={{ title: "📋 Rapport mensuel" }} />
         <Stack.Screen name="WriteReview" component={WriteReviewScreen} options={{ title: "⭐ Laisser un avis" }} />
         <Stack.Screen name="Support" component={SupportScreen} options={{ title: "🤝 Aide & Support" }} />
+        <Stack.Screen name="Tendances" component={TendancesScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="SellerBroadcast" component={SellerBroadcastScreen} options={{ title: "📣 Diffusion" }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

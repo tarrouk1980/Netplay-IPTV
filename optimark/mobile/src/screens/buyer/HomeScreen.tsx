@@ -196,6 +196,9 @@ export default function HomeScreen({ navigation }: any) {
         <View style={{ paddingTop: 16 }}>
           <View style={s.sectionHeader}>
             <Text style={s.sectionTitle}>🔥 Tendances</Text>
+            <TouchableOpacity onPress={() => navigation.navigate("Tendances")}>
+              <Text style={{ fontSize: 12, color: "#9f1239", fontWeight: "700" }}>Voir tout →</Text>
+            </TouchableOpacity>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 12, paddingBottom: 8 }}>
             {trendingProducts.map((p: any) => (
