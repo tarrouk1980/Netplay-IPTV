@@ -64,6 +64,7 @@ import FavoritesScreen from "../screens/buyer/FavoritesScreen";
 import SellerStoreScreen from "../screens/buyer/SellerStoreScreen";
 import TendancesScreen from "../screens/buyer/TendancesScreen";
 import SellerBroadcastScreen from "../screens/seller/SellerBroadcastScreen";
+import MyQuestionsScreen from "../screens/buyer/MyQuestionsScreen";
 import { useCart } from "../contexts/CartContext";
 
 const Tab = createBottomTabNavigator();
@@ -170,6 +171,7 @@ export default function AppNavigator() {
         <Stack.Screen name="Support" component={SupportScreen} options={{ title: "🤝 Aide & Support" }} />
         <Stack.Screen name="Tendances" component={TendancesScreen} options={{ headerShown: false }} />
         <Stack.Screen name="SellerBroadcast" component={SellerBroadcastScreen} options={{ title: "📣 Diffusion" }} />
+        <Stack.Screen name="MyQuestions" component={MyQuestionsScreen} options={{ title: "❓ Mes questions" }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

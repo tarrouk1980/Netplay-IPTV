@@ -18,6 +18,12 @@ export class QuestionsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('my')
+  getMyQuestions(@Request() req: any) {
+    return this.questionsService.getMyQuestions(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post()
   ask(@Body('productId') productId: string, @Body('question') question: string, @Request() req: any) {
     return this.questionsService.ask(productId, req.user.id, question);

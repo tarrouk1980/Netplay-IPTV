@@ -71,6 +71,17 @@ export class QuestionsService {
     return { data: updated, message: 'Réponse enregistrée', success: true };
   }
 
+  async getMyQuestions(userId: string) {
+    const questions = await this.prisma.productQuestion.findMany({
+      where: { userId },
+      include: {
+        product: { select: { id: true, title: true, images: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return { data: questions, success: true };
+  }
+
   async delete(questionId: string, userId: string, role: string) {
     const q = await this.prisma.productQuestion.findUnique({ where: { id: questionId } });
     if (!q) throw new NotFoundException('Question introuvable');
