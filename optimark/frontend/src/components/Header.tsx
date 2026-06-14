@@ -242,10 +242,10 @@ export default function Header() {
                     )}
                   </Link>
                   <Link
-                    href="/compte"
+                    href="/tableau-de-bord"
                     className="text-slate-700 font-semibold hover:text-rose-800 transition text-sm px-4 py-2.5 rounded-xl hover:bg-rose-50"
                   >
-                    {user.name}
+                    🏠 {user.name}
                   </Link>
                   <button
                     onClick={logout}
