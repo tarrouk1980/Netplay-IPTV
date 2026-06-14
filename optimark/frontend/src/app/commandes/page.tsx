@@ -4,140 +4,148 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
 import api from "@/lib/api";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  PENDING: { label: "En attente", color: "bg-amber-50 text-amber-700 border-amber-200" },
-  CONFIRMED: { label: "Confirmée", color: "bg-blue-50 text-blue-700 border-blue-200" },
-  SHIPPED: { label: "Expédiée", color: "bg-purple-50 text-purple-700 border-purple-200" },
-  DELIVERED: { label: "Livrée", color: "bg-green-50 text-green-700 border-green-200" },
-  CANCELLED: { label: "Annulée", color: "bg-red-50 text-red-700 border-red-200" },
+interface OrderItem {
+  id: string;
+  quantity: number;
+  price: number;
+  product: { title: string };
+}
+
+interface Order {
+  id: string;
+  total: number;
+  status: string;
+  paymentMethod: string;
+  createdAt: string;
+  items: OrderItem[];
+}
+
+const STATUS_LABELS: Record<string, { label: string; color: string; icon: string }> = {
+  PENDING:    { label: "En attente",  color: "bg-yellow-100 text-yellow-700", icon: "⏳" },
+  CONFIRMED:  { label: "Confirmée",   color: "bg-blue-100 text-blue-700",     icon: "✅" },
+  SHIPPED:    { label: "Expédiée",    color: "bg-purple-100 text-purple-700", icon: "🚚" },
+  DELIVERED:  { label: "Livrée",      color: "bg-green-100 text-green-700",   icon: "📦" },
+  CANCELLED:  { label: "Annulée",     color: "bg-red-100 text-red-700",       icon: "❌" },
 };
 
-export default function CommandesPage() {
-  const { user, loading: authLoading } = useAuth();
+const PAYMENT_LABELS: Record<string, string> = {
+  KONNECT:          "Konnect 💳",
+  PAYMEE:           "Paymee 💳",
+  CASH_ON_DELIVERY: "Cash à la livraison 💵",
+  CARD:             "Carte bancaire 💳",
+};
+
+function CommandesContent() {
+  const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const justOrdered = searchParams.get("payment") === "success";
-  const [orders, setOrders] = useState<any[]>([]);
+  const paymentStatus = searchParams.get("payment");
+
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [returns, setReturns] = useState<any[]>([]);
-  const tab = searchParams.get("tab") || "orders";
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!user) { router.push("/auth/connexion"); return; }
-    Promise.all([
-      api.get("/orders/me").catch(() => null),
-      api.get("/returns/my").catch(() => null),
-    ]).then(([oRes, rRes]) => {
-      setOrders(oRes?.data?.data || []);
-      setReturns(rRes?.data?.data || []);
+    if (!user) {
+      router.push("/auth/connexion");
+      return;
+    }
+    api.get("/orders/me").then((res) => {
+      setOrders(res.data.data || []);
+    }).catch(() => {
+      setOrders([]);
     }).finally(() => setLoading(false));
-  }, [user, authLoading, router]);
+  }, [user, router]);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
 
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-8">
-        <h1 className="text-2xl font-black text-slate-900 mb-2">Mes commandes</h1>
-        <div className="flex gap-2 mb-8">
-          <Link href="/commandes" className={`px-4 py-2 rounded-xl text-sm font-bold transition ${tab === "orders" ? "bg-rose-800 text-white" : "bg-white border border-slate-200 text-slate-600 hover:border-rose-300"}`}>
-            📦 Commandes
-          </Link>
-          <Link href="/commandes?tab=returns" className={`px-4 py-2 rounded-xl text-sm font-bold transition ${tab === "returns" ? "bg-rose-800 text-white" : "bg-white border border-slate-200 text-slate-600 hover:border-rose-300"}`}>
-            ↩️ Mes retours {returns.length > 0 && `(${returns.length})`}
-          </Link>
-        </div>
+        <h1 className="text-2xl font-bold text-slate-800 mb-2">Mes commandes</h1>
+        <p className="text-slate-500 text-sm mb-6">Suivez l&apos;état de vos commandes</p>
 
-        {justOrdered && (
-          <div className="bg-green-50 border border-green-200 rounded-2xl p-5 mb-8 flex items-center gap-4">
-            <span className="text-3xl">🎉</span>
+        {paymentStatus === "success" && (
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 flex items-center gap-3">
+            <span className="text-2xl">🎉</span>
             <div>
-              <p className="font-bold text-green-800">Commande passée avec succès !</p>
-              <p className="text-green-600 text-sm">Vous recevrez une confirmation par e-mail. Merci d&apos;avoir choisi OPTIMARK.</p>
+              <p className="font-semibold text-green-800">Paiement réussi !</p>
+              <p className="text-green-600 text-sm">Votre commande a été passée avec succès.</p>
+            </div>
+          </div>
+        )}
+        {paymentStatus === "failed" && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-center gap-3">
+            <span className="text-2xl">❌</span>
+            <div>
+              <p className="font-semibold text-red-800">Paiement échoué</p>
+              <p className="text-red-600 text-sm">Veuillez réessayer ou choisir un autre mode de paiement.</p>
             </div>
           </div>
         )}
 
-        {tab === "returns" ? (
-          loading ? (
-            <div className="space-y-4">{Array.from({length:3}).map((_,i)=><div key={i} className="skeleton rounded-2xl h-24"/>)}</div>
-          ) : returns.length === 0 ? (
-            <div className="text-center py-20 bg-white rounded-2xl border border-slate-100">
-              <span className="text-4xl block mb-3">😊</span>
-              <p className="font-bold text-slate-700">Aucun retour effectué</p>
-              <p className="text-slate-400 text-sm mt-1">Vos demandes de retour apparaîtront ici.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {returns.map((ret: any) => {
-                const retStatus: Record<string,{label:string;color:string}> = {
-                  PENDING:  { label: "En attente", color: "bg-amber-50 text-amber-700 border-amber-200" },
-                  APPROVED: { label: "Approuvée",  color: "bg-blue-50 text-blue-700 border-blue-200"   },
-                  REFUNDED: { label: "Remboursée", color: "bg-green-50 text-green-700 border-green-200" },
-                  REJECTED: { label: "Rejetée",    color: "bg-red-50 text-red-700 border-red-200"      },
-                };
-                const s = retStatus[ret.status] || retStatus.PENDING;
-                return (
-                  <div key={ret.id} className="bg-white border border-slate-100 rounded-2xl p-5" style={{boxShadow:"0 2px 12px rgba(0,0,0,0.06)"}}>
-                    <div className="flex items-start justify-between gap-3 flex-wrap">
-                      <div>
-                        <p className="font-bold text-slate-800">Commande #{ret.order?.id?.slice(0,8)}</p>
-                        <p className="text-slate-500 text-xs mt-1">
-                          {new Date(ret.createdAt).toLocaleDateString("fr-FR", {day:"numeric",month:"long",year:"numeric"})}
-                          {ret.order?.total && ` · ${Number(ret.order.total).toFixed(2)} TND`}
-                        </p>
-                        <p className="text-slate-600 text-sm mt-2 max-w-md">{ret.reason}</p>
-                        {ret.adminNote && <p className="text-xs text-blue-600 mt-1 italic">Note : {ret.adminNote}</p>}
-                      </div>
-                      <span className={`text-xs font-bold px-3 py-1 rounded-full border ${s.color}`}>{s.label}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )
-        ) : loading ? (
-          <div className="space-y-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="skeleton rounded-2xl h-28" />
-            ))}
+        {loading ? (
+          <div className="text-center py-20 text-slate-400">
+            <p className="text-4xl mb-4 animate-pulse">⏳</p>
+            <p>Chargement de vos commandes...</p>
           </div>
         ) : orders.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-2xl border border-slate-100">
-            <span className="text-5xl block mb-4">📦</span>
-            <p className="text-xl font-bold text-slate-700 mb-1">Aucune commande pour le moment</p>
-            <p className="text-slate-400 text-sm mb-5">Vos achats apparaîtront ici une fois passés.</p>
-            <Link href="/produits" className="inline-block bg-rose-800 hover:bg-rose-900 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition">
+          <div className="text-center py-20 text-slate-400">
+            <p className="text-5xl mb-4">📭</p>
+            <p className="text-xl font-medium text-slate-600">Aucune commande pour l&apos;instant</p>
+            <button
+              onClick={() => router.push("/produits")}
+              className="mt-4 bg-blue-800 text-white px-6 py-2 rounded-xl font-semibold hover:bg-blue-700 transition text-sm"
+            >
               Découvrir les produits
-            </Link>
+            </button>
           </div>
         ) : (
           <div className="space-y-4">
-            {orders.map((order: any) => {
-              const status = STATUS_LABELS[order.status] || STATUS_LABELS.PENDING;
+            {orders.map((order) => {
+              const status = STATUS_LABELS[order.status] || { label: order.status, color: "bg-gray-100 text-gray-700", icon: "❓" };
               return (
-                <Link key={order.id} href={`/commandes/${order.id}`} className="block bg-white border border-slate-100 rounded-2xl p-5 hover:border-rose-200 transition" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-                  <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                <div key={order.id} className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                     <div>
-                      <p className="font-bold text-slate-800">Commande #{order.id?.slice(0, 8)}</p>
-                      <p className="text-slate-400 text-xs">{order.createdAt ? new Date(order.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : ""}</p>
+                      <p className="text-xs text-slate-400 font-mono">#{order.id.slice(0, 12).toUpperCase()}</p>
+                      <p className="text-sm text-slate-500 mt-0.5">
+                        {new Date(order.createdAt).toLocaleDateString("fr-FR", {
+                          day: "numeric", month: "long", year: "numeric"
+                        })}
+                      </p>
                     </div>
-                    <span className={`text-xs font-bold px-3 py-1 rounded-full border ${status.color}`}>{status.label}</span>
-                  </div>
-                  <div className="border-t border-slate-100 pt-3 flex items-center justify-between">
-                    <p className="text-slate-500 text-sm">{order.items?.length || 0} article(s)</p>
                     <div className="flex items-center gap-3">
-                      <a href={`/commandes/${order.id}/facture`} target="_blank" onClick={e => e.stopPropagation()}
-                        className="text-xs text-rose-800 font-semibold hover:underline">🧾 Facture</a>
-                      <p className="font-black text-rose-800">{Number(order.total || 0).toFixed(2)} TND</p>
+                      <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${status.color}`}>
+                        {status.icon} {status.label}
+                      </span>
+                      <span className="text-lg font-extrabold text-blue-800">{order.total.toFixed(2)} TND</span>
                     </div>
                   </div>
-                </Link>
+
+                  <div className="border-t border-slate-100 pt-4 space-y-2">
+                    {order.items?.map((item) => (
+                      <div key={item.id} className="flex items-center justify-between text-sm">
+                        <span className="text-slate-700">{item.product?.title} <span className="text-slate-400">×{item.quantity}</span></span>
+                        <span className="text-slate-600 font-medium">{(item.price * item.quantity).toFixed(2)} TND</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="border-t border-slate-100 pt-3 mt-3 flex items-center justify-between">
+                    <span className="text-xs text-slate-400">
+                      Paiement : {PAYMENT_LABELS[order.paymentMethod] || order.paymentMethod}
+                    </span>
+                    {order.status === "PENDING" && (
+                      <button className="text-xs text-red-500 hover:text-red-700 font-medium transition">
+                        Annuler
+                      </button>
+                    )}
+                  </div>
+                </div>
               );
             })}
           </div>
@@ -146,5 +154,13 @@ export default function CommandesPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function CommandesPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-slate-400">Chargement...</div>}>
+      <CommandesContent />
+    </Suspense>
   );
 }
