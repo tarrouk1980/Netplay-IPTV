@@ -52,6 +52,7 @@ import AddressBookScreen from "../screens/buyer/AddressBookScreen";
 import SellerStockAlertsScreen from "../screens/seller/SellerStockAlertsScreen";
 import SellerReportScreen from "../screens/seller/SellerReportScreen";
 import WriteReviewScreen from "../screens/buyer/WriteReviewScreen";
+import SupportScreen from "../screens/buyer/SupportScreen";
 import SellerBundlesScreen from "../screens/seller/SellerBundlesScreen";
 import GiftCardsScreen from "../screens/buyer/GiftCardsScreen";
 import PriceAlertsScreen from "../screens/buyer/PriceAlertsScreen";
@@ -164,6 +165,7 @@ export default function AppNavigator() {
         <Stack.Screen name="SellerStockAlerts" component={SellerStockAlertsScreen} options={{ title: "⚠️ Alertes de stock" }} />
         <Stack.Screen name="SellerReport" component={SellerReportScreen} options={{ title: "📋 Rapport mensuel" }} />
         <Stack.Screen name="WriteReview" component={WriteReviewScreen} options={{ title: "⭐ Laisser un avis" }} />
+        <Stack.Screen name="Support" component={SupportScreen} options={{ title: "🤝 Aide & Support" }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

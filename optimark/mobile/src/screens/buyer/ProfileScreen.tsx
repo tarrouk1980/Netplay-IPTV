@@ -219,6 +219,12 @@ export default function ProfileScreen({ navigation }: any) {
           <Text style={s.menuArrow}>›</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity style={s.menuItem} onPress={() => navigation.navigate("Support")}>
+          <Text style={s.menuIcon}>🤝</Text>
+          <Text style={s.menuLabel}>Aide & Support</Text>
+          <Text style={s.menuArrow}>›</Text>
+        </TouchableOpacity>
+
         {isSeller && (
           <TouchableOpacity style={s.menuItem} onPress={() => navigation.navigate("SellerTab")}>
             <Text style={s.menuIcon}>🏪</Text>
