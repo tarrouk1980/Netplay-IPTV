@@ -1,6 +1,27 @@
-import React, { useRef } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { WebView } from 'react-native-webview';
+import React, { useState } from 'react';
+import { View, Image, Text, StyleSheet, Dimensions } from 'react-native';
+import Constants from 'expo-constants';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const MAPBOX_TOKEN = Constants.expoConfig?.extra?.mapboxToken || 'pk.eyJ1IjoiZWFzeXdheXRhcmVrIiwiYSI6ImNtcHNuaGJ1ODBoc2Qyc3FxenU0aGFvd3QifQ.K-z5zbFtY8v5lyMUn7TryQ';
+
+// Builds a Mapbox Static API URL — just a regular image, no WebView
+function buildStaticUrl({ centerCoordinate, zoom, markers, width, height }) {
+  const [lng, lat] = centerCoordinate;
+  const w = Math.min(Math.round(width || SCREEN_WIDTH), 1280);
+  const h = Math.round(height || 220);
+  const z = zoom || 13;
+
+  const MARKER_COLORS = ['F5A623', 'E74C3C', '27AE60', '3498DB'];
+  const overlays = markers.map((m, i) => {
+    const color = (m.color || '#F5A623').replace('#', '');
+    const [mLng, mLat] = m.coordinates;
+    return `pin-l+${color}(${mLng},${mLat})`;
+  }).join(',');
+
+  const base = overlays ? `${overlays}/` : '';
+  return `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/${base}${lng},${lat},${z}/${w}x${h}@2x?access_token=${MAPBOX_TOKEN}`;
+}
 
 export default function MapboxWebView({
   style,
@@ -10,92 +31,46 @@ export default function MapboxWebView({
   route = null,
   heatmapZones = [],
 }) {
-  const markersJson = JSON.stringify(markers);
-  const routeJson = route ? JSON.stringify(route) : 'null';
-  const zonesWithCoords = heatmapZones.map((z, i) => ({
-    lat: z.lat || (36.8065 + (i - 1) * 0.03),
-    lng: z.lng || (10.1815 + (i - 1) * 0.04),
-    color: z.color || '#F5A623',
-    radius: z.radius || 800,
-    label: z.label || '',
-  }));
-  const zonesJson = JSON.stringify(zonesWithCoords);
-  const center = `[${centerCoordinate[1]}, ${centerCoordinate[0]}]`;
+  const [imgError, setImgError] = useState(false);
+  const containerStyle = [styles.container, style];
+  const width = (style?.width) || SCREEN_WIDTH - 32;
+  const height = (style?.height) || 220;
 
-  const html = `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  html, body, #map { width:100%; height:100%; background:#1a1a2e; }
-  .leaflet-control-attribution { display:none !important; }
-</style>
-</head>
-<body>
-<div id="map"></div>
-<script>
-  var map = L.map('map', { zoomControl:true, attributionControl:false }).setView(${center}, ${zoom});
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
-  }).addTo(map);
-
-  var markers = ${markersJson};
-  markers.forEach(function(m) {
-    var icon = L.divIcon({
-      html: '<div style="font-size:22px;line-height:1;">' + (m.label || '📍') + '</div>',
-      className: '',
-      iconSize: [30, 30],
-      iconAnchor: [15, 30],
-    });
-    L.marker([m.coordinates[1], m.coordinates[0]], { icon: icon }).addTo(map);
-  });
-
-  var route = ${routeJson};
-  if (route && route.length > 1) {
-    var latlngs = route.map(function(c) { return [c[1], c[0]]; });
-    L.polyline(latlngs, { color: '#F5A623', weight: 5, opacity: 0.9 }).addTo(map);
+  if (imgError) {
+    return (
+      <View style={[containerStyle, styles.placeholder, { height }]}>
+        <Text style={styles.icon}>🗺️</Text>
+        <Text style={styles.text}>Carte indisponible</Text>
+        {markers[0] && (
+          <Text style={styles.hint}>
+            {markers[0].coordinates[1].toFixed(4)}° N, {markers[0].coordinates[0].toFixed(4)}° E
+          </Text>
+        )}
+      </View>
+    );
   }
 
-  var zones = ${zonesJson};
-  zones.forEach(function(z) {
-    L.circle([z.lat, z.lng], {
-      color: z.color,
-      fillColor: z.color,
-      fillOpacity: 0.18,
-      opacity: 0.55,
-      radius: z.radius || 800,
-      weight: 2,
-    }).addTo(map);
-  });
-</script>
-</body>
-</html>`;
+  const uri = buildStaticUrl({ centerCoordinate, zoom, markers, width, height });
 
   return (
-    <View style={[styles.container, style]}>
-      <WebView
-        source={{ html, baseUrl: 'https://unpkg.com' }}
-        style={styles.webview}
-        scrollEnabled={false}
-        javaScriptEnabled={true}
-        domStorageEnabled={true}
-        originWhitelist={['*']}
-        mixedContentMode="always"
-        allowFileAccessFromFileURLs={true}
-        allowUniversalAccessFromFileURLs={true}
-        nestedScrollEnabled={false}
-        overScrollMode="never"
-        onShouldStartLoadWithRequest={() => true}
+    <View style={[containerStyle, { height }]}>
+      <Image
+        source={{ uri }}
+        style={{ width: '100%', height }}
+        resizeMode="cover"
+        onError={() => setImgError(true)}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { overflow: 'hidden', borderRadius: 12 },
-  webview: { flex: 1, backgroundColor: '#1a1a2e' },
+  container: { overflow: 'hidden', borderRadius: 12, backgroundColor: '#1C1C28' },
+  placeholder: {
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: '#2C2C3E', borderRadius: 12,
+  },
+  icon: { fontSize: 36, marginBottom: 8 },
+  text: { color: '#8E8E9A', fontSize: 13, fontWeight: '600' },
+  hint: { color: '#4A4A5A', fontSize: 11, marginTop: 4 },
 });
