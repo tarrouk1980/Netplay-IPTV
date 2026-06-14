@@ -4,7 +4,7 @@ import {
   StyleSheet, Alert, ActivityIndicator, Modal, ScrollView, Switch,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import api from "../../lib/api";
+import api from "../../api";
 
 const ROSE = "#9f1239";
 

@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import api from '../../lib/api';
+import api from '../../api';
 
 export default function SellerReviewsScreen() {
   const [reviews, setReviews] = useState<any[]>([]);

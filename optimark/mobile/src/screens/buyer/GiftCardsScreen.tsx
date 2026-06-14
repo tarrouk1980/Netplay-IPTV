@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, TouchableOpacity, FlatList, TextInput, StyleSheet, ActivityIndicator, Alert, ScrollView } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import api from '../../lib/api';
+import api from '../../api';
 
 const AMOUNTS = [10, 20, 50, 100, 200];
 

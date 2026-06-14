@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import api from '../../lib/api';
+import api from '../../api';
 
 const PLAN_COLORS: Record<string, string> = { FREE: '#94a3b8', PRO: '#9f1239', BUSINESS: '#7c3aed' };
 

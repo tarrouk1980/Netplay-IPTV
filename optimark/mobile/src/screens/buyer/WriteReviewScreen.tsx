@@ -3,7 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   Alert, ScrollView, ActivityIndicator,
 } from "react-native";
-import api from "../../lib/api";
+import api from "../../api";
 
 const ROSE = "#9f1239";
 

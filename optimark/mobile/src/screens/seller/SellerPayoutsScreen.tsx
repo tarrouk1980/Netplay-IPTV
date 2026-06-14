@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, Alert, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import api from '../../lib/api';
+import api from '../../api';
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING: 'En attente', APPROVED: 'Approuvé', PAID: 'Payé', REJECTED: 'Rejeté',
