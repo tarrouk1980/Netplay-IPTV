@@ -1,9 +1,6 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import Mapbox from '@rnmapbox/maps';
-
-const MAPBOX_TOKEN = 'pk.eyJ1IjoiZWFzeXdheXRhcmVrIiwiYSI6ImNtcHNuaGJ1ODBoc2Qyc3FxenU0aGFvd3QifQ.K-z5zbFtY8v5lyMUn7TryQ';
-Mapbox.setAccessToken(MAPBOX_TOKEN);
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -16,39 +13,37 @@ export default function MapboxWebView({
   heatmapZones = [],
 }) {
   const height = style?.height || 220;
+  const width = style?.width || SCREEN_WIDTH;
 
   return (
-    <View style={[styles.container, style, { height }]}>
+    <View style={{ width, height, overflow: 'hidden', borderRadius: 12 }}>
       <Mapbox.MapView
-        style={StyleSheet.absoluteFillObject}
+        style={{ width, height }}
         styleURL={Mapbox.StyleURL.Dark}
         compassEnabled={false}
         attributionEnabled={false}
         logoEnabled={false}
-        scrollEnabled={true}
-        zoomEnabled={true}
+        scrollEnabled={false}
+        zoomEnabled={false}
+        pitchEnabled={false}
+        rotateEnabled={false}
       >
         <Mapbox.Camera
-          defaultSettings={{
-            centerCoordinate,
-            zoomLevel: zoom,
-          }}
+          centerCoordinate={centerCoordinate}
+          zoomLevel={zoom}
+          animationDuration={0}
         />
 
-        {/* Marqueurs */}
         {markers.map((m, i) => (
           <Mapbox.PointAnnotation
-            key={`marker-${i}`}
-            id={`marker-${i}`}
+            key={`m${i}`}
+            id={`m${i}`}
             coordinate={m.coordinates}
           >
-            <View style={[styles.markerDot, { backgroundColor: m.color || '#F5A623' }]}>
-              <Mapbox.Callout title={m.label || ''} />
-            </View>
+            <View style={[styles.dot, { backgroundColor: m.color || '#F5A623' }]} />
           </Mapbox.PointAnnotation>
         ))}
 
-        {/* Route polyline */}
         {route && route.length > 1 && (
           <Mapbox.ShapeSource
             id="route"
@@ -60,49 +55,14 @@ export default function MapboxWebView({
             />
           </Mapbox.ShapeSource>
         )}
-
-        {/* Zones heatmap */}
-        {heatmapZones.length > 0 && (
-          <Mapbox.ShapeSource
-            id="heatmap"
-            shape={{
-              type: 'FeatureCollection',
-              features: heatmapZones.map((z, i) => ({
-                type: 'Feature',
-                geometry: { type: 'Point', coordinates: [z.lng || 10.18, z.lat || 36.81] },
-                properties: { color: z.color || '#F5A623' },
-              })),
-            }}
-          >
-            <Mapbox.CircleLayer
-              id="heatmapCircles"
-              style={{
-                circleColor: ['get', 'color'],
-                circleOpacity: 0.25,
-                circleRadius: 60,
-                circleStrokeColor: ['get', 'color'],
-                circleStrokeWidth: 2,
-                circleStrokeOpacity: 0.6,
-              }}
-            />
-          </Mapbox.ShapeSource>
-        )}
       </Mapbox.MapView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    overflow: 'hidden',
-    borderRadius: 12,
-    backgroundColor: '#1C1C28',
-  },
-  markerDot: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#FFF',
+  dot: {
+    width: 18, height: 18, borderRadius: 9,
+    borderWidth: 2, borderColor: '#FFF',
   },
 });

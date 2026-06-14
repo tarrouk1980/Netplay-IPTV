@@ -22,6 +22,8 @@ class ErrorBoundary extends React.Component {
   }
 }
 import { initI18n } from './i18n';
+import Mapbox from '@rnmapbox/maps';
+Mapbox.setAccessToken('pk.eyJ1IjoiZWFzeXdheXRhcmVrIiwiYSI6ImNtcHNuaGJ1ODBoc2Qyc3FxenU0aGFvd3QifQ.K-z5zbFtY8v5lyMUn7TryQ');
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
