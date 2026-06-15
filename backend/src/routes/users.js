@@ -445,7 +445,6 @@ router.post('/clients/favorites/:providerId', authenticate, async (req, res) => 
 });
 
 // ─── Address book ───────────────────────────
-const addressStore = new Map();
 
 router.get('/clients/addresses', authenticate, (req, res) => {
   return res.json({ addresses: addressStore.get(req.user.id) || [] });
