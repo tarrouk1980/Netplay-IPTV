@@ -3,7 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const api = axios.create({
   baseURL: "https://optimark-api.onrender.com/api",
-  timeout: 10000,
+  timeout: 60000,
 });
 
 api.interceptors.request.use(async (config) => {

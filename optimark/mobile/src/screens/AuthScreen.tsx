@@ -19,7 +19,8 @@ export default function AuthScreen({ navigation }: any) {
       else await register(name, email, password);
       navigation.goBack();
     } catch (e: any) {
-      Alert.alert("Erreur", e.response?.data?.message || "Authentification échouée.");
+      const msg = e.response?.data?.message || e.message || "Authentification échouée.";
+      Alert.alert("Erreur", msg);
     } finally {
       setLoading(false);
     }
