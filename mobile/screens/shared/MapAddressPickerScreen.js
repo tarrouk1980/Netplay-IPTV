@@ -52,12 +52,6 @@ async function forwardGeocode(query) {
 export default function MapAddressPickerScreen({ route, navigation }) {
   const { onSelect, title = 'Choisir une adresse', initialLat, initialLng } = route.params || {};
 
-  const [region, setRegion] = useState({
-    latitude: initialLat || DEFAULT_REGION.latitude,
-    longitude: initialLng || DEFAULT_REGION.longitude,
-    latitudeDelta: 0.02,
-    longitudeDelta: 0.02,
-  });
   const [pin, setPin] = useState({ lat: initialLat || DEFAULT_REGION.latitude, lng: initialLng || DEFAULT_REGION.longitude });
   const [address, setAddress] = useState('');
   const [resolving, setResolving] = useState(false);
