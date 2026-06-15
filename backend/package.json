@@ -5,7 +5,7 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "test": "jest --forceExit",
-    "db:migrate": "prisma migrate dev",
+    "build": "prisma generate && prisma migrate resolve --applied 20260531000000_add_wallet_loyalty_reports_backhome || true && prisma migrate deploy",
     "db:generate": "prisma generate",
     "db:studio": "prisma studio"
   },
