@@ -1,12 +1,16 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
   constructor() {
-    const url = process.env.DATABASE_URL + '?schema=optimark';
-    const adapter = new PrismaPg({ connectionString: url });
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    pool.on('connect', (client: any) => {
+      client.query('SET search_path TO optimark');
+    });
+    const adapter = new PrismaPg(pool);
     super({ adapter });
   }
 
