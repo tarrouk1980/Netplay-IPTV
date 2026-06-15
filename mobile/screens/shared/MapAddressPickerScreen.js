@@ -6,6 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import * as Location from 'expo-location';
+import MapboxWebView from '../../components/MapboxWebView';
 
 const { width, height } = Dimensions.get('window');
 const MAPBOX_TOKEN = 'pk.eyJ1IjoiZWFzeXdheXRhcmVrIiwiYSI6ImNtcHNuaGJ1ODBoc2Qyc3FxenU0aGFvd3QifQ.K-z5zbFtY8v5lyMUn7TryQ';
@@ -64,7 +65,6 @@ export default function MapAddressPickerScreen({ route, navigation }) {
   const [suggestions, setSuggestions] = useState([]);
   const [searching, setSearching] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
-  const mapRef = useRef(null);
   const debounceRef = useRef(null);
 
   const resolvePin = useCallback(async (lat, lng) => {
@@ -75,15 +75,6 @@ export default function MapAddressPickerScreen({ route, navigation }) {
   }, []);
 
   useEffect(() => { resolvePin(pin.lat, pin.lng); }, []);
-
-  const handleRegionChange = (reg) => {
-    setPin({ lat: reg.latitude, lng: reg.longitude });
-  };
-
-  const handleRegionChangeComplete = (reg) => {
-    setPin({ lat: reg.latitude, lng: reg.longitude });
-    resolvePin(reg.latitude, reg.longitude);
-  };
 
   const handleSearch = (text) => {
     setQuery(text);
@@ -99,14 +90,11 @@ export default function MapAddressPickerScreen({ route, navigation }) {
 
   const pickSuggestion = (feature) => {
     const [lng, lat] = feature.center;
-    const newRegion = { latitude: lat, longitude: lng, latitudeDelta: 0.01, longitudeDelta: 0.01 };
-    setRegion(newRegion);
     setPin({ lat, lng });
     setAddress(feature.place_name);
     setQuery(feature.place_name);
     setSuggestions([]);
     setShowSearch(false);
-    mapRef.current?.animateToRegion(newRegion, 500);
   };
 
   const handleMyLocation = async () => {
@@ -114,10 +102,7 @@ export default function MapAddressPickerScreen({ route, navigation }) {
     if (status !== 'granted') { Alert.alert('Permission refusée'); return; }
     const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
     const { latitude, longitude } = loc.coords;
-    const newRegion = { latitude, longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 };
-    setRegion(newRegion);
     setPin({ lat: latitude, lng: longitude });
-    mapRef.current?.animateToRegion(newRegion, 500);
     resolvePin(latitude, longitude);
   };
 
@@ -130,15 +115,11 @@ export default function MapAddressPickerScreen({ route, navigation }) {
   return (
     <View style={styles.container}>
       {/* Map */}
-      <MapView
-        ref={mapRef}
+      <MapboxWebView
         style={styles.map}
-        initialRegion={region}
-        onRegionChange={handleRegionChange}
-        onRegionChangeComplete={handleRegionChangeComplete}
-        mapType="standard"
-        showsUserLocation
-        showsMyLocationButton={false}
+        centerCoordinate={[pin.lng, pin.lat]}
+        zoom={14}
+        markers={[{ coordinates: [pin.lng, pin.lat], color: '#F5A623', label: '📍' }]}
       />
 
       {/* Center pin */}
@@ -176,8 +157,6 @@ export default function MapAddressPickerScreen({ route, navigation }) {
               <TouchableOpacity
                 style={styles.quickChip}
                 onPress={() => {
-                  const r = { latitude: item.lat, longitude: item.lng, latitudeDelta: 0.02, longitudeDelta: 0.02 };
-                  mapRef.current?.animateToRegion(r, 500);
                   setPin({ lat: item.lat, lng: item.lng });
                   resolvePin(item.lat, item.lng);
                 }}
