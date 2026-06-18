@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-const auth = require('../middleware/auth');
+const { authenticate: auth } = require('../middleware/auth');
 
 // POST /api/business/register — submit company registration request
 router.post('/register', auth, async (req, res) => {

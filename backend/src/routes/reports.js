@@ -1,6 +1,7 @@
 'use strict';
 const express = require('express');
-const { authenticate, requireRole } = require('../middleware/auth');
+const { authenticate } = require('../middleware/auth');
+const { requireRole } = require('../middleware/rbac');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const router = express.Router();
