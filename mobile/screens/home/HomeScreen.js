@@ -197,6 +197,11 @@ export default function HomeScreen({ navigation }) {
         </TouchableOpacity>
       )}
       <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={{ backgroundColor: '#D32F2F', padding: 6 }}>
+          <Text style={{ color: '#fff', fontSize: 11, textAlign: 'center' }}>
+            DEBUG role={String(user?.role)} kyc={String(user?.kycStatus)}
+          </Text>
+        </View>
         {/* Header */}
         <View style={styles.header}>
           <View>
