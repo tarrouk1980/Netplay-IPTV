@@ -79,6 +79,7 @@ export default function HomeScreen({ navigation }) {
   const [heroBanner, setHeroBanner] = useState(null);
   const promoBannerRef = useRef(null);
   const [promoBannerIndex, setPromoBannerIndex] = useState(0);
+  const [redirectDebug, setRedirectDebug] = useState('not run yet');
 
   const fetchActivity = useCallback(async () => {
     try {
@@ -118,21 +119,30 @@ export default function HomeScreen({ navigation }) {
     try { fetchActivity(); } catch {}
     try { fetchAds(); } catch {}
 
-    if (!user?.role) return;
+    if (!user?.role) { setRedirectDebug('no user.role'); return; }
 
     const PROVIDER_ROLES = ['CHAUFFEUR', 'LIVREUR', 'DEPANNEUR', 'MARCHAND'];
 
     try {
       if (user.role === 'ADMIN') { navigation.replace('AdminDashboard'); return; }
       if (PROVIDER_ROLES.includes(user.role)) {
-        if (user.kycStatus !== 'APPROVED') { navigation.replace('KYCPending'); return; }
+        if (user.kycStatus !== 'APPROVED') {
+          setRedirectDebug(`kyc not approved: ${user.kycStatus}`);
+          navigation.replace('KYCPending');
+          return;
+        }
+        setRedirectDebug(`replacing to dashboard for ${user.role}`);
         if (user.role === 'CHAUFFEUR') navigation.replace('DriverDashboard');
         else if (user.role === 'LIVREUR') navigation.replace('LivreurDashboard');
         else if (user.role === 'DEPANNEUR') navigation.replace('DepanneurDashboard');
         else if (user.role === 'MARCHAND') navigation.replace('MerchantDashboard');
         return;
+      } else {
+        setRedirectDebug(`role not in PROVIDER_ROLES: ${user.role}`);
       }
-    } catch {}
+    } catch (e) {
+      setRedirectDebug(`THROW: ${e?.message}`);
+    }
     // CLIENT → reste sur HomeScreen
   }, [user?.role, user?.kycStatus]);
 
@@ -200,6 +210,9 @@ export default function HomeScreen({ navigation }) {
         <View style={{ backgroundColor: '#D32F2F', padding: 6 }}>
           <Text style={{ color: '#fff', fontSize: 11, textAlign: 'center' }}>
             DEBUG role={String(user?.role)} kyc={String(user?.kycStatus)}
+          </Text>
+          <Text style={{ color: '#fff', fontSize: 11, textAlign: 'center' }}>
+            redirect: {redirectDebug}
           </Text>
         </View>
         {/* Header */}
