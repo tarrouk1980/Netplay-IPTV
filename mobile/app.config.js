@@ -31,10 +31,7 @@ module.exports = {
       ],
     },
     updates: {
-      url: 'https://u.expo.dev/028c05e2-49a4-41fd-b364-3e5be6bc7ca1',
-      enabled: true,
-      checkAutomatically: 'ON_LOAD',
-      fallbackToCacheTimeout: 0,
+      enabled: false,
     },
     runtimeVersion: {
       policy: 'sdkVersion',
