@@ -60,8 +60,6 @@ export default function MapboxWebView({
         domStorageEnabled={true}
         originWhitelist={['*']}
         mixedContentMode="always"
-        scrollEnabled={false}
-        overScrollMode="never"
         setSupportMultipleWindows={false}
       />
     </View>
