@@ -222,11 +222,7 @@ export default function TaxiRequestScreen({ route, navigation }) {
 
       <ScrollView style={styles.scroll} keyboardShouldPersistTaps="handled">
         {/* Interactive map */}
-        <View
-          style={styles.mapContainer}
-          onStartShouldSetResponder={() => true}
-          onMoveShouldSetResponder={() => true}
-        >
+        <View style={styles.mapContainer}>
           <MapboxWebView
             style={{ height: 220 }}
             centerCoordinate={
