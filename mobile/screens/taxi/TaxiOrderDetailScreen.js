@@ -220,7 +220,7 @@ export default function TaxiOrderDetailScreen({ route, navigation }) {
         <View style={s.section}>
           <Text style={s.sectionTitle}>Paiement</Text>
           <View style={s.card}>
-            <Row label="Méthode" value={meta.paymentMethod || 'Cash'} />
+            <Row label="Méthode" value={meta.payment?.method || 'Cash'} />
             <Row label="Date" value={new Date(order.createdAt).toLocaleString('fr-TN')} />
           </View>
         </View>

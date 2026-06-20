@@ -193,7 +193,7 @@ export default function ClientOrderDetailScreen({ navigation, route }) {
                 <Text style={styles.totalLabel}>TOTAL</Text>
                 <Text style={styles.totalVal}>{order.total.toFixed(3)} TND</Text>
               </View>
-              <Text style={styles.paymentMethod}>💳 {order.paymentMethod}</Text>
+              <Text style={styles.paymentMethod}>💳 {order.metadata?.payment?.method || 'N/A'}</Text>
             </View>
           </View>
 

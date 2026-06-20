@@ -70,7 +70,7 @@ function buildReceiptText(order) {
   if (order.discount)    lines.push(`Remise      : -${order.discount} TND`);
   lines.push('──────────────────────────────');
   lines.push(`TOTAL       : ${order.price ?? order.fare ?? 'N/A'} TND`);
-  lines.push(`Paiement    : ${order.paymentMethod || 'Espèces'}`);
+  lines.push(`Paiement    : ${order.metadata?.payment?.method || 'Espèces'}`);
   if (order.driver?.name) {
     lines.push('');
     lines.push('──────────────────────────────');

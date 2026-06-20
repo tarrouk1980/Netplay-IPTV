@@ -198,7 +198,7 @@ export default function EasyPassScreen({ navigation }) {
     </View>
   );
 
-  const activePlan = subscription?.plan;
+  const activePlan = subscription?.planType;
   const expiresAt = subscription?.expiresAt ? new Date(subscription.expiresAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : null;
 
   return (

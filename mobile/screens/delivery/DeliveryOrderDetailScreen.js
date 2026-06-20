@@ -227,7 +227,7 @@ export default function DeliveryOrderDetailScreen({ route, navigation }) {
         <View style={s.section}>
           <Text style={s.sectionTitle}>Paiement</Text>
           <View style={s.card}>
-            <Row label="Méthode" value={meta.paymentMethod || 'Cash'} />
+            <Row label="Méthode" value={meta.payment?.method || 'Cash'} />
             <Row label="Montant total" value={`${parseFloat(order.price || 0).toFixed(3)} TND`} valueColor={COLORS.green} />
           </View>
         </View>

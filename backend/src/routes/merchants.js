@@ -132,6 +132,7 @@ router.post(
     body('price').isFloat({ min: 0 }),
     body('category').trim().notEmpty(),
     body('imageUrl').optional().isURL(),
+    body('stock').optional().isInt({ min: 0 }),
     body('promoPrice').optional().isFloat({ min: 0 }),
     body('promoLabel').optional().trim(),
   ],
@@ -143,7 +144,7 @@ router.post(
       return res.status(404).json({ error: 'Merchant profile not found', code: 'NOT_FOUND' });
     }
 
-    const { name, description, price, category, imageUrl, promoPrice, promoLabel } = req.body;
+    const { name, description, price, category, imageUrl, stock, promoPrice, promoLabel } = req.body;
 
     const product = await prisma.product.create({
       data: {
@@ -153,6 +154,7 @@ router.post(
         price: price.toString(),
         category,
         imageUrl: imageUrl || null,
+        stock: stock !== undefined ? parseInt(stock) : 0,
         metadata: promoPrice ? { promoPrice: promoPrice.toString(), promoLabel: promoLabel || null } : undefined,
       },
     });
@@ -172,6 +174,7 @@ router.patch(
     body('price').optional().isFloat({ min: 0 }),
     body('category').optional().trim().notEmpty(),
     body('imageUrl').optional().isURL(),
+    body('stock').optional().isInt({ min: 0 }),
     body('active').optional().isBoolean(),
   ],
   async (req, res) => {
@@ -189,13 +192,14 @@ router.patch(
       return res.status(404).json({ error: 'Product not found', code: 'NOT_FOUND' });
     }
 
-    const { name, description, price, category, imageUrl, active } = req.body;
+    const { name, description, price, category, imageUrl, stock, active } = req.body;
     const data = {};
     if (name !== undefined) data.name = name;
     if (description !== undefined) data.description = description;
     if (price !== undefined) data.price = price.toString();
     if (category !== undefined) data.category = category;
     if (imageUrl !== undefined) data.imageUrl = imageUrl;
+    if (stock !== undefined) data.stock = parseInt(stock);
     if (active !== undefined) data.active = active;
 
     const updated = await prisma.product.update({ where: { id: product.id }, data });

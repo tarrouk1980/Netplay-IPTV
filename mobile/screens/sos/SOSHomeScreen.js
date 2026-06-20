@@ -78,11 +78,11 @@ export default function SOSHomeScreen({ navigation }) {
             </Text>
             {contractValid && (
               <View style={styles.coverageTags}>
-                {myContract.coverageTypes.map((c) => (
-                  <View key={c} style={styles.coverageTag}>
-                    <Text style={styles.coverageTagText}>{c}</Text>
-                  </View>
-                ))}
+                <View style={styles.coverageTag}>
+                  <Text style={styles.coverageTagText}>
+                    {myContract.companyName} · {myContract.quotaUsed}/{myContract.quotaTotal} interventions
+                  </Text>
+                </View>
               </View>
             )}
           </View>

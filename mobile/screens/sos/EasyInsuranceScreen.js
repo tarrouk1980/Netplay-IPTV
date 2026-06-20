@@ -32,12 +32,6 @@ const INSURERS = [
   { id: 'OTHER', label: 'Autre' },
 ];
 
-const COVERAGE_OPTIONS = [
-  { key: 'REMORQUAGE', label: '🚚 Remorquage', desc: 'Prise en charge du remorquage de votre véhicule' },
-  { key: 'PANNE', label: '🔧 Assistance panne', desc: 'Intervention mécanique sur place' },
-  { key: 'ACCIDENT', label: '🚗 Accident', desc: 'Assistance en cas d\'accident de la route' },
-];
-
 export default function EasyInsuranceScreen({ navigation }) {
   const [contract, setContract] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -46,9 +40,9 @@ export default function EasyInsuranceScreen({ navigation }) {
 
   // Form fields
   const [insurerId, setInsurerId] = useState('');
-  const [contractNumber, setContractNumber] = useState('');
+  const [quotaTotal, setQuotaTotal] = useState('');
+  const [amountFixed, setAmountFixed] = useState('');
   const [expiresAt, setExpiresAt] = useState('');
-  const [coverageTypes, setCoverageTypes] = useState([]);
 
   useEffect(() => {
     loadContract();
@@ -61,10 +55,10 @@ export default function EasyInsuranceScreen({ navigation }) {
       const c = res.data.contract;
       setContract(c);
       // Pre-fill form
-      setInsurerId(c.insurerId);
-      setContractNumber(c.contractNumber);
+      setInsurerId(c.companyName);
+      setQuotaTotal(String(c.quotaTotal));
+      setAmountFixed(String(c.amountFixed));
       setExpiresAt(c.expiresAt ? c.expiresAt.slice(0, 10) : '');
-      setCoverageTypes(c.coverageTypes || []);
     } catch (err) {
       if (err?.response?.status === 404) {
         setContract(null);
@@ -75,27 +69,20 @@ export default function EasyInsuranceScreen({ navigation }) {
     }
   };
 
-  const toggleCoverage = (key) => {
-    setCoverageTypes(prev =>
-      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
-    );
-  };
-
   const validateDate = (d) => /^\d{4}-\d{2}-\d{2}$/.test(d);
 
   const saveContract = async () => {
     if (!insurerId) { Alert.alert('Erreur', 'Sélectionnez votre assureur.'); return; }
-    if (!contractNumber.trim()) { Alert.alert('Erreur', 'Entrez le numéro de contrat.'); return; }
+    if (!quotaTotal || parseInt(quotaTotal) < 1) { Alert.alert('Erreur', 'Entrez un nombre d\'interventions valide.'); return; }
     if (!validateDate(expiresAt)) { Alert.alert('Erreur', 'Date d\'expiration invalide. Format: AAAA-MM-JJ'); return; }
-    if (coverageTypes.length === 0) { Alert.alert('Erreur', 'Sélectionnez au moins un type de couverture.'); return; }
 
     setSaving(true);
     try {
       const res = await api.post('/api/insurance/contracts', {
-        insurerId,
-        contractNumber: contractNumber.trim(),
+        companyName: insurerId,
+        quotaTotal: parseInt(quotaTotal),
+        amountFixed: parseFloat(amountFixed) || 0,
         expiresAt: new Date(expiresAt).toISOString(),
-        coverageTypes,
       });
       setContract(res.data.contract);
       setEditMode(false);
@@ -158,14 +145,20 @@ export default function EasyInsuranceScreen({ navigation }) {
               <View style={styles.row}>
                 <Text style={styles.rowLabel}>Assureur</Text>
                 <Text style={styles.rowValue}>
-                  {INSURERS.find(i => i.id === contract.insurerId)?.label || contract.insurerId}
+                  {INSURERS.find(i => i.id === contract.companyName)?.label || contract.companyName}
                 </Text>
               </View>
               <View style={styles.separator} />
 
               <View style={styles.row}>
-                <Text style={styles.rowLabel}>N° Contrat</Text>
-                <Text style={styles.rowValue}>{contract.contractNumber}</Text>
+                <Text style={styles.rowLabel}>Interventions restantes</Text>
+                <Text style={styles.rowValue}>{contract.quotaTotal - contract.quotaUsed} / {contract.quotaTotal}</Text>
+              </View>
+              <View style={styles.separator} />
+
+              <View style={styles.row}>
+                <Text style={styles.rowLabel}>Montant pris en charge</Text>
+                <Text style={styles.rowValue}>{Number(contract.amountFixed).toFixed(3)} TND</Text>
               </View>
               <View style={styles.separator} />
 
@@ -175,15 +168,6 @@ export default function EasyInsuranceScreen({ navigation }) {
                   {new Date(contract.expiresAt).toLocaleDateString('fr-TN')}
                 </Text>
               </View>
-              <View style={styles.separator} />
-
-              <Text style={[styles.rowLabel, { marginBottom: 10 }]}>Couvertures</Text>
-              {COVERAGE_OPTIONS.filter(o => (contract.coverageTypes || []).includes(o.key)).map(o => (
-                <View key={o.key} style={styles.coverageChip}>
-                  <Text style={styles.coverageChipText}>{o.label}</Text>
-                  <Text style={styles.coverageChipDesc}>{o.desc}</Text>
-                </View>
-              ))}
             </View>
           )}
 
@@ -220,15 +204,26 @@ export default function EasyInsuranceScreen({ navigation }) {
                 </View>
               </ScrollView>
 
-              {/* Contract number */}
-              <Text style={styles.fieldLabel}>Numéro de contrat *</Text>
+              {/* Quota */}
+              <Text style={styles.fieldLabel}>Nombre d'interventions couvertes *</Text>
               <TextInput
                 style={styles.input}
-                value={contractNumber}
-                onChangeText={setContractNumber}
-                placeholder="Ex: GAT-2024-123456"
+                value={quotaTotal}
+                onChangeText={setQuotaTotal}
+                placeholder="Ex: 3"
                 placeholderTextColor={COLORS.muted}
-                autoCapitalize="characters"
+                keyboardType="numeric"
+              />
+
+              {/* Fixed amount */}
+              <Text style={styles.fieldLabel}>Montant pris en charge par intervention (TND)</Text>
+              <TextInput
+                style={styles.input}
+                value={amountFixed}
+                onChangeText={setAmountFixed}
+                placeholder="Ex: 50"
+                placeholderTextColor={COLORS.muted}
+                keyboardType="numeric"
               />
 
               {/* Expiry date */}
@@ -242,25 +237,6 @@ export default function EasyInsuranceScreen({ navigation }) {
                 keyboardType="numeric"
                 maxLength={10}
               />
-
-              {/* Coverage types */}
-              <Text style={styles.fieldLabel}>Types de couverture *</Text>
-              {COVERAGE_OPTIONS.map(o => (
-                <TouchableOpacity
-                  key={o.key}
-                  style={[styles.coverageOption, coverageTypes.includes(o.key) && styles.coverageOptionActive]}
-                  onPress={() => toggleCoverage(o.key)}
-                  activeOpacity={0.75}
-                >
-                  <View style={[styles.checkbox, coverageTypes.includes(o.key) && styles.checkboxActive]}>
-                    {coverageTypes.includes(o.key) && <Text style={styles.checkmark}>✓</Text>}
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.coverageOptionLabel}>{o.label}</Text>
-                    <Text style={styles.coverageOptionDesc}>{o.desc}</Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
 
               {/* Save button */}
               <TouchableOpacity

@@ -232,8 +232,8 @@ export default function ClientOrderHistoryDetailScreen({ route, navigation }) {
         <View style={s.section}>
           <Text style={s.sectionTitle}>Paiement</Text>
           <View style={s.card}>
-            <Row label="Méthode" value={meta.paymentMethod || 'Cash'} />
-            <Row label="Statut paiement" value={order.paymentStatus || 'PAID'} valueColor={COLORS.green} />
+            <Row label="Méthode" value={meta.payment?.method || 'Cash'} />
+            <Row label="Statut paiement" value={meta.payment?.status || 'PAID'} valueColor={COLORS.green} />
           </View>
         </View>
 

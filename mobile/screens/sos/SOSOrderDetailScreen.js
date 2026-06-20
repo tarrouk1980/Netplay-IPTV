@@ -238,7 +238,7 @@ export default function SOSOrderDetailScreen({ route, navigation }) {
           <Text style={s.sectionTitle}>Facturation</Text>
           <View style={s.card}>
             <Row label="Montant" value={`${parseFloat(order.price || 0).toFixed(3)} TND`} valueColor={COLORS.green} />
-            <Row label="Paiement" value={meta.paymentMethod || 'Cash'} />
+            <Row label="Paiement" value={meta.payment?.method || 'Cash'} />
             {order.tip > 0 && <Row label="Pourboire" value={`${parseFloat(order.tip).toFixed(3)} TND`} valueColor={COLORS.orange} />}
           </View>
         </View>

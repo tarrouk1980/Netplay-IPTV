@@ -25,7 +25,7 @@ export default function MerchantAddProductScreen({ navigation, route }) {
   const [price, setPrice] = useState(editProduct?.price?.toString() || '');
   const [category, setCategory] = useState(editProduct?.category || '');
   const [stock, setStock] = useState(editProduct?.stock?.toString() || '');
-  const [available, setAvailable] = useState(editProduct?.available ?? true);
+  const [available, setAvailable] = useState(editProduct?.active ?? true);
   const [hasPromo, setHasPromo] = useState(false);
   const [promoPrice, setPromoPrice] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -39,24 +39,28 @@ export default function MerchantAddProductScreen({ navigation, route }) {
       return;
     }
     setSubmitting(true);
-    const payload = {
-      name: name.trim(),
-      description: description.trim(),
-      price: parseFloat(price),
-      category,
-      stock: stock ? parseInt(stock) : null,
-      available,
-      promoPrice: hasPromo && promoPrice ? parseFloat(promoPrice) : null,
-    };
     try {
       if (isEdit) {
-        await api.put(`/api/merchant/products/${editProduct.id}`, payload);
+        await api.patch(`/api/merchants/me/products/${editProduct.id}`, {
+          name: name.trim(),
+          description: description.trim(),
+          price: parseFloat(price),
+          category,
+          active: available,
+        });
       } else {
-        await api.post('/api/merchant/products', payload);
+        await api.post('/api/merchants/me/products', {
+          name: name.trim(),
+          description: description.trim(),
+          price: parseFloat(price),
+          category,
+          stock: stock ? parseInt(stock) : 0,
+          promoPrice: hasPromo && promoPrice ? parseFloat(promoPrice) : null,
+        });
       }
       Alert.alert(
         isEdit ? 'Produit modifié !' : 'Produit ajouté !',
-        `"${payload.name}" a été ${isEdit ? 'mis à jour' : 'ajouté à votre catalogue'}.`,
+        `"${name.trim()}" a été ${isEdit ? 'mis à jour' : 'ajouté à votre catalogue'}.`,
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
     } catch {

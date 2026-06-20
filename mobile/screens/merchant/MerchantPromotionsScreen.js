@@ -26,27 +26,45 @@ export default function MerchantPromotionsScreen({ navigation }) {
   const [promos, setPromos] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    api.get('/api/merchant/promotions')
-      .then(r => setPromos(r.data || MOCK_PROMOS))
+  const load = () => {
+    api.get('/api/merchants/me/products')
+      .then(r => {
+        const products = r.data?.products || [];
+        const withPromo = products
+          .filter(p => p.metadata?.promoPrice)
+          .map(p => ({
+            id: p.id,
+            type: 'fixed',
+            label: p.metadata.promoLabel || `${p.name} en promo`,
+            discount: Number(p.price) - Number(p.metadata.promoPrice),
+            minOrder: 0,
+            uses: 0,
+            maxUses: 0,
+            active: p.active,
+            expiry: null,
+          }));
+        setPromos(withPromo);
+      })
       .catch(() => setPromos(MOCK_PROMOS))
       .finally(() => setLoading(false));
-  }, []);
+  };
+
+  useEffect(() => { load(); }, []);
 
   const togglePromo = (id) => {
-    setPromos(prev => prev.map(p => p.id === id ? { ...p, active: !p.active } : p));
     const promo = promos.find(p => p.id === id);
-    api.patch(`/api/merchant/promotions/${id}`, { active: !promo.active }).catch(() => {});
+    setPromos(prev => prev.map(p => p.id === id ? { ...p, active: !p.active } : p));
+    api.patch(`/api/merchants/me/products/${id}`, { active: !promo.active }).catch(() => {});
   };
 
   const handleDelete = (id) => {
-    Alert.alert('Supprimer', 'Supprimer cette promotion ?', [
+    Alert.alert('Supprimer', 'Retirer la promotion de ce produit ?', [
       { text: 'Annuler', style: 'cancel' },
       {
         text: 'Supprimer', style: 'destructive',
         onPress: () => {
           setPromos(prev => prev.filter(p => p.id !== id));
-          api.delete(`/api/merchant/promotions/${id}`).catch(() => {});
+          api.patch(`/api/merchants/me/products/${id}`, { active: false }).catch(() => {});
         },
       },
     ]);
@@ -60,7 +78,7 @@ export default function MerchantPromotionsScreen({ navigation }) {
           <Text style={styles.backArrow}>‹</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>🏷️ Mes Promotions</Text>
-        <TouchableOpacity onPress={() => Alert.alert('Nouvelle promo', 'Formulaire de création à venir.')}>
+        <TouchableOpacity onPress={() => navigation.navigate('MerchantProducts')}>
           <Text style={styles.addBtn}>+ Créer</Text>
         </TouchableOpacity>
       </View>
@@ -95,7 +113,7 @@ export default function MerchantPromotionsScreen({ navigation }) {
                     </View>
                     <Text style={styles.promoLabel}>{promo.label}</Text>
                     <Text style={styles.promoMeta}>
-                      Min. commande: {promo.minOrder} TND · Expire: {promo.expiry}
+                      Réduction: {promo.discount.toFixed(3)} TND
                     </Text>
                   </View>
                   <Switch
@@ -120,7 +138,7 @@ export default function MerchantPromotionsScreen({ navigation }) {
             );
           })}
 
-          <TouchableOpacity style={styles.createBtn} onPress={() => Alert.alert('Créer', 'Formulaire de création bientôt disponible.')}>
+          <TouchableOpacity style={styles.createBtn} onPress={() => navigation.navigate('MerchantProducts')}>
             <Text style={styles.createBtnText}>+ Créer une nouvelle promotion</Text>
           </TouchableOpacity>
         </ScrollView>
