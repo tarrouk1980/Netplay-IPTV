@@ -14,12 +14,12 @@ const router = express.Router();
 router.post(
   '/update',
   authenticate,
-  requireRole('CHAUFFEUR', 'LIVREUR', 'DEPANNEUR'),
+  requireRole('CHAUFFEUR', 'LIVREUR', 'DEPANNEUR', 'PRESTATAIRE'),
   [
     body('lat').isFloat({ min: -90, max: 90 }).withMessage('lat must be a valid latitude'),
     body('lng').isFloat({ min: -180, max: 180 }).withMessage('lng must be a valid longitude'),
     body('serviceType')
-      .isIn(['TAXI', 'SOS', 'DELIVERY', 'GROCERY'])
+      .isIn(['TAXI', 'SOS', 'DELIVERY', 'GROCERY', 'HOME_SERVICE'])
       .withMessage('Invalid serviceType'),
   ],
   async (req, res) => {
@@ -56,7 +56,7 @@ router.get(
     query('lng').isFloat({ min: -180, max: 180 }).withMessage('lng is required and must be valid'),
     query('radius').optional().isFloat({ min: 0.1, max: 100 }),
     query('serviceType')
-      .isIn(['TAXI', 'SOS', 'DELIVERY', 'GROCERY'])
+      .isIn(['TAXI', 'SOS', 'DELIVERY', 'GROCERY', 'HOME_SERVICE'])
       .withMessage('serviceType is required'),
   ],
   async (req, res) => {

@@ -13,6 +13,7 @@ enum UserRole {
   LIVREUR
   DEPANNEUR
   MARCHAND
+  PRESTATAIRE
   ADMIN
 }
 
@@ -45,6 +46,7 @@ enum ServiceType {
   SOS
   DELIVERY
   GROCERY
+  HOME_SERVICE
 }
 
 enum SubscriptionStatus {
@@ -82,6 +84,7 @@ model User {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
+  serviceCategory       String?
   walletBalance         Float     @default(0)
   loyaltyPoints         Int       @default(0)
   subscriptionActive    Boolean   @default(false)
@@ -106,7 +109,6 @@ model User {
   loyaltyTransactions LoyaltyTransaction[]
   reportsGiven        Report[]         @relation("ReporterReports")
   reportsReceived     Report[]         @relation("ReportedReports")
-  backHomeRides       BackHomeRide[]
 }
 
 enum RewardType {
@@ -355,16 +357,3 @@ model Report {
   reported    User      @relation("ReportedReports", fields: [reportedId], references: [id])
 }
 
-model BackHomeRide {
-  id          String   @id @default(cuid())
-  driverId    String
-  destLat     Float
-  destLng     Float
-  destAddress String   @default("")
-  seatsTotal  Int      @default(1)
-  seatsLeft   Int      @default(1)
-  price       Float    @default(0)
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  driver      User     @relation(fields: [driverId], references: [id])
-}

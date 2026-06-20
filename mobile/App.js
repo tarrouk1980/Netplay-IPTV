@@ -154,8 +154,8 @@ import ProviderProfileScreen from './screens/profile/ProviderProfileScreen';
 // Subscriptions
 import BuyPassScreen from './screens/subscriptions/BuyPassScreen';
 
-// Back Home Ride & Payment
-import BackHomeRideScreen from './screens/taxi/BackHomeRideScreen';
+// EasyServices & Payment
+import EasyServicesScreen from './screens/services/EasyServicesScreen';
 import PaymentScreen from './screens/payment/PaymentScreen';
 import WalletScreen from './screens/wallet/WalletScreen';
 import WalletRechargeScreen from './screens/wallet/WalletRechargeScreen';
@@ -827,8 +827,8 @@ function MainStack() {
       <Stack.Screen name="BuyPass" component={BuyPassScreen} options={{ title: 'Passer Premium' }} />
       <Stack.Screen name="PassScreen" component={EasyPassScreen} options={{ headerShown: false }} />
 
-      {/* Back Home Ride & Payment & Wallet */}
-      <Stack.Screen name="BackHomeRide" component={BackHomeRideScreen} options={{ headerShown: false }} />
+      {/* EasyServices & Payment & Wallet */}
+      <Stack.Screen name="EasyServices" component={EasyServicesScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Payment" component={PaymentScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Wallet" component={WalletScreen} options={{ headerShown: false }} />
       <Stack.Screen name="WalletRecharge" component={WalletRechargeScreen} options={{ headerShown: false }} />

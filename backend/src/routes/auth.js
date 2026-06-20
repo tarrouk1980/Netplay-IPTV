@@ -52,9 +52,13 @@ router.post(
     body('phone').trim().notEmpty().withMessage('Phone is required'),
     body('role')
       .optional()
-      .isIn(['CLIENT', 'CHAUFFEUR', 'LIVREUR', 'DEPANNEUR', 'MARCHAND', 'ADMIN'])
+      .isIn(['CLIENT', 'CHAUFFEUR', 'LIVREUR', 'DEPANNEUR', 'MARCHAND', 'PRESTATAIRE', 'ADMIN'])
       .withMessage('Invalid role'),
     body('email').optional().isEmail().withMessage('Invalid email'),
+    body('serviceCategory')
+      .if(body('role').equals('PRESTATAIRE'))
+      .isIn(['PLOMBIER', 'ELECTRICIEN', 'MEDECIN', 'AVOCAT', 'PEDAGOGUE', 'COACH_SPORTIF', 'AUTRE'])
+      .withMessage('Invalid serviceCategory'),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -62,7 +66,7 @@ router.post(
       return res.status(422).json({ error: 'Validation failed', code: 'VALIDATION_ERROR', details: errors.array() });
     }
 
-    const { name, phone, email, role, password } = req.body;
+    const { name, phone, email, role, password, serviceCategory } = req.body;
 
     try {
       const existing = await prisma.user.findUnique({ where: { phone } });
@@ -73,7 +77,7 @@ router.post(
       const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
 
       // En phase de test: auto-approuver les prestataires (KYC manuel activé en production)
-      const kycStatus = ['CHAUFFEUR', 'LIVREUR', 'DEPANNEUR', 'MARCHAND'].includes(role) ? 'APPROVED' : 'NOT_REQUIRED';
+      const kycStatus = ['CHAUFFEUR', 'LIVREUR', 'DEPANNEUR', 'MARCHAND', 'PRESTATAIRE'].includes(role) ? 'APPROVED' : 'NOT_REQUIRED';
 
       // Generate unique referral code at registration
       const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -93,6 +97,7 @@ router.post(
           role: role || 'CLIENT',
           kycStatus,
           referralCode,
+          serviceCategory: role === 'PRESTATAIRE' ? serviceCategory : null,
         },
         select: { id: true, name: true, phone: true, email: true, role: true, kycStatus: true, referralCode: true, createdAt: true },
       });
