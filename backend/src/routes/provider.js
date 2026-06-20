@@ -28,13 +28,15 @@ router.get('/earnings', authenticate, requireProvider, async (req, res) => {
       },
       select: {
         id: true,
-        totalAmount: true,
+        finalPrice: true,
+        price: true,
         completedAt: true,
       },
       orderBy: { completedAt: 'asc' },
     });
 
-    const totalTND = orders.reduce((s, o) => s + Number(o.totalAmount || 0), 0);
+    const orderAmount = (o) => Number(o.finalPrice ?? o.price ?? 0);
+    const totalTND = orders.reduce((s, o) => s + orderAmount(o), 0);
     const ordersCompleted = orders.length;
     const avgPerOrder = ordersCompleted > 0 ? totalTND / ordersCompleted : 0;
 
@@ -47,7 +49,7 @@ router.get('/earnings', authenticate, requireProvider, async (req, res) => {
     }
     orders.forEach(o => {
       const key = new Date(o.completedAt).toISOString().slice(0, 10);
-      if (dailyMap[key] !== undefined) dailyMap[key] += Number(o.totalAmount || 0);
+      if (dailyMap[key] !== undefined) dailyMap[key] += orderAmount(o);
     });
 
     const labels = Object.keys(dailyMap);
@@ -132,10 +134,11 @@ router.get('/income', requireProvider, async (req, res) => {
         status: 'COMPLETED',
         createdAt: { gte: startDate, lt: endDate },
       },
-      select: { price: true, createdAt: true, type: true },
+      select: { price: true, finalPrice: true, createdAt: true, serviceType: true },
     });
 
-    const totalGross = orders.reduce((s, o) => s + Number(o.price || 0), 0);
+    const orderAmount = (o) => Number(o.finalPrice ?? o.price ?? 0);
+    const totalGross = orders.reduce((s, o) => s + orderAmount(o), 0);
     const ordersCount = orders.length;
     const avgPerOrder = ordersCount > 0 ? totalGross / ordersCount : 0;
 
@@ -146,7 +149,7 @@ router.get('/income', requireProvider, async (req, res) => {
     const byDate = {};
     orders.forEach(o => {
       const d = o.createdAt.toISOString().split('T')[0];
-      byDate[d] = (byDate[d] || 0) + Number(o.price || 0);
+      byDate[d] = (byDate[d] || 0) + orderAmount(o);
     });
     const bestDayEntry = Object.entries(byDate).sort((a, b) => b[1] - a[1])[0];
     const bestDay = bestDayEntry ? { date: bestDayEntry[0], amount: bestDayEntry[1] } : { date: '-', amount: 0 };
@@ -161,15 +164,15 @@ router.get('/income', requireProvider, async (req, res) => {
     orders.forEach(o => {
       const day = o.createdAt.getDate();
       const wi = day <= 7 ? 0 : day <= 14 ? 1 : day <= 21 ? 2 : 3;
-      byWeek[wi].amount += Number(o.price || 0);
+      byWeek[wi].amount += orderAmount(o);
     });
 
     // By service
     const serviceMap = {};
     orders.forEach(o => {
-      serviceMap[o.type] = serviceMap[o.type] || { service: o.type, count: 0, amount: 0 };
-      serviceMap[o.type].count++;
-      serviceMap[o.type].amount += Number(o.price || 0);
+      serviceMap[o.serviceType] = serviceMap[o.serviceType] || { service: o.serviceType, count: 0, amount: 0 };
+      serviceMap[o.serviceType].count++;
+      serviceMap[o.serviceType].amount += orderAmount(o);
     });
 
     res.json({
@@ -219,12 +222,15 @@ router.get('/reviews', authenticate, async (req, res) => {
   }
 });
 
+// In-memory availability store (no ProviderAvailability model in schema)
+const availabilityStore = new Map(); // providerId -> { schedule, onlineNow }
+
 router.get('/availability', authenticate, async (req, res) => {
   try {
-    const rec = await prisma.providerAvailability.findFirst({ where: { providerId: req.user.id } });
+    const rec = availabilityStore.get(req.user.id);
     res.json({
-      schedule: rec?.schedule ? JSON.parse(rec.schedule) : null,
-      onlineNow: req.user.isOnline || false,
+      schedule: rec?.schedule ?? null,
+      onlineNow: rec?.onlineNow ?? (req.user.isOnline || false),
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -234,11 +240,7 @@ router.get('/availability', authenticate, async (req, res) => {
 router.post('/availability', authenticate, async (req, res) => {
   try {
     const { schedule, onlineNow } = req.body;
-    await prisma.providerAvailability.upsert({
-      where: { providerId: req.user.id },
-      create: { providerId: req.user.id, schedule: JSON.stringify(schedule) },
-      update: { schedule: JSON.stringify(schedule) },
-    });
+    availabilityStore.set(req.user.id, { schedule, onlineNow: onlineNow ?? availabilityStore.get(req.user.id)?.onlineNow ?? false });
     if (onlineNow !== undefined) {
       await prisma.user.update({ where: { id: req.user.id }, data: { isOnline: onlineNow } });
     }
@@ -248,14 +250,12 @@ router.post('/availability', authenticate, async (req, res) => {
   }
 });
 
+// In-memory provider document store (no ProviderDocument model in schema)
+const documentStore = new Map(); // providerId -> { [type]: { type, status, uploadedAt, expiresAt, note } }
+
 router.get('/documents', authenticate, async (req, res) => {
   try {
-    const docs = await prisma.providerDocument.findMany({
-      where: { providerId: req.user.id },
-      select: { type: true, status: true, uploadedAt: true, expiresAt: true, note: true },
-    });
-    const map = {};
-    docs.forEach(d => { map[d.type] = d; });
+    const map = documentStore.get(req.user.id) || {};
     res.json({ documents: map });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -265,17 +265,18 @@ router.get('/documents', authenticate, async (req, res) => {
 router.post('/documents', authenticate, async (req, res) => {
   try {
     const { type } = req.body;
-    const existing = await prisma.providerDocument.findFirst({ where: { providerId: req.user.id, type } });
-    if (existing) {
-      await prisma.providerDocument.update({ where: { id: existing.id }, data: { status: 'PENDING', uploadedAt: new Date() } });
-    } else {
-      await prisma.providerDocument.create({ data: { providerId: req.user.id, type, status: 'PENDING', uploadedAt: new Date() } });
-    }
+    if (!type) return res.status(400).json({ error: 'type is required' });
+    const map = documentStore.get(req.user.id) || {};
+    map[type] = { type, status: 'PENDING', uploadedAt: new Date().toISOString(), expiresAt: null, note: 'Vérification en cours…' };
+    documentStore.set(req.user.id, map);
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
+// In-memory earnings-goal store (no EarningsGoal model in schema)
+const earningsGoalStore = new Map(); // userId -> { daily, weekly, monthly }
 
 router.get('/earnings-goal', authenticate, async (req, res) => {
   try {
@@ -285,29 +286,32 @@ router.get('/earnings-goal', authenticate, async (req, res) => {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOf28Days = new Date(now - 28 * 86400000);
 
+    const orderAmount = (o) => Number(o.finalPrice ?? o.price ?? 0);
     const [daily, weekly, monthly, history28] = await Promise.all([
-      prisma.order.aggregate({ where: { providerId: req.user.id, status: 'COMPLETED', completedAt: { gte: startOfDay } }, _sum: { fare: true } }),
-      prisma.order.aggregate({ where: { providerId: req.user.id, status: 'COMPLETED', completedAt: { gte: startOfWeek } }, _sum: { fare: true } }),
-      prisma.order.aggregate({ where: { providerId: req.user.id, status: 'COMPLETED', completedAt: { gte: startOfMonth } }, _sum: { fare: true } }),
-      prisma.order.findMany({ where: { providerId: req.user.id, status: 'COMPLETED', completedAt: { gte: startOf28Days } }, select: { completedAt: true, fare: true } }),
+      prisma.order.findMany({ where: { providerId: req.user.id, status: 'COMPLETED', completedAt: { gte: startOfDay } }, select: { finalPrice: true, price: true } }),
+      prisma.order.findMany({ where: { providerId: req.user.id, status: 'COMPLETED', completedAt: { gte: startOfWeek } }, select: { finalPrice: true, price: true } }),
+      prisma.order.findMany({ where: { providerId: req.user.id, status: 'COMPLETED', completedAt: { gte: startOfMonth } }, select: { finalPrice: true, price: true } }),
+      prisma.order.findMany({ where: { providerId: req.user.id, status: 'COMPLETED', completedAt: { gte: startOf28Days } }, select: { completedAt: true, finalPrice: true, price: true } }),
     ]);
 
     const dayMap = {};
     history28.forEach(o => {
       if (!o.completedAt) return;
       const key = new Date(o.completedAt).toISOString().slice(0, 10);
-      dayMap[key] = (dayMap[key] || 0) + (o.fare || 0);
+      dayMap[key] = (dayMap[key] || 0) + orderAmount(o);
     });
+
+    const savedGoals = earningsGoalStore.get(req.user.id);
 
     res.json({
       earnings: {
-        daily: daily._sum.fare || 0,
-        weekly: weekly._sum.fare || 0,
-        monthly: monthly._sum.fare || 0,
+        daily: daily.reduce((s, o) => s + orderAmount(o), 0),
+        weekly: weekly.reduce((s, o) => s + orderAmount(o), 0),
+        monthly: monthly.reduce((s, o) => s + orderAmount(o), 0),
       },
       streakData: Object.fromEntries(Object.entries(dayMap).map(([k, v]) => [k, v > 0])),
       streak: 0,
-      goals: { daily: 100, weekly: 500, monthly: 2000 },
+      goals: savedGoals || { daily: 100, weekly: 500, monthly: 2000 },
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -315,6 +319,10 @@ router.get('/earnings-goal', authenticate, async (req, res) => {
 });
 
 router.post('/earnings-goal', authenticate, async (req, res) => {
+  const { goals } = req.body;
+  if (goals && typeof goals === 'object') {
+    earningsGoalStore.set(req.user.id, goals);
+  }
   res.json({ ok: true });
 });
 
@@ -423,19 +431,20 @@ router.get('/earnings-summary', authenticate, async (req, res) => {
       orderBy: { createdAt: 'desc' },
     });
 
-    const totalRevenue = orders.reduce((s, o) => s + Number(o.price || 0), 0);
-    const totalTips = orders.reduce((s, o) => s + Number(o.tip || 0), 0);
+    const orderAmount = (o) => Number(o.finalPrice ?? o.price ?? 0);
+    const totalRevenue = orders.reduce((s, o) => s + orderAmount(o), 0);
+    const totalTips = 0; // Tips are tracked in the separate Tip model, not aggregated here yet.
     const avgPerOrder = orders.length ? totalRevenue / orders.length : 0;
 
     const dayLabels = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
     const weeklyChart = Array.from({ length: 7 }, (_, i) => {
       const d = new Date(); d.setDate(now.getDate() - (6 - i)); d.setHours(0,0,0,0);
       const v = orders.filter((o) => new Date(o.createdAt).toDateString() === d.toDateString())
-        .reduce((s, o) => s + Number(o.price || 0), 0);
+        .reduce((s, o) => s + orderAmount(o), 0);
       return { label: dayLabels[d.getDay()], value: v };
     });
 
-    const goal = await prisma.earningsGoal.findFirst({ where: { userId: req.user.id } }).catch(() => null);
+    const savedGoals = earningsGoalStore.get(req.user.id);
 
     return res.json({
       totalRevenue,
@@ -444,7 +453,7 @@ router.get('/earnings-summary', authenticate, async (req, res) => {
       avgPerOrder,
       hoursOnline: 0,
       conversionRate: 85,
-      goalAmount: goal?.target ?? 100,
+      goalAmount: savedGoals?.[period] ?? savedGoals?.monthly ?? 100,
       weeklyChart,
       topHours: [],
       recentOrders: orders.slice(0, 10),
