@@ -184,16 +184,20 @@ model OrderEvent {
 }
 
 model Vehicle {
-  id            String   @id @default(cuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id])
-  make          String
-  model         String
-  plate         String   @unique
-  vehicleType   String
-  licenseNumber String?
-  verified      Boolean  @default(false)
-  createdAt     DateTime @default(now())
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id])
+  make              String
+  model             String
+  plate             String    @unique
+  vehicleType       String
+  licenseNumber     String?
+  year              Int?
+  color             String?
+  insuranceExpiry   DateTime?
+  techControlExpiry DateTime?
+  verified          Boolean   @default(false)
+  createdAt         DateTime  @default(now())
 }
 
 model Merchant {

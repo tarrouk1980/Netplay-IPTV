@@ -7,6 +7,7 @@ const { authenticate } = require('../middleware/auth');
 const { requireRole } = require('../middleware/rbac');
 const { kycGuard } = require('../middleware/kycGuard');
 const { estimateFare, modeB } = require('../services/taximetre');
+const { getPosition } = require('../services/geolocation');
 const { sendNotification, NOTIFICATION_TYPES } = require('../services/fcm');
 const { findNearby } = require('../services/geolocation');
 
@@ -631,18 +632,22 @@ router.get('/orders/:id/tracking', authenticate, async (req, res) => {
     const order = await prisma.order.findUnique({
       where: { id: req.params.id },
       include: {
-        provider: { select: { id: true, name: true, rating: true, lastLat: true, lastLng: true, vehicleInfo: true } },
+        provider: { select: { id: true, name: true, rating: true } },
       },
     });
     if (!order) return res.status(404).json({ error: 'Order not found' });
+    const position = order.providerId ? await getPosition(order.providerId, 'TAXI').catch(() => null) : null;
+    const vehicle = order.providerId
+      ? await prisma.vehicle.findFirst({ where: { userId: order.providerId } }).catch(() => null)
+      : null;
     res.json({
       order: { id: order.id, status: order.status },
       provider: order.provider ? {
         name: order.provider.name,
         rating: order.provider.rating,
-        lat: order.provider.lastLat,
-        lng: order.provider.lastLng,
-        vehicle: order.provider.vehicleInfo,
+        lat: position?.lat ?? null,
+        lng: position?.lng ?? null,
+        vehicle: vehicle ? `${vehicle.make} ${vehicle.model} (${vehicle.plate})` : null,
       } : null,
     });
   } catch (err) {
@@ -663,17 +668,16 @@ router.post('/schedule', authenticate, async (req, res) => {
     }
     const order = await prisma.order.create({
       data: {
-        userId: req.user.id,
+        clientId: req.user.id,
         serviceType: 'TAXI',
-        status: 'SCHEDULED',
+        status: 'PENDING',
         originAddress,
-        originLat: originLat ? parseFloat(originLat) : null,
-        originLng: originLng ? parseFloat(originLng) : null,
+        originLat: originLat ? parseFloat(originLat) : 0,
+        originLng: originLng ? parseFloat(originLng) : 0,
         destinationAddress,
         destinationLat: destinationLat ? parseFloat(destinationLat) : null,
         destinationLng: destinationLng ? parseFloat(destinationLng) : null,
-        note: note || null,
-        scheduledAt: scheduledDate,
+        metadata: { note: note || null, scheduledAt: scheduledDate.toISOString() },
       },
     });
     res.status(201).json({ order });

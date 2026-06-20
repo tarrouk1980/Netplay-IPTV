@@ -54,4 +54,18 @@ async function findNearby(lat, lng, radiusKm, serviceType) {
   });
 }
 
-module.exports = { updatePosition, findNearby };
+/**
+ * Get a single provider's last known position.
+ * @param {string} userId
+ * @param {string} serviceType
+ * @returns {Promise<{lat: number, lng: number} | null>}
+ */
+async function getPosition(userId, serviceType) {
+  const key = `geo:${serviceType.toLowerCase()}`;
+  const results = await redisClient.geopos(key, userId);
+  const coords = results && results[0];
+  if (!coords) return null;
+  return { lng: parseFloat(coords[0]), lat: parseFloat(coords[1]) };
+}
+
+module.exports = { updatePosition, findNearby, getPosition };

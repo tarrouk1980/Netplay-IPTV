@@ -65,7 +65,8 @@ router.get('/my', authenticate, async (req, res) => {
       where: { userId: req.user.id },
       orderBy: { createdAt: 'desc' },
     }).catch(() => null);
-    return res.json({ vehicle: vehicle || null });
+    const mapped = vehicle ? { ...vehicle, brand: vehicle.make, licensePlate: vehicle.plate } : null;
+    return res.json({ vehicle: mapped });
   } catch (err) {
     return res.json({ vehicle: null });
   }
@@ -77,16 +78,26 @@ router.get('/my', authenticate, async (req, res) => {
 router.post('/my', authenticate, async (req, res) => {
   try {
     const { vehicleType, brand, model, year, licensePlate, color, insuranceExpiry, techControlExpiry } = req.body;
+    const data = {
+      vehicleType,
+      make: brand,
+      model,
+      year: year ? parseInt(year) : null,
+      plate: licensePlate,
+      color,
+      insuranceExpiry: insuranceExpiry ? new Date(insuranceExpiry) : null,
+      techControlExpiry: techControlExpiry ? new Date(techControlExpiry) : null,
+    };
     const existing = await prisma.vehicle.findFirst({ where: { userId: req.user.id } }).catch(() => null);
     let vehicle;
     if (existing) {
       vehicle = await prisma.vehicle.update({
         where: { id: existing.id },
-        data: { vehicleType, brand, model, year, licensePlate, color, insuranceExpiry: insuranceExpiry ? new Date(insuranceExpiry) : null, techControlExpiry: techControlExpiry ? new Date(techControlExpiry) : null },
+        data,
       }).catch(() => existing);
     } else {
       vehicle = await prisma.vehicle.create({
-        data: { userId: req.user.id, vehicleType, brand, model, year, licensePlate, color, insuranceExpiry: insuranceExpiry ? new Date(insuranceExpiry) : null, techControlExpiry: techControlExpiry ? new Date(techControlExpiry) : null },
+        data: { userId: req.user.id, ...data },
       }).catch(() => null);
     }
     return res.json({ success: true, vehicle });
