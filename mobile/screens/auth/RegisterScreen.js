@@ -704,7 +704,7 @@ export default function RegisterScreen({ navigation }) {
 
   function renderRecapItems() {
     const roleInfo = ROLES.find((r) => r.value === role);
-    const roleDisplay = roleInfo ? `${roleInfo.emoji} ${roleInfo.label}` : role;
+    const roleDisplay = roleInfo ? roleInfo.label : role;
 
     const rows = [
       { label: 'Nom', value: name },
@@ -734,7 +734,7 @@ export default function RegisterScreen({ navigation }) {
       const ttInfo = TRUCK_TYPES.find((t) => t.value === truckType);
       rows.push(
         { label: 'Permis', value: depLicense },
-        { label: 'Camion', value: ttInfo ? `${ttInfo.emoji} ${ttInfo.label}` : truckType },
+        { label: 'Camion', value: ttInfo ? ttInfo.label : truckType },
         { label: 'Plaque camion', value: truckPlate },
       );
       if (depZones.length > 0) rows.push({ label: 'Zones', value: depZones.join(', ') });
