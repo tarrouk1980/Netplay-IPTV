@@ -79,4 +79,66 @@ router.post('/:orderId/messages', authenticate, (req, res) => {
   res.json(msg);
 });
 
+// POST /api/chat/:orderId/voice — send a voice message
+router.post('/:orderId/voice', authenticate, chatUpload.single('audio'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'Aucun fichier reçu' });
+
+  const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
+  const url = `${baseUrl}/uploads/chat/${req.file.filename}`;
+
+  const msg = {
+    id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
+    orderId: req.params.orderId,
+    senderId: req.user.id,
+    senderName: req.user.name,
+    type: 'VOICE',
+    url,
+    createdAt: new Date().toISOString(),
+  };
+
+  const msgs = chatMessages.get(req.params.orderId) || [];
+  msgs.push(msg);
+  if (msgs.length > 200) msgs.shift();
+  chatMessages.set(req.params.orderId, msgs);
+
+  try {
+    const { getIO } = require('../socket');
+    const io = getIO();
+    if (io) io.to(`order_${req.params.orderId}`).emit(`chat:${req.params.orderId}`, msg);
+  } catch {}
+
+  res.json(msg);
+});
+
+// POST /api/chat/:orderId/image — send an image message
+router.post('/:orderId/image', authenticate, chatUpload.single('image'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'Aucun fichier reçu' });
+
+  const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
+  const url = `${baseUrl}/uploads/chat/${req.file.filename}`;
+
+  const msg = {
+    id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
+    orderId: req.params.orderId,
+    senderId: req.user.id,
+    senderName: req.user.name,
+    type: 'IMAGE',
+    url,
+    createdAt: new Date().toISOString(),
+  };
+
+  const msgs = chatMessages.get(req.params.orderId) || [];
+  msgs.push(msg);
+  if (msgs.length > 200) msgs.shift();
+  chatMessages.set(req.params.orderId, msgs);
+
+  try {
+    const { getIO } = require('../socket');
+    const io = getIO();
+    if (io) io.to(`order_${req.params.orderId}`).emit(`chat:${req.params.orderId}`, msg);
+  } catch {}
+
+  res.json(msg);
+});
+
 module.exports = router;
