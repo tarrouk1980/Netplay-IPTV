@@ -211,8 +211,8 @@ router.get('/provider/:userId/profile', authenticate, async (req, res) => {
 // GET /api/users/provider/:userId/reviews
 router.get('/provider/:userId/reviews', authenticate, async (req, res) => {
   try {
-    const ratings = await prisma.rating.findMany({
-      where: { providerId: req.params.userId },
+    const ratings = await prisma.review.findMany({
+      where: { targetId: req.params.userId },
       orderBy: { createdAt: 'desc' },
       take: 20,
       select: {
@@ -220,14 +220,14 @@ router.get('/provider/:userId/reviews', authenticate, async (req, res) => {
         rating: true,
         comment: true,
         createdAt: true,
-        client: { select: { name: true } },
+        reviewer: { select: { name: true } },
       },
     });
     const formatted = ratings.map(r => ({
       id: r.id,
       rating: r.rating,
       comment: r.comment,
-      clientName: r.client?.name || 'Client anonyme',
+      clientName: r.reviewer?.name || 'Client anonyme',
       createdAt: r.createdAt,
     }));
     return res.json(formatted);
@@ -334,6 +334,7 @@ router.delete('/me/account', authenticate, async (req, res) => {
 
 // ── Address book (in-memory until schema supports it) ─────────────────────
 const addressStore = new Map(); // userId → [{id, label, type, address, lat, lng}]
+const favoritesStore = new Map(); // clientId → Set<providerId>
 
 router.get('/addresses', authenticate, (req, res) => {
   res.json({ addresses: addressStore.get(req.user.id) || [] });
@@ -369,42 +370,30 @@ router.delete('/addresses/:id', authenticate, (req, res) => {
 // GET /api/users/nearby-providers?lat=&lng=
 router.get('/nearby-providers', authenticate, async (req, res) => {
   try {
+    const { findNearby } = require('../services/geolocation');
     const lat = parseFloat(req.query.lat) || 36.8065;
     const lng = parseFloat(req.query.lng) || 10.1815;
     const radius = parseFloat(req.query.radius) || 10; // km
 
-    const providers = await prisma.user.findMany({
-      where: {
-        role: { in: ['CHAUFFEUR', 'LIVREUR', 'DEPANNEUR'] },
-        isOnline: true,
-        lastLat: { not: null },
-        lastLng: { not: null },
-      },
-      select: {
-        id: true, name: true, role: true, rating: true,
-        lastLat: true, lastLng: true, vehicleInfo: true,
-      },
-    });
-
-    const toRad = d => (d * Math.PI) / 180;
-    const haversine = (la1, lo1, la2, lo2) => {
-      const R = 6371;
-      const dLat = toRad(la2 - la1);
-      const dLon = toRad(lo2 - lo1);
-      const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(la1)) * Math.cos(toRad(la2)) * Math.sin(dLon / 2) ** 2;
-      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    };
-
-    const nearby = providers
-      .map(p => ({ ...p, distance: Math.round(haversine(lat, lng, p.lastLat, p.lastLng) * 10) / 10 }))
-      .filter(p => p.distance <= radius);
-
-    const roleMap = { CHAUFFEUR: 'TAXI', LIVREUR: 'DELIVERY', DEPANNEUR: 'SOS' };
     const result = { TAXI: [], SOS: [], DELIVERY: [] };
-    nearby.forEach(p => {
-      const key = roleMap[p.role];
-      if (key) result[key].push({ id: p.id, name: p.name, lat: p.lastLat, lng: p.lastLng, rating: p.rating || 4.5, distance: p.distance });
-    });
+    for (const serviceType of Object.keys(result)) {
+      const matches = await findNearby(lat, lng, radius, serviceType).catch(() => []);
+      const ids = matches.map((m) => m.userId);
+      const users = ids.length
+        ? await prisma.user.findMany({ where: { id: { in: ids }, isOnline: true }, select: { id: true, name: true, rating: true } })
+        : [];
+      const userMap = Object.fromEntries(users.map((u) => [u.id, u]));
+      result[serviceType] = matches
+        .filter((m) => userMap[m.userId])
+        .map((m) => ({
+          id: m.userId,
+          name: userMap[m.userId].name,
+          lat: m.lat,
+          lng: m.lng,
+          rating: userMap[m.userId].rating || 4.5,
+          distance: Math.round(m.distance * 10) / 10,
+        }));
+    }
 
     res.json({ providers: result });
   } catch (err) {
@@ -418,17 +407,11 @@ router.get('/nearby-providers', authenticate, async (req, res) => {
 // ─────────────────────────────────────────────
 router.get('/clients/favorites', authenticate, async (req, res) => {
   try {
-    const favs = await prisma.favoriteProvider.findMany({
-      where: { clientId: req.user.id },
-      include: {
-        provider: {
-          select: { id: true, name: true, phone: true, role: true },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    }).catch(() => []);
+    const providerIds = [...(favoritesStore.get(req.user.id) || [])];
+    const providers = providerIds.length
+      ? await prisma.user.findMany({ where: { id: { in: providerIds } }, select: { id: true, name: true, phone: true, role: true } })
+      : [];
 
-    const providerIds = favs.map((f) => f.providerId);
     const reviews = providerIds.length
       ? await prisma.review.groupBy({
           by: ['targetId'],
@@ -440,9 +423,9 @@ router.get('/clients/favorites', authenticate, async (req, res) => {
 
     const ratingMap = Object.fromEntries(reviews.map((r) => [r.targetId, { rating: r._avg.rating, totalOrders: r._count._all }]));
 
-    const favorites = favs.map((f) => ({
-      ...f.provider,
-      ...ratingMap[f.providerId],
+    const favorites = providers.map((p) => ({
+      ...p,
+      ...ratingMap[p.id],
     }));
 
     return res.json({ favorites });
@@ -457,9 +440,7 @@ router.get('/clients/favorites', authenticate, async (req, res) => {
 // ─────────────────────────────────────────────
 router.delete('/clients/favorites/:providerId', authenticate, async (req, res) => {
   try {
-    await prisma.favoriteProvider.deleteMany({
-      where: { clientId: req.user.id, providerId: req.params.providerId },
-    }).catch(() => {});
+    favoritesStore.get(req.user.id)?.delete(req.params.providerId);
     return res.json({ success: true });
   } catch (err) {
     console.error('[clients/favorites/delete]', err);
@@ -472,11 +453,8 @@ router.delete('/clients/favorites/:providerId', authenticate, async (req, res) =
 // ─────────────────────────────────────────────
 router.post('/clients/favorites/:providerId', authenticate, async (req, res) => {
   try {
-    await prisma.favoriteProvider.upsert({
-      where: { clientId_providerId: { clientId: req.user.id, providerId: req.params.providerId } },
-      update: {},
-      create: { clientId: req.user.id, providerId: req.params.providerId },
-    }).catch(() => {});
+    if (!favoritesStore.has(req.user.id)) favoritesStore.set(req.user.id, new Set());
+    favoritesStore.get(req.user.id).add(req.params.providerId);
     return res.json({ success: true });
   } catch (err) {
     console.error('[clients/favorites/add]', err);

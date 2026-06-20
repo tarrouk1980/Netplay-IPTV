@@ -1073,7 +1073,7 @@ router.get('/stats/geo', async (req, res) => {
 
     const orders = await prisma.order.findMany({
       where: { originLat: { not: null }, originLng: { not: null } },
-      select: { serviceType: true, originLat: true, originLng: true, totalAmount: true, price: true },
+      select: { serviceType: true, originLat: true, originLng: true, finalPrice: true, price: true },
     });
 
     const result = zones.map(zone => {
@@ -1081,7 +1081,7 @@ router.get('/stats/geo', async (req, res) => {
       return {
         key: zone.key, label: zone.label, lat: zone.lat, lng: zone.lng,
         orders: zOrders.length,
-        revenue: zOrders.reduce((s, o) => s + (o.totalAmount || o.price || 0), 0),
+        revenue: zOrders.reduce((s, o) => s + Number(o.finalPrice ?? o.price ?? 0), 0),
         taxi:     zOrders.filter(o => o.serviceType === 'TAXI').length,
         sos:      zOrders.filter(o => o.serviceType === 'SOS').length,
         delivery: zOrders.filter(o => o.serviceType === 'DELIVERY').length,
@@ -1100,10 +1100,10 @@ router.get('/stats/geo', async (req, res) => {
 router.get('/users/:id/orders', async (req, res) => {
   try {
     const orders = await prisma.order.findMany({
-      where: { OR: [{ userId: req.params.id }, { providerId: req.params.id }] },
+      where: { OR: [{ clientId: req.params.id }, { providerId: req.params.id }] },
       orderBy: { createdAt: 'desc' },
       take: 20,
-      select: { id: true, serviceType: true, status: true, totalAmount: true, price: true, createdAt: true },
+      select: { id: true, serviceType: true, status: true, finalPrice: true, price: true, createdAt: true },
     });
     res.json({ orders });
   } catch (err) {
@@ -1309,15 +1309,15 @@ router.get('/stats/top-providers', authenticate, requireRole('ADMIN'), async (re
     startDate.setDate(startDate.getDate() - 29);
 
     const grouped = await prisma.order.groupBy({
-      by: ['driverId'],
-      where: { status: 'COMPLETED', completedAt: { gte: startDate }, driverId: { not: null } },
+      by: ['providerId'],
+      where: { status: 'COMPLETED', completedAt: { gte: startDate }, providerId: { not: null } },
       _count: { id: true },
-      _sum: { price: true },
+      _sum: { finalPrice: true, price: true },
       orderBy: { _count: { id: 'desc' } },
       take: 10,
     });
 
-    const ids = grouped.map((g) => g.driverId);
+    const ids = grouped.map((g) => g.providerId);
     const users = await prisma.user.findMany({
       where: { id: { in: ids } },
       select: { id: true, name: true, role: true, avgRating: true },
@@ -1325,9 +1325,9 @@ router.get('/stats/top-providers', authenticate, requireRole('ADMIN'), async (re
 
     const userMap = Object.fromEntries(users.map((u) => [u.id, u]));
     const top = grouped.map((g) => ({
-      ...userMap[g.driverId],
+      ...userMap[g.providerId],
       orders: g._count.id,
-      revenue: Number(g._sum.price || 0),
+      revenue: Number(g._sum.finalPrice || g._sum.price || 0),
     }));
 
     res.json({ providers: top });
@@ -1397,28 +1397,31 @@ router.post('/wallets/:userId/adjust', authenticate, async (req, res) => {
 router.get('/providers/live', authenticate, async (req, res) => {
   try {
     if (req.user.role !== 'ADMIN') return res.status(403).json({ error: 'Admin only' });
+    const { getPosition } = require('../services/geolocation');
+    const ROLE_TO_SERVICE = { CHAUFFEUR: 'TAXI', LIVREUR: 'DELIVERY', DEPANNEUR: 'SOS' };
     const providers = await prisma.user.findMany({
       where: {
         role: { in: ['CHAUFFEUR', 'LIVREUR', 'DEPANNEUR'] },
         isOnline: true,
-        lastLat: { not: null },
       },
       select: {
-        id: true, name: true, role: true, lastLat: true, lastLng: true,
-        _count: { select: { providedOrders: { where: { createdAt: { gte: new Date(new Date().setHours(0,0,0,0)) } } } } },
+        id: true, name: true, role: true,
+        _count: { select: { ordersAsProvider: { where: { createdAt: { gte: new Date(new Date().setHours(0,0,0,0)) } } } } },
       },
     });
-    res.json({
-      providers: providers.map(p => ({
+    const withPositions = await Promise.all(providers.map(async (p) => {
+      const position = await getPosition(p.id, ROLE_TO_SERVICE[p.role]).catch(() => null);
+      return {
         id: p.id,
         name: p.name,
         role: p.role,
-        lat: p.lastLat,
-        lng: p.lastLng,
+        lat: position?.lat ?? null,
+        lng: position?.lng ?? null,
         status: 'ONLINE',
-        ordersToday: p._count.providedOrders,
-      })),
-    });
+        ordersToday: p._count.ordersAsProvider,
+      };
+    }));
+    res.json({ providers: withPositions.filter((p) => p.lat !== null) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -1461,16 +1464,16 @@ router.post('/users/bulk', async (req, res) => {
     if (!Array.isArray(ids) || !ids.length) return res.status(400).json({ error: 'ids required' });
 
     if (action === 'BAN') {
-      await prisma.user.updateMany({ where: { id: { in: ids } }, data: { isBanned: true } });
+      await prisma.user.updateMany({ where: { id: { in: ids } }, data: { suspended: true } });
     } else if (action === 'UNBAN') {
-      await prisma.user.updateMany({ where: { id: { in: ids } }, data: { isBanned: false } });
+      await prisma.user.updateMany({ where: { id: { in: ids } }, data: { suspended: false } });
     } else if (action === 'VERIFY_KYC') {
       await prisma.user.updateMany({ where: { id: { in: ids } }, data: { kycStatus: 'APPROVED' } });
     } else if (action === 'REVOKE_KYC') {
       await prisma.user.updateMany({ where: { id: { in: ids } }, data: { kycStatus: 'REJECTED' } });
     } else if (action === 'NOTIFY' && message) {
-      const users = await prisma.user.findMany({ where: { id: { in: ids }, pushToken: { not: null } }, select: { pushToken: true } });
-      const tokens = users.map(u => u.pushToken).filter(Boolean);
+      const users = await prisma.user.findMany({ where: { id: { in: ids }, fcmToken: { not: null } }, select: { fcmToken: true } });
+      const tokens = users.map(u => u.fcmToken).filter(Boolean);
       if (tokens.length) {
         await fetch('https://exp.host/--/api/v2/push/send', {
           method: 'POST',
@@ -1500,23 +1503,24 @@ router.get('/revenue', async (req, res) => {
     const [orders, prevOrders] = await Promise.all([
       prisma.order.findMany({
         where: { status: 'COMPLETED', completedAt: { gte: since } },
-        select: { serviceType: true, fare: true, providerId: true, completedAt: true },
+        select: { serviceType: true, finalPrice: true, price: true, providerId: true, completedAt: true },
       }),
       prisma.order.findMany({
         where: { status: 'COMPLETED', completedAt: { gte: new Date(since.getTime() - (now - since)), lt: since } },
-        select: { fare: true },
+        select: { finalPrice: true, price: true },
       }),
     ]);
 
-    const totalTND = orders.reduce((s, o) => s + (o.fare || 0), 0);
-    const prevTotal = prevOrders.reduce((s, o) => s + (o.fare || 0), 0);
+    const fareOf = (o) => Number(o.finalPrice ?? o.price ?? 0);
+    const totalTND = orders.reduce((s, o) => s + fareOf(o), 0);
+    const prevTotal = prevOrders.reduce((s, o) => s + fareOf(o), 0);
     const growth = prevTotal > 0 ? ((totalTND - prevTotal) / prevTotal) * 100 : 0;
 
     const serviceMap = {};
     orders.forEach(o => {
       const t = o.serviceType || 'TAXI';
       if (!serviceMap[t]) serviceMap[t] = { revenue: 0, orders: 0 };
-      serviceMap[t].revenue += o.fare || 0;
+      serviceMap[t].revenue += fareOf(o);
       serviceMap[t].orders++;
     });
     const byService = Object.entries(serviceMap).map(([service, v]) => ({
@@ -1537,10 +1541,10 @@ router.post('/notifications/push', async (req, res) => {
 
     const roleFilter = audience && audience !== 'ALL' ? { role: audience } : {};
     const users = await prisma.user.findMany({
-      where: { ...roleFilter, pushToken: { not: null } },
-      select: { pushToken: true },
+      where: { ...roleFilter, fcmToken: { not: null } },
+      select: { fcmToken: true },
     });
-    const tokens = users.map(u => u.pushToken).filter(Boolean);
+    const tokens = users.map(u => u.fcmToken).filter(Boolean);
 
     if (tokens.length > 0) {
       const messages = tokens.map(to => ({
@@ -1914,7 +1918,7 @@ router.get('/users/:id/ban-history', async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.params.id },
-      select: { id: true, name: true, phone: true, isBanned: true, role: true },
+      select: { id: true, name: true, phone: true, suspended: true, role: true },
     });
 
     const history = await prisma.userAction.findMany({
@@ -1936,7 +1940,7 @@ router.post('/users/:id/unban', async (req, res) => {
   try {
     await prisma.user.update({
       where: { id: req.params.id },
-      data: { isBanned: false },
+      data: { suspended: false },
     });
     await prisma.userAction.create({
       data: { userId: req.params.id, type: 'UNBAN', performedBy: req.user.name || 'Admin', reason: 'Levée manuelle du ban' },
@@ -1964,7 +1968,7 @@ router.patch('/appeals/:id', async (req, res) => {
     }).catch(() => ({ id: req.params.id, status: accepted ? 'ACCEPTED' : 'REJECTED' }));
 
     if (accepted && appeal.userId) {
-      await prisma.user.update({ where: { id: appeal.userId }, data: { isBanned: false } }).catch(() => {});
+      await prisma.user.update({ where: { id: appeal.userId }, data: { suspended: false } }).catch(() => {});
     }
 
     return res.json({ appeal });
@@ -2185,11 +2189,17 @@ router.post('/notifications/campaigns', async (req, res) => {
 // ─────────────────────────────────────────────
 router.get('/providers/online', async (req, res) => {
   try {
+    const { getPosition } = require('../services/geolocation');
+    const ROLE_TO_SERVICE = { CHAUFFEUR: 'TAXI', LIVREUR: 'DELIVERY', DEPANNEUR: 'SOS' };
     const providers = await prisma.user.findMany({
       where: { role: { in: ['CHAUFFEUR', 'LIVREUR', 'DEPANNEUR'] }, isOnline: true },
-      select: { id: true, name: true, role: true, lastLat: true, lastLng: true },
+      select: { id: true, name: true, role: true },
     }).catch(() => []);
-    return res.json({ providers: providers.map((p) => ({ ...p, lat: p.lastLat || 36.82, lng: p.lastLng || 10.18, status: 'ONLINE' })) });
+    const withPositions = await Promise.all(providers.map(async (p) => {
+      const position = await getPosition(p.id, ROLE_TO_SERVICE[p.role]).catch(() => null);
+      return { ...p, lat: position?.lat ?? 36.82, lng: position?.lng ?? 10.18, status: 'ONLINE' };
+    }));
+    return res.json({ providers: withPositions });
   } catch {
     return res.json({ providers: [] });
   }
