@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getCurrentLocationWithAddress } from '../../utils/locationUtils';
-// useTaxiStore no longer needed here — ordering flow handled by TaxiRequestScreen
+import api from '../../services/api';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', border: '#2C2C3E',
@@ -39,7 +39,7 @@ export default function TaxiHomeScreen({ navigation }) {
   const [taxiType, setTaxiType] = useState('STANDARD');
   const [mode, setMode] = useState('NOW');
   const [locating, setLocating] = useState(false);
-  const [nearbyCount] = useState(4);
+  const [nearbyCount, setNearbyCount] = useState(0);
 
   useEffect(() => { detectLocation(); }, []);
 
@@ -49,8 +49,18 @@ export default function TaxiHomeScreen({ navigation }) {
     if (result) {
       setOrigin(result.coords);
       setOriginText(result.address);
+      fetchNearbyCount(result.coords);
     }
     setLocating(false);
+  };
+
+  const fetchNearbyCount = async (coords) => {
+    try {
+      const res = await api.get('/api/taxi/nearby', { params: { lat: coords.lat, lng: coords.lng, radius: 5 } });
+      setNearbyCount(res.data?.count || 0);
+    } catch {
+      setNearbyCount(0);
+    }
   };
 
   const estimatedFare = (multiplier) => {
@@ -90,8 +100,12 @@ export default function TaxiHomeScreen({ navigation }) {
 
         {/* Nearby indicator */}
         <View style={styles.nearbyRow}>
-          <View style={styles.nearbyDot} />
-          <Text style={styles.nearbyText}>{nearbyCount} chauffeurs disponibles près de vous</Text>
+          <View style={[styles.nearbyDot, nearbyCount === 0 && { backgroundColor: COLORS.muted }]} />
+          <Text style={styles.nearbyText}>
+            {nearbyCount > 0
+              ? `${nearbyCount} chauffeur${nearbyCount > 1 ? 's' : ''} disponible${nearbyCount > 1 ? 's' : ''} près de vous`
+              : 'Aucun chauffeur disponible près de vous pour le moment'}
+          </Text>
         </View>
 
         {/* Mode tabs */}
