@@ -32,7 +32,7 @@ export default function ClientWalletScreen({ navigation }) {
   const [tab, setTab] = useState('history');
 
   const load = useCallback(() => {
-    api.get('/api/client/wallet')
+    api.get('/api/wallet')
       .then(r => setData(r.data || MOCK))
       .catch(() => setData(MOCK))
       .finally(() => setLoading(false));

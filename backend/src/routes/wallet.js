@@ -6,6 +6,28 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const router = express.Router();
 
+// GET /api/wallet — combined balance + transactions
+router.get('/', authenticate, async (req, res) => {
+  try {
+    const [user, txs] = await Promise.all([
+      prisma.user.findUnique({ where: { id: req.user.id }, select: { walletBalance: true } }),
+      prisma.walletTransaction.findMany({ where: { userId: req.user.id }, orderBy: { createdAt: 'desc' }, take: 50 }),
+    ]);
+    res.json({
+      balance: user?.walletBalance || 0,
+      transactions: txs.map((t) => ({
+        id: t.id,
+        type: t.type === 'CREDIT' || t.type === 'RECHARGE' ? 'CREDIT' : 'DEBIT',
+        label: t.description || t.type,
+        amount: t.type === 'CREDIT' || t.type === 'RECHARGE' ? t.amount : -t.amount,
+        date: t.createdAt,
+      })),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/wallet/balance
 router.get('/balance', authenticate, async (req, res) => {
   try {
@@ -36,7 +58,7 @@ router.get('/transactions', authenticate, async (req, res) => {
 // POST /api/wallet/recharge — simulation (en prod: intégration paiement)
 router.post('/recharge', authenticate, async (req, res) => {
   const { amount } = req.body;
-  if (![7, 30, 90].includes(Number(amount))) {
+  if (!(Number(amount) > 0)) {
     return res.status(400).json({ error: 'Montant invalide' });
   }
   try {

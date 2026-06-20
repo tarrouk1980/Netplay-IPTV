@@ -34,8 +34,26 @@ export default function ClientReferralScreen({ navigation }) {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    api.get('/api/client/referral')
-      .then(r => setData(r.data || MOCK_DATA))
+    Promise.all([api.get('/api/referral/my-stats'), api.get('/api/referral/history')])
+      .then(([statsRes, historyRes]) => {
+        const stats = statsRes.data;
+        const history = historyRes.data || [];
+        const rewardPerReferral = stats.referrals > 0 ? stats.totalRewardsEarned / stats.referrals : 3.0;
+        setData({
+          code: stats.code,
+          totalInvited: stats.referrals,
+          totalEarned: stats.totalRewardsEarned,
+          pendingEarned: 0,
+          rewardPerReferral,
+          referrals: history.map((u) => ({
+            id: u.id,
+            name: u.name,
+            joined: new Date(u.createdAt).toLocaleDateString('fr-FR'),
+            status: 'active',
+            reward: rewardPerReferral,
+          })),
+        });
+      })
       .catch(() => setData(MOCK_DATA))
       .finally(() => setLoading(false));
   }, []);

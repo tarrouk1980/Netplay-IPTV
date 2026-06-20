@@ -69,6 +69,47 @@ router.get('/my-stats', authenticate, async (req, res) => {
   }
 });
 
+// GET /api/referral/leaderboard — top referrers by reward count
+router.get('/leaderboard', authenticate, async (req, res) => {
+  try {
+    const topReferrers = await prisma.referralReward.groupBy({
+      by: ['referrerId'],
+      _sum: { rewardAmount: true },
+      _count: { referrerId: true },
+      orderBy: { _sum: { rewardAmount: 'desc' } },
+      take: 20,
+    });
+    const users = await prisma.user.findMany({
+      where: { id: { in: topReferrers.map((r) => r.referrerId) } },
+      select: { id: true, name: true },
+    });
+    const nameById = Object.fromEntries(users.map((u) => [u.id, u.name]));
+    const leaders = topReferrers.map((r, i) => ({
+      rank: i + 1,
+      userId: r.referrerId,
+      name: nameById[r.referrerId] || 'Utilisateur',
+      referrals: r._count.referrerId,
+      points: r._sum.rewardAmount || 0,
+    }));
+
+    const myReward = await prisma.referralReward.aggregate({
+      where: { referrerId: req.user.id },
+      _sum: { rewardAmount: true },
+      _count: { referrerId: true },
+    });
+    const myRankIdx = leaders.findIndex((l) => l.userId === req.user.id);
+    const myRank = {
+      rank: myRankIdx >= 0 ? myRankIdx + 1 : leaders.length + 1,
+      referrals: myReward._count.referrerId || 0,
+      points: myReward._sum.rewardAmount || 0,
+    };
+
+    res.json({ leaders, myRank });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/referral/history — list users referred by me
 router.get('/history', authenticate, async (req, res) => {
   try {

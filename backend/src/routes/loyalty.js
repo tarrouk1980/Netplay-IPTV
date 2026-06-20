@@ -121,14 +121,14 @@ router.get('/rewards', authenticate, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
-      select: { easyPoints: true },
+      select: { loyaltyPoints: true },
     }).catch(() => null);
-    const history = await prisma.pointsTransaction.findMany({
+    const history = await prisma.loyaltyTransaction.findMany({
       where: { userId: req.user.id },
       orderBy: { createdAt: 'desc' },
       take: 20,
     }).catch(() => []);
-    return res.json({ points: user?.easyPoints || 0, history });
+    return res.json({ points: user?.loyaltyPoints || 0, history });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
@@ -141,10 +141,13 @@ router.post('/redeem', authenticate, async (req, res) => {
     const REWARD_COSTS = { r1: 200, r2: 150, r3: 400, r4: 100, r5: 500, r6: 350 };
     const cost = REWARD_COSTS[rewardId];
     if (!cost) return res.status(400).json({ error: 'Récompense invalide' });
-    const user = await prisma.user.findUnique({ where: { id: req.user.id }, select: { easyPoints: true } }).catch(() => null);
-    if (!user || (user.easyPoints || 0) < cost) return res.status(400).json({ error: 'Points insuffisants' });
-    await prisma.user.update({ where: { id: req.user.id }, data: { easyPoints: { decrement: cost } } }).catch(() => null);
-    return res.json({ success: true, pointsSpent: cost, newBalance: (user.easyPoints || 0) - cost });
+    const user = await prisma.user.findUnique({ where: { id: req.user.id }, select: { loyaltyPoints: true } }).catch(() => null);
+    if (!user || (user.loyaltyPoints || 0) < cost) return res.status(400).json({ error: 'Points insuffisants' });
+    await prisma.user.update({ where: { id: req.user.id }, data: { loyaltyPoints: { decrement: cost } } }).catch(() => null);
+    await prisma.loyaltyTransaction.create({
+      data: { userId: req.user.id, points: -cost, type: 'REDEEM', description: `Récompense ${rewardId}` },
+    }).catch(() => null);
+    return res.json({ success: true, pointsSpent: cost, newBalance: (user.loyaltyPoints || 0) - cost });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
