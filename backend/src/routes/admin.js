@@ -13,6 +13,24 @@ const router = express.Router();
 router.use(authenticate, requireRole('ADMIN'));
 
 // ─────────────────────────────────────────────
+// In-memory stores (no matching Prisma model exists yet — mirrors the
+// pattern used in routes/support.js and routes/chat.js).
+// ─────────────────────────────────────────────
+const promoStore = new Map(); // id -> promo
+let promoSeq = 1;
+const promotionStore = new Map(); // id -> promotion
+let promotionSeq = 1;
+const appSettingsStore = {
+  taxiBaseFare: 2, taxiPerKm: 0.8, sosCalloutFee: 10, deliveryBaseFee: 3, deliveryPerKm: 0.5,
+  commissionRate: 0, sosEnabled: true, deliveryEnabled: true, groceryEnabled: true,
+  newRegistrations: true, maxOrderRadius: 15, driverIdleTimeout: 10, maintenanceMode: false,
+  appVersion: '1.0.0', minAppVersion: '1.0.0',
+};
+const appVersionStore = new Map(); // id -> version record
+let appVersionSeq = 1;
+const sessionStore = new Map(); // userId -> session record
+
+// ─────────────────────────────────────────────
 // GET /api/admin/kyc/pending — list users awaiting KYC
 // ─────────────────────────────────────────────
 router.get('/kyc/pending', async (req, res) => {
@@ -1568,23 +1586,23 @@ router.post('/promo-codes/bulk', async (req, res) => {
   try {
     const { codes, discountType, discountValue, maxUses, services, expiresAt, minOrderAmount } = req.body;
     if (!Array.isArray(codes) || !codes.length) return res.status(400).json({ error: 'codes required' });
-    const created = await prisma.$transaction(
-      codes.map(code =>
-        prisma.promoCode.create({
-          data: {
-            code,
-            discountType: discountType || 'PERCENT',
-            discountValue: parseFloat(discountValue) || 0,
-            maxUses: parseInt(maxUses) || 1,
-            usedCount: 0,
-            services: services && services.length ? JSON.stringify(services) : null,
-            expiresAt: expiresAt ? new Date(expiresAt) : null,
-            minOrderAmount: minOrderAmount ? parseFloat(minOrderAmount) : null,
-          },
-        })
-      )
-    );
-    res.json({ created: created.length });
+    codes.forEach((code) => {
+      const id = String(promoSeq++);
+      promoStore.set(id, {
+        id,
+        code: String(code).trim().toUpperCase(),
+        type: discountType || 'PERCENT',
+        value: parseFloat(discountValue) || 0,
+        service: services && services.length ? services[0] : 'ALL',
+        maxUsage: parseInt(maxUses) || 1,
+        usageCount: 0,
+        active: true,
+        expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
+        minOrderAmount: minOrderAmount ? parseFloat(minOrderAmount) : null,
+        createdAt: new Date().toISOString(),
+      });
+    });
+    res.json({ created: codes.length });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -1630,67 +1648,33 @@ router.post('/users/:id/wallet/adjust', async (req, res) => {
 // PATCH /api/admin/promo-codes/:id
 // ─────────────────────────────────────────────
 router.get('/promo-codes/:id', async (req, res) => {
-  try {
-    const promo = await prisma.promoCode.findFirst({
-      where: { OR: [{ id: req.params.id }, { code: req.params.id }] },
-    }).catch(() => null);
-    if (!promo) return res.status(404).json({ error: 'Not found' });
-
-    const usages = await prisma.promoUsage.findMany({
-      where: { promoCodeId: promo.id },
-      include: { user: { select: { name: true } } },
-      orderBy: { createdAt: 'desc' },
-      take: 20,
-    }).catch(() => []);
-
-    const totalSavings = usages.reduce((s, u) => s + Number(u.discount || 0), 0);
-    return res.json({ promo: { ...promo, usedCount: usages.length, totalSavings }, usages });
-  } catch (err) {
-    return res.status(500).json({ error: 'Internal server error' });
-  }
+  const promo = [...promoStore.values()].find((p) => p.id === req.params.id || p.code === req.params.id);
+  if (!promo) return res.status(404).json({ error: 'Not found' });
+  return res.json({ promo: { ...promo, usedCount: promo.usageCount, totalSavings: 0 }, usages: [] });
 });
 
 router.patch('/promo-codes/:id', async (req, res) => {
-  try {
-    const { maxUses, expiresAt, active } = req.body;
-    const updated = await prisma.promoCode.update({
-      where: { id: req.params.id },
-      data: {
-        ...(maxUses !== undefined ? { maxUses: maxUses || null } : {}),
-        ...(expiresAt !== undefined ? { expiresAt: expiresAt ? new Date(expiresAt) : null } : {}),
-        ...(active !== undefined ? { active } : {}),
-      },
-    });
-    return res.json({ promo: updated });
-  } catch (err) {
-    return res.status(500).json({ error: 'Internal server error' });
-  }
+  const promo = promoStore.get(req.params.id);
+  if (!promo) return res.status(404).json({ error: 'Not found' });
+  const { maxUses, expiresAt, active } = req.body;
+  if (maxUses !== undefined) promo.maxUsage = maxUses || null;
+  if (expiresAt !== undefined) promo.expiresAt = expiresAt ? new Date(expiresAt).toISOString() : null;
+  if (active !== undefined) promo.active = active;
+  promoStore.set(promo.id, promo);
+  return res.json({ promo });
 });
 
 // ─────────────────────────────────────────────
 // GET/PUT /api/admin/config
 // ─────────────────────────────────────────────
 router.get('/config', async (req, res) => {
-  try {
-    const config = await prisma.appConfig.findFirst().catch(() => null);
-    return res.json({ config: config?.data || {} });
-  } catch (err) {
-    return res.status(500).json({ error: 'Internal server error' });
-  }
+  return res.json({ config: appSettingsStore });
 });
 
 router.put('/config', async (req, res) => {
-  try {
-    const { config } = req.body;
-    await prisma.appConfig.upsert({
-      where: { id: 1 },
-      update: { data: config, updatedAt: new Date() },
-      create: { id: 1, data: config },
-    }).catch(() => {});
-    return res.json({ success: true });
-  } catch (err) {
-    return res.status(500).json({ error: 'Internal server error' });
-  }
+  const { config } = req.body;
+  if (config && typeof config === 'object') Object.assign(appSettingsStore, config);
+  return res.json({ success: true });
 });
 
 // ─────────────────────────────────────────────
@@ -2225,6 +2209,317 @@ router.get('/financial/report', async (req, res) => {
     });
   } catch (err) {
     return res.json({ currentMonth: {}, monthly: [], paymentMethods: [], taxBreakdown: {} });
+  }
+});
+
+// ─────────────────────────────────────────────
+// PATCH /api/admin/users/:id/status — used by AdminUserDetailScreen.js
+// Backed by real Prisma User model (status maps to suspended boolean).
+// ─────────────────────────────────────────────
+router.patch('/users/:id/status', async (req, res) => {
+  try {
+    const { status } = req.body;
+    const suspended = status === 'BANNED';
+    const user = await prisma.user.update({
+      where: { id: req.params.id },
+      data: { suspended },
+    });
+    return res.json({ user: { ...user, status: suspended ? 'BANNED' : 'ACTIVE' } });
+  } catch (err) {
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// GET /api/admin/drivers — used by AdminDriversScreen.js
+// Backed by real Prisma User model (role CHAUFFEUR/LIVREUR/DEPANNEUR).
+// ─────────────────────────────────────────────
+router.get('/drivers', async (req, res) => {
+  try {
+    const drivers = await prisma.user.findMany({
+      where: { role: { in: ['CHAUFFEUR', 'LIVREUR', 'DEPANNEUR'] } },
+      select: {
+        id: true, name: true, phone: true, role: true, rating: true, totalRides: true,
+        isOnline: true, suspended: true, createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    const mapped = drivers.map(d => ({
+      ...d,
+      service: d.role === 'CHAUFFEUR' ? 'TAXI' : d.role === 'LIVREUR' ? 'DELIVERY' : 'SOS',
+      status: d.suspended ? 'SUSPENDED' : d.isOnline ? 'ONLINE' : 'OFFLINE',
+      trips: d.totalRides || 0,
+    }));
+    return res.json({ drivers: mapped });
+  } catch (err) {
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// GET /api/admin/transactions — used by AdminTransactionsScreen.js
+// Backed by real Prisma WalletTransaction model.
+// ─────────────────────────────────────────────
+router.get('/transactions', async (req, res) => {
+  try {
+    const transactions = await prisma.walletTransaction.findMany({
+      include: { user: { select: { name: true, phone: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+    });
+    return res.json({ transactions });
+  } catch (err) {
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// GET /api/admin/map/agents — used by AdminMapScreen.js
+// Backed by real Prisma User model + live geolocation service.
+// ─────────────────────────────────────────────
+router.get('/map/agents', async (req, res) => {
+  try {
+    const { getPosition } = require('../services/geolocation');
+    const ROLE_TO_SERVICE = { CHAUFFEUR: 'TAXI', LIVREUR: 'DELIVERY', DEPANNEUR: 'SOS' };
+    const agents = await prisma.user.findMany({
+      where: { role: { in: ['CHAUFFEUR', 'LIVREUR', 'DEPANNEUR'] } },
+      select: { id: true, name: true, role: true, isOnline: true, rating: true },
+    }).catch(() => []);
+    const withPositions = await Promise.all(agents.map(async (a) => {
+      const position = await getPosition(a.id, ROLE_TO_SERVICE[a.role]).catch(() => null);
+      return {
+        ...a,
+        service: ROLE_TO_SERVICE[a.role],
+        status: a.isOnline ? 'ONLINE' : 'OFFLINE',
+        lat: position?.lat ?? null,
+        lng: position?.lng ?? null,
+      };
+    }));
+    return res.json({ agents: withPositions });
+  } catch (err) {
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// GET/POST/PATCH/DELETE /api/admin/promos — used by AdminPromoCodesScreen.js
+// No PromoCode/PromoUsage model exists in schema.prisma yet, so this and the
+// /promo-codes routes above share the same in-memory promoStore.
+// ─────────────────────────────────────────────
+router.get('/promos', async (req, res) => {
+  const promos = Array.from(promoStore.values()).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  return res.json({ promos });
+});
+
+router.post('/promos', async (req, res) => {
+  const { code, type, value, service, maxUsage, expiresAt } = req.body;
+  if (!code || value === undefined || maxUsage === undefined) {
+    return res.status(400).json({ error: 'code, value and maxUsage are required' });
+  }
+  const promo = {
+    id: String(promoSeq++),
+    code: String(code).trim().toUpperCase(),
+    type: type || 'PERCENT',
+    value: parseFloat(value) || 0,
+    service: service || 'ALL',
+    maxUsage: parseInt(maxUsage) || 0,
+    usageCount: 0,
+    expiresAt: expiresAt || null,
+    active: true,
+    createdAt: new Date().toISOString(),
+  };
+  promoStore.set(promo.id, promo);
+  return res.status(201).json({ promo });
+});
+
+router.patch('/promos/:id', async (req, res) => {
+  const promo = promoStore.get(req.params.id);
+  if (!promo) return res.status(404).json({ error: 'Not found' });
+  Object.assign(promo, req.body);
+  promoStore.set(promo.id, promo);
+  return res.json({ promo });
+});
+
+router.delete('/promos/:id', async (req, res) => {
+  if (!promoStore.has(req.params.id)) return res.status(404).json({ error: 'Not found' });
+  promoStore.delete(req.params.id);
+  return res.json({ success: true });
+});
+
+// ─────────────────────────────────────────────
+// GET/POST/PUT/DELETE /api/admin/promotions — used by AdminPromotionsScreen.js
+// Distinct in-memory store from /promos (different shape: minOrder/usageLimit).
+// No matching Prisma model exists.
+// ─────────────────────────────────────────────
+router.get('/promotions', async (req, res) => {
+  const promotions = Array.from(promotionStore.values()).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  return res.json({ promotions });
+});
+
+router.post('/promotions', async (req, res) => {
+  const body = req.body || {};
+  const promotion = {
+    id: String(promotionSeq++),
+    code: body.code,
+    type: body.type || 'PERCENT',
+    value: parseFloat(body.value) || 0,
+    minOrder: parseFloat(body.minOrder) || 0,
+    usageLimit: parseInt(body.usageLimit) || 0,
+    usageCount: 0,
+    service: body.service || 'ALL',
+    expiresAt: body.expiresAt || null,
+    active: true,
+    createdAt: new Date().toISOString(),
+  };
+  promotionStore.set(promotion.id, promotion);
+  return res.status(201).json({ promotion });
+});
+
+router.put('/promotions/:id', async (req, res) => {
+  const promotion = promotionStore.get(req.params.id);
+  if (!promotion) return res.status(404).json({ error: 'Not found' });
+  Object.assign(promotion, req.body);
+  promotionStore.set(promotion.id, promotion);
+  return res.json({ promotion });
+});
+
+router.delete('/promotions/:id', async (req, res) => {
+  if (!promotionStore.has(req.params.id)) return res.status(404).json({ error: 'Not found' });
+  promotionStore.delete(req.params.id);
+  return res.json({ success: true });
+});
+
+// ─────────────────────────────────────────────
+// GET /api/admin/vehicles — used by AdminVehiclesScreen.js
+// POST /api/admin/vehicles/:id/:action — approve/reject/suspend
+// Backed by real Prisma Vehicle model (verified boolean used to track approval).
+// ─────────────────────────────────────────────
+router.get('/vehicles', async (req, res) => {
+  try {
+    const vehicles = await prisma.vehicle.findMany({
+      include: { user: { select: { name: true, phone: true, role: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+    const mapped = vehicles.map(v => ({
+      ...v,
+      brand: v.make,
+      status: v.verified ? 'APPROVED' : 'PENDING',
+    }));
+    return res.json({ vehicles: mapped });
+  } catch (err) {
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/vehicles/:id/:action', async (req, res) => {
+  try {
+    const { id, action } = req.params;
+    if (!['approve', 'reject', 'suspend'].includes(action)) {
+      return res.status(400).json({ error: 'Invalid action' });
+    }
+    const verified = action === 'approve';
+    const vehicle = await prisma.vehicle.update({ where: { id }, data: { verified } });
+    const status = action === 'approve' ? 'APPROVED' : action === 'reject' ? 'REJECTED' : 'SUSPENDED';
+    return res.json({ vehicle: { ...vehicle, status } });
+  } catch (err) {
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// GET/PUT /api/admin/settings — used by AdminAppSettingsScreen.js
+// POST /api/admin/cache/flush
+// No AppConfig/settings model exists in schema.prisma; backed by the same
+// in-memory appSettingsStore used by the /config routes above.
+// ─────────────────────────────────────────────
+router.get('/settings', async (req, res) => {
+  return res.json(appSettingsStore);
+});
+
+router.put('/settings', async (req, res) => {
+  Object.assign(appSettingsStore, req.body || {});
+  return res.json(appSettingsStore);
+});
+
+router.post('/cache/flush', async (req, res) => {
+  try {
+    const { redis } = require('../config/redis');
+    if (redis && typeof redis.flushdb === 'function') await redis.flushdb();
+  } catch {}
+  return res.json({ success: true });
+});
+
+// ─────────────────────────────────────────────
+// GET/POST/PATCH /api/admin/app-versions — used by AdminAppVersionScreen.js
+// No AppVersion model exists in schema.prisma; backed by in-memory store.
+// ─────────────────────────────────────────────
+router.get('/app-versions', async (req, res) => {
+  const versions = Array.from(appVersionStore.values()).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  return res.json({ versions });
+});
+
+router.post('/app-versions', async (req, res) => {
+  const body = req.body || {};
+  const version = {
+    id: String(appVersionSeq++),
+    number: body.number || body.version || '1.0.0',
+    platform: body.platform || 'ALL',
+    status: body.status || 'ACTIVE',
+    releaseNotes: body.releaseNotes || '',
+    createdAt: new Date().toISOString(),
+  };
+  appVersionStore.set(version.id, version);
+  return res.status(201).json({ version });
+});
+
+router.patch('/app-versions/:id', async (req, res) => {
+  const version = appVersionStore.get(req.params.id);
+  if (!version) return res.status(404).json({ error: 'Not found' });
+  Object.assign(version, req.body);
+  appVersionStore.set(version.id, version);
+  return res.json({ version });
+});
+
+// ─────────────────────────────────────────────
+// GET /api/admin/sessions — used by AdminUserSessionsScreen.js
+// POST /api/admin/sessions/:userId/logout
+// No UserSession model exists in schema.prisma; backed by in-memory store,
+// seeded lazily from real Prisma User.isOnline so the list isn't empty.
+// ─────────────────────────────────────────────
+router.get('/sessions', async (req, res) => {
+  try {
+    const onlineUsers = await prisma.user.findMany({
+      where: { isOnline: true },
+      select: { id: true, name: true, role: true, updatedAt: true },
+    }).catch(() => []);
+    for (const u of onlineUsers) {
+      if (!sessionStore.has(u.id)) {
+        sessionStore.set(u.id, {
+          userId: u.id, userName: u.name, role: u.role,
+          isOnline: true, lastActive: u.updatedAt,
+        });
+      }
+    }
+    const sessions = Array.from(sessionStore.values());
+    return res.json({ sessions });
+  } catch (err) {
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/sessions/:userId/logout', async (req, res) => {
+  try {
+    await prisma.user.update({ where: { id: req.params.userId }, data: { isOnline: false } }).catch(() => {});
+    const session = sessionStore.get(req.params.userId);
+    if (session) {
+      session.isOnline = false;
+      session.lastActive = new Date().toISOString();
+    } else {
+      sessionStore.set(req.params.userId, { userId: req.params.userId, isOnline: false, lastActive: new Date().toISOString() });
+    }
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
