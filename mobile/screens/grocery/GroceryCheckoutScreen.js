@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
+import { getCurrentLocationWithAddress } from '../../utils/locationUtils';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28',
@@ -41,12 +42,27 @@ export default function GroceryCheckoutScreen({ navigation, route }) {
   const handleOrder = async () => {
     setSubmitting(true);
     try {
-      const res = await api.post('/api/grocery/orders', {
-        items, address, slot, payment, promoCode, notes,
-        subtotal, deliveryFee, total,
+      const loc = await getCurrentLocationWithAddress();
+      if (!loc) {
+        Alert.alert('Localisation requise', 'Activez la localisation pour passer la commande.');
+        setSubmitting(false);
+        return;
+      }
+
+      const res = await api.post('/api/grocery/request', {
+        items: items.map((i) => ({
+          productId: i.id || i.productId,
+          price: i.price,
+          quantity: i.qty || 1,
+        })),
+        deliveryLat: loc.coords.lat,
+        deliveryLng: loc.coords.lng,
+        deliveryAddress: address,
+        note: notes || undefined,
       });
+
       navigation.replace('GroceryCheckoutSuccess', {
-        orderId: res.data?.orderId || `GRC-${Date.now().toString().slice(-6)}`,
+        orderId: res.data?.order?.id || `GRC-${Date.now().toString().slice(-6)}`,
         storeName, total,
       });
     } catch {

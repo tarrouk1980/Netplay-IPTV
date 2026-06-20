@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
+import { getCurrentLocationWithAddress } from '../../utils/locationUtils';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', border: '#2C2C3E',
@@ -83,12 +84,21 @@ export default function GroceryCartScreen({ navigation, route }) {
     if (items.length === 0) { Alert.alert('Panier vide', 'Ajoutez des articles avant de commander.'); return; }
     setSubmitting(true);
     try {
+      const loc = await getCurrentLocationWithAddress();
+      if (!loc) {
+        Alert.alert('Localisation requise', 'Activez la localisation pour passer la commande.');
+        setSubmitting(false);
+        return;
+      }
+
       const body = {
-        shopId,
-        items: items.map(i => ({ id: i.id, qty: i.qty })),
-        promoCode: promoApplied ? promoCode : undefined,
+        items: items.map(i => ({ productId: i.id, price: i.price, quantity: i.qty })),
+        merchantIds: shopId ? [shopId] : undefined,
+        deliveryLat: loc.coords.lat,
+        deliveryLng: loc.coords.lng,
+        deliveryAddress: loc.address,
       };
-      const res = await api.post('/api/grocery/order', body);
+      const res = await api.post('/api/grocery/request', body);
       const orderId = res.data?.order?.id;
       navigation.replace('GroceryOrderTracking', { orderId });
     } catch {
