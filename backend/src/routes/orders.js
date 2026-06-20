@@ -13,7 +13,7 @@ router.post('/:id/rate', authenticate, async (req, res) => {
 
     const order = await prisma.order.findUnique({
       where: { id: req.params.id },
-      select: { id: true, userId: true, providerId: true, status: true },
+      select: { id: true, clientId: true, providerId: true, status: true },
     });
     if (!order) return res.status(404).json({ error: 'Order not found' });
     if (order.status !== 'COMPLETED') return res.status(400).json({ error: 'Order not completed' });
@@ -22,23 +22,22 @@ router.post('/:id/rate', authenticate, async (req, res) => {
     const review = await prisma.review.create({
       data: {
         orderId: order.id,
-        clientId: req.user.id,
-        providerId: order.providerId,
+        reviewerId: req.user.id,
+        targetId: order.providerId,
         rating: parseInt(rating),
         comment: comment || null,
-        tags: tags || [],
       },
     });
 
     // Update provider average rating
     if (order.providerId) {
       const avg = await prisma.review.aggregate({
-        where: { providerId: order.providerId },
+        where: { targetId: order.providerId },
         _avg: { rating: true },
       });
       await prisma.user.update({
         where: { id: order.providerId },
-        data: { rating: avg._avg.rating || rating },
+        data: { avgRating: avg._avg.rating || rating },
       });
     }
 
@@ -48,8 +47,8 @@ router.post('/:id/rate', authenticate, async (req, res) => {
       await prisma.$transaction([
         prisma.user.update({ where: { id: req.user.id }, data: { walletBalance: { decrement: tipAmt } } }),
         prisma.user.update({ where: { id: order.providerId }, data: { walletBalance: { increment: tipAmt } } }),
-        prisma.walletTransaction.create({
-          data: { userId: order.providerId, type: 'TIP', amount: tipAmt, description: `Pourboire commande #${order.id.slice(-6)}` },
+        prisma.tip.create({
+          data: { orderId: order.id, amount: tipAmt, fromUserId: req.user.id, toUserId: order.providerId },
         }),
       ]);
     }
@@ -68,7 +67,7 @@ router.get('/:id', authenticate, async (req, res) => {
       where: { id: req.params.id },
       include: {
         client: { select: { id: true, name: true, phone: true } },
-        provider: { select: { id: true, name: true, phone: true, rating: true } },
+        provider: { select: { id: true, name: true, phone: true, avgRating: true } },
       },
     });
     if (!order) return res.status(404).json({ error: 'Order not found' });
@@ -83,7 +82,7 @@ router.get('/active', authenticate, async (req, res) => {
     const orders = await prisma.order.findMany({
       where: {
         clientId: req.user.id,
-        status: { in: ['PENDING', 'ACCEPTED', 'IN_PROGRESS', 'ARRIVED', 'PREPARING', 'PICKED_UP'] },
+        status: { in: ['PENDING', 'ACCEPTED', 'IN_PROGRESS'] },
       },
       include: {
         provider: { select: { name: true, phone: true } },
