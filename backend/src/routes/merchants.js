@@ -237,22 +237,30 @@ router.get('/stats', authenticate, requireRole('MARCHAND'), async (req, res) => 
       where: { userId: req.user.id },
     });
 
+    // Orders reference merchants via metadata.merchantIds (grocery checkout), not a direct column.
+    const merchantOrderFilter = (extra) => ({
+      serviceType: 'GROCERY',
+      metadata: { path: ['merchantIds'], array_contains: merchant?.id },
+      ...extra,
+    });
+
     const [todayOrders, monthOrders, pendingOrders] = await Promise.all([
       prisma.order.findMany({
-        where: { merchantId: merchant?.id, status: 'COMPLETED', completedAt: { gte: startOfDay } },
-        select: { totalAmount: true },
+        where: merchantOrderFilter({ status: 'COMPLETED', completedAt: { gte: startOfDay } }),
+        select: { finalPrice: true, price: true },
       }),
       prisma.order.findMany({
-        where: { merchantId: merchant?.id, status: 'COMPLETED', completedAt: { gte: startOfMonth } },
-        select: { totalAmount: true },
+        where: merchantOrderFilter({ status: 'COMPLETED', completedAt: { gte: startOfMonth } }),
+        select: { finalPrice: true, price: true },
       }),
       prisma.order.count({
-        where: { merchantId: merchant?.id, status: 'PENDING' },
+        where: merchantOrderFilter({ status: 'PENDING' }),
       }),
     ]);
 
-    const todayRevenue = todayOrders.reduce((s, o) => s + Number(o.totalAmount || 0), 0);
-    const monthRevenue = monthOrders.reduce((s, o) => s + Number(o.totalAmount || 0), 0);
+    const orderAmount = (o) => Number(o.finalPrice ?? o.price ?? 0);
+    const todayRevenue = todayOrders.reduce((s, o) => s + orderAmount(o), 0);
+    const monthRevenue = monthOrders.reduce((s, o) => s + orderAmount(o), 0);
 
     return res.json({
       todayOrders: todayOrders.length,

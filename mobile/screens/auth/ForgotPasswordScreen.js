@@ -31,6 +31,12 @@ export default function ForgotPasswordScreen({ navigation }) {
   const [newPassword, setNewPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Phone must match the +216-prefixed format stored at registration (see LoginScreen).
+  const normalizePhone = (raw) => {
+    const trimmed = raw.trim().replace(/\s+/g, '');
+    return trimmed.startsWith('+') ? trimmed : `+216${trimmed}`;
+  };
+
   const handleSendCode = async () => {
     if (!phone.trim()) {
       Alert.alert('Erreur', 'Veuillez saisir votre numéro de téléphone');
@@ -38,7 +44,7 @@ export default function ForgotPasswordScreen({ navigation }) {
     }
     setIsLoading(true);
     try {
-      await api.post('/api/auth/forgot-password', { phone: phone.trim() });
+      await api.post('/api/auth/forgot-password', { phone: normalizePhone(phone) });
       setStep(2);
     } catch (err) {
       const message = err.response?.data?.error || 'Impossible d\'envoyer le code. Vérifiez votre numéro.';
@@ -60,7 +66,7 @@ export default function ForgotPasswordScreen({ navigation }) {
     setIsLoading(true);
     try {
       await api.post('/api/auth/reset-password', {
-        phone: phone.trim(),
+        phone: normalizePhone(phone),
         code: code.trim(),
         newPassword,
       });

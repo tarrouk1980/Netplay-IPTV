@@ -41,7 +41,7 @@ export default function MerchantDashboardScreen({ navigation }) {
   const [isOpen, setIsOpen] = useState(true);
 
   const load = useCallback(() => {
-    api.get('/api/merchant/dashboard')
+    api.get('/api/merchants/stats')
       .then(r => setStats(r.data || MOCK_STATS))
       .catch(() => setStats(MOCK_STATS))
       .finally(() => setLoading(false));
@@ -52,7 +52,7 @@ export default function MerchantDashboardScreen({ navigation }) {
   const toggleOpen = async () => {
     const next = !isOpen;
     setIsOpen(next);
-    await api.post('/api/merchant/status', { open: next }).catch(() => setIsOpen(v => !v));
+    await api.patch('/api/merchants/me/toggle').catch(() => setIsOpen(v => !v));
   };
 
   const peakHour = stats ? stats.hourlyOrders.indexOf(Math.max(...stats.hourlyOrders)) : 0;

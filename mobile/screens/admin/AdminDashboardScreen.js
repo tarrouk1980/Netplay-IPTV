@@ -54,8 +54,44 @@ export default function AdminDashboardScreen({ navigation }) {
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const res = await api.get('/api/admin/dashboard');
-      setData(res.data || MOCK);
+      const res = await api.get('/api/admin/stats');
+      const s = res.data;
+      if (!s) { setData(MOCK); return; }
+
+      const SERVICE_META = {
+        TAXI: { name: 'Taxi', icon: '🚕', color: COLORS.accent },
+        DELIVERY: { name: 'Livraison', icon: '📦', color: COLORS.blue },
+        GROCERY: { name: 'Épicerie', icon: '🛒', color: COLORS.green },
+        SOS: { name: 'SOS', icon: '🔧', color: COLORS.red },
+        HOME_SERVICE: { name: 'EasyServices', icon: '🛠️', color: COLORS.accent },
+      };
+
+      setData({
+        revenue: {
+          today: s.revenue?.todayTND ?? 0,
+          month: s.revenue?.monthTND ?? 0,
+          growth: 0,
+        },
+        orders: {
+          today: s.orders?.today ?? 0,
+          active: (s.orders?.total ?? 0) - (s.orders?.completed ?? 0) - (s.orders?.cancelled ?? 0),
+          pending: s.orders?.pending ?? 0,
+        },
+        users: {
+          total: s.users?.total ?? 0,
+          newToday: 0,
+          providers: (s.users?.chauffeurs ?? 0) + (s.users?.livreurs ?? 0) + (s.users?.depanneurs ?? 0) + (s.users?.marchands ?? 0),
+        },
+        services: Object.entries(s.orders?.byType || {}).map(([key, active]) => ({
+          name: SERVICE_META[key]?.name || key,
+          icon: SERVICE_META[key]?.icon || '🔹',
+          color: SERVICE_META[key]?.color || COLORS.accent,
+          active,
+        })),
+        alerts: s.orders?.pending > 5
+          ? [{ type: 'ORDER', message: `${s.orders.pending} commandes en attente`, color: COLORS.red }]
+          : [],
+      });
     } catch {
       setData(MOCK);
     } finally {

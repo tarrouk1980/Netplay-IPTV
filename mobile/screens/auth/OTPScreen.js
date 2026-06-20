@@ -67,7 +67,7 @@ export default function OTPScreen({ navigation, route }) {
     try {
       await api.post('/api/auth/otp/verify', { phone, otp: otpCode });
       Alert.alert('Succès', 'Numéro vérifié avec succès !', [
-        { text: 'Continuer', onPress: () => navigation.replace('Main') },
+        { text: 'Continuer', onPress: () => navigation.replace('Login') },
       ]);
     } catch (error) {
       const message = error.response?.data?.error || 'Code OTP invalide';
