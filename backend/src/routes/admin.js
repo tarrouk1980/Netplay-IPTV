@@ -1592,13 +1592,13 @@ router.post('/promo-codes/bulk', async (req, res) => {
 // ─────────────────────────────────────────────
 router.get('/users/:id/wallet', async (req, res) => {
   try {
-    const wallet = await prisma.wallet.findUnique({ where: { userId: req.params.id } }).catch(() => null);
+    const user = await prisma.user.findUnique({ where: { id: req.params.id }, select: { walletBalance: true } });
     const transactions = await prisma.walletTransaction.findMany({
       where: { userId: req.params.id },
       orderBy: { createdAt: 'desc' },
       take: 50,
     }).catch(() => []);
-    return res.json({ wallet: wallet || { balance: 0 }, transactions });
+    return res.json({ wallet: { balance: user?.walletBalance ?? 0 }, transactions });
   } catch (err) {
     return res.status(500).json({ error: 'Internal server error' });
   }
@@ -1608,13 +1608,12 @@ router.post('/users/:id/wallet/adjust', async (req, res) => {
   try {
     const { type, amount, note } = req.body;
     const delta = type === 'CREDIT' ? parseFloat(amount) : -parseFloat(amount);
-    await prisma.wallet.upsert({
-      where: { userId: req.params.id },
-      update: { balance: { increment: delta } },
-      create: { userId: req.params.id, balance: Math.max(0, delta) },
+    await prisma.user.update({
+      where: { id: req.params.id },
+      data: { walletBalance: { increment: delta } },
     });
     await prisma.walletTransaction.create({
-      data: { userId: req.params.id, type: 'ADMIN', amount: parseFloat(amount), note: note || `Ajustement admin (${type})` },
+      data: { userId: req.params.id, type: 'ADMIN', amount: parseFloat(amount), description: note || `Ajustement admin (${type})` },
     }).catch(() => {});
     return res.json({ success: true });
   } catch (err) {
@@ -1878,23 +1877,30 @@ router.patch('/disputes/:id/status', async (req, res) => {
 router.post('/disputes/:id/refund', async (req, res) => {
   try {
     const { amount, note } = req.body;
-    const dispute = await prisma.dispute.findUnique({ where: { id: req.params.id } }).catch(() => null);
-    if (dispute?.clientId) {
-      await prisma.wallet.upsert({
-        where: { userId: dispute.clientId },
-        update: { balance: { increment: parseFloat(amount) } },
-        create: { userId: dispute.clientId, balance: parseFloat(amount) },
-      }).catch(() => {});
+    const refundAmount = parseFloat(amount);
+    if (!refundAmount || refundAmount <= 0) {
+      return res.status(400).json({ error: 'Invalid amount', code: 'INVALID_AMOUNT' });
+    }
+
+    const dispute = await prisma.dispute.findUnique({ where: { id: req.params.id }, include: { order: true } });
+    if (!dispute) return res.status(404).json({ error: 'Dispute not found', code: 'NOT_FOUND' });
+
+    const clientId = dispute.order?.clientId;
+    if (clientId) {
+      await prisma.user.update({
+        where: { id: clientId },
+        data: { walletBalance: { increment: refundAmount } },
+      });
       await prisma.walletTransaction.create({
         data: {
-          userId: dispute.clientId,
+          userId: clientId,
           type: 'REFUND',
-          amount: parseFloat(amount),
-          note: note || `Remboursement litige #${req.params.id.slice(-6)}`,
+          amount: refundAmount,
+          description: note || `Remboursement litige #${req.params.id.slice(-6)}`,
         },
-      }).catch(() => {});
+      });
     }
-    return res.json({ success: true, amount });
+    return res.json({ success: true, amount: refundAmount });
   } catch (err) {
     console.error('[admin/disputes/refund]', err);
     return res.status(500).json({ error: 'Internal server error' });
