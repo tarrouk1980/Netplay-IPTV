@@ -123,19 +123,21 @@ export default function HomeScreen({ navigation }) {
 
     const PROVIDER_ROLES = ['CHAUFFEUR', 'LIVREUR', 'DEPANNEUR', 'MARCHAND'];
 
+    const goTo = (screen) => navigation.reset({ index: 0, routes: [{ name: screen }] });
+
     try {
-      if (user.role === 'ADMIN') { navigation.replace('AdminDashboard'); return; }
+      if (user.role === 'ADMIN') { goTo('AdminDashboard'); return; }
       if (PROVIDER_ROLES.includes(user.role)) {
         if (user.kycStatus !== 'APPROVED') {
           setRedirectDebug(`kyc not approved: ${user.kycStatus}`);
-          navigation.replace('KYCPending');
+          goTo('KYCPending');
           return;
         }
         setRedirectDebug(`replacing to dashboard for ${user.role}`);
-        if (user.role === 'CHAUFFEUR') navigation.replace('DriverDashboard');
-        else if (user.role === 'LIVREUR') navigation.replace('LivreurDashboard');
-        else if (user.role === 'DEPANNEUR') navigation.replace('DepanneurDashboard');
-        else if (user.role === 'MARCHAND') navigation.replace('MerchantDashboard');
+        if (user.role === 'CHAUFFEUR') goTo('DriverDashboard');
+        else if (user.role === 'LIVREUR') goTo('LivreurDashboard');
+        else if (user.role === 'DEPANNEUR') goTo('DepanneurDashboard');
+        else if (user.role === 'MARCHAND') goTo('MerchantDashboard');
         return;
       } else {
         setRedirectDebug(`role not in PROVIDER_ROLES: ${user.role}`);
@@ -173,7 +175,7 @@ export default function HomeScreen({ navigation }) {
         ADMIN: 'AdminDashboard',
       };
       const screen = ROLE_SCREENS[user.role];
-      if (screen) { navigation.replace(screen); return; }
+      if (screen) { navigation.reset({ index: 0, routes: [{ name: screen }] }); return; }
     }
     if (serviceKey === 'EASYTAXY') navigation.navigate('TaxiHome');
     else if (serviceKey === 'SOS') navigation.navigate('SOSHome');
