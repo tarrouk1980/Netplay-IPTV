@@ -256,8 +256,8 @@ model Dispute {
 
 model Review {
   id         String   @id @default(cuid())
-  orderId    String
-  order      Order    @relation(fields: [orderId], references: [id])
+  orderId    String?
+  order      Order?   @relation(fields: [orderId], references: [id])
   reviewerId String
   reviewer   User     @relation("ReviewerRelation", fields: [reviewerId], references: [id])
   targetId   String

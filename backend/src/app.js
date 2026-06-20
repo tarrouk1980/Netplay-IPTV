@@ -78,6 +78,7 @@ app.use('/api/homeservices', homeservicesRoutes);
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/support', require('./routes/support'));
 app.use('/api/payments', require('./routes/payments'));
+app.use('/api/reviews', require('./routes/reviews'));
 
 // 404 handler
 app.use((req, res) => {

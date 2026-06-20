@@ -38,7 +38,7 @@ export default function ReviewsScreen({ navigation, route }) {
   const targetId = route?.params?.targetId;
   const targetName = route?.params?.targetName || 'Ce prestataire';
 
-  const [reviews, setReviews] = useState(MOCK_REVIEWS);
+  const [reviews, setReviews] = useState(targetId ? [] : MOCK_REVIEWS);
   const [loading, setLoading] = useState(false);
   const [myRating, setMyRating] = useState(0);
   const [myComment, setMyComment] = useState('');
@@ -58,7 +58,7 @@ export default function ReviewsScreen({ navigation, route }) {
       setLoading(true);
       try {
         const res = await api.get(`/api/reviews/${targetId}`);
-        if (res.data?.reviews?.length) setReviews(res.data.reviews);
+        setReviews(res.data?.reviews || []);
       } catch {} finally {
         setLoading(false);
       }
