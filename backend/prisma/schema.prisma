@@ -158,6 +158,7 @@ model Order {
   price                Decimal?
   counterPrice         Float?
   finalPrice           Float?
+  metadata             Json?
   passConsumed         Boolean     @default(false)
   clientConfirmedAt    DateTime?
   providerConfirmedAt  DateTime?
@@ -199,6 +200,9 @@ model Merchant {
   name                 String
   category             String
   address              String
+  lat                  Float?
+  lng                  Float?
+  isOpen               Boolean   @default(true)
   priceAgreementSigned Boolean   @default(false)
   isBoosted            Boolean   @default(false)
   boostedUntil         DateTime?

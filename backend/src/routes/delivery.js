@@ -64,7 +64,7 @@ router.post(
 
     const productIds = items.map((i) => i.productId);
     const products = await prisma.product.findMany({
-      where: { id: { in: productIds }, merchantId, available: true },
+      where: { id: { in: productIds }, merchantId, active: true },
     });
 
     if (products.length !== productIds.length) {
@@ -94,12 +94,12 @@ router.post(
     const order = await prisma.order.create({
       data: {
         clientId: req.user.id,
-        type: 'DELIVERY',
+        serviceType: 'DELIVERY',
         status: 'PENDING',
         originLat: merchant.lat,
         originLng: merchant.lng,
-        destLat: deliveryLat,
-        destLng: deliveryLng,
+        destinationLat: deliveryLat,
+        destinationLng: deliveryLng,
         price: total.toString(),
         metadata: {
           merchantId,
@@ -155,7 +155,7 @@ router.post(
 // ─────────────────────────────────────────────
 router.get('/history', authenticate, requireRole('CLIENT'), async (req, res) => {
   const orders = await prisma.order.findMany({
-    where: { clientId: req.user.id, type: 'DELIVERY' },
+    where: { clientId: req.user.id, serviceType: 'DELIVERY' },
     orderBy: { createdAt: 'desc' },
     include: { events: { orderBy: { createdAt: 'asc' } } },
   });
@@ -174,7 +174,7 @@ router.get('/merchant/orders', authenticate, requireRole('MARCHAND'), async (req
 
   const orders = await prisma.order.findMany({
     where: {
-      type: 'DELIVERY',
+      serviceType: 'DELIVERY',
       metadata: { path: ['merchantId'], equals: merchant.id },
     },
     orderBy: { createdAt: 'desc' },
@@ -193,7 +193,7 @@ router.get('/merchant/orders', authenticate, requireRole('MARCHAND'), async (req
 router.get('/livreur/assignments', authenticate, requireRole('LIVREUR'), async (req, res) => {
   const orders = await prisma.order.findMany({
     where: {
-      type: 'DELIVERY',
+      serviceType: 'DELIVERY',
       providerId: req.user.id,
       status: { in: ['ACCEPTED', 'IN_PROGRESS'] },
     },
@@ -314,7 +314,7 @@ router.get('/:id', authenticate, async (req, res) => {
 // ─────────────────────────────────────────────
 router.post('/:id/confirm-receipt', authenticate, requireRole('CLIENT'), async (req, res) => {
   const order = await prisma.order.findUnique({ where: { id: req.params.id } });
-  if (!order || order.type !== 'DELIVERY') {
+  if (!order || order.serviceType !== 'DELIVERY') {
     return res.status(404).json({ error: 'Order not found', code: 'NOT_FOUND' });
   }
   if (order.clientId !== req.user.id) {
@@ -363,7 +363,7 @@ router.post('/:id/confirm-receipt', authenticate, requireRole('CLIENT'), async (
 // ─────────────────────────────────────────────
 router.post('/:id/cancel', authenticate, requireRole('CLIENT'), async (req, res) => {
   const order = await prisma.order.findUnique({ where: { id: req.params.id } });
-  if (!order || order.type !== 'DELIVERY') {
+  if (!order || order.serviceType !== 'DELIVERY') {
     return res.status(404).json({ error: 'Order not found', code: 'NOT_FOUND' });
   }
   if (order.clientId !== req.user.id) {
@@ -393,7 +393,7 @@ router.post('/:id/accept', authenticate, requireRole('MARCHAND'), async (req, re
   }
 
   const order = await prisma.order.findUnique({ where: { id: req.params.id } });
-  if (!order || order.type !== 'DELIVERY') {
+  if (!order || order.serviceType !== 'DELIVERY') {
     return res.status(404).json({ error: 'Order not found', code: 'NOT_FOUND' });
   }
   if (order.metadata?.merchantId !== merchant.id) {
@@ -489,7 +489,7 @@ router.post('/:id/ready', authenticate, requireRole('MARCHAND'), async (req, res
     where: { id: req.params.id },
     include: { provider: { select: { fcmToken: true } } },
   });
-  if (!order || order.type !== 'DELIVERY') {
+  if (!order || order.serviceType !== 'DELIVERY') {
     return res.status(404).json({ error: 'Order not found', code: 'NOT_FOUND' });
   }
   if (order.metadata?.merchantId !== merchant.id) {
@@ -529,7 +529,7 @@ router.post('/:id/pickup', authenticate, requireRole('LIVREUR'), async (req, res
     where: { id: req.params.id },
     include: { client: { select: { fcmToken: true } } },
   });
-  if (!order || order.type !== 'DELIVERY') {
+  if (!order || order.serviceType !== 'DELIVERY') {
     return res.status(404).json({ error: 'Order not found', code: 'NOT_FOUND' });
   }
   if (order.providerId !== req.user.id) {
@@ -573,7 +573,7 @@ router.post('/:id/complete', authenticate, requireRole('LIVREUR'), async (req, r
     where: { id: req.params.id },
     include: { client: { select: { fcmToken: true } } },
   });
-  if (!order || order.type !== 'DELIVERY') {
+  if (!order || order.serviceType !== 'DELIVERY') {
     return res.status(404).json({ error: 'Order not found', code: 'NOT_FOUND' });
   }
   if (order.providerId !== req.user.id) {
@@ -589,8 +589,8 @@ router.post('/:id/complete', authenticate, requireRole('LIVREUR'), async (req, r
   const completed = await prisma.$transaction(async (tx) => {
     const subs = await tx.$queryRaw`
       SELECT * FROM "Subscription"
-      WHERE "userId" = ${req.user.id}
-        AND "isActive" = true
+      WHERE "providerId" = ${req.user.id}
+        AND "status" = 'ACTIVE'
         AND "expiresAt" > NOW()
       ORDER BY "createdAt" DESC
       LIMIT 1
@@ -598,12 +598,13 @@ router.post('/:id/complete', authenticate, requireRole('LIVREUR'), async (req, r
     `;
 
     const sub = subs[0];
-    if (sub && sub.ridesLeft !== null && sub.ridesLeft > 0) {
+    if (sub && sub.ridesRemaining !== null && sub.ridesRemaining > 0) {
       await tx.subscription.update({
         where: { id: sub.id },
         data: {
-          ridesLeft: { decrement: 1 },
-          ...(sub.ridesLeft - 1 === 0 ? { isActive: false } : {}),
+          ridesConsumed: { increment: 1 },
+          ridesRemaining: { decrement: 1 },
+          ...(sub.ridesRemaining - 1 === 0 ? { status: 'EXHAUSTED' } : {}),
         },
       });
     }
@@ -666,19 +667,19 @@ router.get('/earnings', authenticate, async (req, res) => {
 
     const [todayRes, weekRes, monthRes, countRes] = await Promise.all([
       prisma.order.aggregate({
-        where: { driverId: req.user.id, status: 'COMPLETED', updatedAt: { gte: startOfDay } },
+        where: { providerId: req.user.id, serviceType: 'DELIVERY', status: 'COMPLETED', completedAt: { gte: startOfDay } },
         _sum: { price: true },
       }),
       prisma.order.aggregate({
-        where: { driverId: req.user.id, status: 'COMPLETED', updatedAt: { gte: startOfWeek } },
+        where: { providerId: req.user.id, serviceType: 'DELIVERY', status: 'COMPLETED', completedAt: { gte: startOfWeek } },
         _sum: { price: true },
       }),
       prisma.order.aggregate({
-        where: { driverId: req.user.id, status: 'COMPLETED', updatedAt: { gte: startOfMonth } },
+        where: { providerId: req.user.id, serviceType: 'DELIVERY', status: 'COMPLETED', completedAt: { gte: startOfMonth } },
         _sum: { price: true },
       }),
       prisma.order.count({
-        where: { driverId: req.user.id, status: 'COMPLETED', updatedAt: { gte: startOfMonth } },
+        where: { providerId: req.user.id, serviceType: 'DELIVERY', status: 'COMPLETED', completedAt: { gte: startOfMonth } },
       }),
     ]);
 
@@ -744,13 +745,22 @@ router.get('/merchant/stats', authenticate, async (req, res) => {
       month: new Date(now - 30 * 86400000),
     }[period] || new Date(now - 7 * 86400000);
 
+    const merchant = await prisma.merchant.findUnique({ where: { userId: req.user.id } });
+    if (!merchant) {
+      return res.status(404).json({ error: 'Merchant profile not found', code: 'NOT_FOUND' });
+    }
+
     const orders = await prisma.order.findMany({
-      where: { merchantId: req.user.id, createdAt: { gte: since } },
-      select: { fare: true, status: true, createdAt: true, clientId: true },
+      where: {
+        serviceType: 'DELIVERY',
+        metadata: { path: ['merchantId'], equals: merchant.id },
+        createdAt: { gte: since },
+      },
+      select: { price: true, status: true, createdAt: true, clientId: true },
     });
 
     const completed = orders.filter(o => o.status === 'COMPLETED');
-    const revenue = completed.reduce((s, o) => s + (o.fare || 0), 0);
+    const revenue = completed.reduce((s, o) => s + Number(o.price || 0), 0);
     const statusBreakdown = orders.reduce((acc, o) => { acc[o.status] = (acc[o.status] || 0) + 1; return acc; }, {});
 
     res.json({
