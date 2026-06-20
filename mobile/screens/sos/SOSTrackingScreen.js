@@ -50,9 +50,15 @@ export default function SOSTrackingScreen({ navigation, route }) {
     // Poll real status
     const poll = setInterval(async () => {
       try {
-        const res = await api.get(`/api/sos/request/${requestId}/status`);
-        if (res.data?.stepIdx !== undefined) setStepIdx(res.data.stepIdx);
-        if (res.data?.driver) setDriver(res.data.driver);
+        const res = await api.get(`/api/sos/${requestId}`);
+        const order = res.data?.order;
+        if (order) {
+          const STATUS_TO_STEP = { PENDING: 0, ACCEPTED: 2, IN_PROGRESS: 4, COMPLETED: 5 };
+          if (STATUS_TO_STEP[order.status] !== undefined) setStepIdx(STATUS_TO_STEP[order.status]);
+          if (order.provider) {
+            setDriver({ name: order.provider.name, phone: order.provider.phone });
+          }
+        }
       } catch {}
     }, 10000);
 

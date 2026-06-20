@@ -78,7 +78,7 @@ export default function ClientSOSHistoryScreen({ navigation }) {
 
   const load = useCallback(async (silent = false) => {
     try {
-      const res = await api.get('/api/sos/client/history');
+      const res = await api.get('/api/sos/history');
       setOrders(res.data.orders || []);
     } catch {
       if (!silent) setOrders(MOCK_ORDERS);

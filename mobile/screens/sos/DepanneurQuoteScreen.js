@@ -45,9 +45,10 @@ export default function DepanneurQuoteScreen({ navigation, route }) {
 
   const handleSend = async () => {
     setSending(true);
-    const payload = { interventionId, service, urgency, distanceKm: distKm, notes, totalPrice };
+    const estimatedArrivalMin = Math.max(1, Math.ceil(distKm * 2) + 5);
+    const payload = { price: totalPrice, estimatedArrivalMin };
     try {
-      await api.post('/api/sos/depanneur/quote', payload);
+      await api.post(`/api/sos/${interventionId}/quote`, payload);
       Alert.alert('✅ Devis envoyé', 'Le client a reçu votre devis. En attente de confirmation.', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
