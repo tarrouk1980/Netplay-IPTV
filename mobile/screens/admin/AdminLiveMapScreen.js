@@ -33,7 +33,7 @@ export default function AdminLiveMapScreen({ navigation }) {
 
   const load = useCallback((silent = false) => {
     if (!silent) setLoading(true);
-    api.get('/api/admin/live/providers')
+    api.get('/api/admin/providers/live')
       .then(r => setProviders(r.data.providers || MOCK_PROVIDERS))
       .catch(() => setProviders(MOCK_PROVIDERS))
       .finally(() => { setLoading(false); setRefreshing(false); });

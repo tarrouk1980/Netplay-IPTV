@@ -27,7 +27,7 @@ export const useAdStore = create((set, get) => ({
 
   trackImpression: async (adId) => {
     try {
-      await api.post(`/ads/${adId}/impression`);
+      await api.post(`/api/ads/${adId}/impression`);
     } catch {
       // non-blocking
     }
@@ -35,7 +35,7 @@ export const useAdStore = create((set, get) => ({
 
   trackClick: async (adId) => {
     try {
-      await api.post(`/ads/${adId}/click`);
+      await api.post(`/api/ads/${adId}/click`);
     } catch {
       // non-blocking
     }

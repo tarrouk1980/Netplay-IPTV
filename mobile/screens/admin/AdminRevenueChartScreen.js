@@ -40,7 +40,7 @@ export default function AdminRevenueChartScreen({ navigation }) {
   const [period, setPeriod] = useState('month');
 
   useEffect(() => {
-    api.get('/api/admin/revenue/chart')
+    api.get('/api/admin/stats/revenue-chart')
       .then(r => setData(r.data || MOCK))
       .catch(() => setData(MOCK))
       .finally(() => setLoading(false));
