@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import { WebView } from 'react-native-webview';
+import { LEAFLET_JS, LEAFLET_CSS } from '../assets/leaflet/leafletAssets';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -18,15 +19,16 @@ function buildHtml(lat, lng, zoom, markers) {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>${LEAFLET_CSS}</style>
   <style>
     html, body, #map { height: 100%; width: 100%; margin: 0; padding: 0; background: #1C1C28; }
   </style>
 </head>
 <body>
   <div id="map"></div>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>${LEAFLET_JS}</script>
   <script>
+    L.Icon.Default.imagePath = 'https://unpkg.com/leaflet@1.9.4/dist/images/';
     var map = L.map('map', { zoomControl: true, attributionControl: false }).setView([${lat}, ${lng}], ${zoom});
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
