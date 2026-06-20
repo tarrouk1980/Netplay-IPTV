@@ -2,9 +2,17 @@
 const express = require('express');
 const axios = require('axios');
 const { authenticate } = require('../middleware/auth');
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const { prisma } = require('../config/db');
 const router = express.Router();
+
+async function setPaymentInfo(orderId, paymentInfo) {
+  const order = await prisma.order.findUnique({ where: { id: orderId }, select: { metadata: true } });
+  if (!order) return;
+  await prisma.order.update({
+    where: { id: orderId },
+    data: { metadata: { ...(order.metadata || {}), payment: paymentInfo } },
+  });
+}
 
 // ─── Flouci ─────────────────────────────────────────────────────
 // Flouci API docs: https://developers.flouci.com
@@ -59,10 +67,7 @@ router.get('/flouci/success', async (req, res) => {
   const { orderId, payment_id } = req.query;
   try {
     if (orderId) {
-      await prisma.order.update({
-        where: { id: orderId },
-        data: { paymentStatus: 'PAID', paymentMethod: 'FLOUCI', paymentRef: payment_id },
-      }).catch(() => {});
+      await setPaymentInfo(orderId, { status: 'PAID', method: 'FLOUCI', ref: payment_id }).catch(() => {});
     }
     res.redirect(`${process.env.MOBILE_DEEP_LINK || 'easyway://'}payment/success?orderId=${orderId}`);
   } catch {
@@ -145,10 +150,7 @@ router.post('/d17/callback', async (req, res) => {
   const { order_id, transaction_id, status } = req.body;
   try {
     if (order_id && status === 'SUCCESS') {
-      await prisma.order.update({
-        where: { id: order_id },
-        data: { paymentStatus: 'PAID', paymentMethod: 'D17', paymentRef: transaction_id },
-      }).catch(() => {});
+      await setPaymentInfo(order_id, { status: 'PAID', method: 'D17', ref: transaction_id }).catch(() => {});
     }
     res.json({ received: true });
   } catch {
@@ -161,10 +163,7 @@ router.post('/cash', authenticate, async (req, res) => {
   const { orderId, amount } = req.body;
   try {
     if (orderId) {
-      await prisma.order.update({
-        where: { id: orderId },
-        data: { paymentMethod: 'CASH', paymentStatus: 'PENDING' },
-      }).catch(() => {});
+      await setPaymentInfo(orderId, { status: 'PENDING', method: 'CASH' }).catch(() => {});
     }
     res.json({ success: true, method: 'CASH', orderId, amount });
   } catch (err) {

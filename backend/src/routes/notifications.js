@@ -129,7 +129,7 @@ router.post('/broadcast', authenticate, async (req, res) => {
           type: type || 'SYSTEM',
           title: title.trim(),
           body: body.trim(),
-          data: JSON.stringify({}),
+          data: '{}',
         })),
         skipDuplicates: true,
       }).catch(() => {});

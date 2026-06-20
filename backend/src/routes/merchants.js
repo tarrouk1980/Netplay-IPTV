@@ -172,7 +172,7 @@ router.patch(
     body('price').optional().isFloat({ min: 0 }),
     body('category').optional().trim().notEmpty(),
     body('imageUrl').optional().isURL(),
-    body('available').optional().isBoolean(),
+    body('active').optional().isBoolean(),
   ],
   async (req, res) => {
     if (!validate(req, res)) return;
@@ -189,14 +189,14 @@ router.patch(
       return res.status(404).json({ error: 'Product not found', code: 'NOT_FOUND' });
     }
 
-    const { name, description, price, category, imageUrl, available } = req.body;
+    const { name, description, price, category, imageUrl, active } = req.body;
     const data = {};
     if (name !== undefined) data.name = name;
     if (description !== undefined) data.description = description;
     if (price !== undefined) data.price = price.toString();
     if (category !== undefined) data.category = category;
     if (imageUrl !== undefined) data.imageUrl = imageUrl;
-    if (available !== undefined) data.available = available;
+    if (active !== undefined) data.active = active;
 
     const updated = await prisma.product.update({ where: { id: product.id }, data });
     return res.json({ product: updated });
@@ -292,20 +292,21 @@ router.get(
     const { category, lat, lng, radius, promoOnly } = req.query;
     const where = {};
     if (category) where.category = category;
-    if (promoOnly === 'true') where.hasPromo = true;
 
     const merchants = await prisma.merchant.findMany({
       where,
       include: {
         products: {
-          where: { available: true },
+          where: { active: true },
           select: { id: true, name: true, price: true, category: true, metadata: true },
         },
       },
       orderBy: [{ isOpen: 'desc' }, { name: 'asc' }],
     });
 
-    let result = merchants;
+    let result = promoOnly === 'true'
+      ? merchants.filter((m) => m.products.some((p) => p.metadata && p.metadata.promoPrice))
+      : merchants;
 
     if (lat && lng && radius) {
       const userLat = parseFloat(lat);
@@ -334,7 +335,7 @@ router.get('/:id', async (req, res) => {
     where: { id: req.params.id },
     include: {
       products: {
-        where: { available: true },
+        where: { active: true },
         orderBy: [{ category: 'asc' }, { name: 'asc' }],
       },
     },

@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const { prisma } = require('../config/db');
 
 // Konnect payment init
 router.post('/konnect/init', authenticate, async (req, res) => {
@@ -63,7 +62,13 @@ router.post('/konnect/webhook', async (req, res) => {
   try {
     const { payment_ref, order_id, status } = req.body;
     if (status === 'completed' && order_id) {
-      await prisma.order.update({ where: { id: order_id }, data: { paymentStatus: 'PAID', paymentRef: payment_ref } });
+      const order = await prisma.order.findUnique({ where: { id: order_id }, select: { metadata: true } });
+      if (order) {
+        await prisma.order.update({
+          where: { id: order_id },
+          data: { metadata: { ...(order.metadata || {}), payment: { status: 'PAID', method: 'KONNECT', ref: payment_ref } } },
+        });
+      }
     }
     res.json({ ok: true });
   } catch (err) {
@@ -133,7 +138,7 @@ router.post('/wallet/pay', authenticate, async (req, res) => {
       prisma.user.update({ where: { id: req.user.id }, data: { walletBalance: { decrement: amount } } }),
       prisma.walletTransaction.create({ data: { userId: req.user.id, amount: -amount, type: 'PAYMENT', description: `Paiement commande ${orderId || ''}` } }),
     ]);
-    res.json({ ok: true, newBalance: user.walletBalance - amount });
+    res.json({ ok: true, newBalance: Number(user.walletBalance) - Number(amount) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

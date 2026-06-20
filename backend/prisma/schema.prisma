@@ -110,6 +110,7 @@ model User {
   loyaltyTransactions LoyaltyTransaction[]
   reportsGiven        Report[]         @relation("ReporterReports")
   reportsReceived     Report[]         @relation("ReportedReports")
+  notifications       Notification[]
 }
 
 enum RewardType {
@@ -220,17 +221,19 @@ model Merchant {
 }
 
 model Product {
-  id         String   @id @default(cuid())
-  merchantId String
-  merchant   Merchant @relation(fields: [merchantId], references: [id])
-  name       String
-  category   String
-  price      Decimal
-  stock      Int      @default(0)
-  imageUrl   String?
-  active     Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id          String   @id @default(cuid())
+  merchantId  String
+  merchant    Merchant @relation(fields: [merchantId], references: [id])
+  name        String
+  description String?
+  category    String
+  price       Decimal
+  stock       Int      @default(0)
+  imageUrl    String?
+  active      Boolean  @default(true)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model InsuranceContract {
@@ -345,6 +348,18 @@ model LoyaltyTransaction {
   description String
   createdAt   DateTime @default(now())
   user        User     @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  body      String
+  data      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model Report {

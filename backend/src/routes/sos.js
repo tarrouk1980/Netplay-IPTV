@@ -55,8 +55,8 @@ router.post(
     try {
       // Insurance validation
       if (mode === 'INSURANCE') {
-        const contract = await prisma.insuranceContract.findUnique({
-          where: { userId: req.user.id },
+        const contract = await prisma.insuranceContract.findFirst({
+          where: { providerId: req.user.id },
         });
 
         if (!contract) {
@@ -65,11 +65,10 @@ router.post(
         if (new Date(contract.expiresAt) < new Date()) {
           return res.status(400).json({ error: 'Insurance contract has expired', code: 'CONTRACT_EXPIRED' });
         }
-        const coverageMap = { ACCIDENT: 'ACCIDENT', PANNE: 'PANNE', REMORQUAGE: 'REMORQUAGE' };
-        if (!contract.coverageTypes.includes(coverageMap[sosType])) {
+        if (contract.quotaUsed >= contract.quotaTotal) {
           return res.status(400).json({
-            error: `Your insurance does not cover ${sosType}`,
-            code: 'COVERAGE_NOT_INCLUDED',
+            error: 'Your insurance quota is exhausted',
+            code: 'QUOTA_EXHAUSTED',
           });
         }
       }
@@ -95,6 +94,13 @@ router.post(
       });
 
       await logEvent(order.id, 'ORDER_CREATED', { mode, sosType, clientId: req.user.id });
+
+      if (mode === 'INSURANCE') {
+        await prisma.insuranceContract.updateMany({
+          where: { providerId: req.user.id },
+          data: { quotaUsed: { increment: 1 } },
+        });
+      }
 
       // Find up to 5 nearby DEPANNEUR providers via Redis GEO
       let top5 = [];
@@ -617,7 +623,7 @@ router.post(
       const order = await prisma.order.findUnique({ where: { id } });
       if (!order) return res.status(404).json({ error: 'Order not found', code: 'NOT_FOUND' });
       if (order.clientId !== req.user.id) return res.status(403).json({ error: 'Not your order', code: 'FORBIDDEN' });
-      if (!['PENDING', 'QUOTED'].includes(order.status) && order.status !== 'PENDING') {
+      if (order.status !== 'PENDING') {
         return res.status(409).json({ error: `Order status is ${order.status}`, code: 'INVALID_STATE' });
       }
 

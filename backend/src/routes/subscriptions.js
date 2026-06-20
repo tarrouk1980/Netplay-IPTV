@@ -208,7 +208,7 @@ router.post(
 router.get('/me', authenticate, async (req, res) => {
   try {
     const sub = await prisma.subscription.findFirst({
-      where: { userId: req.user.id, isActive: true },
+      where: { providerId: req.user.id, status: 'ACTIVE', expiresAt: { gt: new Date() } },
       orderBy: { createdAt: 'desc' },
     });
     res.json({ subscription: sub || null });
@@ -220,16 +220,22 @@ router.get('/me', authenticate, async (req, res) => {
 // POST /api/subscriptions/subscribe
 router.post('/subscribe', authenticate, async (req, res) => {
   const { plan } = req.body;
-  const prices = { BASIC: 9.9, PREMIUM: 19.9, GOLD: 39.9 };
-  const price = prices[plan];
-  if (!price) return res.status(400).json({ error: 'Invalid plan' });
+  const catalog = PASS_CATALOG[plan];
+  if (!catalog) return res.status(400).json({ error: 'Invalid plan' });
   try {
     const user = await prisma.user.findUnique({ where: { id: req.user.id }, select: { walletBalance: true } });
-    if ((user?.walletBalance || 0) < price) return res.status(402).json({ error: 'Solde insuffisant' });
-    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-    await prisma.user.update({ where: { id: req.user.id }, data: { walletBalance: { decrement: price } } });
+    if ((user?.walletBalance || 0) < catalog.priceTND) return res.status(402).json({ error: 'Solde insuffisant' });
+    const expiresAt = new Date(Date.now() + catalog.totalDays * 24 * 60 * 60 * 1000);
+    await prisma.user.update({ where: { id: req.user.id }, data: { walletBalance: { decrement: catalog.priceTND } } });
     const sub = await prisma.subscription.create({
-      data: { userId: req.user.id, plan, isActive: true, expiresAt },
+      data: {
+        providerId: req.user.id,
+        planType: plan,
+        startDate: new Date(),
+        expiresAt,
+        amount: catalog.priceTND,
+        status: 'ACTIVE',
+      },
     });
     res.status(201).json({ subscription: sub });
   } catch (err) {
@@ -240,9 +246,9 @@ router.post('/subscribe', authenticate, async (req, res) => {
 // POST /api/subscriptions/cancel
 router.post('/cancel', authenticate, async (req, res) => {
   try {
-    const sub = await prisma.subscription.findFirst({ where: { userId: req.user.id, isActive: true } });
+    const sub = await prisma.subscription.findFirst({ where: { providerId: req.user.id, status: 'ACTIVE' } });
     if (!sub) return res.status(404).json({ error: 'No active subscription' });
-    await prisma.subscription.update({ where: { id: sub.id }, data: { cancelAtPeriodEnd: true } });
+    await prisma.subscription.update({ where: { id: sub.id }, data: { status: 'EXPIRED', endDate: new Date() } });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

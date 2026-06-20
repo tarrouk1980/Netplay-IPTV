@@ -857,12 +857,12 @@ router.get("/livreur/earnings", authenticate, requireRole("LIVREUR"), async (req
     else { from = new Date(now.getFullYear(), now.getMonth(), 1); }
     const orders = await prisma.order.findMany({
       where: { providerId: req.user.id, serviceType: "DELIVERY", createdAt: { gte: from } },
-      include: { client: { select: { name: true } } },
+      include: { client: { select: { name: true } }, tips: { select: { amount: true } } },
       orderBy: { createdAt: "desc" },
     });
     const completed = orders.filter(o => o.status === "COMPLETED");
     const totalRevenue = completed.reduce((s,o)=>s+Number(o.price||0),0);
-    const totalTips = completed.reduce((s,o)=>s+Number(o.tip||0),0);
+    const totalTips = completed.reduce((s,o)=>s+o.tips.reduce((a,t)=>a+Number(t.amount||0),0),0);
     const avgPerDelivery = completed.length ? totalRevenue/completed.length : 0;
     const dayLabels=["D","L","M","M","J","V","S"];
     const days = period==="week" ? 7 : new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
