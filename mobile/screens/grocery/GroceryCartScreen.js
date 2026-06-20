@@ -67,7 +67,7 @@ export default function GroceryCartScreen({ navigation, route }) {
     if (!promoCode.trim()) return;
     setPromoLoading(true);
     try {
-      const res = await api.post('/api/promos/validate', { code: promoCode.trim(), service: 'GROCERY' });
+      const res = await api.post('/api/promo/apply', { code: promoCode.trim(), serviceType: 'GROCERY', amount: subtotal + DELIVERY_FEE });
       const disc = res.data.discount || 0;
       setDiscount(disc);
       setPromoApplied(true);

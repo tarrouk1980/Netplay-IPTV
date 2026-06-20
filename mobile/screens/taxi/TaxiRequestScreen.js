@@ -147,7 +147,7 @@ export default function TaxiRequestScreen({ route, navigation }) {
         // In production: parse destination text to coords via Mapbox Geocoding API
       };
 
-      const response = await api.post('/taxi/estimate', body);
+      const response = await api.post('/api/taxi/estimate', body);
       setFareEstimate(response.data);
     } catch (err) {
       console.warn('[TaxiRequest] Estimate error:', err?.response?.data || err.message);

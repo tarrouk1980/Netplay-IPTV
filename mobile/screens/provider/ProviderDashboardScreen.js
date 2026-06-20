@@ -134,9 +134,9 @@ export default function ProviderDashboardScreen({ navigation }) {
   const loadData = useCallback(async () => {
     try {
       const [profileRes, walletRes, ordersRes] = await Promise.all([
-        api.get('/users/me').catch(() => null),
-        api.get('/wallet/balance').catch(() => null),
-        api.get('/users/me/orders?limit=5').catch(() => null),
+        api.get('/api/users/me').catch(() => null),
+        api.get('/api/wallet/balance').catch(() => null),
+        api.get('/api/users/me/orders?limit=5').catch(() => null),
       ]);
 
       if (profileRes?.data) {
@@ -193,7 +193,7 @@ export default function ProviderDashboardScreen({ navigation }) {
   const handleToggleOnline = async (value) => {
     setToggling(true);
     try {
-      await api.post('/users/me/status', { online: value });
+      await api.post('/api/users/me/status', { online: value });
       setIsOnline(value);
     } catch (err) {
       Alert.alert('Erreur', 'Impossible de changer le statut. Veuillez réessayer.');

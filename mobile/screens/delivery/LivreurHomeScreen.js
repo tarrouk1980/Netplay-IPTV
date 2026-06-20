@@ -35,7 +35,7 @@ export default function LivreurHomeScreen({ navigation }) {
   const [countdown, setCountdown] = useState(0);
 
   useEffect(() => {
-    api.get('/api/livreur/stats')
+    api.get('/api/delivery/earnings')
       .then(r => setStats(r.data || MOCK_STATS))
       .catch(() => {});
   }, []);
@@ -62,7 +62,7 @@ export default function LivreurHomeScreen({ navigation }) {
 
   const handleToggleOnline = (val) => {
     setOnline(val);
-    api.patch('/api/livreur/status', { online: val }).catch(() => {});
+    api.patch('/api/delivery/livreur/status', { online: val }).catch(() => {});
     if (!val) setIncoming(null);
   };
 
@@ -70,7 +70,7 @@ export default function LivreurHomeScreen({ navigation }) {
     if (!incoming) return;
     setAccepting(true);
     try {
-      await api.post('/api/livreur/orders/accept', { orderId: incoming.id });
+      await api.post(`/api/delivery/livreur/orders/${incoming.id}/accept`);
     } catch {}
     setAccepting(false);
     setIncoming(null);

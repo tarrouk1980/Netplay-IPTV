@@ -65,12 +65,13 @@ export default function DepanneurDashboardScreen({ navigation }) {
 
   const load = useCallback(() => {
     Promise.all([
-      api.get('/api/depanneur/requests').catch(() => ({ data: { requests: MOCK_REQUESTS } })),
-      api.get('/api/depanneur/stats').catch(() => ({ data: MOCK_STATS })),
-      api.get('/api/depanneur/status').catch(() => ({ data: { online: false } })),
+      api.get('/api/sos/depanneur/requests').catch(() => ({ data: { requests: MOCK_REQUESTS } })),
+      api.get('/api/sos/depanneur/dashboard').catch(() => ({ data: { stats: MOCK_STATS } })),
+      api.get('/api/sos/depanneur/status').catch(() => ({ data: { online: false } })),
     ]).then(([reqRes, statsRes, statusRes]) => {
       setRequests(reqRes.data.requests || MOCK_REQUESTS);
-      setStats(statsRes.data || MOCK_STATS);
+      const s = statsRes.data?.stats;
+      setStats(s ? { todayEarnings: s.revenue, todayJobs: s.interventions, rating: s.rating, totalJobs: s.interventions } : MOCK_STATS);
       setOnline(statusRes.data.online || false);
     }).finally(() => setLoading(false));
   }, []);
@@ -80,7 +81,7 @@ export default function DepanneurDashboardScreen({ navigation }) {
   const toggleOnline = async (val) => {
     setTogglingOnline(true);
     try {
-      await api.post('/api/depanneur/status', { online: val });
+      await api.patch('/api/sos/depanneur/toggle', { online: val });
       setOnline(val);
     } catch {
       setOnline(v => v);
@@ -91,7 +92,7 @@ export default function DepanneurDashboardScreen({ navigation }) {
 
   const handleAccept = async (sos) => {
     try {
-      await api.post(`/api/depanneur/requests/${sos.id}/accept`);
+      await api.post(`/api/sos/depanneur/requests/${sos.id}/accept`);
       setRequests(prev => prev.filter(r => r.id !== sos.id));
       Alert.alert('Intervention acceptée', `Navigation vers ${sos.clientName} lancée.`);
     } catch {

@@ -891,6 +891,90 @@ router.patch('/orders/:id/complete', authenticate, async (req, res) => {
 });
 
 // ─────────────────────────────────────────────
+// GET /api/sos/depanneur/requests — pending SOS requests notified to this depanneur
+// ─────────────────────────────────────────────
+router.get('/depanneur/requests', authenticate, requireRole('DEPANNEUR'), async (req, res) => {
+  try {
+    const orders = await prisma.order.findMany({
+      where: { serviceType: 'SOS', status: 'PENDING' },
+      orderBy: { createdAt: 'desc' },
+      include: { client: { select: { name: true } } },
+    });
+
+    const requests = orders
+      .filter((o) => (o.metadata?.notifiedDepanneurs || []).includes(req.user.id))
+      .map((o) => ({
+        id: o.id,
+        type: o.metadata?.sosType || 'PANNE',
+        clientName: o.client?.name || 'Client',
+        distance: o.metadata?.distanceKm ?? null,
+        address: o.originAddress || '',
+        createdAt: new Date(o.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        urgent: o.metadata?.sosType === 'ACCIDENT',
+      }));
+
+    return res.json({ requests, count: requests.length });
+  } catch (err) {
+    console.error('[sos/depanneur/requests]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// GET /api/sos/depanneur/status
+// ─────────────────────────────────────────────
+router.get('/depanneur/status', authenticate, requireRole('DEPANNEUR'), async (req, res) => {
+  const user = await prisma.user.findUnique({ where: { id: req.user.id }, select: { isOnline: true } });
+  return res.json({ online: user?.isOnline ?? false });
+});
+
+// ─────────────────────────────────────────────
+// POST /api/sos/depanneur/requests/:id/accept — instant assignment to depanneur
+// ─────────────────────────────────────────────
+router.post('/depanneur/requests/:id/accept', authenticate, requireRole('DEPANNEUR'), async (req, res) => {
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: req.params.id },
+      include: { client: { select: { fcmToken: true } } },
+    });
+    if (!order || order.serviceType !== 'SOS') {
+      return res.status(404).json({ error: 'Order not found', code: 'NOT_FOUND' });
+    }
+    if (order.providerId || order.status !== 'PENDING') {
+      return res.status(409).json({ error: 'Order already assigned', code: 'ALREADY_ASSIGNED' });
+    }
+
+    const updated = await prisma.order.update({
+      where: { id: order.id },
+      data: { providerId: req.user.id, status: 'ACCEPTED' },
+    });
+
+    await logEvent(order.id, 'DEPANNEUR_ASSIGNED', { depanneurId: req.user.id });
+
+    const clientToken = order.client?.fcmToken;
+    if (clientToken) {
+      await sendNotification(
+        [clientToken],
+        NOTIFICATION_TYPES.ORDER_ACCEPTED,
+        'Dépanneur en route !',
+        'Un dépanneur a accepté votre demande SOS.',
+        { orderId: order.id }
+      );
+    }
+
+    const io = getIo(req);
+    if (io) {
+      io.to(`user:${order.clientId}`).emit('sos:accepted', { orderId: order.id });
+    }
+
+    return res.json({ order: updated });
+  } catch (err) {
+    console.error('[sos/depanneur/requests/:id/accept]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─────────────────────────────────────────────
 // GET /api/sos/depanneur/dashboard
 // ─────────────────────────────────────────────
 router.get('/depanneur/dashboard', authenticate, requireRole('DEPANNEUR'), async (req, res) => {
@@ -944,11 +1028,12 @@ router.get('/depanneur/dashboard', authenticate, requireRole('DEPANNEUR'), async
 router.patch('/depanneur/toggle', authenticate, requireRole('DEPANNEUR'), async (req, res) => {
   try {
     const user = await prisma.user.findUnique({ where: { id: req.user.id }, select: { isOnline: true } });
+    const nextOnline = typeof req.body?.online === 'boolean' ? req.body.online : !user?.isOnline;
     const updated = await prisma.user.update({
       where: { id: req.user.id },
-      data: { isOnline: !user?.isOnline },
+      data: { isOnline: nextOnline },
     });
-    return res.json({ isOnline: updated.isOnline });
+    return res.json({ isOnline: updated.isOnline, online: updated.isOnline });
   } catch (err) {
     console.error('[sos/depanneur/toggle]', err);
     return res.status(500).json({ error: 'Internal server error' });

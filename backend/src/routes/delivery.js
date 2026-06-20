@@ -208,6 +208,71 @@ router.get('/livreur/assignments', authenticate, requireRole('LIVREUR'), async (
 });
 
 // ─────────────────────────────────────────────
+// LIVREUR: GET /delivery/livreur/status
+// ─────────────────────────────────────────────
+router.get('/livreur/status', authenticate, requireRole('LIVREUR'), async (req, res) => {
+  const user = await prisma.user.findUnique({ where: { id: req.user.id }, select: { isOnline: true } });
+  return res.json({ online: user?.isOnline ?? false });
+});
+
+// ─────────────────────────────────────────────
+// LIVREUR: PATCH /delivery/livreur/status
+// ─────────────────────────────────────────────
+router.patch('/livreur/status', authenticate, requireRole('LIVREUR'), async (req, res) => {
+  const updated = await prisma.user.update({
+    where: { id: req.user.id },
+    data: { isOnline: !!req.body.online },
+  });
+  return res.json({ online: updated.isOnline });
+});
+
+// ─────────────────────────────────────────────
+// LIVREUR: POST /delivery/livreur/orders/:id/accept — claim an unassigned order
+// ─────────────────────────────────────────────
+router.post('/livreur/orders/:id/accept', authenticate, requireRole('LIVREUR'), async (req, res) => {
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: req.params.id },
+      include: { client: { select: { fcmToken: true } } },
+    });
+    if (!order || order.serviceType !== 'DELIVERY') {
+      return res.status(404).json({ error: 'Order not found', code: 'NOT_FOUND' });
+    }
+    if (order.providerId || order.status !== 'PENDING') {
+      return res.status(409).json({ error: 'Order already assigned', code: 'ALREADY_ASSIGNED' });
+    }
+
+    const updated = await prisma.order.update({
+      where: { id: order.id },
+      data: { providerId: req.user.id, status: 'ACCEPTED' },
+    });
+
+    await logEvent(order.id, 'LIVREUR_ASSIGNED', { livreurId: req.user.id });
+
+    const clientToken = order.client?.fcmToken;
+    if (clientToken) {
+      await sendNotification(
+        [clientToken],
+        NOTIFICATION_TYPES.ORDER_ACCEPTED,
+        'Livreur en route !',
+        'Un livreur a accepté votre commande.',
+        { orderId: order.id }
+      );
+    }
+
+    const io = getIo(req);
+    if (io) {
+      io.to(`user:${order.clientId}`).emit('delivery:accepted', { orderId: order.id });
+    }
+
+    return res.json({ order: updated });
+  } catch (err) {
+    console.error('[delivery/livreur/orders/:id/accept]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─────────────────────────────────────────────
 // LIVREUR: GET /delivery/livreur/nearby-orders
 // Unassigned delivery orders near the livreur's current position
 // ─────────────────────────────────────────────

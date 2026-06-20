@@ -15,14 +15,28 @@ router.get('/me', authenticate, async (req, res) => {
       where: { id: req.user.id },
       select: {
         id: true, name: true, phone: true, email: true,
-        role: true, kycStatus: true, fcmToken: true,
+        role: true, kycStatus: true, fcmToken: true, isOnline: true,
         createdAt: true, updatedAt: true,
       },
     });
     if (!user) return res.status(404).json({ error: 'User not found', code: 'USER_NOT_FOUND' });
-    return res.json(user);
+    return res.json({ ...user, online: user.isOnline });
   } catch (err) {
     console.error('[Users/Me]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// POST /api/users/me/status — toggle online/offline for providers
+router.post('/me/status', authenticate, async (req, res) => {
+  try {
+    const updated = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { isOnline: !!req.body.online },
+    });
+    return res.json({ online: updated.isOnline });
+  } catch (err) {
+    console.error('[Users/Me/Status]', err);
     return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
   }
 });

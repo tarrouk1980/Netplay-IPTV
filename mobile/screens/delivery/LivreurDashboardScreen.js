@@ -71,9 +71,9 @@ export default function LivreurDashboardScreen({ navigation }) {
 
   const load = useCallback(() => {
     Promise.all([
-      api.get('/api/livreur/orders/available').catch(() => ({ data: { orders: MOCK_ORDERS } })),
-      api.get('/api/livreur/stats').catch(() => ({ data: MOCK_STATS })),
-      api.get('/api/livreur/status').catch(() => ({ data: { online: false } })),
+      api.get('/api/delivery/livreur/nearby-orders').catch(() => ({ data: { orders: MOCK_ORDERS } })),
+      api.get('/api/delivery/earnings').catch(() => ({ data: MOCK_STATS })),
+      api.get('/api/delivery/livreur/status').catch(() => ({ data: { online: false } })),
     ]).then(([ordRes, statsRes, statusRes]) => {
       setOrders(ordRes.data.orders || MOCK_ORDERS);
       setStats(statsRes.data || MOCK_STATS);
@@ -93,7 +93,7 @@ export default function LivreurDashboardScreen({ navigation }) {
   const toggleOnline = async (val) => {
     setToggling(true);
     try {
-      await api.post('/api/livreur/status', { online: val });
+      await api.patch('/api/delivery/livreur/status', { online: val });
       setOnline(val);
     } catch {
       setOnline(v => v);
@@ -104,7 +104,7 @@ export default function LivreurDashboardScreen({ navigation }) {
 
   const handleAccept = async (order) => {
     try {
-      await api.post(`/api/livreur/orders/${order.id}/accept`);
+      await api.post(`/api/delivery/livreur/orders/${order.id}/accept`);
       setOrders(prev => prev.filter(o => o.id !== order.id));
       navigation.navigate('LivreurLiveMap', { orderId: order.id });
     } catch {

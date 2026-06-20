@@ -98,7 +98,7 @@ export default function DriverDashboardScreen({ navigation }) {
     // In production: fetch completed orders for today from API
     // For now using placeholder calculation
     try {
-      const response = await api.get('/taxi/nearby?lat=36.8&lng=10.1&radius=5').catch(() => null);
+      const response = await api.get('/api/taxi/nearby?lat=36.8&lng=10.1&radius=5').catch(() => null);
       // Earnings summary would come from a dedicated endpoint
       setEarnings({ today: 0, rides: 0 });
     } catch {
@@ -116,7 +116,7 @@ export default function DriverDashboardScreen({ navigation }) {
     const interval = setInterval(async () => {
       try {
         const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-        await api.post('/geo/update', {
+        await api.post('/api/geo/update', {
           lat: loc.coords.latitude,
           lng: loc.coords.longitude,
           serviceType: 'TAXI',
@@ -178,7 +178,7 @@ export default function DriverDashboardScreen({ navigation }) {
   const handleStartRide = async () => {
     if (!currentOrder) return;
     try {
-      await api.post(`/taxi/${currentOrder.id}/start`);
+      await api.post(`/api/taxi/${currentOrder.id}/start`);
     } catch (err) {
       Alert.alert('Erreur', err?.message || 'Impossible de démarrer la course.');
     }

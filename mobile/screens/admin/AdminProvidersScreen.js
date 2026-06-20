@@ -159,7 +159,7 @@ export default function AdminProvidersScreen({ navigation }) {
 
   const fetchProviders = useCallback(async (tab = activeTab) => {
     try {
-      const res = await api.get(`/admin/providers?status=${tab}&limit=50`);
+      const res = await api.get(`/api/admin/providers?status=${tab}&limit=50`);
       const data = res.data?.providers ?? res.data ?? [];
       setProviders(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -192,7 +192,7 @@ export default function AdminProvidersScreen({ navigation }) {
           onPress: async () => {
             setActionLoading(provider.id);
             try {
-              await api.patch(`/admin/users/${provider.id}/reactivate`);
+              await api.patch(`/api/admin/users/${provider.id}/reactivate`);
               setProviders((prev) => prev.filter((p) => p.id !== provider.id));
             } catch (err) {
               Alert.alert('Erreur', 'Impossible d\'activer ce prestataire.');
@@ -217,7 +217,7 @@ export default function AdminProvidersScreen({ navigation }) {
           onPress: async () => {
             setActionLoading(provider.id);
             try {
-              await api.patch(`/admin/users/${provider.id}/suspend`);
+              await api.patch(`/api/admin/users/${provider.id}/suspend`);
               setProviders((prev) => prev.filter((p) => p.id !== provider.id));
             } catch (err) {
               Alert.alert('Erreur', 'Impossible de suspendre ce prestataire.');

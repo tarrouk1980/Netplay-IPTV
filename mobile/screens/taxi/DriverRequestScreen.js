@@ -96,7 +96,7 @@ export default function DriverRequestScreen({ route, navigation }) {
     stopTimer();
     setLoading(true);
     try {
-      await api.post(`/taxi/${orderId}/accept`);
+      await api.post(`/api/taxi/${orderId}/accept`);
       navigation.replace('DriverDashboard');
     } catch (err) {
       Alert.alert('Erreur', err?.response?.data?.message || 'Impossible d\'accepter.');
@@ -111,7 +111,7 @@ export default function DriverRequestScreen({ route, navigation }) {
     stopTimer();
     if (!auto) setLoading(true);
     try {
-      await api.post(`/taxi/${orderId}/reject`).catch(() => null);
+      await api.post(`/api/taxi/${orderId}/reject`).catch(() => null);
     } finally {
       if (!auto) setLoading(false);
       navigation.replace('DriverDashboard');
