@@ -121,7 +121,7 @@ export default function HomeScreen({ navigation }) {
 
     if (!user?.role) { setRedirectDebug('no user.role'); return; }
 
-    const PROVIDER_ROLES = ['CHAUFFEUR', 'LIVREUR', 'DEPANNEUR', 'MARCHAND'];
+    const PROVIDER_ROLES = ['CHAUFFEUR', 'LIVREUR', 'DEPANNEUR', 'MARCHAND', 'PRESTATAIRE'];
 
     const goTo = (screen) => navigation.reset({ index: 0, routes: [{ name: screen }] });
 
@@ -138,6 +138,7 @@ export default function HomeScreen({ navigation }) {
         else if (user.role === 'LIVREUR') goTo('LivreurDashboard');
         else if (user.role === 'DEPANNEUR') goTo('DepanneurDashboard');
         else if (user.role === 'MARCHAND') goTo('MerchantDashboard');
+        else if (user.role === 'PRESTATAIRE') goTo('EasyServicesProvider');
         return;
       } else {
         setRedirectDebug(`role not in PROVIDER_ROLES: ${user.role}`);
@@ -173,6 +174,7 @@ export default function HomeScreen({ navigation }) {
         DEPANNEUR: 'DepanneurDashboard',
         MARCHAND: 'MerchantDashboard',
         ADMIN: 'AdminDashboard',
+        PRESTATAIRE: 'EasyServicesProvider',
       };
       const screen = ROLE_SCREENS[user.role];
       if (screen) { navigation.reset({ index: 0, routes: [{ name: screen }] }); return; }

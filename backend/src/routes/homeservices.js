@@ -11,15 +11,16 @@ const { findNearby } = require('../services/geolocation');
 const router = express.Router();
 
 const CATEGORIES = [
-  { key: 'PLOMBIER', label: 'Plombier', icon: '🔧' },
-  { key: 'ELECTRICIEN', label: 'Électricien', icon: '💡' },
-  { key: 'MEDECIN', label: 'Médecin', icon: '🩺' },
-  { key: 'AVOCAT', label: 'Avocat', icon: '⚖️' },
-  { key: 'PEDAGOGUE', label: 'Pédagogue / Soutien scolaire', icon: '📚' },
-  { key: 'COACH_SPORTIF', label: 'Coach sportif', icon: '🏋️' },
-  { key: 'AUTRE', label: 'Autre service', icon: '🧰' },
+  { key: 'PLOMBIER', label: 'Plombier', icon: '🔧', remote: false },
+  { key: 'ELECTRICIEN', label: 'Électricien', icon: '💡', remote: false },
+  { key: 'MEDECIN', label: 'Médecin', icon: '🩺', remote: true },
+  { key: 'AVOCAT', label: 'Avocat', icon: '⚖️', remote: true },
+  { key: 'PEDAGOGUE', label: 'Pédagogue / Soutien scolaire', icon: '📚', remote: true },
+  { key: 'COACH_SPORTIF', label: 'Coach sportif', icon: '🏋️', remote: true },
+  { key: 'AUTRE', label: 'Autre service', icon: '🧰', remote: false },
 ];
 const CATEGORY_KEYS = CATEGORIES.map((c) => c.key);
+const REMOTE_CATEGORY_KEYS = CATEGORIES.filter((c) => c.remote).map((c) => c.key);
 
 function getIo(req) {
   return req.app.get('io');
@@ -59,11 +60,13 @@ router.post(
     body('lng').isFloat({ min: -180, max: 180 }),
     body('address').trim().notEmpty(),
     body('scheduledAt').optional().isISO8601(),
+    body('consultationMode').optional().isIn(['PRESENTIEL', 'VIDEO']),
   ],
   async (req, res) => {
     if (!validate(req, res)) return;
 
-    const { category, description, lat, lng, address, scheduledAt } = req.body;
+    const { category, description, lat, lng, address, scheduledAt, consultationMode } = req.body;
+    const mode = REMOTE_CATEGORY_KEYS.includes(category) && consultationMode === 'VIDEO' ? 'VIDEO' : 'PRESENTIEL';
 
     const order = await prisma.order.create({
       data: {
@@ -77,6 +80,7 @@ router.post(
           category,
           description,
           scheduledAt: scheduledAt || null,
+          consultationMode: mode,
           notifiedProviders: [],
         },
       },
@@ -264,13 +268,17 @@ router.post('/:id/accept', authenticate, requireRole('CLIENT'), async (req, res)
     return res.status(404).json({ error: 'Quote not found', code: 'QUOTE_NOT_FOUND' });
   }
 
+  const videoCallUrl = order.metadata?.consultationMode === 'VIDEO'
+    ? `https://meet.jit.si/EasyServices-${order.id}`
+    : null;
+
   const updated = await prisma.order.update({
     where: { id: order.id },
     data: {
       status: 'ACCEPTED',
       providerId,
       finalPrice: quote.price,
-      metadata: { ...order.metadata, acceptedQuote: quote },
+      metadata: { ...order.metadata, acceptedQuote: quote, videoCallUrl },
     },
   });
 

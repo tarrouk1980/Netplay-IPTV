@@ -14,19 +14,20 @@ const COLORS = {
 };
 
 const FALLBACK_CATEGORIES = [
-  { key: 'PLOMBIER', label: 'Plombier', icon: '🔧' },
-  { key: 'ELECTRICIEN', label: 'Électricien', icon: '💡' },
-  { key: 'MEDECIN', label: 'Médecin', icon: '🩺' },
-  { key: 'AVOCAT', label: 'Avocat', icon: '⚖️' },
-  { key: 'PEDAGOGUE', label: 'Pédagogue / Soutien scolaire', icon: '📚' },
-  { key: 'COACH_SPORTIF', label: 'Coach sportif', icon: '🏋️' },
-  { key: 'AUTRE', label: 'Autre service', icon: '🧰' },
+  { key: 'PLOMBIER', label: 'Plombier', icon: '🔧', remote: false },
+  { key: 'ELECTRICIEN', label: 'Électricien', icon: '💡', remote: false },
+  { key: 'MEDECIN', label: 'Médecin', icon: '🩺', remote: true },
+  { key: 'AVOCAT', label: 'Avocat', icon: '⚖️', remote: true },
+  { key: 'PEDAGOGUE', label: 'Pédagogue / Soutien scolaire', icon: '📚', remote: true },
+  { key: 'COACH_SPORTIF', label: 'Coach sportif', icon: '🏋️', remote: true },
+  { key: 'AUTRE', label: 'Autre service', icon: '🧰', remote: false },
 ];
 
 export default function EasyServicesScreen({ navigation }) {
   const [categories, setCategories] = useState(FALLBACK_CATEGORIES);
   const [selected, setSelected] = useState(null);
   const [description, setDescription] = useState('');
+  const [videoMode, setVideoMode] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -34,6 +35,15 @@ export default function EasyServicesScreen({ navigation }) {
       .then((res) => { if (res.data?.categories?.length) setCategories(res.data.categories); })
       .catch(() => {});
   }, []);
+
+  const selectedCategory = categories.find((c) => c.key === selected);
+  const canGoRemote = !!selectedCategory?.remote;
+
+  const handleSelect = (key) => {
+    setSelected(key);
+    const cat = categories.find((c) => c.key === key);
+    if (!cat?.remote) setVideoMode(false);
+  };
 
   const handleRequest = useCallback(async () => {
     if (!selected) {
@@ -58,6 +68,7 @@ export default function EasyServicesScreen({ navigation }) {
         lat: loc.coords.lat,
         lng: loc.coords.lng,
         address: loc.address,
+        consultationMode: canGoRemote && videoMode ? 'VIDEO' : 'PRESENTIEL',
       });
       Alert.alert(
         'Demande envoyée !',
@@ -69,7 +80,7 @@ export default function EasyServicesScreen({ navigation }) {
     } finally {
       setSubmitting(false);
     }
-  }, [selected, description, navigation]);
+  }, [selected, description, videoMode, canGoRemote, navigation]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -92,7 +103,7 @@ export default function EasyServicesScreen({ navigation }) {
             <TouchableOpacity
               key={c.key}
               style={[styles.categoryCard, selected === c.key && styles.categoryCardActive]}
-              onPress={() => setSelected(c.key)}
+              onPress={() => handleSelect(c.key)}
             >
               <Text style={styles.categoryIcon}>{c.icon}</Text>
               <Text style={[styles.categoryLabel, selected === c.key && styles.categoryLabelActive]}>{c.label}</Text>
@@ -110,6 +121,24 @@ export default function EasyServicesScreen({ navigation }) {
           multiline
           textAlignVertical="top"
         />
+
+        {canGoRemote && (
+          <TouchableOpacity
+            style={[styles.videoToggle, videoMode && styles.videoToggleActive]}
+            onPress={() => setVideoMode((v) => !v)}
+          >
+            <Text style={styles.videoToggleIcon}>📹</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.videoToggleTitle}>Consultation en appel vidéo</Text>
+              <Text style={styles.videoToggleSub}>
+                {videoMode ? 'Un lien d\'appel sera généré une fois le devis accepté' : 'Activez pour consulter à distance'}
+              </Text>
+            </View>
+            <View style={[styles.videoCheckbox, videoMode && styles.videoCheckboxActive]}>
+              {videoMode && <Text style={styles.videoCheckMark}>✓</Text>}
+            </View>
+          </TouchableOpacity>
+        )}
 
         <TouchableOpacity
           style={[styles.requestBtn, submitting && { opacity: 0.6 }]}
@@ -157,4 +186,19 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.accent, borderRadius: 16, paddingVertical: 16, alignItems: 'center',
   },
   requestBtnText: { color: '#000', fontSize: 16, fontWeight: '900' },
+  videoToggle: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: COLORS.surface, borderRadius: 14, padding: 14, marginBottom: 20,
+    borderWidth: 1.5, borderColor: COLORS.border,
+  },
+  videoToggleActive: { borderColor: COLORS.accent, backgroundColor: COLORS.accent + '10' },
+  videoToggleIcon: { fontSize: 22 },
+  videoToggleTitle: { color: COLORS.text, fontSize: 13, fontWeight: '700' },
+  videoToggleSub: { color: COLORS.muted, fontSize: 11, marginTop: 2 },
+  videoCheckbox: {
+    width: 24, height: 24, borderRadius: 6, borderWidth: 1.5, borderColor: COLORS.border,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  videoCheckboxActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
+  videoCheckMark: { color: '#000', fontWeight: '900', fontSize: 14 },
 });
