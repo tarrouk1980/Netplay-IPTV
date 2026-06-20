@@ -79,7 +79,6 @@ export default function HomeScreen({ navigation }) {
   const [heroBanner, setHeroBanner] = useState(null);
   const promoBannerRef = useRef(null);
   const [promoBannerIndex, setPromoBannerIndex] = useState(0);
-  const [redirectDebug, setRedirectDebug] = useState('not run yet');
 
   const fetchActivity = useCallback(async () => {
     try {
@@ -119,34 +118,35 @@ export default function HomeScreen({ navigation }) {
     try { fetchActivity(); } catch {}
     try { fetchAds(); } catch {}
 
-    if (!user?.role) { setRedirectDebug('no user.role'); return; }
+    if (!user?.role || user.role === 'CLIENT') return;
 
     const PROVIDER_ROLES = ['CHAUFFEUR', 'LIVREUR', 'DEPANNEUR', 'MARCHAND', 'PRESTATAIRE'];
+    if (!PROVIDER_ROLES.includes(user.role) && user.role !== 'ADMIN') return;
 
-    const goTo = (screen) => navigation.reset({ index: 0, routes: [{ name: screen }] });
+    const ROLE_DASHBOARDS = {
+      ADMIN: 'AdminDashboard',
+      CHAUFFEUR: 'DriverDashboard',
+      LIVREUR: 'LivreurDashboard',
+      DEPANNEUR: 'DepanneurDashboard',
+      MARCHAND: 'MerchantDashboard',
+      PRESTATAIRE: 'EasyServicesProvider',
+    };
 
-    try {
-      if (user.role === 'ADMIN') { goTo('AdminDashboard'); return; }
-      if (PROVIDER_ROLES.includes(user.role)) {
-        if (user.kycStatus !== 'APPROVED') {
-          setRedirectDebug(`kyc not approved: ${user.kycStatus}`);
-          goTo('KYCPending');
-          return;
-        }
-        setRedirectDebug(`replacing to dashboard for ${user.role}`);
-        if (user.role === 'CHAUFFEUR') goTo('DriverDashboard');
-        else if (user.role === 'LIVREUR') goTo('LivreurDashboard');
-        else if (user.role === 'DEPANNEUR') goTo('DepanneurDashboard');
-        else if (user.role === 'MARCHAND') goTo('MerchantDashboard');
-        else if (user.role === 'PRESTATAIRE') goTo('EasyServicesProvider');
-        return;
-      } else {
-        setRedirectDebug(`role not in PROVIDER_ROLES: ${user.role}`);
+    const targetScreen = user.role !== 'ADMIN' && user.kycStatus !== 'APPROVED'
+      ? 'KYCPending'
+      : ROLE_DASHBOARDS[user.role];
+
+    if (!targetScreen) return;
+
+    // navigation.reset called from the initial-route effect can be a no-op if fired
+    // before the navigator has finished mounting; deferring to the next frame
+    // ensures it's actually ready to handle the action.
+    const frame = requestAnimationFrame(() => {
+      if (navigation.isFocused()) {
+        navigation.reset({ index: 0, routes: [{ name: targetScreen }] });
       }
-    } catch (e) {
-      setRedirectDebug(`THROW: ${e?.message}`);
-    }
-    // CLIENT → reste sur HomeScreen
+    });
+    return () => cancelAnimationFrame(frame);
   }, [user?.role, user?.kycStatus]);
 
   const activeOrder = (() => {
@@ -211,14 +211,6 @@ export default function HomeScreen({ navigation }) {
         </TouchableOpacity>
       )}
       <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={{ backgroundColor: '#D32F2F', padding: 6 }}>
-          <Text style={{ color: '#fff', fontSize: 11, textAlign: 'center' }}>
-            DEBUG role={String(user?.role)} kyc={String(user?.kycStatus)}
-          </Text>
-          <Text style={{ color: '#fff', fontSize: 11, textAlign: 'center' }}>
-            redirect: {redirectDebug}
-          </Text>
-        </View>
         {/* Header */}
         <View style={styles.header}>
           <View>
