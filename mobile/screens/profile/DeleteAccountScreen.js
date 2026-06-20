@@ -42,7 +42,7 @@ export default function DeleteAccountScreen({ navigation }) {
           onPress: async () => {
             setDeleting(true);
             try {
-              await api.delete('/api/user/account', { data: { reason } });
+              await api.delete('/api/users/me/account', { data: { reason } });
               await logout();
               navigation.reset({ index: 0, routes: [{ name: 'Onboarding' }] });
             } catch {

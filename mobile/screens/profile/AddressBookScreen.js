@@ -88,7 +88,7 @@ export default function AddressBookScreen({ navigation }) {
     (async () => {
       setLoading(true);
       try {
-        const res = await api.get('/api/user/addresses');
+        const res = await api.get('/api/users/clients/addresses');
         if (res.data?.addresses?.length) setAddresses(res.data.addresses);
       } catch {} finally {
         setLoading(false);
@@ -99,11 +99,11 @@ export default function AddressBookScreen({ navigation }) {
   const handleSave = async ({ type, label, address }) => {
     try {
       if (editTarget) {
-        await api.put(`/api/user/addresses/${editTarget.id}`, { type, label, address });
+        await api.put(`/api/users/clients/addresses/${editTarget.id}`, { type, label, address });
         setAddresses(prev => prev.map(a => a.id === editTarget.id ? { ...a, type, label, address } : a));
       } else {
-        const res = await api.post('/api/user/addresses', { type, label, address }).catch(() => ({ data: { id: `A${Date.now()}` } }));
-        setAddresses(prev => [...prev, { id: res.data.id, type, label, address, default: false }]);
+        const res = await api.post('/api/users/clients/addresses', { type, label, address }).catch(() => ({ data: { address: { id: `A${Date.now()}` } } }));
+        setAddresses(prev => [...prev, { id: res.data.address?.id, type, label, address, default: false }]);
       }
     } catch {}
     setShowForm(false);
@@ -116,7 +116,7 @@ export default function AddressBookScreen({ navigation }) {
       {
         text: 'Supprimer', style: 'destructive',
         onPress: async () => {
-          try { await api.delete(`/api/user/addresses/${id}`); } catch {}
+          try { await api.delete(`/api/users/clients/addresses/${id}`); } catch {}
           setAddresses(prev => prev.filter(a => a.id !== id));
         },
       },
@@ -124,7 +124,7 @@ export default function AddressBookScreen({ navigation }) {
   };
 
   const handleSetDefault = async (id) => {
-    try { await api.patch(`/api/user/addresses/${id}/default`); } catch {}
+    try { await api.patch(`/api/users/clients/addresses/${id}/default`); } catch {}
     setAddresses(prev => prev.map(a => ({ ...a, default: a.id === id })));
   };
 

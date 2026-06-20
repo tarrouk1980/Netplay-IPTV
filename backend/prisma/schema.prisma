@@ -91,6 +91,7 @@ model User {
   subscriptionExpiresAt DateTime?
   suspended             Boolean   @default(false)
   avgRating             Float     @default(0)
+  isOnline              Boolean   @default(false)
 
   subscription        Subscription[]
   vehicle             Vehicle[]

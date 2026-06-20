@@ -70,7 +70,7 @@ export default function NotificationsSettingsScreen({ navigation }) {
 
   const handleSave = async () => {
     try {
-      await api.put('/api/user/notification-prefs', prefs);
+      await api.put('/api/users/me/notification-prefs', prefs);
     } catch {}
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);

@@ -306,6 +306,32 @@ router.post('/provider-onboarding', authenticate, async (req, res) => {
   }
 });
 
+// ── Notification preferences (in-memory until schema supports it) ─────────
+const notifPrefsStore = new Map(); // userId → prefs object
+
+router.get('/me/notification-prefs', authenticate, (req, res) => {
+  res.json({ prefs: notifPrefsStore.get(req.user.id) || {} });
+});
+
+router.put('/me/notification-prefs', authenticate, (req, res) => {
+  notifPrefsStore.set(req.user.id, req.body || {});
+  res.json({ success: true, prefs: req.body || {} });
+});
+
+// ── Account deletion ────────────────────────────────────────────────────
+router.delete('/me/account', authenticate, async (req, res) => {
+  try {
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { suspended: true, fcmToken: null },
+    });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[Users/DeleteAccount]', err);
+    res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
 // ── Address book (in-memory until schema supports it) ─────────────────────
 const addressStore = new Map(); // userId → [{id, label, type, address, lat, lng}]
 
