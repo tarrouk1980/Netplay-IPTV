@@ -208,6 +208,73 @@ router.get('/livreur/assignments', authenticate, requireRole('LIVREUR'), async (
 });
 
 // ─────────────────────────────────────────────
+// LIVREUR: GET /delivery/livreur/nearby-orders
+// Unassigned delivery orders near the livreur's current position
+// ─────────────────────────────────────────────
+router.get('/livreur/nearby-orders', authenticate, requireRole('LIVREUR'), async (req, res) => {
+  try {
+    let lat = parseFloat(req.query.lat);
+    let lng = parseFloat(req.query.lng);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      const { redisClient } = require('../config/redis');
+      const coords = await redisClient.geopos('geo:delivery', req.user.id).catch(() => null);
+      if (coords?.[0]) {
+        lng = parseFloat(coords[0][0]);
+        lat = parseFloat(coords[0][1]);
+      } else {
+        lat = 36.8065; // Tunis fallback
+        lng = 10.1815;
+      }
+    }
+
+    const orders = await prisma.order.findMany({
+      where: {
+        serviceType: 'DELIVERY',
+        status: 'PENDING',
+        providerId: null,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 30,
+      include: {
+        client: { select: { id: true, name: true } },
+      },
+    });
+
+    const haversineKm = (lat1, lng1, lat2, lng2) => {
+      const R = 6371;
+      const dLat = ((lat2 - lat1) * Math.PI) / 180;
+      const dLng = ((lng2 - lng1) * Math.PI) / 180;
+      const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    };
+
+    const result = orders
+      .map((o) => ({
+        id: o.id,
+        merchant: o.originAddress || 'Commerçant',
+        client: o.client?.name || 'Client',
+        distance: Math.round(haversineKm(lat, lng, o.originLat, o.originLng) * 10) / 10,
+        address: o.destinationAddress || '',
+        status: 'AVAILABLE',
+        amount: o.price ? parseFloat(o.price) : 0,
+        items: 1,
+        lat: o.originLat,
+        lng: o.originLng,
+      }))
+      .filter((o) => o.distance <= 15)
+      .sort((a, b) => a.distance - b.distance);
+
+    return res.json({ orders: result, count: result.length });
+  } catch (err) {
+    console.error('[delivery/livreur/nearby-orders]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─────────────────────────────────────────────
 // GET /delivery/:id — order details
 // ─────────────────────────────────────────────
 router.get('/:id', authenticate, async (req, res) => {

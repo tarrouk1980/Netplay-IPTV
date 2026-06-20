@@ -318,29 +318,89 @@ router.post('/earnings-goal', authenticate, async (req, res) => {
   res.json({ ok: true });
 });
 
+// Known Tunisian neighborhoods used to label geo-clusters of real order pickups
+const KNOWN_AREAS = [
+  { name: 'Tunis Centre', lat: 36.8065, lng: 10.1815 },
+  { name: 'Lac 1 & 2', lat: 36.8433, lng: 10.2467 },
+  { name: 'Aéroport Tunis-Carthage', lat: 36.8510, lng: 10.2272 },
+  { name: 'Ennasr', lat: 36.8770, lng: 10.1660 },
+  { name: 'La Marsa', lat: 36.8771, lng: 10.3243 },
+  { name: 'Ariana', lat: 36.8625, lng: 10.1956 },
+  { name: 'Sousse', lat: 35.8254, lng: 10.6369 },
+  { name: 'Sfax', lat: 34.7398, lng: 10.7600 },
+];
+
+function nearestArea(lat, lng) {
+  let best = KNOWN_AREAS[0];
+  let bestDist = Infinity;
+  for (const area of KNOWN_AREAS) {
+    const dist = Math.hypot(area.lat - lat, area.lng - lng);
+    if (dist < bestDist) { bestDist = dist; best = area; }
+  }
+  return best;
+}
+
+function demandLabel(count, max) {
+  const ratio = max > 0 ? count / max : 0;
+  if (ratio >= 0.75) return { demand: 'Très élevée', icon: '🔴' };
+  if (ratio >= 0.5) return { demand: 'Élevée', icon: '🟡' };
+  if (ratio >= 0.25) return { demand: 'Moyenne', icon: '🟢' };
+  return { demand: 'Faible', icon: '🟢' };
+}
+
 router.get('/demand-heatmap', authenticate, async (req, res) => {
   try {
     const now = new Date();
     const fourWeeksAgo = new Date(now - 28 * 24 * 3600 * 1000);
     const orders = await prisma.order.findMany({
       where: { createdAt: { gte: fourWeeksAgo }, status: { in: ['COMPLETED', 'IN_PROGRESS'] } },
-      select: { createdAt: true, pickupLat: true, pickupLng: true },
+      select: { createdAt: true, originLat: true, originLng: true },
     });
 
-    const DAYS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
-    const heatmap = Array.from({ length: 7 }, () => Array(24).fill(0));
+    // Day-of-week × hour demand matrix, indexed Lun=0 ... Dim=6 (matches mobile UI)
+    const DAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+    const demand = Array.from({ length: 7 }, () => Array(24).fill(0));
     orders.forEach(o => {
       const d = new Date(o.createdAt);
-      heatmap[d.getDay()][d.getHours()]++;
+      const jsDay = d.getDay(); // 0=Dim
+      const dayIndex = (jsDay + 6) % 7; // shift so 0=Lun
+      demand[dayIndex][d.getHours()]++;
     });
 
-    const zones = [
-      { name: 'Tunis Centre', lat: 36.8189, lng: 10.1658 },
-      { name: 'La Marsa', lat: 36.8771, lng: 10.3243 },
-      { name: 'Sfax', lat: 34.7398, lng: 10.7600 },
-    ];
+    // Real geo-clustering: bucket each order's pickup point to its nearest known area
+    const zoneCounts = new Map();
+    orders.forEach(o => {
+      if (o.originLat == null || o.originLng == null) return;
+      const area = nearestArea(o.originLat, o.originLng);
+      zoneCounts.set(area.name, (zoneCounts.get(area.name) || 0) + 1);
+    });
 
-    res.json({ heatmap, days: DAYS, zones });
+    const maxCount = Math.max(1, ...zoneCounts.values());
+    let hotZones = Array.from(zoneCounts.entries())
+      .map(([name, count]) => {
+        const area = KNOWN_AREAS.find(a => a.name === name);
+        const { demand: demandLevel, icon } = demandLabel(count, maxCount);
+        return {
+          name,
+          lat: area.lat,
+          lng: area.lng,
+          demand: demandLevel,
+          icon,
+          orderCount: count,
+          tip: `${count} course${count > 1 ? 's' : ''} sur les 4 dernières semaines dans cette zone`,
+        };
+      })
+      .sort((a, b) => b.orderCount - a.orderCount)
+      .slice(0, 5);
+
+    // No real order history yet (new market / new account) → fall back to known areas with zero data
+    if (hotZones.length === 0) {
+      hotZones = KNOWN_AREAS.slice(0, 5).map(a => ({
+        ...a, demand: 'Faible', icon: '🟢', orderCount: 0, tip: 'Pas encore de données de demande dans cette zone',
+      }));
+    }
+
+    res.json({ demand, days: DAYS, hotZones });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

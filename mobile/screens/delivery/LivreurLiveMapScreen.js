@@ -4,6 +4,8 @@ import {
   StatusBar, ScrollView, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import MapboxWebView from '../../components/MapboxWebView';
+import { getCurrentLocationWithAddress } from '../../utils/locationUtils';
 import api from '../../services/api';
 
 const COLORS = {
@@ -25,23 +27,31 @@ const STATUS_CONFIG = {
 };
 
 export default function LivreurLiveMapScreen({ navigation }) {
-  const [orders, setOrders] = useState(MOCK_ORDERS);
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [online, setOnline] = useState(true);
   const [selected, setSelected] = useState(null);
+  const [myPosition, setMyPosition] = useState(null);
   const intervalRef = useRef(null);
 
   useEffect(() => {
-    fetchOrders();
-    intervalRef.current = setInterval(fetchOrders, 20000);
+    (async () => {
+      const loc = await getCurrentLocationWithAddress();
+      if (loc) setMyPosition(loc.coords);
+      fetchOrders(loc?.coords);
+    })();
+    intervalRef.current = setInterval(() => fetchOrders(myPosition), 20000);
     return () => clearInterval(intervalRef.current);
   }, []);
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (coords) => {
     try {
-      const res = await api.get('/api/delivery/livreur/nearby-orders');
-      if (res.data?.orders?.length > 0) setOrders(res.data.orders);
-    } catch {} finally { setLoading(false); }
+      const params = coords ? { lat: coords.lat, lng: coords.lng } : {};
+      const res = await api.get('/api/delivery/livreur/nearby-orders', { params });
+      setOrders(res.data?.orders || []);
+    } catch {
+      setOrders(MOCK_ORDERS);
+    } finally { setLoading(false); }
   };
 
   const acceptOrder = async (order) => {
@@ -92,21 +102,20 @@ export default function LivreurLiveMapScreen({ navigation }) {
         </View>
       </View>
 
-      {/* Map placeholder */}
+      {/* Real interactive map */}
       <View style={styles.mapBox}>
-        <Text style={{ fontSize: 36, marginBottom: 6 }}>🗺️</Text>
-        <Text style={{ color: COLORS.muted, fontSize: 12 }}>Zone de livraison active</Text>
-        <View style={styles.mapPins}>
-          {orders.map((o, i) => (
-            <TouchableOpacity
-              key={o.id}
-              style={[styles.mapPin, { left: 30 + i * 60, top: 15 + (i % 2) * 25 }, { backgroundColor: STATUS_CONFIG[o.status]?.color || COLORS.muted }, selected?.id === o.id && { width: 32, height: 32, borderRadius: 16 }]}
-              onPress={() => setSelected(selected?.id === o.id ? null : o)}
-            >
-              <Text style={{ fontSize: 9 }}>🛵</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <MapboxWebView
+          style={{ height: 180 }}
+          centerCoordinate={myPosition ? [myPosition.lng, myPosition.lat] : [10.1815, 36.8065]}
+          zoom={13}
+          markers={[
+            ...(myPosition ? [{ coordinates: [myPosition.lng, myPosition.lat], label: '🛵 Moi' }] : []),
+            ...orders.filter((o) => o.lat && o.lng).map((o) => ({
+              coordinates: [o.lng, o.lat],
+              label: `${o.merchant} — ${o.amount?.toFixed?.(2) || o.amount} TND`,
+            })),
+          ]}
+        />
       </View>
 
       {loading ? <ActivityIndicator color={COLORS.accent} style={{ marginTop: 40 }} /> : (
@@ -159,9 +168,7 @@ const styles = StyleSheet.create({
   statNum: { fontSize: 20, fontWeight: '900' },
   statLabel: { color: COLORS.muted, fontSize: 10, marginTop: 2, textAlign: 'center' },
   statDivider: { width: 1, backgroundColor: COLORS.border },
-  mapBox: { height: 140, backgroundColor: COLORS.surfaceAlt, margin: 16, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: COLORS.border, overflow: 'hidden' },
-  mapPins: { position: 'absolute', width: '100%', height: '100%' },
-  mapPin: { position: 'absolute', width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#FFF' },
+  mapBox: { height: 180, margin: 16, borderRadius: 14, overflow: 'hidden', borderWidth: 1, borderColor: COLORS.border },
   listTitle: { color: COLORS.white, fontSize: 14, fontWeight: '700', marginBottom: 12 },
   card: { backgroundColor: COLORS.surface, borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: COLORS.border },
   cardTop: { flexDirection: 'row', gap: 12 },

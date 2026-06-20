@@ -5,12 +5,20 @@ import { LEAFLET_JS, LEAFLET_CSS } from '../assets/leaflet/leafletAssets';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-function buildHtml(lat, lng, zoom, markers) {
+function buildHtml(lat, lng, zoom, markers, heatmapZones) {
   const markerJs = markers
     .map((m) => {
       const [mlng, mlat] = m.coordinates;
       const label = (m.label || '').replace(/'/g, "\\'");
       return `L.marker([${mlat}, ${mlng}]).addTo(map)${label ? `.bindPopup('${label}')` : ''};`;
+    })
+    .join('\n');
+
+  const heatmapJs = heatmapZones
+    .map((z) => {
+      const label = (z.label || '').replace(/'/g, "\\'");
+      const color = z.color || '#E74C3C';
+      return `L.circle([${z.lat}, ${z.lng}], { radius: 900, color: '${color}', fillColor: '${color}', fillOpacity: 0.25, weight: 1 }).addTo(map)${label ? `.bindPopup('${label}')` : ''};`;
     })
     .join('\n');
 
@@ -33,6 +41,7 @@ function buildHtml(lat, lng, zoom, markers) {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
     }).addTo(map);
+    ${heatmapJs}
     ${markerJs}
   </script>
 </body>
@@ -44,13 +53,14 @@ export default function MapboxWebView({
   centerCoordinate = [10.1815, 36.8065],
   zoom = 13,
   markers = [],
+  heatmapZones = [],
 }) {
   const height = style?.height || 220;
   const width = style?.width || SCREEN_WIDTH;
   const [lng, lat] = centerCoordinate;
   const webviewRef = useRef(null);
 
-  const html = buildHtml(lat, lng, zoom, markers);
+  const html = buildHtml(lat, lng, zoom, markers, heatmapZones);
 
   return (
     <View style={[styles.container, { width, height }]}>

@@ -4,7 +4,7 @@ import {
   ActivityIndicator, StatusBar, RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Image } from 'react-native';
+import MapboxWebView from '../../components/MapboxWebView';
 import api from '../../services/api';
 
 const COLORS = {
@@ -18,8 +18,6 @@ const COLORS = {
   red: '#E74C3C',
   blue: '#3498DB',
 };
-
-const MAPBOX_TOKEN = 'pk.eyJ1IjoiZWFzeXdheXRhcmVrIiwiYSI6ImNtcHNuaGJ1ODBoc2Qyc3FxenU0aGFvd3QifQ.K-z5zbFtY8v5lyMUn7TryQ';
 
 const DAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 const HOURS_LABELS = ['6h', '8h', '10h', '12h', '14h', '16h', '18h', '20h', '22h'];
@@ -64,15 +62,16 @@ const cell = StyleSheet.create({
   fire: { fontSize: 9 },
 });
 
-function buildMapUrl(zones) {
-  const pins = zones.slice(0, 5).map(z => `pin-s+E74C3C(${z.lng},${z.lat})`).join(',');
-  return `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/${pins}/10.24,36.84,11/340x180@2x?access_token=${MAPBOX_TOKEN}`;
-}
+const DEMAND_COLORS = {
+  'Très élevée': '#E74C3C',
+  'Élevée': '#F39C12',
+  'Moyenne': '#27AE60',
+  'Faible': '#3498DB',
+};
 
 export default function DriverHeatmapScreen({ navigation }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [mapError, setMapError] = useState(false);
   const [selectedZone, setSelectedZone] = useState(null);
   const [tab, setTab] = useState('heatmap'); // heatmap | zones | tips
 
@@ -91,7 +90,6 @@ export default function DriverHeatmapScreen({ navigation }) {
 
   const demand = data?.demand || MOCK_DEMAND;
   const hotZones = data?.hotZones || MOCK_HOT_ZONES;
-  const mapUrl = !mapError ? buildMapUrl(hotZones) : null;
 
   // Best hour = highest average across all days
   const hourlyAvg = HOURS_LABELS.map((_, hi) => ({
@@ -198,11 +196,19 @@ export default function DriverHeatmapScreen({ navigation }) {
         {/* Zones tab */}
         {tab === 'zones' && (
           <>
-            {mapUrl && (
-              <View style={styles.mapContainer}>
-                <Image source={{ uri: mapUrl }} style={styles.mapImage} onError={() => setMapError(true)} resizeMode="cover" />
-              </View>
-            )}
+            <View style={styles.mapContainer}>
+              <MapboxWebView
+                style={{ height: 180 }}
+                centerCoordinate={[10.24, 36.84]}
+                zoom={10}
+                heatmapZones={hotZones.map((z) => ({
+                  lat: z.lat,
+                  lng: z.lng,
+                  color: DEMAND_COLORS[z.demand] || '#E74C3C',
+                  label: `${z.icon} ${z.name} — ${z.demand}`,
+                }))}
+              />
+            </View>
             <Text style={styles.sectionTitle}>Zones les plus actives</Text>
             {hotZones.map((z, i) => (
               <TouchableOpacity
@@ -287,7 +293,6 @@ const styles = StyleSheet.create({
   hourlyVal: { color: COLORS.muted, fontSize: 8, marginBottom: 2 },
   hourlyLabel: { color: COLORS.muted, fontSize: 8, marginTop: 4 },
   mapContainer: { borderRadius: 14, overflow: 'hidden', height: 180, marginBottom: 14 },
-  mapImage: { width: '100%', height: 180 },
   zoneCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: COLORS.surface, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, padding: 14, marginBottom: 8 },
   zoneCardActive: { borderColor: COLORS.accent },
   zoneDemandIcon: { fontSize: 22 },
