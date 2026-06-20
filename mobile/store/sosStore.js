@@ -99,7 +99,7 @@ const useSosStore = create((set, get) => ({
   // ─────────────────────────────────────────────
   fetchMyContract: async () => {
     try {
-      const response = await api.get('/insurance/contracts/me');
+      const response = await api.get('/api/insurance/contracts/me');
       set({ myContract: response.data.contract });
       return response.data.contract;
     } catch {

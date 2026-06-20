@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { api } from '../services/api';
+import api from '../services/api';
 
 export const useAdStore = create((set, get) => ({
   adsByPlacement: {
@@ -12,7 +12,7 @@ export const useAdStore = create((set, get) => ({
 
   fetchAds: async (placement) => {
     try {
-      const res = await api.get('/ads', { params: { placement, limit: 5 } });
+      const res = await api.get('/api/ads', { params: { placement, limit: 5 } });
       set((state) => ({
         adsByPlacement: {
           ...state.adsByPlacement,

@@ -12,7 +12,7 @@ const useDeliveryStore = create((set, get) => ({
   fetchMerchants: async (filters = {}) => {
     set({ isLoading: true });
     try {
-      const response = await api.get('/merchants', { params: filters });
+      const response = await api.get('/api/merchants', { params: filters });
       const merchants = response.data.merchants || [];
       set({ merchants });
       return merchants;
@@ -24,7 +24,7 @@ const useDeliveryStore = create((set, get) => ({
   fetchMerchant: async (id) => {
     set({ isLoading: true });
     try {
-      const response = await api.get(`/merchants/${id}`);
+      const response = await api.get(`/api/merchants/${id}`);
       const { merchant } = response.data;
       set({ currentMerchant: merchant });
       return merchant;
