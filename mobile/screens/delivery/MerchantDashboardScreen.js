@@ -63,7 +63,7 @@ export default function MerchantDashboardScreen({ navigation }) {
 
       <View style={styles.header}>
         <TouchableOpacity onPress={() => logout()} style={{ padding: 8, marginRight: 8 }}>
-          <Text style={{ color: '#FFFFFF', fontSize: 24, fontWeight: '300' }}>‹</Text>
+          <Text style={{ fontSize: 18 }}>🚪</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>🏪 Mon commerce</Text>
         <TouchableOpacity
