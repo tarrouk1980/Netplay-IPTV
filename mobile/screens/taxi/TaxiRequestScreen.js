@@ -10,13 +10,11 @@ import {
   StatusBar,
   Alert,
   Animated,
-  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getCurrentLocationWithAddress, geocodeAutocomplete } from '../../utils/locationUtils';
 import useTaxiStore from '../../store/taxiStore';
 import FareEstimateCard from '../../components/FareEstimateCard';
-import PriceEstimate from '../../components/PriceEstimate';
 import MapboxWebView from '../../components/MapboxWebView';
 import PromoCodeWidget from '../payment/PromoCodeWidget';
 import ServiceIcon from '../../components/ServiceIcon';
@@ -55,8 +53,6 @@ export default function TaxiRequestScreen({ route, navigation }) {
   const [loadingLocation, setLoadingLocation] = useState(true);
   const [loadingEstimate, setLoadingEstimate] = useState(false);
   const [demandZones, setDemandZones] = useState([]);
-  const [showPriceEstimate, setShowPriceEstimate] = useState(false);
-  const [estimatedDistanceKm, setEstimatedDistanceKm] = useState(5);
   const [waypoints, setWaypoints] = useState([]);
   const [destinationCoords, setDestinationCoords] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
@@ -198,10 +194,9 @@ export default function TaxiRequestScreen({ route, navigation }) {
       Alert.alert('Position requise', 'Veuillez activer la localisation.');
       return;
     }
-    // Compute a fictional distance estimate between 3 and 8 km if none known
-    const dist = fareEstimate?.distanceKm || (3 + Math.random() * 5);
-    setEstimatedDistanceKm(parseFloat(dist.toFixed(1)));
-    setShowPriceEstimate(true);
+    // Book directly — fare is already visible on screen (mode A) or explained (mode B),
+    // so a separate confirmation modal would just be a redundant extra step.
+    doRequestTaxi();
   };
 
   return (
@@ -426,41 +421,21 @@ export default function TaxiRequestScreen({ route, navigation }) {
         >
           {isSearching
             ? <ActivityIndicator color="#fff" />
-            : <Text style={styles.searchButtonText}>🔍 Chercher un taxi</Text>}
+            : <Text style={styles.searchButtonText}>🚕 Commander ce taxi</Text>}
         </TouchableOpacity>
+
+        {mode === 'A' && (
+          <PromoCodeWidget
+            serviceType="TAXI"
+            amount={fareEstimate?.total || 0}
+            onDiscount={(discount, code) => {
+              if (discount > 0) console.log(`[Promo] -${discount} TND avec code ${code}`);
+            }}
+          />
+        )}
 
         <View style={{ height: 32 }} />
       </ScrollView>
-
-      {/* PriceEstimate Modal */}
-      <Modal
-        visible={showPriceEstimate}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowPriceEstimate(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <PriceEstimate
-              serviceType="TAXI"
-              distanceKm={estimatedDistanceKm}
-              onConfirm={() => {
-                setShowPriceEstimate(false);
-                doRequestTaxi();
-              }}
-              onCancel={() => setShowPriceEstimate(false)}
-            />
-            <PromoCodeWidget
-              serviceType="TAXI"
-              amount={fareEstimate?.total || 0}
-              onDiscount={(discount, code) => {
-                // Discount stored for later use in order creation
-                if (discount > 0) console.log(`[Promo] -${discount} TND avec code ${code}`);
-              }}
-            />
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }

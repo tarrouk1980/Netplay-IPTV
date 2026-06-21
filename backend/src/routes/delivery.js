@@ -151,6 +151,62 @@ router.post(
 );
 
 // ─────────────────────────────────────────────
+// CLIENT: POST /delivery/package — P2P parcel send (EasyPackage), no merchant involved
+// ─────────────────────────────────────────────
+router.post(
+  '/package',
+  authenticate,
+  requireRole('CLIENT'),
+  [
+    body('pickup').trim().notEmpty(),
+    body('delivery').trim().notEmpty(),
+    body('pickupLat').optional().isFloat({ min: -90, max: 90 }),
+    body('pickupLng').optional().isFloat({ min: -180, max: 180 }),
+    body('deliveryLat').optional().isFloat({ min: -90, max: 90 }),
+    body('deliveryLng').optional().isFloat({ min: -180, max: 180 }),
+    body('size').optional().trim(),
+    body('service').optional().trim(),
+    body('senderName').optional().trim(),
+    body('receiverPhone').optional().trim(),
+    body('description').optional().trim(),
+  ],
+  async (req, res) => {
+    if (!validate(req, res)) return;
+
+    const {
+      pickup, delivery, pickupLat, pickupLng, deliveryLat, deliveryLng,
+      size, service, senderName, receiverPhone, description,
+    } = req.body;
+
+    const order = await prisma.order.create({
+      data: {
+        clientId: req.user.id,
+        serviceType: 'DELIVERY',
+        status: 'PENDING',
+        originLat: pickupLat ?? 0,
+        originLng: pickupLng ?? 0,
+        originAddress: pickup,
+        destinationLat: deliveryLat ?? null,
+        destinationLng: deliveryLng ?? null,
+        destinationAddress: delivery,
+        metadata: {
+          kind: 'PACKAGE',
+          size: size || null,
+          service: service || null,
+          senderName: senderName || null,
+          receiverPhone: receiverPhone || null,
+          description: description || null,
+        },
+      },
+    });
+
+    await logEvent(order.id, 'ORDER_CREATED', { clientId: req.user.id, kind: 'PACKAGE' });
+
+    return res.status(201).json({ order });
+  }
+);
+
+// ─────────────────────────────────────────────
 // CLIENT: GET /delivery/history
 // ─────────────────────────────────────────────
 router.get('/history', authenticate, requireRole('CLIENT'), async (req, res) => {

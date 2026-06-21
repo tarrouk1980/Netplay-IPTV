@@ -13,10 +13,12 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C',
 };
 
+// En Tunisie, le tarif taxi est réglementé par le compteur officiel et ne dépend pas
+// du type de véhicule (berline ou SUV) — seule la capacité passagers diffère.
 const TAXI_TYPES = [
   { key: 'STANDARD', icon: '🚕', label: 'Standard', desc: 'Berline confortable', multiplier: 1 },
-  { key: 'CONFORT', icon: '🚙', label: 'Confort', desc: 'SUV ou premium', multiplier: 1.4 },
-  { key: 'VAN', icon: '🚐', label: 'Van', desc: 'Jusqu\'à 7 personnes', multiplier: 1.8 },
+  { key: 'CONFORT', icon: '🚙', label: 'Confort', desc: 'SUV ou premium', multiplier: 1 },
+  { key: 'VAN', icon: '🚐', label: 'Van', desc: 'Jusqu\'à 7 personnes', multiplier: 1 },
 ];
 
 const MODES = [

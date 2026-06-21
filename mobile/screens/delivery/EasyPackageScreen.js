@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, StatusBar, Alert, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { getCurrentLocationWithAddress, geocodeAutocomplete } from '../../utils/locationUtils';
+import MapboxWebView from '../../components/MapboxWebView';
 import api from '../../services/api';
 
 const COLORS = {
@@ -29,11 +31,50 @@ export default function EasyPackageScreen({ navigation }) {
   const [size, setSize] = useState('S');
   const [service, setService] = useState('STANDARD');
   const [pickup, setPickup] = useState('');
+  const [pickupCoords, setPickupCoords] = useState(null);
   const [delivery, setDelivery] = useState('');
+  const [deliveryCoords, setDeliveryCoords] = useState(null);
   const [senderName, setSenderName] = useState('');
   const [receiverPhone, setReceiverPhone] = useState('');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
+  const [locating, setLocating] = useState(true);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestTimeout = useRef(null);
+
+  useEffect(() => { detectPickup(); }, []);
+
+  const detectPickup = async () => {
+    setLocating(true);
+    const result = await getCurrentLocationWithAddress();
+    if (result) {
+      setPickup(result.address);
+      setPickupCoords(result.coords);
+    }
+    setLocating(false);
+  };
+
+  const handleDeliveryChange = (text) => {
+    setDelivery(text);
+    setDeliveryCoords(null);
+    setSuggestions([]);
+    setShowSuggestions(false);
+    if (suggestTimeout.current) clearTimeout(suggestTimeout.current);
+    if (text.length < 2) return;
+    suggestTimeout.current = setTimeout(async () => {
+      const results = await geocodeAutocomplete(text, pickupCoords);
+      setSuggestions(results);
+      setShowSuggestions(results.length > 0);
+    }, 400);
+  };
+
+  const handleSelectSuggestion = (s) => {
+    setDelivery(s.fullName);
+    setDeliveryCoords(s.coords);
+    setSuggestions([]);
+    setShowSuggestions(false);
+  };
 
   const selectedSize = SIZES.find((s) => s.id === size);
   const selectedService = SERVICES.find((s) => s.id === service);
@@ -50,15 +91,15 @@ export default function EasyPackageScreen({ navigation }) {
     try {
       await api.post('/api/delivery/package', {
         size, service, pickup, delivery,
+        pickupLat: pickupCoords?.lat, pickupLng: pickupCoords?.lng,
+        deliveryLat: deliveryCoords?.lat, deliveryLng: deliveryCoords?.lng,
         senderName, receiverPhone, description,
       });
       Alert.alert('Colis envoyé ✅', 'Un livreur a été notifié et va récupérer votre colis.', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch {
-      Alert.alert('Confirmation', `Demande d'envoi enregistrée.\nUn livreur vous contactera sous peu.`, [
-        { text: 'OK', onPress: () => navigation.goBack() },
-      ]);
+      Alert.alert('Erreur', "Impossible d'envoyer la demande. Vérifiez votre connexion et réessayez.");
     } finally {
       setLoading(false);
     }
@@ -115,20 +156,65 @@ export default function EasyPackageScreen({ navigation }) {
 
         {/* Addresses */}
         <Text style={styles.sectionTitle}>Adresses</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="📍 Adresse de ramassage"
-          placeholderTextColor={COLORS.muted}
-          value={pickup}
-          onChangeText={setPickup}
-        />
+
+        {(pickupCoords || deliveryCoords) && (
+          <View style={styles.mapPreview}>
+            <MapboxWebView
+              style={{ height: 160 }}
+              centerCoordinate={
+                pickupCoords && deliveryCoords
+                  ? [(pickupCoords.lng + deliveryCoords.lng) / 2, (pickupCoords.lat + deliveryCoords.lat) / 2]
+                  : pickupCoords ? [pickupCoords.lng, pickupCoords.lat] : [deliveryCoords.lng, deliveryCoords.lat]
+              }
+              zoom={deliveryCoords ? 11 : 13}
+              markers={[
+                ...(pickupCoords ? [{ coordinates: [pickupCoords.lng, pickupCoords.lat], color: '#27AE60', label: '📍' }] : []),
+                ...(deliveryCoords ? [{ coordinates: [deliveryCoords.lng, deliveryCoords.lat], color: '#E74C3C', label: '🏁' }] : []),
+              ]}
+            />
+          </View>
+        )}
+
+        <View style={styles.inputRow}>
+          {locating ? (
+            <View style={[styles.input, { flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
+              <ActivityIndicator size="small" color={COLORS.accent} />
+              <Text style={{ color: COLORS.muted, fontSize: 14 }}>Localisation en cours...</Text>
+            </View>
+          ) : (
+            <TextInput
+              style={[styles.input, { flex: 1 }]}
+              placeholder="📍 Adresse de ramassage"
+              placeholderTextColor={COLORS.muted}
+              value={pickup}
+              onChangeText={(v) => { setPickup(v); setPickupCoords(null); }}
+            />
+          )}
+          <TouchableOpacity onPress={detectPickup} style={styles.gpsBtn}>
+            <Text style={{ fontSize: 18 }}>📍</Text>
+          </TouchableOpacity>
+        </View>
+
         <TextInput
           style={[styles.input, { marginTop: 10 }]}
           placeholder="🏁 Adresse de livraison"
           placeholderTextColor={COLORS.muted}
           value={delivery}
-          onChangeText={setDelivery}
+          onChangeText={handleDeliveryChange}
         />
+        {showSuggestions && suggestions.length > 0 && (
+          <View style={styles.suggestionsBox}>
+            {suggestions.map((s) => (
+              <TouchableOpacity key={s.id} style={styles.suggestionItem} onPress={() => handleSelectSuggestion(s)}>
+                <Text style={{ fontSize: 14 }}>📍</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.suggestionName} numberOfLines={1}>{s.name}</Text>
+                  <Text style={styles.suggestionFull} numberOfLines={1}>{s.fullName}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
         {/* Contact */}
         <Text style={styles.sectionTitle}>Informations</Text>
@@ -221,6 +307,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 14,
     color: COLORS.white, fontSize: 15,
   },
+  mapPreview: { borderRadius: 12, overflow: 'hidden', marginBottom: 10 },
+  inputRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  gpsBtn: { padding: 6 },
+  suggestionsBox: {
+    backgroundColor: COLORS.surface, borderRadius: 12,
+    borderWidth: 1, borderColor: COLORS.border,
+    marginTop: 4, overflow: 'hidden',
+  },
+  suggestionItem: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    padding: 12, borderBottomWidth: 1, borderBottomColor: COLORS.border,
+  },
+  suggestionName: { color: COLORS.white, fontSize: 14, fontWeight: '500' },
+  suggestionFull: { color: COLORS.muted, fontSize: 11, marginTop: 1 },
   summary: {
     backgroundColor: COLORS.surface, borderRadius: 12,
     padding: 16, marginTop: 20,
