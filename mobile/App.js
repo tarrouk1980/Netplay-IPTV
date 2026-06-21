@@ -69,6 +69,7 @@ import EasyInsuranceScreen from './screens/sos/EasyInsuranceScreen';
 import DeliveryHomeScreen from './screens/delivery/DeliveryHomeScreen';
 import MerchantScreen from './screens/delivery/MerchantScreen';
 import DeliveryTrackingScreen from './screens/delivery/DeliveryTrackingScreen';
+import LivreurDashboardScreen from './screens/delivery/LivreurDashboardScreen';
 import MerchantDashboardScreen from './screens/delivery/MerchantDashboardScreen';
 import MerchantProductsScreen from './screens/delivery/MerchantProductsScreen';
 
@@ -634,6 +635,7 @@ function MainStack() {
       <Stack.Screen name="DeliveryHome" component={DeliveryHomeScreen} options={{ title: 'Delivery', headerShown: false }} />
       <Stack.Screen name="Merchant" component={MerchantScreen} options={{ title: 'Commande' }} />
       <Stack.Screen name="DeliveryTracking" component={DeliveryTrackingScreen} options={{ title: 'Suivi livraison', headerShown: false }} />
+      <Stack.Screen name="LivreurDashboard" component={LivreurDashboardScreen} options={{ title: 'Tableau de bord', headerShown: false }} />
       <Stack.Screen name="MerchantDashboard" component={MerchantDashboardScreen} options={{ title: 'Ma boutique', headerShown: false }} />
       <Stack.Screen name="MerchantProducts" component={MerchantProductsScreen} options={{ headerShown: false }} />
 
