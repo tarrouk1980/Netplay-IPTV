@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  StatusBar, TextInput, Alert, Switch,
+  StatusBar, TextInput, Alert, Switch, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
@@ -12,50 +12,44 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB', orange: '#E67E22',
 };
 
-const MOCK_ZONES = [
-  { id: 1, name: 'Tunis Centre', type: 'STANDARD', active: true, surcharge: 0, drivers: 42, demandLevel: 'HAUTE', color: '#27AE60' },
-  { id: 2, name: 'La Marsa', type: 'STANDARD', active: true, surcharge: 0, drivers: 18, demandLevel: 'MOYENNE', color: '#F5A623' },
-  { id: 3, name: 'Aéroport Tunis-Carthage', type: 'AIRPORT', active: true, surcharge: 5, drivers: 12, demandLevel: 'HAUTE', color: '#3498DB' },
-  { id: 4, name: 'Ariana', type: 'STANDARD', active: true, surcharge: 0, drivers: 24, demandLevel: 'FAIBLE', color: '#E74C3C' },
-  { id: 5, name: 'Ben Arous', type: 'STANDARD', active: false, surcharge: 0, drivers: 0, demandLevel: 'AUCUNE', color: '#8A8A9A' },
-  { id: 6, name: 'Zone franche Bizerte', type: 'RESTRICTED', active: false, surcharge: 10, drivers: 0, demandLevel: 'AUCUNE', color: '#9B59B6' },
-];
-
-const DEMAND_COLORS = {
-  HAUTE: COLORS.green, MOYENNE: COLORS.orange,
-  FAIBLE: COLORS.red, AUCUNE: COLORS.muted,
-};
-
-const TYPE_LABELS = {
-  STANDARD: '🏙️ Standard', AIRPORT: '✈️ Aéroport', RESTRICTED: '🚫 Restreinte',
-};
-
 export default function AdminGeoZonesScreen({ navigation }) {
-  const [zones, setZones] = useState(MOCK_ZONES);
+  const [zones, setZones] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [selected, setSelected] = useState(null);
   const [search, setSearch] = useState('');
   const [editSurcharge, setEditSurcharge] = useState('');
 
+  const load = useCallback(() => {
+    setLoading(true);
+    setError(false);
+    api.get('/api/admin/zones')
+      .then(r => setZones(r.data?.zones || []))
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
   const filtered = zones.filter(z => z.name.toLowerCase().includes(search.toLowerCase()));
 
   const toggleZone = async (zone) => {
-    const updated = zones.map(z => z.id === zone.id ? { ...z, active: !z.active } : z);
+    const updated = zones.map(z => z.name === zone.name ? { ...z, enabled: !z.enabled } : z);
     setZones(updated);
-    try { await api.patch(`/api/admin/zones/${zone.id}`, { active: !zone.active }); } catch {}
+    try { await api.patch(`/api/admin/zones/${encodeURIComponent(zone.name)}/toggle`, { enabled: !zone.enabled }); } catch {}
   };
 
   const saveSurcharge = async (zone) => {
     const val = parseFloat(editSurcharge);
     if (isNaN(val) || val < 0) { Alert.alert('Valeur invalide'); return; }
-    setZones(zones.map(z => z.id === zone.id ? { ...z, surcharge: val } : z));
+    setZones(zones.map(z => z.name === zone.name ? { ...z, multiplier: val } : z));
     setSelected(null);
-    try { await api.patch(`/api/admin/zones/${zone.id}`, { surcharge: val }); } catch {}
+    try { await api.patch(`/api/admin/zones/${encodeURIComponent(zone.name)}`, { multiplier: val }); } catch {}
   };
 
   const stats = {
-    active: zones.filter(z => z.active).length,
-    totalDrivers: zones.reduce((s, z) => s + z.drivers, 0),
-    highDemand: zones.filter(z => z.demandLevel === 'HAUTE').length,
+    active: zones.filter(z => z.enabled).length,
+    highDemand: zones.filter(z => z.multiplier > 1).length,
   };
 
   return (
@@ -78,11 +72,6 @@ export default function AdminGeoZonesScreen({ navigation }) {
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
-          <Text style={[styles.statNum, { color: COLORS.white }]}>{stats.totalDrivers}</Text>
-          <Text style={styles.statLabel}>Chauffeurs total</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
           <Text style={[styles.statNum, { color: COLORS.red }]}>{stats.highDemand}</Text>
           <Text style={styles.statLabel}>Forte demande</Text>
         </View>
@@ -99,57 +88,66 @@ export default function AdminGeoZonesScreen({ navigation }) {
         />
       </View>
 
+      {loading ? (
+        <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 60 }} />
+      ) : error ? (
+        <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 24 }}>
+          <Text style={{ fontSize: 36 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, marginTop: 10, textAlign: 'center' }}>
+            Impossible de récupérer les données des zones.
+          </Text>
+        </View>
+      ) : (
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+        {filtered.length === 0 && (
+          <View style={{ alignItems: 'center', marginTop: 40 }}>
+            <Text style={{ color: COLORS.muted }}>Aucune zone trouvée</Text>
+          </View>
+        )}
         {filtered.map(zone => {
-          const isSel = selected?.id === zone.id;
+          const isSel = selected?.name === zone.name;
           return (
-            <TouchableOpacity key={zone.id} style={[styles.card, !zone.active && { opacity: 0.6 }, isSel && { borderColor: COLORS.accent }]} onPress={() => setSelected(isSel ? null : zone)} activeOpacity={0.85}>
+            <TouchableOpacity key={zone.name} style={[styles.card, !zone.enabled && { opacity: 0.6 }, isSel && { borderColor: COLORS.accent }]} onPress={() => setSelected(isSel ? null : zone)} activeOpacity={0.85}>
               <View style={styles.cardTop}>
-                <View style={[styles.colorDot, { backgroundColor: zone.color }]} />
                 <View style={{ flex: 1 }}>
                   <View style={styles.cardHeader}>
                     <Text style={styles.zoneName}>{zone.name}</Text>
                     <Switch
-                      value={zone.active}
+                      value={!!zone.enabled}
                       onValueChange={() => toggleZone(zone)}
-                      thumbColor={zone.active ? COLORS.green : COLORS.muted}
+                      thumbColor={zone.enabled ? COLORS.green : COLORS.muted}
                       trackColor={{ false: COLORS.border, true: COLORS.green + '66' }}
                     />
                   </View>
                   <View style={styles.cardMeta}>
-                    <Text style={styles.metaChip}>{TYPE_LABELS[zone.type]}</Text>
-                    <Text style={[styles.demandBadge, { color: DEMAND_COLORS[zone.demandLevel] }]}>● {zone.demandLevel}</Text>
-                    <Text style={styles.metaItem}>🚕 {zone.drivers}</Text>
-                    {zone.surcharge > 0 && <Text style={[styles.metaItem, { color: COLORS.orange }]}>+{zone.surcharge} TND</Text>}
+                    {zone.multiplier > 1 && <Text style={[styles.metaItem, { color: COLORS.orange }]}>x{zone.multiplier}</Text>}
                   </View>
                 </View>
               </View>
 
               {isSel && (
                 <View style={styles.editPanel}>
-                  <Text style={styles.editLabel}>Supplément tarifaire (TND)</Text>
+                  <Text style={styles.editLabel}>Multiplicateur tarifaire</Text>
                   <View style={styles.editRow}>
                     <TextInput
                       style={styles.editInput}
-                      defaultValue={String(zone.surcharge)}
+                      defaultValue={String(zone.multiplier ?? 1)}
                       onChangeText={setEditSurcharge}
                       keyboardType="decimal-pad"
-                      placeholder="0"
+                      placeholder="1.0"
                       placeholderTextColor={COLORS.muted}
                     />
                     <TouchableOpacity style={styles.saveBtn} onPress={() => saveSurcharge(zone)}>
                       <Text style={styles.saveBtnText}>Sauvegarder</Text>
                     </TouchableOpacity>
                   </View>
-                  <TouchableOpacity style={styles.mapBtn} onPress={() => navigation.navigate('AdminLiveMap', { zoneId: zone.id })}>
-                    <Text style={styles.mapBtnText}>🗺️ Voir sur la carte</Text>
-                  </TouchableOpacity>
                 </View>
               )}
             </TouchableOpacity>
           );
         })}
       </ScrollView>
+      )}
     </SafeAreaView>
   );
 }

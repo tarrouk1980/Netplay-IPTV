@@ -63,10 +63,28 @@ export default function AdminOrdersScreen({ navigation }) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('Tous');
 
+  const [loadError, setLoadError] = useState(false);
+
   const load = useCallback(() => {
+    setLoadError(false);
     api.get('/api/admin/orders')
-      .then(r => setOrders(r.data.orders || MOCK))
-      .catch(() => setOrders(MOCK))
+      .then(r => {
+        const mapped = (r.data.orders || []).map(o => ({
+          id: o.id,
+          type: o.serviceType,
+          client: o.client?.name || 'Client inconnu',
+          provider: o.provider?.name || null,
+          amount: Number(o.price || 0),
+          status: o.status,
+          date: o.createdAt
+            ? new Date(o.createdAt).toLocaleString('fr-TN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+            : '',
+          from: o.originAddress,
+          to: o.destinationAddress,
+        }));
+        setOrders(mapped);
+      })
+      .catch(() => { setOrders([]); setLoadError(true); })
       .finally(() => setLoading(false));
   }, []);
 

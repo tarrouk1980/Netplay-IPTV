@@ -20,13 +20,6 @@ const ROLE_COLOR = {
 const TABS = ['En attente', 'Approuvés', 'Rejetés'];
 const STATUS_TAB = { PENDING: 0, APPROVED: 1, REJECTED: 2 };
 
-const MOCK_KYC = [
-  { id: 'K1', name: 'Karim Ben Salah', role: 'CHAUFFEUR', status: 'PENDING', submittedAt: '2025-06-01', docs: ['CIN', 'Permis', 'Carte grise', 'Assurance'], note: '' },
-  { id: 'K2', name: 'Yassine Mejri', role: 'LIVREUR', status: 'PENDING', submittedAt: '2025-06-02', docs: ['CIN', 'Photo moto'], note: '' },
-  { id: 'K3', name: 'Mounir Tlili', role: 'DEPANNEUR', status: 'APPROVED', submittedAt: '2025-05-28', docs: ['CIN', 'Diplôme mécanicien', 'Photo camion'], note: '' },
-  { id: 'K4', name: 'Sara Mansour', role: 'MARCHAND', status: 'REJECTED', submittedAt: '2025-05-25', docs: ['Registre commerce', 'CIN'], note: 'Document illisible' },
-];
-
 function KYCCard({ item, onApprove, onReject }) {
   const roleColor = ROLE_COLOR[item.role] || COLORS.muted;
   return (
@@ -87,14 +80,27 @@ function KYCCard({ item, onApprove, onReject }) {
 export default function AdminKYCScreen({ navigation }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [tab, setTab] = useState(0);
   const [search, setSearch] = useState('');
 
   const load = useCallback(() => {
     setLoading(true);
-    api.get('/api/admin/kyc')
-      .then(r => setItems(r.data.kyc || MOCK_KYC))
-      .catch(() => setItems(MOCK_KYC))
+    setError(false);
+    api.get('/api/admin/kyc/pending')
+      .then(r => {
+        const users = r.data?.users || [];
+        setItems(users.map(u => ({
+          id: u.id,
+          name: u.name,
+          role: u.role,
+          status: u.kycStatus || 'PENDING',
+          submittedAt: u.createdAt ? new Date(u.createdAt).toISOString().slice(0, 10) : '',
+          docs: Array.isArray(u.kycDocuments) ? u.kycDocuments : [],
+          note: '',
+        })));
+      })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -118,10 +124,10 @@ export default function AdminKYCScreen({ navigation }) {
     Alert.prompt('Motif de rejet', 'Expliquez brièvement la raison du rejet :', [
       { text: 'Annuler', style: 'cancel' },
       {
-        text: 'Rejeter', style: 'destructive', onPress: async (note) => {
+        text: 'Rejeter', style: 'destructive', onPress: async (reason) => {
           try {
-            await api.post(`/api/admin/kyc/${kyc.id}/reject`, { note });
-            setItems(prev => prev.map(k => k.id === kyc.id ? { ...k, status: 'REJECTED', note: note || '' } : k));
+            await api.post(`/api/admin/kyc/${kyc.id}/reject`, { reason });
+            setItems(prev => prev.map(k => k.id === kyc.id ? { ...k, status: 'REJECTED', note: reason || '' } : k));
           } catch { Alert.alert('Erreur', 'Impossible de rejeter.'); }
         },
       },
@@ -176,6 +182,13 @@ export default function AdminKYCScreen({ navigation }) {
 
       {loading ? (
         <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} />
+      ) : error ? (
+        <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 24 }}>
+          <Text style={{ fontSize: 40 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, marginTop: 12, textAlign: 'center' }}>
+            Impossible de récupérer les données KYC.
+          </Text>
+        </View>
       ) : (
         <FlatList
           data={filtered}
