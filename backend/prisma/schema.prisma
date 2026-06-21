@@ -112,6 +112,8 @@ model User {
   reportsGiven        Report[]         @relation("ReporterReports")
   reportsReceived     Report[]         @relation("ReportedReports")
   notifications       Notification[]
+  businessDrivers     BusinessDriver[] @relation("BusinessOwner")
+  businessOf          BusinessDriver[] @relation("BusinessDriverLink")
 }
 
 enum RewardType {
@@ -362,6 +364,17 @@ model Notification {
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
+}
+
+model BusinessDriver {
+  id          String   @id @default(cuid())
+  businessId  String
+  driverId    String
+  createdAt   DateTime @default(now())
+  business    User     @relation("BusinessOwner", fields: [businessId], references: [id])
+  driver      User     @relation("BusinessDriverLink", fields: [driverId], references: [id])
+
+  @@unique([businessId, driverId])
 }
 
 model Report {

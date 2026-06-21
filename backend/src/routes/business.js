@@ -29,15 +29,35 @@ router.post('/register', auth, async (req, res) => {
   }
 });
 
-// GET /api/business/stats — company KPIs
+// GET /api/business/stats — company KPIs computed from linked drivers' real orders
 router.get('/stats', auth, async (req, res) => {
   try {
-    // Return demo data until BusinessAccount model added to schema
+    const links = await prisma.businessDriver.findMany({ where: { businessId: req.user.id } });
+    const driverIds = links.map((l) => l.driverId);
+
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    let ridesThisMonth = 0;
+    let totalSpent = 0;
+    if (driverIds.length) {
+      const orders = await prisma.order.findMany({
+        where: {
+          providerId: { in: driverIds },
+          status: 'COMPLETED',
+          createdAt: { gte: monthStart },
+        },
+        select: { price: true, finalPrice: true },
+      });
+      ridesThisMonth = orders.length;
+      totalSpent = orders.reduce((s, o) => s + Number(o.finalPrice ?? o.price ?? 0), 0);
+    }
+
     res.json({
       planName: 'Business',
-      driversCount: 0,
-      ridesThisMonth: 0,
-      totalSpent: 0,
+      driversCount: driverIds.length,
+      ridesThisMonth,
+      totalSpent,
       nextBilling: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().slice(0, 10),
     });
   } catch (err) {
@@ -48,8 +68,11 @@ router.get('/stats', auth, async (req, res) => {
 // GET /api/business/drivers — list company drivers
 router.get('/drivers', auth, async (req, res) => {
   try {
-    // TODO: query BusinessDriver join table
-    res.json([]);
+    const links = await prisma.businessDriver.findMany({
+      where: { businessId: req.user.id },
+      include: { driver: { select: { id: true, name: true, phone: true } } },
+    });
+    res.json(links.map((l) => ({ id: l.driver.id, name: l.driver.name, phone: l.driver.phone })));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -58,13 +81,22 @@ router.get('/drivers', auth, async (req, res) => {
 // POST /api/business/drivers — add driver by phone
 router.post('/drivers', auth, async (req, res) => {
   try {
-    const { phone, name } = req.body;
+    const { phone } = req.body;
     if (!phone) return res.status(400).json({ error: 'Numéro de téléphone requis' });
 
     const driver = await prisma.user.findFirst({ where: { phone } });
     if (!driver) {
       return res.status(404).json({ error: 'Aucun conducteur trouvé avec ce numéro.' });
     }
+    if (driver.id === req.user.id) {
+      return res.status(400).json({ error: 'Vous ne pouvez pas vous ajouter vous-même.' });
+    }
+
+    await prisma.businessDriver.upsert({
+      where: { businessId_driverId: { businessId: req.user.id, driverId: driver.id } },
+      update: {},
+      create: { businessId: req.user.id, driverId: driver.id },
+    });
 
     res.json({ success: true, driver: { id: driver.id, name: driver.name, phone: driver.phone } });
   } catch (err) {
@@ -75,6 +107,9 @@ router.post('/drivers', auth, async (req, res) => {
 // DELETE /api/business/drivers/:driverId — remove driver
 router.delete('/drivers/:driverId', auth, async (req, res) => {
   try {
+    await prisma.businessDriver.deleteMany({
+      where: { businessId: req.user.id, driverId: req.params.driverId },
+    });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

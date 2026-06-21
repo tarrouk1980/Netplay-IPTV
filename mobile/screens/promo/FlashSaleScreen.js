@@ -80,9 +80,10 @@ function Countdown({ endsAt }) {
 }
 
 function DealCard({ deal, onClaim }) {
-  const slotsLeft = deal.totalSlots - deal.usedSlots;
-  const pct = deal.usedSlots / deal.totalSlots;
-  const urgent = slotsLeft <= 5;
+  const hasSlots = deal.totalSlots != null && deal.usedSlots != null;
+  const slotsLeft = hasSlots ? deal.totalSlots - deal.usedSlots : null;
+  const pct = hasSlots ? deal.usedSlots / deal.totalSlots : 0;
+  const urgent = hasSlots && slotsLeft <= 5;
 
   return (
     <View style={[styles.dealCard, { borderColor: deal.color }]}>
@@ -102,19 +103,25 @@ function DealCard({ deal, onClaim }) {
       </View>
 
       <View style={styles.dealBody}>
-        <View style={styles.timerRow}>
-          <Text style={styles.timerLabel}>⏰ Expire dans</Text>
-          <Countdown endsAt={deal.endsAt} />
-        </View>
+        {deal.endsAt != null && (
+          <View style={styles.timerRow}>
+            <Text style={styles.timerLabel}>⏰ Expire dans</Text>
+            <Countdown endsAt={deal.endsAt} />
+          </View>
+        )}
 
-        <View style={styles.slotsRow}>
-          <Text style={[styles.slotsText, urgent && { color: COLORS.red }]}>
-            {urgent ? `🔥 Plus que ${slotsLeft} place${slotsLeft > 1 ? 's' : ''} !` : `${slotsLeft} places restantes`}
-          </Text>
-        </View>
-        <View style={styles.progressBar}>
-          <View style={[styles.progressFill, { width: `${pct * 100}%`, backgroundColor: pct > 0.8 ? COLORS.red : deal.color }]} />
-        </View>
+        {hasSlots && (
+          <>
+            <View style={styles.slotsRow}>
+              <Text style={[styles.slotsText, urgent && { color: COLORS.red }]}>
+                {urgent ? `🔥 Plus que ${slotsLeft} place${slotsLeft > 1 ? 's' : ''} !` : `${slotsLeft} places restantes`}
+              </Text>
+            </View>
+            <View style={styles.progressBar}>
+              <View style={[styles.progressFill, { width: `${pct * 100}%`, backgroundColor: pct > 0.8 ? COLORS.red : deal.color }]} />
+            </View>
+          </>
+        )}
 
         {deal.minOrder > 0 && (
           <Text style={styles.minOrder}>Min. commande : {deal.minOrder} TND</Text>
@@ -147,8 +154,24 @@ export default function FlashSaleScreen({ navigation }) {
   useEffect(() => {
     (async () => {
       try {
-        const res = await api.get('/api/promo/flash');
-        if (res.data?.deals?.length) setDeals(res.data.deals);
+        const res = await api.get('/api/promo/list');
+        const codes = Array.isArray(res.data) ? res.data : [];
+        if (codes.length) {
+          setDeals(codes.map((c, i) => ({
+            id: c.code,
+            emoji: '🏷️',
+            title: c.label,
+            service: (c.services && c.services[0]) || 'TOUS',
+            code: c.code,
+            discount: c.value,
+            type: c.type === 'PERCENT' ? 'percent' : 'fixed',
+            endsAt: null,
+            totalSlots: null,
+            usedSlots: null,
+            color: [COLORS.accent, COLORS.purple, COLORS.red, COLORS.green, COLORS.blue][i % 5],
+            minOrder: c.minAmount || 0,
+          })));
+        }
       } catch {}
     })();
 

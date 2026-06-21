@@ -21,28 +21,6 @@ const MONTHS = [
   'Juillet','Août','Septembre','Octobre','Novembre','Décembre',
 ];
 
-const MOCK_INCOME = {
-  providerName: 'Tarek Ben Ali',
-  role: 'CHAUFFEUR',
-  totalGross: 847.500,
-  platformFee: 0,
-  totalNet: 847.500,
-  ordersCount: 203,
-  avgPerOrder: 4.175,
-  workDays: 22,
-  bestDay: { date: '2025-05-15', amount: 62.000 },
-  byService: [
-    { service: 'TAXI', count: 203, amount: 847.500 },
-  ],
-  byWeek: [
-    { week: 'S1 (1-7)', amount: 189.500 },
-    { week: 'S2 (8-14)', amount: 231.000 },
-    { week: 'S3 (15-21)', amount: 247.500 },
-    { week: 'S4 (22-31)', amount: 179.500 },
-  ],
-  taxNote: 'Revenus soumis à l\'impôt sur le revenu (IR) selon le barème tunisien.',
-};
-
 function Row({ label, value, bold, accent, border }) {
   return (
     <View style={[styles.tableRow, border && styles.tableRowBorder]}>
@@ -58,13 +36,15 @@ export default function ProviderIncomeScreen({ navigation }) {
   const [year, setYear] = useState(now.getFullYear());
   const [income, setIncome] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     setLoading(true);
+    setError(false);
     api.get(`/api/provider/income?month=${month + 1}&year=${year}`)
-      .then(r => setIncome(r.data || MOCK_INCOME))
-      .catch(() => setIncome(MOCK_INCOME))
+      .then(r => setIncome(r.data))
+      .catch(() => { setIncome(null); setError(true); })
       .finally(() => setLoading(false));
   }, [month, year]);
 
@@ -168,7 +148,15 @@ export default function ProviderIncomeScreen({ navigation }) {
 
           <View style={{ height: 40 }} />
         </ScrollView>
-      ) : null}
+      ) : (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>
+            {error
+              ? 'Impossible de récupérer votre relevé de revenus. Vérifiez votre connexion et réessayez.'
+              : 'Aucun revenu enregistré pour cette période.'}
+          </Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -228,4 +216,6 @@ const styles = StyleSheet.create({
   },
   taxTitle: { color: COLORS.text, fontSize: 13, fontWeight: '700', marginBottom: 8 },
   taxText: { color: COLORS.muted, fontSize: 12, lineHeight: 18 },
+  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
+  emptyText: { color: COLORS.muted, fontSize: 14, textAlign: 'center', lineHeight: 20 },
 });

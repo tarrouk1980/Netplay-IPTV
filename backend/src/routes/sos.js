@@ -779,29 +779,6 @@ router.post(
 );
 
 // ─────────────────────────────────────────────
-// GET /api/sos/depanneur/requests — DEPANNEUR sees nearby PENDING requests
-// ─────────────────────────────────────────────
-router.get(
-  '/depanneur/requests',
-  authenticate,
-  requireRole('DEPANNEUR'),
-  async (req, res) => {
-    try {
-      const orders = await prisma.order.findMany({
-        where: { serviceType: 'SOS', status: 'PENDING' },
-        include: { client: { select: { id: true, name: true } } },
-        orderBy: { createdAt: 'desc' },
-        take: 20,
-      });
-      return res.json({ orders, count: orders.length });
-    } catch (err) {
-      console.error('[SOS] depanneur/requests error:', err);
-      return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
-    }
-  }
-);
-
-// ─────────────────────────────────────────────
 // GET /api/sos/history — CLIENT order history
 // ─────────────────────────────────────────────
 router.get(
@@ -940,22 +917,22 @@ router.get('/depanneur/requests', authenticate, requireRole('DEPANNEUR'), async 
     const orders = await prisma.order.findMany({
       where: { serviceType: 'SOS', status: 'PENDING' },
       orderBy: { createdAt: 'desc' },
-      include: { client: { select: { name: true } } },
+      include: { client: { select: { id: true, name: true } } },
     });
 
-    const requests = orders
-      .filter((o) => (o.metadata?.notifiedDepanneurs || []).includes(req.user.id))
-      .map((o) => ({
-        id: o.id,
-        type: o.metadata?.sosType || 'PANNE',
-        clientName: o.client?.name || 'Client',
-        distance: o.metadata?.distanceKm ?? null,
-        address: o.originAddress || '',
-        createdAt: new Date(o.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-        urgent: o.metadata?.sosType === 'ACCIDENT',
-      }));
+    const notified = orders.filter((o) => (o.metadata?.notifiedDepanneurs || []).includes(req.user.id));
 
-    return res.json({ requests, count: requests.length });
+    const requests = notified.map((o) => ({
+      id: o.id,
+      type: o.metadata?.sosType || 'PANNE',
+      clientName: o.client?.name || 'Client',
+      distance: o.metadata?.distanceKm ?? null,
+      address: o.originAddress || '',
+      createdAt: new Date(o.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+      urgent: o.metadata?.sosType === 'ACCIDENT',
+    }));
+
+    return res.json({ requests, orders: notified, count: requests.length });
   } catch (err) {
     console.error('[sos/depanneur/requests]', err);
     return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });

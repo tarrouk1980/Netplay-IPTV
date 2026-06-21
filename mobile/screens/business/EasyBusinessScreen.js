@@ -200,13 +200,12 @@ export default function EasyBusinessScreen({ navigation }) {
     );
   };
 
-  // ── DEMO data if API not available ──
   const demoStats = stats || {
-    planName: 'Business',
-    driversCount: 3,
-    ridesThisMonth: 47,
-    totalSpent: 211.5,
-    nextBilling: '2026-07-01',
+    planName: '—',
+    driversCount: 0,
+    ridesThisMonth: 0,
+    totalSpent: 0,
+    nextBilling: '—',
   };
 
   return (

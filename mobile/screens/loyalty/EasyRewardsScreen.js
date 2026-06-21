@@ -33,13 +33,14 @@ const TIERS = [
   { name: 'Diamond', min: 5000, max: Infinity, color: '#89CFF0', icon: '💠' },
 ];
 
-const REWARDS = [
-  { id: 'r1', title: 'Course gratuite', description: 'Réduction de 10 TND sur votre prochain taxi', cost: 200, icon: '🚕', category: 'TAXI', stock: 50 },
-  { id: 'r2', title: 'Livraison offerte', description: 'Frais de livraison gratuits sur votre prochaine commande', cost: 150, icon: '🛵', category: 'DELIVERY', stock: 100 },
-  { id: 'r3', title: 'Réduction SOS 50%', description: '50% de réduction sur votre prochaine intervention SOS', cost: 400, icon: '🛻', category: 'SOS', stock: 20 },
-  { id: 'r4', title: 'Bon d\'achat 5 TND', description: 'Bon valable sur toutes les épiceries partenaires', cost: 100, icon: '🎁', category: 'GROCERY', stock: 200 },
-  { id: 'r5', title: 'EasyPass 7 jours', description: 'Accès premium gratuit pendant 7 jours', cost: 500, icon: '⭐', category: 'PASS', stock: 30 },
-  { id: 'r6', title: 'Bon carburant 10 TND', description: 'Valable dans les stations partenaires', cost: 350, icon: '⛽', category: 'FUEL', stock: 15 },
+// Fallback only used if /api/loyalty/balance is unreachable — the real
+// catalog (and the only set of ids /api/loyalty/redeem actually accepts)
+// is fetched from the backend below.
+const FALLBACK_REWARDS = [
+  { id: 'r1', title: '-10% Taxi', description: 'Réduction sur prochaine course taxi', cost: 500, icon: '🚕' },
+  { id: 'r2', title: 'Livraison gratuite', description: 'Frais de livraison offerts', cost: 300, icon: '🛵' },
+  { id: 'r3', title: '-50% SOS', description: 'Moitié prix sur intervention SOS', cost: 800, icon: '🚑' },
+  { id: 'r4', title: 'Course offerte', description: 'Une course taxi gratuite', cost: 2000, icon: '🎁' },
 ];
 
 function ProgressBar({ pct, color }) {
@@ -72,14 +73,19 @@ export default function EasyRewardsScreen({ navigation }) {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [redeeming, setRedeeming] = useState(null);
+  const [rewards, setRewards] = useState(FALLBACK_REWARDS);
 
   const load = useCallback(async () => {
     try {
-      const res = await api.get('/api/loyalty/rewards');
+      const res = await api.get('/api/loyalty/balance');
       setPoints(res.data.points || 0);
       const currentTier = TIERS.slice().reverse().find((t) => res.data.points >= t.min) || TIERS[0];
       setTier(currentTier);
-      setHistory(res.data.history || []);
+      if (Array.isArray(res.data.rewards) && res.data.rewards.length) {
+        setRewards(res.data.rewards.map((r) => ({
+          id: r.id, title: r.label, description: r.description, cost: r.points, icon: r.icon,
+        })));
+      }
     } catch {
       setPoints(680);
       setTier(TIERS[1]);
@@ -170,7 +176,7 @@ export default function EasyRewardsScreen({ navigation }) {
 
         {/* Rewards catalogue */}
         <Text style={s.sectionTitle}>Catalogue de récompenses</Text>
-        {REWARDS.map((reward) => {
+        {rewards.map((reward) => {
           const canAfford = points >= reward.cost;
           const isRedeeming = redeeming === reward.id;
           return (

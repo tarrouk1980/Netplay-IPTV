@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  StatusBar, ActivityIndicator,
+  StatusBar, ActivityIndicator, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
@@ -23,17 +23,22 @@ const MOCK = [
   { id: 'EP008', type: 'credit', label: 'Pass Premium activé',          pts: +150, date: '01/12/2024', service: '🌟' },
 ];
 
-const REWARDS = [
-  { pts: 200,  label: 'Réduction 5 TND',    emoji: '💰' },
-  { pts: 500,  label: 'Course gratuite',    emoji: '🚕' },
-  { pts: 1000, label: 'Livraison offerte',  emoji: '📦' },
-  { pts: 2000, label: 'Mois Pass -50%',     emoji: '🌟' },
+// Fallback only used if /api/loyalty/balance is unreachable — the real
+// catalog (and the only set of ids /api/loyalty/redeem actually accepts)
+// is fetched from the backend below.
+const FALLBACK_REWARDS = [
+  { id: 'r1', pts: 500,  label: '-10% Taxi',          emoji: '🚕' },
+  { id: 'r2', pts: 300,  label: 'Livraison gratuite',  emoji: '🛵' },
+  { id: 'r3', pts: 800,  label: '-50% SOS',            emoji: '🚑' },
+  { id: 'r4', pts: 2000, label: 'Course offerte',      emoji: '🎁' },
 ];
 
 export default function EasyPointsHistoryScreen({ navigation }) {
   const [history, setHistory] = useState(MOCK);
   const [loading, setLoading] = useState(false);
-  const [balance, setBalance] = useState(590);
+  const [balance, setBalance] = useState(0);
+  const [rewards, setRewards] = useState(FALLBACK_REWARDS);
+  const [redeeming, setRedeeming] = useState(null);
   const [tab, setTab] = useState('historique');
 
   useEffect(() => {
@@ -42,11 +47,32 @@ export default function EasyPointsHistoryScreen({ navigation }) {
       try {
         const res = await api.get('/api/loyalty/history');
         if (Array.isArray(res.data) && res.data.length) setHistory(res.data);
-      } catch {} finally {
-        setLoading(false);
-      }
+      } catch {}
+      try {
+        const balRes = await api.get('/api/loyalty/balance');
+        setBalance(balRes.data.points ?? 0);
+        if (Array.isArray(balRes.data.rewards) && balRes.data.rewards.length) {
+          setRewards(balRes.data.rewards.map((r) => ({
+            id: r.id, pts: r.points, label: r.label, emoji: r.icon,
+          })));
+        }
+      } catch {}
+      setLoading(false);
     })();
   }, []);
+
+  const handleRedeem = async (reward) => {
+    setRedeeming(reward.id);
+    try {
+      await api.post('/api/loyalty/redeem', { rewardId: reward.id });
+      setBalance((p) => p - reward.pts);
+      Alert.alert('🎁 Récompense activée !', `${reward.label} est disponible.`);
+    } catch {
+      Alert.alert('Erreur', "Impossible d'échanger cette récompense.");
+    } finally {
+      setRedeeming(null);
+    }
+  };
 
   const earned = history.filter((h) => h.type === 'credit').reduce((s, h) => s + h.pts, 0);
   const spent  = history.filter((h) => h.type === 'debit').reduce((s, h) => s + Math.abs(h.pts), 0);
@@ -116,10 +142,11 @@ export default function EasyPointsHistoryScreen({ navigation }) {
       {tab === 'echanger' && (
         <ScrollView contentContainerStyle={styles.rewardList} showsVerticalScrollIndicator={false}>
           <Text style={styles.rewardNote}>Échangez vos points contre des avantages exclusifs !</Text>
-          {REWARDS.map((r) => {
+          {rewards.map((r) => {
             const canRedeem = balance >= r.pts;
+            const isRedeeming = redeeming === r.id;
             return (
-              <View key={r.pts} style={[styles.rewardCard, !canRedeem && { opacity: 0.5 }]}>
+              <View key={r.id} style={[styles.rewardCard, !canRedeem && { opacity: 0.5 }]}>
                 <Text style={{ fontSize: 36 }}>{r.emoji}</Text>
                 <View style={{ flex: 1, marginLeft: 14 }}>
                   <Text style={styles.rewardLabel}>{r.label}</Text>
@@ -127,10 +154,12 @@ export default function EasyPointsHistoryScreen({ navigation }) {
                 </View>
                 <TouchableOpacity
                   style={[styles.redeemBtn, !canRedeem && styles.redeemBtnDisabled]}
-                  disabled={!canRedeem}
-                  onPress={() => {}}
+                  disabled={!canRedeem || isRedeeming}
+                  onPress={() => handleRedeem(r)}
                 >
-                  <Text style={styles.redeemBtnText}>{canRedeem ? 'Échanger' : 'Insuffisant'}</Text>
+                  {isRedeeming
+                    ? <ActivityIndicator color="#000" size="small" />
+                    : <Text style={styles.redeemBtnText}>{canRedeem ? 'Échanger' : 'Insuffisant'}</Text>}
                 </TouchableOpacity>
               </View>
             );

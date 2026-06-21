@@ -100,7 +100,7 @@ export default function ClientFavoriteProvidersScreen({ navigation }) {
 
   const load = useCallback(async () => {
     try {
-      const res = await api.get('/api/clients/favorites');
+      const res = await api.get('/api/users/clients/favorites');
       setFavorites(res.data.favorites || []);
     } catch {
       setFavorites([]);
@@ -120,7 +120,7 @@ export default function ClientFavoriteProvidersScreen({ navigation }) {
         style: 'destructive',
         onPress: async () => {
           try {
-            await api.delete(`/api/clients/favorites/${providerId}`);
+            await api.delete(`/api/users/clients/favorites/${providerId}`);
             setFavorites((prev) => prev.filter((f) => f.id !== providerId));
           } catch {
             Alert.alert('Erreur', 'Impossible de retirer.');

@@ -1157,14 +1157,18 @@ router.post('/users/:id/ban', authenticate, async (req, res) => {
 });
 
 // POST /api/admin/users/:id/unban — Débannir un utilisateur
-router.post('/users/:id/unban', authenticate, async (req, res) => {
+router.post('/users/:id/unban', async (req, res) => {
   try {
     await prisma.user.update({
       where: { id: req.params.id },
-      data: { kycStatus: 'APPROVED' },
+      data: { suspended: false },
     });
+    await prisma.userAction.create({
+      data: { userId: req.params.id, type: 'UNBAN', performedBy: req.user.name || 'Admin', reason: 'Levée manuelle du ban' },
+    }).catch(() => {});
     return res.json({ success: true });
   } catch (err) {
+    console.error('[admin/unban]', err);
     return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
   }
 });
@@ -1952,25 +1956,6 @@ router.get('/users/:id/ban-history', async (req, res) => {
     return res.json({ user, history });
   } catch (err) {
     console.error('[admin/ban-history]', err);
-    return res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// ─────────────────────────────────────────────
-// POST /api/admin/users/:id/unban
-// ─────────────────────────────────────────────
-router.post('/users/:id/unban', async (req, res) => {
-  try {
-    await prisma.user.update({
-      where: { id: req.params.id },
-      data: { suspended: false },
-    });
-    await prisma.userAction.create({
-      data: { userId: req.params.id, type: 'UNBAN', performedBy: req.user.name || 'Admin', reason: 'Levée manuelle du ban' },
-    }).catch(() => {});
-    return res.json({ success: true });
-  } catch (err) {
-    console.error('[admin/unban]', err);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });

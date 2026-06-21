@@ -21,13 +21,14 @@ const TIERS = [
   { name: 'Diamant',  min: 10000, max: Infinity, color: '#B9F2FF', emoji: '👑', perks: ['20% remise', 'Chauffeur dédié', 'EasyPass Gold inclus', 'Concierge 24/7'] },
 ];
 
-const REWARDS = [
-  { id: 'taxi5', label: '-5 TND sur votre prochain taxi', cost: 100, emoji: '🚕', service: 'TAXI' },
-  { id: 'delivery_free', label: 'Livraison offerte', cost: 80, emoji: '🛵', service: 'DELIVERY' },
-  { id: 'sos10', label: '-10 TND sur SOS Remorquage', cost: 200, emoji: '🛻', service: 'SOS' },
-  { id: 'grocery15', label: '-15 TND sur vos courses', cost: 250, emoji: '🛒', service: 'GROCERY' },
-  { id: 'pass1month', label: '1 mois EasyPass Basic', cost: 500, emoji: '⭐', service: 'PASS' },
-  { id: 'taxi20', label: '-20 TND sur votre prochain taxi', cost: 350, emoji: '🚕', service: 'TAXI' },
+// Fallback only used if /api/loyalty/balance is unreachable — the real
+// catalog (and the only set of ids /api/loyalty/redeem actually accepts)
+// is fetched from the backend below.
+const FALLBACK_REWARDS = [
+  { id: 'r1', label: '-10% Taxi', cost: 500, emoji: '🚕' },
+  { id: 'r2', label: 'Livraison gratuite', cost: 300, emoji: '🛵' },
+  { id: 'r3', label: '-50% SOS', cost: 800, emoji: '🚑' },
+  { id: 'r4', label: 'Course offerte', cost: 2000, emoji: '🎁' },
 ];
 
 const TYPE_EARN = {
@@ -109,6 +110,7 @@ function RewardCard({ reward, points, onRedeem }) {
 export default function EasyPointsDashboardScreen({ navigation }) {
   const [points, setPoints] = useState(null);
   const [history, setHistory] = useState([]);
+  const [rewards, setRewards] = useState(FALLBACK_REWARDS);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('rewards'); // rewards | history | tiers
 
@@ -121,9 +123,17 @@ export default function EasyPointsDashboardScreen({ navigation }) {
     } catch {
       setPoints(68);
       setHistory(MOCK_HISTORY);
-    } finally {
-      setLoading(false);
     }
+    try {
+      const balRes = await api.get('/api/loyalty/balance');
+      const real = balRes.data.rewards;
+      if (Array.isArray(real) && real.length) {
+        setRewards(real.map(r => ({
+          id: r.id, label: r.label, cost: r.points, emoji: r.icon,
+        })));
+      }
+    } catch {}
+    setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -193,7 +203,7 @@ export default function EasyPointsDashboardScreen({ navigation }) {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
         {tab === 'rewards' && (
           <View style={styles.rewardsGrid}>
-            {REWARDS.map(r => (
+            {rewards.map(r => (
               <RewardCard key={r.id} reward={r} points={points || 0} onRedeem={handleRedeem} />
             ))}
           </View>
