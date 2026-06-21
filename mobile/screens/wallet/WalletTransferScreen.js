@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  StatusBar, TextInput, Alert,
+  StatusBar, TextInput, Alert, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', surfaceAlt: '#16161F',
@@ -11,16 +12,8 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB',
 };
 
-const RECENT_CONTACTS = [
-  { id: 1, name: 'Sana Ben Ali', phone: '+216 20 123 456', avatar: '👩' },
-  { id: 2, name: 'Karim Meddeb', phone: '+216 25 987 654', avatar: '👨' },
-  { id: 3, name: 'Amira Trabelsi', phone: '+216 50 111 222', avatar: '👩' },
-];
-
-const MOCK_BALANCE = 147.50;
-
 export default function WalletTransferScreen({ navigation, route }) {
-  const balance = route.params?.balance ?? MOCK_BALANCE;
+  const balance = route.params?.balance ?? 0;
   const [step, setStep] = useState(1);
   const [phone, setPhone] = useState('');
   const [amount, setAmount] = useState('');
@@ -28,32 +21,31 @@ export default function WalletTransferScreen({ navigation, route }) {
   const [recipient, setRecipient] = useState(null);
   const [done, setDone] = useState(false);
   const [refId, setRefId] = useState('');
+  const [sending, setSending] = useState(false);
 
   const numAmount = parseFloat(amount) || 0;
-  const canProceedStep1 = phone.length >= 8 || recipient;
+  const canProceedStep1 = phone.trim().length >= 8;
   const canProceedStep2 = numAmount >= 1 && numAmount <= balance;
 
   const lookupRecipient = () => {
-    if (!phone.trim()) return;
-    // Mock lookup
-    setRecipient({ name: 'Utilisateur EASYWAY', phone, avatar: '👤', verified: true });
-    setStep(2);
-  };
-
-  const selectContact = (c) => {
-    setPhone(c.phone);
-    setRecipient({ name: c.name, phone: c.phone, avatar: c.avatar, verified: true });
+    if (!canProceedStep1) return;
+    setRecipient({ name: null, phone: phone.trim(), avatar: '👤' });
     setStep(2);
   };
 
   const confirmTransfer = async () => {
     if (!canProceedStep2) return;
+    setSending(true);
     try {
-      // await api.post('/wallet/transfer', { phone: recipient.phone, amount: numAmount, note });
-      setRefId('TRF-' + Math.random().toString(36).slice(2, 8).toUpperCase());
+      const res = await api.post('/api/wallet/transfer', { phone: recipient.phone, amount: numAmount, note });
+      setRefId(res.data.refId);
+      setRecipient(prev => ({ ...prev, name: res.data.recipient?.name }));
       setDone(true);
-    } catch {
-      Alert.alert('Erreur', 'Le virement a échoué. Vérifiez le numéro et réessayez.');
+    } catch (err) {
+      const msg = err?.response?.data?.error || 'Le virement a échoué. Vérifiez le numéro et réessayez.';
+      Alert.alert('Erreur', msg);
+    } finally {
+      setSending(false);
     }
   };
 
@@ -154,26 +146,12 @@ export default function WalletTransferScreen({ navigation, route }) {
               />
             </View>
             <TouchableOpacity
-              style={[styles.lookupBtn, !phone.trim() && styles.lookupBtnDisabled]}
+              style={[styles.lookupBtn, !canProceedStep1 && styles.lookupBtnDisabled]}
               onPress={lookupRecipient}
-              disabled={!phone.trim()}
+              disabled={!canProceedStep1}
             >
-              <Text style={styles.lookupBtnText}>Rechercher</Text>
+              <Text style={styles.lookupBtnText}>Continuer</Text>
             </TouchableOpacity>
-
-            <Text style={styles.sectionTitle}>👥 Contacts récents</Text>
-            {RECENT_CONTACTS.map((c) => (
-              <TouchableOpacity key={c.id} style={styles.contactRow} onPress={() => selectContact(c)}>
-                <View style={styles.contactAvatar}>
-                  <Text style={{ fontSize: 24 }}>{c.avatar}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.contactName}>{c.name}</Text>
-                  <Text style={styles.contactPhone}>{c.phone}</Text>
-                </View>
-                <Text style={{ color: COLORS.accent, fontSize: 20 }}>›</Text>
-              </TouchableOpacity>
-            ))}
           </View>
         )}
 
@@ -183,14 +161,9 @@ export default function WalletTransferScreen({ navigation, route }) {
             <View style={styles.recipientCard}>
               <Text style={styles.recipientAvatar}>{recipient.avatar}</Text>
               <View style={{ flex: 1 }}>
-                <Text style={styles.recipientName}>{recipient.name}</Text>
+                <Text style={styles.recipientName}>{recipient.name || 'Destinataire'}</Text>
                 <Text style={styles.recipientPhone}>{recipient.phone}</Text>
               </View>
-              {recipient.verified && (
-                <View style={styles.verifiedBadge}>
-                  <Text style={styles.verifiedText}>✓ Vérifié</Text>
-                </View>
-              )}
             </View>
 
             <Text style={styles.sectionTitle}>💵 Montant</Text>
@@ -248,13 +221,17 @@ export default function WalletTransferScreen({ navigation, route }) {
         )}
         {step === 2 && (
           <TouchableOpacity
-            style={[styles.nextBtn, !canProceedStep2 && styles.nextBtnDisabled]}
+            style={[styles.nextBtn, (!canProceedStep2 || sending) && styles.nextBtnDisabled]}
             onPress={confirmTransfer}
-            disabled={!canProceedStep2}
+            disabled={!canProceedStep2 || sending}
           >
-            <Text style={styles.nextBtnText}>
-              {canProceedStep2 ? `Envoyer ${numAmount.toFixed(2)} TND` : 'Entrez un montant valide'}
-            </Text>
+            {sending ? (
+              <ActivityIndicator color="#000" />
+            ) : (
+              <Text style={styles.nextBtnText}>
+                {canProceedStep2 ? `Envoyer ${numAmount.toFixed(2)} TND` : 'Entrez un montant valide'}
+              </Text>
+            )}
           </TouchableOpacity>
         )}
       </View>

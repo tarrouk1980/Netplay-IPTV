@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  ActivityIndicator, StatusBar, Alert,
+  ActivityIndicator, StatusBar, Alert, Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -38,17 +38,6 @@ const TYPE_CONFIG = {
   PROMO:     { sign: '+', color: COLORS.accent, icon: '🎁' },
 };
 
-const MOCK_TRANSACTIONS = [
-  { id: 'tx1', type: 'RECHARGE', amount: 20, description: 'Recharge Flouci', createdAt: new Date(Date.now() - 1 * 86400000).toISOString() },
-  { id: 'tx2', type: 'DEBIT',    amount: 4.5, description: 'Course taxi #A3F2', createdAt: new Date(Date.now() - 2 * 86400000).toISOString() },
-  { id: 'tx3', type: 'REFUND',   amount: 2.0, description: 'Remboursement commande annulée', createdAt: new Date(Date.now() - 3 * 86400000).toISOString() },
-  { id: 'tx4', type: 'PROMO',    amount: 5.0, description: 'Code promo BIENVENUE', createdAt: new Date(Date.now() - 5 * 86400000).toISOString() },
-  { id: 'tx5', type: 'DEBIT',    amount: 8.0, description: 'Livraison #D8C1', createdAt: new Date(Date.now() - 7 * 86400000).toISOString() },
-  { id: 'tx6', type: 'DEBIT',    amount: 12.5, description: 'SOS Remorquage #S2F4', createdAt: new Date(Date.now() - 10 * 86400000).toISOString() },
-  { id: 'tx7', type: 'RECHARGE', amount: 50,  description: 'Recharge D17', createdAt: new Date(Date.now() - 14 * 86400000).toISOString() },
-  { id: 'tx8', type: 'CREDIT',   amount: 1.0, description: 'Bonus parrainage', createdAt: new Date(Date.now() - 20 * 86400000).toISOString() },
-];
-
 function formatDate(iso) {
   const d = new Date(iso);
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -82,9 +71,9 @@ export default function WalletTransactionsScreen({ navigation }) {
   const load = useCallback(async () => {
     try {
       const res = await api.get('/api/wallet/transactions');
-      setTransactions(Array.isArray(res.data) && res.data.length ? res.data : MOCK_TRANSACTIONS);
+      setTransactions(Array.isArray(res.data) ? res.data : []);
     } catch {
-      setTransactions(MOCK_TRANSACTIONS);
+      setTransactions([]);
     } finally {
       setLoading(false);
     }
@@ -112,13 +101,7 @@ export default function WalletTransactionsScreen({ navigation }) {
         return `"${formatDate(tx.createdAt)}","${tx.type}","${tx.description}","${cfg.sign}${tx.amount.toFixed(3)}"`;
       }).join('\n');
       const csv = header + rows;
-      const path = FileSystem.documentDirectory + `transactions_${Date.now()}.csv`;
-      await FileSystem.writeAsStringAsync(path, csv, { encoding: FileSystem.EncodingType.UTF8 });
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(path, { mimeType: 'text/csv', dialogTitle: 'Exporter les transactions' });
-      } else {
-        Alert.alert('Export', 'Fichier CSV créé');
-      }
+      await Share.share({ message: csv, title: 'Transactions wallet' });
     } catch (err) {
       Alert.alert('Erreur', "Impossible d'exporter");
     } finally {

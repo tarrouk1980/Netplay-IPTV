@@ -77,6 +77,44 @@ router.post('/recharge', authenticate, async (req, res) => {
   }
 });
 
+// POST /api/wallet/transfer — send wallet balance to another user by phone
+router.post('/transfer', authenticate, async (req, res) => {
+  const { phone, amount, note } = req.body;
+  const numAmount = Number(amount);
+  if (!phone) return res.status(400).json({ error: 'Numéro de téléphone requis' });
+  if (!(numAmount >= 1)) return res.status(400).json({ error: 'Montant invalide (minimum 1 TND)' });
+
+  try {
+    const recipient = await prisma.user.findUnique({ where: { phone } });
+    if (!recipient) return res.status(404).json({ error: 'Aucun utilisateur trouvé avec ce numéro.' });
+    if (recipient.id === req.user.id) return res.status(400).json({ error: 'Vous ne pouvez pas vous envoyer de l\'argent à vous-même.' });
+
+    const result = await prisma.$transaction(async (tx) => {
+      const sender = await tx.user.findUnique({ where: { id: req.user.id }, select: { walletBalance: true } });
+      if ((sender?.walletBalance || 0) < numAmount) {
+        throw new Error('INSUFFICIENT_BALANCE');
+      }
+      await tx.user.update({ where: { id: req.user.id }, data: { walletBalance: { decrement: numAmount } } });
+      await tx.user.update({ where: { id: recipient.id }, data: { walletBalance: { increment: numAmount } } });
+      await tx.walletTransaction.create({
+        data: { userId: req.user.id, amount: numAmount, type: 'DEBIT', description: `Virement à ${recipient.name}${note ? ` — ${note}` : ''}` },
+      });
+      await tx.walletTransaction.create({
+        data: { userId: recipient.id, amount: numAmount, type: 'CREDIT', description: `Virement de ${req.user.name}${note ? ` — ${note}` : ''}` },
+      });
+      return true;
+    });
+
+    const refId = 'TRF-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+    res.json({ success: true, refId, recipient: { name: recipient.name, phone: recipient.phone } });
+  } catch (err) {
+    if (err.message === 'INSUFFICIENT_BALANCE') {
+      return res.status(400).json({ error: 'Solde insuffisant.' });
+    }
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /api/wallet/topup — cash/D17 topup request
 router.post('/topup', authenticate, async (req, res) => {
   try {

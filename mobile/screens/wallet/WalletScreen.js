@@ -12,31 +12,19 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB',
 };
 
-const MOCK_WALLET = {
-  balance: 47.500,
-  pendingBalance: 5.000,
-  transactions: [
-    { id: 'T1', type: 'CREDIT', label: 'Recharge portefeuille', amount: 50.000, date: '03 juin', icon: '💳' },
-    { id: 'T2', type: 'DEBIT', label: 'Course Taxi — Karim B.', amount: -18.500, date: '03 juin', icon: '🚕' },
-    { id: 'T3', type: 'DEBIT', label: 'Livraison Pizza Roma', amount: -5.000, date: '02 juin', icon: '📦' },
-    { id: 'T4', type: 'CREDIT', label: 'Remboursement course', amount: 12.000, date: '01 juin', icon: '↩️' },
-    { id: 'T5', type: 'DEBIT', label: 'SOS Dépannage', amount: -45.000, date: '30 mai', icon: '🔧' },
-    { id: 'T6', type: 'CREDIT', label: 'Bonus parrainage', amount: 10.000, date: '28 mai', icon: '🎁' },
-  ],
-};
-
 const TX_FILTERS = ['Toutes', 'Crédits', 'Débits'];
 
 function TxRow({ item }) {
   const isCredit = item.type === 'CREDIT';
+  const date = item.date ? new Date(item.date).toLocaleDateString('fr-TN', { day: '2-digit', month: 'short' }) : '';
   return (
     <View style={styles.txRow}>
       <View style={[styles.txIcon, { backgroundColor: (isCredit ? COLORS.green : COLORS.red) + '20' }]}>
-        <Text style={{ fontSize: 18 }}>{item.icon}</Text>
+        <Text style={{ fontSize: 18 }}>{isCredit ? '💳' : '🧾'}</Text>
       </View>
       <View style={styles.txInfo}>
         <Text style={styles.txLabel} numberOfLines={1}>{item.label}</Text>
-        <Text style={styles.txDate}>{item.date}</Text>
+        <Text style={styles.txDate}>{date}</Text>
       </View>
       <Text style={[styles.txAmount, { color: isCredit ? COLORS.green : COLORS.red }]}>
         {isCredit ? '+' : ''}{item.amount.toFixed(3)} TND
@@ -48,12 +36,13 @@ function TxRow({ item }) {
 export default function WalletScreen({ navigation }) {
   const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [filter, setFilter] = useState('Toutes');
 
   const load = useCallback(() => {
     api.get('/api/wallet')
-      .then(r => setWallet(r.data || MOCK_WALLET))
-      .catch(() => setWallet(MOCK_WALLET))
+      .then(r => { setWallet(r.data); setError(false); })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -82,6 +71,12 @@ export default function WalletScreen({ navigation }) {
 
       {loading ? (
         <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 60 }} />
+      ) : error || !wallet ? (
+        <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 30 }}>
+          <Text style={{ color: COLORS.muted, fontSize: 14, textAlign: 'center' }}>
+            Impossible de récupérer votre portefeuille. Vérifiez votre connexion et réessayez.
+          </Text>
+        </View>
       ) : (
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
@@ -117,8 +112,8 @@ export default function WalletScreen({ navigation }) {
           <View style={styles.quickRow}>
             {[
               { icon: '💳', label: 'Recharger', onPress: () => navigation.navigate('WalletRecharge') },
-              { icon: '↗️', label: 'Virement', onPress: () => {} },
-              { icon: '🎁', label: 'Parrainer', onPress: () => {} },
+              { icon: '↗️', label: 'Virement', onPress: () => navigation.navigate('WalletTransfer', { balance: wallet?.balance }) },
+              { icon: '🎁', label: 'Parrainer', onPress: () => navigation.navigate('Referral') },
             ].map((a, i) => (
               <TouchableOpacity key={i} style={styles.quickBtn} onPress={a.onPress}>
                 <Text style={styles.quickIcon}>{a.icon}</Text>
