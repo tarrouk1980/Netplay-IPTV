@@ -90,7 +90,10 @@ export default function AdminOrderDetailScreen({ navigation, route }) {
   useEffect(() => {
     if (!orderId) { setOrder(MOCK_ORDER); setLoading(false); return; }
     api.get(`/api/admin/orders/${orderId}`)
-      .then(r => setOrder(r.data?.order || MOCK_ORDER))
+      .then(r => {
+        const o = r.data?.order;
+        setOrder(o ? { ...o, type: o.serviceType, destLat: o.destinationLat, destLng: o.destinationLng } : MOCK_ORDER);
+      })
       .catch(() => setOrder(MOCK_ORDER))
       .finally(() => setLoading(false));
   }, [orderId]);
@@ -103,7 +106,7 @@ export default function AdminOrderDetailScreen({ navigation, route }) {
         onPress: async () => {
           setActioning(true);
           try {
-            await api.post(`/api/admin/orders/${order.id}/cancel`, { reason: 'Annulation admin' });
+            await api.post(`/api/admin/orders/${order.id}/force-cancel`, { reason: 'Annulation admin' });
             setOrder(o => ({ ...o, status: 'CANCELLED' }));
           } catch (err) {
             Alert.alert('Erreur', err?.response?.data?.error || 'Action impossible.');

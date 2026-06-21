@@ -44,7 +44,7 @@ export default function SOSRatingScreen({ navigation, route }) {
   const handleSubmit = async () => {
     setSaving(true);
     try {
-      await api.post(`/api/sos/orders/${orderId}/rate`, { rating, tags, comment, tip });
+      await api.post(`/api/orders/${orderId}/rate`, { rating, tags, comment, tip });
       Alert.alert('Merci ! ⭐', 'Votre évaluation a bien été enregistrée.', [
         { text: 'OK', onPress: () => navigation.reset({ index: 0, routes: [{ name: 'Home' }] }) },
       ]);

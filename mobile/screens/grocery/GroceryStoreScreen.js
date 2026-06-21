@@ -61,8 +61,8 @@ export default function GroceryStoreScreen({ navigation, route }) {
   const [cart, setCart] = useState({});
 
   const load = useCallback(() => {
-    api.get('/api/grocery/stores/' + (storeId || '1') + '/products')
-      .then(r => setProducts(r.data.products || MOCK_PRODUCTS))
+    api.get('/api/merchants/' + (storeId || '1'))
+      .then(r => setProducts(r.data.merchant?.products || MOCK_PRODUCTS))
       .catch(() => setProducts(MOCK_PRODUCTS))
       .finally(() => setLoading(false));
   }, [storeId]);

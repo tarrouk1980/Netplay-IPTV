@@ -77,8 +77,8 @@ export default function GroceryShopScreen({ navigation, route }) {
   const [cart, setCart] = useState({});
 
   useEffect(() => {
-    api.get(`/api/grocery/shops/${shopId}/products`)
-      .then(r => setProducts(r.data.products || MOCK_PRODUCTS))
+    api.get(`/api/merchants/${shopId}`)
+      .then(r => setProducts(r.data.merchant?.products || MOCK_PRODUCTS))
       .catch(() => setProducts(MOCK_PRODUCTS))
       .finally(() => setLoading(false));
   }, [shopId]);

@@ -47,8 +47,8 @@ export default function GroceryStoreMapScreen({ navigation }) {
         lng = loc.coords.longitude;
         setUserPos({ lat, lng });
       }
-      const res = await api.get(`/api/grocery/stores?lat=${lat}&lng=${lng}`);
-      if (res.data?.stores?.length) setStores(res.data.stores);
+      const res = await api.get(`/api/merchants?lat=${lat}&lng=${lng}&radius=15`);
+      if (res.data?.merchants?.length) setStores(res.data.merchants);
     } catch {
       // keep mock data
     } finally {

@@ -99,9 +99,16 @@ export default function GroceryStoreDetailScreen({ route, navigation }) {
 
   const load = useCallback(async () => {
     try {
-      const res = await api.get(`/api/merchants/${merchantId}/menu`);
+      const res = await api.get(`/api/merchants/${merchantId}`);
       setStore(res.data.merchant);
-      const cats = res.data.categories || [];
+      const products = res.data.merchant?.products || [];
+      const cats = Object.values(
+        products.reduce((acc, p) => {
+          acc[p.category] = acc[p.category] || { name: p.category, items: [] };
+          acc[p.category].items.push(p);
+          return acc;
+        }, {})
+      );
       setSections(cats);
       if (cats.length > 0 && !activeCategory) setActiveCategory(cats[0].name);
     } catch {

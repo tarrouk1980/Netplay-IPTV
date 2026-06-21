@@ -72,7 +72,20 @@ export default function AdminTransactionsScreen({ navigation }) {
   const load = useCallback(() => {
     setLoading(true);
     api.get('/api/admin/transactions')
-      .then(r => setTxs(r.data.transactions || MOCK_TX))
+      .then(r => {
+        const raw = r.data.transactions;
+        if (!raw?.length) { setTxs(MOCK_TX); return; }
+        setTxs(raw.map(t => ({
+          id: t.id,
+          ref: t.id,
+          type: t.type || 'PAYMENT',
+          user: t.user?.name || t.user?.phone || '—',
+          service: t.service || '',
+          date: new Date(t.createdAt).toLocaleDateString('fr-FR'),
+          amount: Number(t.amount || 0),
+          status: t.status || 'SUCCESS',
+        })));
+      })
       .catch(() => setTxs(MOCK_TX))
       .finally(() => setLoading(false));
   }, []);

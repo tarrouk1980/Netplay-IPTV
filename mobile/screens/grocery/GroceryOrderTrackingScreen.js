@@ -42,7 +42,7 @@ export default function GroceryOrderTrackingScreen({ navigation, route }) {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(() => {
-    api.get('/api/grocery/orders/' + (orderId || 'GRO-4821'))
+    api.get('/api/grocery/' + (orderId || 'GRO-4821'))
       .then(r => setOrder(r.data || MOCK_ORDER))
       .catch(() => setOrder(MOCK_ORDER))
       .finally(() => setLoading(false));

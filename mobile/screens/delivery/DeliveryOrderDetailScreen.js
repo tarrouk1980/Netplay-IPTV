@@ -125,7 +125,7 @@ export default function DeliveryOrderDetailScreen({ route, navigation }) {
         onPress: async () => {
           setCancelling(true);
           try {
-            await api.patch(`/api/orders/${orderId}/cancel`, { reason: 'Annulé par le client' });
+            await api.post(`/api/orders/${orderId}/cancel`, { reason: 'Annulé par le client' });
             Alert.alert('Commande annulée');
             load();
           } catch (e) {

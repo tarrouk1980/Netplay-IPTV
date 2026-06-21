@@ -38,7 +38,7 @@ export default function DepanneurHistoryScreen({ navigation }) {
 
   const load = useCallback(() => {
     setLoading(true);
-    api.get('/api/depanneur/history')
+    api.get('/api/sos/depanneur/dashboard')
       .then(r => setHistory(r.data.history || MOCK_HISTORY))
       .catch(() => setHistory(MOCK_HISTORY))
       .finally(() => setLoading(false));

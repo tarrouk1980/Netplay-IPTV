@@ -397,7 +397,7 @@ router.get('/users/:id', async (req, res) => {
     if (!user) return res.status(404).json({ error: 'User not found', code: 'NOT_FOUND' });
 
     const { password: _pw, ...safeUser } = user;
-    return res.json({ user: safeUser });
+    return res.json({ user: { ...safeUser, status: user.suspended ? 'BANNED' : 'ACTIVE' } });
   } catch (err) {
     console.error('[admin/users/:id]', err);
     return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
@@ -1237,6 +1237,7 @@ router.get('/providers', async (req, res) => {
         role: true,
         kycStatus: true,
         subscriptionActive: true,
+        avgRating: true,
         createdAt: true,
       },
     });

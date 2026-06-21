@@ -62,7 +62,7 @@ export default function GroceryOrdersScreen({ navigation }) {
 
   const load = useCallback(() => {
     setLoading(true);
-    api.get('/api/grocery/orders')
+    api.get('/api/grocery/history')
       .then(r => setOrders(r.data.orders || MOCK_ORDERS))
       .catch(() => setOrders(MOCK_ORDERS))
       .finally(() => setLoading(false));

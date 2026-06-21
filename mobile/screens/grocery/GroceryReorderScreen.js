@@ -100,7 +100,7 @@ export default function GroceryReorderScreen({ navigation }) {
     (async () => {
       setLoading(true);
       try {
-        const res = await api.get('/api/grocery/orders/history');
+        const res = await api.get('/api/grocery/history');
         if (res.data?.orders?.length) setOrders(res.data.orders);
       } catch {} finally {
         setLoading(false);

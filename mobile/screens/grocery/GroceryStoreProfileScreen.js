@@ -45,8 +45,8 @@ export default function GroceryStoreProfileScreen({ navigation, route }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get(`/api/grocery/store/${storeId || 'default'}`)
-      .then(r => setData(r.data || MOCK))
+    api.get(`/api/merchants/${storeId || 'default'}`)
+      .then(r => setData(r.data?.merchant || MOCK))
       .catch(() => setData(MOCK))
       .finally(() => setLoading(false));
   }, []);
