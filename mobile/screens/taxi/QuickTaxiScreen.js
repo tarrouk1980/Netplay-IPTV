@@ -84,6 +84,8 @@ export default function QuickTaxiScreen({ navigation }) {
     setBooking(true);
     try {
       const res = await api.post('/api/taxi/request', {
+        mode: 'A',
+        taxiType: 'NORMAL',
         originLat: userLat,
         originLng: userLng,
         originAddress: 'Ma position actuelle',

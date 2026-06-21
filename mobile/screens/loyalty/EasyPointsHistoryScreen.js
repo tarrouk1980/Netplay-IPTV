@@ -41,8 +41,7 @@ export default function EasyPointsHistoryScreen({ navigation }) {
       setLoading(true);
       try {
         const res = await api.get('/api/loyalty/history');
-        if (res.data?.history?.length) setHistory(res.data.history);
-        if (res.data?.balance !== undefined) setBalance(res.data.balance);
+        if (Array.isArray(res.data) && res.data.length) setHistory(res.data);
       } catch {} finally {
         setLoading(false);
       }

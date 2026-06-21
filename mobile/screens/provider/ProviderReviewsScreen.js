@@ -94,8 +94,8 @@ export default function ProviderReviewsScreen({ navigation }) {
 
   const load = useCallback(async () => {
     try {
-      const res = await api.get('/api/provider/reviews');
-      setReviews(res.data?.reviews || MOCK_REVIEWS);
+      const res = await api.get(`/api/reviews/${user?.id}`);
+      setReviews(res.data?.reviews?.length ? res.data.reviews : MOCK_REVIEWS);
     } catch {
       setReviews(MOCK_REVIEWS);
     } finally {

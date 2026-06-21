@@ -51,7 +51,7 @@ export default function ClientProfileScreen({ navigation }) {
     if (!editValue.trim()) return;
     setSaving(true);
     try {
-      await api.patch('/api/auth/profile', { [editing]: editValue.trim() });
+      await api.patch('/api/users/me', { [editing]: editValue.trim() });
       if (updateProfile) updateProfile({ [editing]: editValue.trim() });
       setEditing(null);
     } catch {

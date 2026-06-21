@@ -111,7 +111,7 @@ export default function DriverRequestScreen({ route, navigation }) {
     stopTimer();
     if (!auto) setLoading(true);
     try {
-      await api.post(`/api/taxi/${orderId}/reject`).catch(() => null);
+      await api.post(`/api/taxi/${orderId}/cancel`).catch(() => null);
     } finally {
       if (!auto) setLoading(false);
       navigation.replace('DriverDashboard');

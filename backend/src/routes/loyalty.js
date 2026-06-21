@@ -134,23 +134,4 @@ router.get('/rewards', authenticate, async (req, res) => {
   }
 });
 
-// POST /api/loyalty/redeem
-router.post('/redeem', authenticate, async (req, res) => {
-  try {
-    const { rewardId } = req.body;
-    const REWARD_COSTS = { r1: 200, r2: 150, r3: 400, r4: 100, r5: 500, r6: 350 };
-    const cost = REWARD_COSTS[rewardId];
-    if (!cost) return res.status(400).json({ error: 'Récompense invalide' });
-    const user = await prisma.user.findUnique({ where: { id: req.user.id }, select: { loyaltyPoints: true } }).catch(() => null);
-    if (!user || (user.loyaltyPoints || 0) < cost) return res.status(400).json({ error: 'Points insuffisants' });
-    await prisma.user.update({ where: { id: req.user.id }, data: { loyaltyPoints: { decrement: cost } } }).catch(() => null);
-    await prisma.loyaltyTransaction.create({
-      data: { userId: req.user.id, points: -cost, type: 'REDEEM', description: `Récompense ${rewardId}` },
-    }).catch(() => null);
-    return res.json({ success: true, pointsSpent: cost, newBalance: (user.loyaltyPoints || 0) - cost });
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-});
-
 module.exports = router;

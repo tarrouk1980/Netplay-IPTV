@@ -82,7 +82,7 @@ export default function WalletTransactionsScreen({ navigation }) {
   const load = useCallback(async () => {
     try {
       const res = await api.get('/api/wallet/transactions');
-      setTransactions(res.data?.transactions || MOCK_TRANSACTIONS);
+      setTransactions(Array.isArray(res.data) && res.data.length ? res.data : MOCK_TRANSACTIONS);
     } catch {
       setTransactions(MOCK_TRANSACTIONS);
     } finally {

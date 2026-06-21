@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
+import api from '../../services/api';
 
 const COLORS = {
   background: '#0A0A0F',
@@ -92,9 +93,9 @@ export default function ClientNotificationPrefsScreen() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetch('/api/clients/notification-preferences')
-      .then((res) => res.json())
-      .then((data) => {
+    api.get('/api/users/me/notification-prefs')
+      .then((res) => {
+        const data = res.data?.prefs;
         if (data && typeof data === 'object') {
           setPrefs({ ...DEFAULT_PREFS, ...data });
         }
@@ -116,11 +117,7 @@ export default function ClientNotificationPrefsScreen() {
 
   const save = () => {
     setLoading(true);
-    fetch('/api/clients/notification-preferences', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(prefs),
-    })
+    api.put('/api/users/me/notification-prefs', prefs)
       .then(() => {
         setLoading(false);
         Alert.alert('Succès', 'Vos préférences de notifications ont été enregistrées.');
