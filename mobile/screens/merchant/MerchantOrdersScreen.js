@@ -12,10 +12,10 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB', orange: '#E67E22',
 };
 
-const STATUS_COLORS = { PENDING: COLORS.orange, CONFIRMED: COLORS.blue, READY: COLORS.accent, DELIVERED: COLORS.green, CANCELLED: COLORS.red };
-const STATUS_LABELS = { PENDING: 'Nouvelle', CONFIRMED: 'En préparation', READY: 'Prête', DELIVERED: 'Livrée', CANCELLED: 'Annulée' };
-const NEXT_STATUS = { PENDING: 'CONFIRMED', CONFIRMED: 'READY', READY: 'DELIVERED' };
-const NEXT_LABELS = { PENDING: 'Accepter', CONFIRMED: 'Prête', READY: 'Remise au livreur' };
+const STATUS_COLORS = { PENDING: COLORS.orange, ACCEPTED: COLORS.blue, IN_PROGRESS: COLORS.accent, COMPLETED: COLORS.green, CANCELLED: COLORS.red };
+const STATUS_LABELS = { PENDING: 'Nouvelle', ACCEPTED: 'Acceptée', IN_PROGRESS: 'En préparation', COMPLETED: 'Livrée', CANCELLED: 'Annulée' };
+const NEXT_STATUS = { PENDING: 'ACCEPTED', ACCEPTED: 'IN_PROGRESS', IN_PROGRESS: 'COMPLETED' };
+const NEXT_LABELS = { PENDING: 'Accepter', ACCEPTED: 'Démarrer préparation', IN_PROGRESS: 'Marquer livrée' };
 
 const MOCK = [
   { id: 'CMD-001', clientName: 'Nadia K.', items: [{ name: 'Kafteji', qty: 2 }, { name: 'Brik', qty: 1 }], total: 18.500, status: 'PENDING', createdAt: '16:42', address: 'Berges du Lac 2' },
@@ -24,7 +24,7 @@ const MOCK = [
   { id: 'CMD-004', clientName: 'Youssef T.', items: [{ name: 'Couscous complet', qty: 1 }], total: 22.000, status: 'DELIVERED', createdAt: '15:10', address: 'Lafayette' },
 ];
 
-const TABS = ['Toutes', 'PENDING', 'CONFIRMED', 'READY', 'DELIVERED'];
+const TABS = ['Toutes', 'PENDING', 'ACCEPTED', 'IN_PROGRESS', 'COMPLETED'];
 
 function OrderCard({ item, onAction }) {
   const sc = STATUS_COLORS[item.status] || COLORS.muted;
@@ -75,8 +75,16 @@ export default function MerchantOrdersScreen({ navigation }) {
   const [tab, setTab] = useState('Toutes');
 
   const load = useCallback(() => {
-    api.get('/api/merchant/orders')
-      .then(r => setOrders(r.data.orders || MOCK))
+    api.get('/api/merchants/me/orders')
+      .then(r => setOrders((r.data.orders || []).map(o => ({
+        id: o.id,
+        clientName: o.client?.name || 'Client',
+        items: o.metadata?.items || [],
+        total: Number(o.finalPrice ?? o.price ?? 0),
+        status: o.status,
+        createdAt: new Date(o.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        address: o.destinationAddress || o.originAddress || '',
+      }))))
       .catch(() => setOrders(MOCK))
       .finally(() => setLoading(false));
   }, []);
@@ -100,7 +108,7 @@ export default function MerchantOrdersScreen({ navigation }) {
 
   const updateStatus = async (order, newStatus) => {
     setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: newStatus } : o));
-    api.put('/api/merchant/orders/' + order.id + '/status', { status: newStatus }).catch(() => {});
+    api.patch('/api/merchants/me/orders/' + order.id + '/status', { status: newStatus }).catch(() => {});
   };
 
   const filtered = tab === 'Toutes' ? orders : orders.filter(o => o.status === tab);

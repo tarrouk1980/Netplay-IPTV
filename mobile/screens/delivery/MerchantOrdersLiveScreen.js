@@ -28,13 +28,11 @@ const COLORS = {
 };
 
 const STATUS_CONFIG = {
-  PENDING: { color: COLORS.orange, label: 'Nouvelle', icon: '🔔', next: 'CONFIRMED', nextLabel: 'Confirmer' },
-  CONFIRMED: { color: COLORS.blue, label: 'Confirmée', icon: '✅', next: 'PREPARING', nextLabel: 'Commencer prépa' },
-  PREPARING: { color: COLORS.teal, label: 'En préparation', icon: '🍽', next: 'READY', nextLabel: 'Prêt à livrer' },
-  READY: { color: COLORS.green, label: 'Prêt', icon: '📦', next: null, nextLabel: null },
-  OUT_FOR_DELIVERY: { color: COLORS.green, label: 'En livraison', icon: '🛵', next: null, nextLabel: null },
-  DELIVERED: { color: COLORS.muted, label: 'Livré', icon: '🏁', next: null, nextLabel: null },
-  CANCELLED: { color: COLORS.accent, label: 'Annulé', icon: '❌', next: null, nextLabel: null },
+  PENDING: { color: COLORS.orange, label: 'Nouvelle', icon: '🔔', next: 'ACCEPTED', nextLabel: 'Accepter' },
+  ACCEPTED: { color: COLORS.blue, label: 'Acceptée', icon: '✅', next: 'IN_PROGRESS', nextLabel: 'Démarrer préparation' },
+  IN_PROGRESS: { color: COLORS.teal, label: 'En préparation', icon: '🍽', next: 'COMPLETED', nextLabel: 'Marquer livrée' },
+  COMPLETED: { color: COLORS.muted, label: 'Livrée', icon: '🏁', next: null, nextLabel: null },
+  CANCELLED: { color: COLORS.accent, label: 'Annulée', icon: '❌', next: null, nextLabel: null },
 };
 
 const MOCK_ORDERS = [
@@ -81,8 +79,18 @@ export default function MerchantOrdersLiveScreen({ navigation }) {
 
   const load = useCallback(async (silent = false) => {
     try {
-      const res = await api.get('/api/merchant/orders/live');
-      setOrders(res.data.orders || []);
+      const res = await api.get('/api/merchants/me/orders');
+      const mapped = (res.data.orders || []).map((o) => ({
+        id: o.id,
+        status: o.status,
+        clientName: o.client?.name || 'Client',
+        totalAmount: Number(o.finalPrice ?? o.price ?? 0),
+        itemCount: (o.metadata?.items || []).length,
+        items: o.metadata?.items || [],
+        createdAt: o.createdAt,
+        address: o.destinationAddress || o.originAddress,
+      }));
+      setOrders(mapped);
       setLastUpdated(new Date());
     } catch {
       if (!silent) setOrders(MOCK_ORDERS);
@@ -100,15 +108,15 @@ export default function MerchantOrdersLiveScreen({ navigation }) {
 
   const advanceStatus = async (orderId, nextStatus) => {
     try {
-      await api.patch(`/api/merchant/orders/${orderId}/status`, { status: nextStatus });
+      await api.patch(`/api/merchants/me/orders/${orderId}/status`, { status: nextStatus });
       load(true);
     } catch {
       Alert.alert('Erreur', 'Impossible de mettre à jour le statut.');
     }
   };
 
-  const active = orders.filter((o) => !['DELIVERED', 'CANCELLED'].includes(o.status));
-  const done = orders.filter((o) => ['DELIVERED', 'CANCELLED'].includes(o.status));
+  const active = orders.filter((o) => !['COMPLETED', 'CANCELLED'].includes(o.status));
+  const done = orders.filter((o) => ['COMPLETED', 'CANCELLED'].includes(o.status));
 
   if (loading) return <View style={s.centered}><ActivityIndicator color={COLORS.teal} size="large" /></View>;
 
@@ -139,16 +147,16 @@ export default function MerchantOrdersLiveScreen({ navigation }) {
           <Text style={s.statLbl}>Nouvelles</Text>
         </View>
         <View style={s.statCard}>
-          <Text style={[s.statVal, { color: COLORS.teal }]}>{orders.filter((o) => o.status === 'PREPARING').length}</Text>
+          <Text style={[s.statVal, { color: COLORS.teal }]}>{orders.filter((o) => o.status === 'IN_PROGRESS').length}</Text>
           <Text style={s.statLbl}>En prépa</Text>
         </View>
         <View style={s.statCard}>
-          <Text style={[s.statVal, { color: COLORS.green }]}>{orders.filter((o) => o.status === 'DELIVERED').length}</Text>
+          <Text style={[s.statVal, { color: COLORS.green }]}>{orders.filter((o) => o.status === 'COMPLETED').length}</Text>
           <Text style={s.statLbl}>Livrées</Text>
         </View>
         <View style={s.statCard}>
           <Text style={[s.statVal, { color: COLORS.text }]}>
-            {orders.filter((o) => o.status === 'DELIVERED').reduce((s, o) => s + (parseFloat(o.totalAmount) || 0), 0).toFixed(0)} TND
+            {orders.filter((o) => o.status === 'COMPLETED').reduce((s, o) => s + (parseFloat(o.totalAmount) || 0), 0).toFixed(0)} TND
           </Text>
           <Text style={s.statLbl}>Revenus</Text>
         </View>

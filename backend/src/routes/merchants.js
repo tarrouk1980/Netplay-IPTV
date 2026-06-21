@@ -230,6 +230,69 @@ router.delete(
   }
 );
 
+// GET /api/merchants/me/orders — orders for this merchant
+router.get('/me/orders', authenticate, requireRole('MARCHAND'), async (req, res) => {
+  try {
+    const merchant = await prisma.merchant.findUnique({ where: { userId: req.user.id } });
+    if (!merchant) {
+      return res.status(404).json({ error: 'Merchant profile not found', code: 'NOT_FOUND' });
+    }
+
+    const where = {
+      serviceType: 'GROCERY',
+      metadata: { path: ['merchantIds'], array_contains: merchant.id },
+    };
+    if (req.query.status) where.status = req.query.status;
+
+    const orders = await prisma.order.findMany({
+      where,
+      include: { client: { select: { id: true, name: true, phone: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    });
+
+    return res.json({ orders });
+  } catch (err) {
+    console.error('[merchants/me/orders]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// PATCH /api/merchants/me/orders/:orderId/status — update order status
+router.patch(
+  '/me/orders/:orderId/status',
+  authenticate,
+  requireRole('MARCHAND'),
+  [body('status').isIn(['ACCEPTED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'])],
+  async (req, res) => {
+    if (!validate(req, res)) return;
+    try {
+      const merchant = await prisma.merchant.findUnique({ where: { userId: req.user.id } });
+      if (!merchant) {
+        return res.status(404).json({ error: 'Merchant profile not found', code: 'NOT_FOUND' });
+      }
+
+      const order = await prisma.order.findFirst({
+        where: {
+          id: req.params.orderId,
+          serviceType: 'GROCERY',
+          metadata: { path: ['merchantIds'], array_contains: merchant.id },
+        },
+      });
+      if (!order) return res.status(404).json({ error: 'Order not found', code: 'NOT_FOUND' });
+
+      const data = { status: req.body.status };
+      if (req.body.status === 'COMPLETED') data.completedAt = new Date();
+
+      const updated = await prisma.order.update({ where: { id: order.id }, data });
+      return res.json({ order: updated });
+    } catch (err) {
+      console.error('[merchants/me/orders/status]', err);
+      return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+    }
+  }
+);
+
 // GET /api/merchants/stats
 router.get('/stats', authenticate, requireRole('MARCHAND'), async (req, res) => {
   try {

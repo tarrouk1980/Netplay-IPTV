@@ -18,16 +18,14 @@ const COLORS = {
   blue: '#3498DB',
 };
 
-const STATUS_FLOW = ['PENDING', 'ACCEPTED', 'PREPARING', 'READY', 'PICKED_UP', 'DELIVERED'];
+const STATUS_FLOW = ['PENDING', 'ACCEPTED', 'IN_PROGRESS', 'COMPLETED'];
 
 const STATUS_CONFIG = {
-  PENDING:     { label: 'Nouvelle commande', color: COLORS.blue,   icon: '🔔', next: 'ACCEPTED',  nextLabel: 'Accepter' },
-  ACCEPTED:    { label: 'Acceptée',           color: COLORS.accent, icon: '✅', next: 'PREPARING', nextLabel: 'Commencer préparation' },
-  PREPARING:   { label: 'En préparation',     color: COLORS.orange, icon: '👨‍🍳', next: 'READY',     nextLabel: 'Marquer prête' },
-  READY:       { label: 'Prête',              color: '#9B59B6',     icon: '📦', next: 'PICKED_UP', nextLabel: 'Livreur récupéré' },
-  PICKED_UP:   { label: 'Récupérée',          color: COLORS.orange, icon: '🛵', next: null,        nextLabel: null },
-  DELIVERED:   { label: 'Livrée',             color: COLORS.accent, icon: '🏁', next: null,        nextLabel: null },
-  CANCELLED:   { label: 'Annulée',            color: COLORS.red,    icon: '❌', next: null,        nextLabel: null },
+  PENDING:     { label: 'Nouvelle commande', color: COLORS.blue,   icon: '🔔', next: 'ACCEPTED',     nextLabel: 'Accepter' },
+  ACCEPTED:    { label: 'Acceptée',           color: COLORS.accent, icon: '✅', next: 'IN_PROGRESS',  nextLabel: 'Commencer préparation' },
+  IN_PROGRESS: { label: 'En préparation',     color: COLORS.orange, icon: '👨‍🍳', next: 'COMPLETED',    nextLabel: 'Marquer livrée' },
+  COMPLETED:   { label: 'Livrée',             color: COLORS.accent, icon: '🏁', next: null,           nextLabel: null },
+  CANCELLED:   { label: 'Annulée',            color: COLORS.red,    icon: '❌', next: null,           nextLabel: null },
 };
 
 const MOCK_ORDER = {
@@ -84,8 +82,19 @@ export default function MerchantOrderDetailScreen({ route, navigation }) {
 
   const load = useCallback(async () => {
     try {
-      const res = await api.get(`/api/merchant/orders/${orderId}`);
-      setOrder(res.data?.order || res.data);
+      const res = await api.get(`/api/orders/${orderId}`);
+      const o = res.data?.order;
+      setOrder(o ? {
+        id: o.id,
+        status: o.status,
+        totalAmount: Number(o.finalPrice ?? o.price ?? 0),
+        createdAt: o.createdAt,
+        deliveryAddress: o.destinationAddress || o.originAddress,
+        note: o.metadata?.note || null,
+        client: o.client,
+        items: o.metadata?.items || [],
+        provider: o.provider ? { name: o.provider.name, rating: o.provider.avgRating } : null,
+      } : MOCK_ORDER);
     } catch {
       setOrder(MOCK_ORDER);
     } finally {
@@ -100,7 +109,7 @@ export default function MerchantOrderDetailScreen({ route, navigation }) {
     if (!cfg?.next) return;
     setUpdating(true);
     try {
-      await api.patch(`/api/merchant/orders/${orderId}/status`, { status: cfg.next });
+      await api.patch(`/api/merchants/me/orders/${orderId}/status`, { status: cfg.next });
       setOrder(o => ({ ...o, status: cfg.next }));
     } catch (err) {
       Alert.alert('Erreur', err.response?.data?.error || 'Mise à jour échouée');
@@ -113,7 +122,7 @@ export default function MerchantOrderDetailScreen({ route, navigation }) {
     if (!cancelReason.trim()) { Alert.alert('Motif requis'); return; }
     setUpdating(true);
     try {
-      await api.patch(`/api/merchant/orders/${orderId}/status`, { status: 'CANCELLED', reason: cancelReason.trim() });
+      await api.patch(`/api/merchants/me/orders/${orderId}/status`, { status: 'CANCELLED', reason: cancelReason.trim() });
       setOrder(o => ({ ...o, status: 'CANCELLED' }));
       setCancelModal(false);
     } catch (err) {
@@ -131,7 +140,7 @@ export default function MerchantOrderDetailScreen({ route, navigation }) {
   if (!order) return null;
 
   const cfg = STATUS_CONFIG[order.status] || STATUS_CONFIG.PENDING;
-  const isTerminal = ['DELIVERED', 'CANCELLED', 'PICKED_UP'].includes(order.status);
+  const isTerminal = ['COMPLETED', 'CANCELLED'].includes(order.status);
   const timeStr = new Date(order.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   const subtotal = (order.items || []).reduce((s, i) => s + i.price * i.quantity, 0);
 
