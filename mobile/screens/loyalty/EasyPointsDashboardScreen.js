@@ -40,16 +40,6 @@ const TYPE_EARN = {
   BONUS: { emoji: '🎉', label: 'Bonus', color: '#FF9800' },
 };
 
-const MOCK_HISTORY = [
-  { id: '1', type: 'TAXI', points: 10, createdAt: new Date(Date.now() - 3600000 * 2).toISOString(), desc: 'Course Tunis → La Marsa' },
-  { id: '2', type: 'DELIVERY', points: 8, createdAt: new Date(Date.now() - 3600000 * 26).toISOString(), desc: 'Livraison Pizza Hut' },
-  { id: '3', type: 'BONUS', points: 50, createdAt: new Date(Date.now() - 86400000 * 3).toISOString(), desc: 'Bienvenue sur EasyWay !' },
-  { id: '4', type: 'REDEEM', points: -100, createdAt: new Date(Date.now() - 86400000 * 5).toISOString(), desc: 'Remise -5 TND taxi' },
-  { id: '5', type: 'SOS', points: 15, createdAt: new Date(Date.now() - 86400000 * 7).toISOString(), desc: 'SOS Remorquage Sfax' },
-  { id: '6', type: 'GROCERY', points: 5, createdAt: new Date(Date.now() - 86400000 * 9).toISOString(), desc: 'Courses Monoprix' },
-  { id: '7', type: 'TAXI', points: 10, createdAt: new Date(Date.now() - 86400000 * 12).toISOString(), desc: 'Course Sousse Centre' },
-];
-
 function TierProgressBar({ points }) {
   const tier = TIERS.find(t => points >= t.min && points <= t.max) || TIERS[0];
   const nextTier = TIERS[TIERS.indexOf(tier) + 1];
@@ -112,6 +102,7 @@ export default function EasyPointsDashboardScreen({ navigation }) {
   const [history, setHistory] = useState([]);
   const [rewards, setRewards] = useState(FALLBACK_REWARDS);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [tab, setTab] = useState('rewards'); // rewards | history | tiers
 
   const load = useCallback(async () => {
@@ -119,10 +110,12 @@ export default function EasyPointsDashboardScreen({ navigation }) {
     try {
       const res = await api.get('/api/loyalty/me');
       setPoints(res.data.points ?? 0);
-      setHistory(res.data.history || MOCK_HISTORY);
+      setHistory(res.data.history || []);
+      setError(false);
     } catch {
-      setPoints(68);
-      setHistory(MOCK_HISTORY);
+      setError(true);
+      setLoading(false);
+      return;
     }
     try {
       const balRes = await api.get('/api/loyalty/balance');
@@ -149,10 +142,11 @@ export default function EasyPointsDashboardScreen({ navigation }) {
           onPress: async () => {
             try {
               await api.post('/api/loyalty/redeem', { rewardId: reward.id });
-              setPoints(p => p - reward.cost);
+              load(); // refresh real balance/history from server
               Alert.alert('🎁 Récompense activée !', `Votre ${reward.label} est disponible.`);
-            } catch {
-              Alert.alert('Erreur', 'Impossible d\'utiliser cette récompense.');
+            } catch (err) {
+              const msg = err?.response?.data?.error || 'Impossible d\'utiliser cette récompense.';
+              Alert.alert('Erreur', msg);
             }
           },
         },
@@ -165,6 +159,29 @@ export default function EasyPointsDashboardScreen({ navigation }) {
       <SafeAreaView style={styles.container}>
         <View style={styles.centered}>
           <ActivityIndicator color={COLORS.accent} size="large" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+            <Text style={styles.backText}>‹</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>⭐ EasyPoints</Text>
+          <View style={{ width: 36 }} />
+        </View>
+        <View style={styles.centered}>
+          <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, fontSize: 14, textAlign: 'center', paddingHorizontal: 30, marginBottom: 16 }}>
+            Impossible de charger vos points. Vérifiez votre connexion.
+          </Text>
+          <TouchableOpacity onPress={load} style={{ backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
+            <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );

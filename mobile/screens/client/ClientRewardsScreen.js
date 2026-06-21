@@ -12,71 +12,74 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB', purple: '#9B59B6',
 };
 
+// Tiers mirror the backend loyalty levels (backend/src/routes/loyalty.js)
 const LEVELS = [
-  { key: 'BRONZE', label: 'Bronze', icon: '🥉', min: 0, max: 500, color: '#CD7F32' },
-  { key: 'SILVER', label: 'Argent', icon: '🥈', min: 500, max: 1500, color: '#C0C0C0' },
-  { key: 'GOLD', label: 'Or', icon: '🥇', min: 1500, max: 4000, color: COLORS.accent },
-  { key: 'PLATINUM', label: 'Platine', icon: '💎', min: 4000, max: 999999, color: COLORS.blue },
+  { key: 'Bronze', label: 'Bronze', icon: '🥉', min: 0, max: 999, color: '#CD7F32' },
+  { key: 'Argent', label: 'Argent', icon: '🥈', min: 1000, max: 4999, color: '#C0C0C0' },
+  { key: 'Or', label: 'Or', icon: '🥇', min: 5000, max: 9999, color: COLORS.accent },
+  { key: 'Platine', label: 'Platine', icon: '💎', min: 10000, max: 999999, color: COLORS.blue },
 ];
 
-const MOCK_REWARDS = {
-  points: 1240,
-  level: 'SILVER',
-  pointsToNext: 260,
-  totalEarned: 3800,
-  history: [
-    { id: 'H1', label: 'Course taxi #TX-4821', points: +50, date: '03 juin', type: 'EARN' },
-    { id: 'H2', label: 'Livraison Carrefour', points: +30, date: '02 juin', type: 'EARN' },
-    { id: 'H3', label: 'Bon de réduction -5 TND', points: -200, date: '01 juin', type: 'REDEEM' },
-    { id: 'H4', label: 'SOS Dépannage', points: +40, date: '30 mai', type: 'EARN' },
-    { id: 'H5', label: 'Bonus bienvenue', points: +500, date: '28 mai', type: 'BONUS' },
-  ],
-};
-
-const VOUCHERS = [
-  { id: 'V1', title: '-5 TND sur votre prochaine course', cost: 200, icon: '🚕', available: true },
-  { id: 'V2', title: 'Livraison gratuite', cost: 150, icon: '🛵', available: true },
-  { id: 'V3', title: '-10% sur épicerie', cost: 300, icon: '🛒', available: true },
-  { id: 'V4', title: 'SOS prioritaire', cost: 400, icon: '🔧', available: false },
-];
+function fmtDate(iso) {
+  try {
+    return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+  } catch {
+    return '';
+  }
+}
 
 export default function ClientRewardsScreen({ navigation }) {
   const [data, setData] = useState(null);
+  const [rewards, setRewards] = useState([]);
+  const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [tab, setTab] = useState('VOUCHERS');
   const [redeeming, setRedeeming] = useState(null);
 
-  useEffect(() => {
-    api.get('/api/client/rewards')
-      .then(r => setData(r.data || MOCK_REWARDS))
-      .catch(() => setData(MOCK_REWARDS))
+  const load = () => {
+    Promise.all([
+      api.get('/api/loyalty/balance'),
+      api.get('/api/loyalty/history').catch(() => ({ data: [] })),
+    ])
+      .then(([balRes, histRes]) => {
+        setData(balRes.data);
+        setRewards(balRes.data?.rewards || []);
+        setHistory(Array.isArray(histRes.data) ? histRes.data : []);
+        setError(false);
+      })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, []);
+  };
 
-  const currentLevel = LEVELS.find(l => l.key === data?.level) || LEVELS[0];
+  useEffect(() => { load(); }, []);
+
+  const points = data?.points || 0;
+  const currentLevel = LEVELS.find(l => points >= l.min && points <= l.max) || LEVELS[0];
   const nextLevel = LEVELS[LEVELS.indexOf(currentLevel) + 1];
+  const pointsToNext = data?.pointsToNext != null ? data.pointsToNext : (nextLevel ? nextLevel.min - points : 0);
   const progress = nextLevel
-    ? (data?.points - currentLevel.min) / (nextLevel.min - currentLevel.min)
+    ? (points - currentLevel.min) / (nextLevel.min - currentLevel.min)
     : 1;
 
-  const handleRedeem = (voucher) => {
-    if (!voucher.available) return;
-    if (data.points < voucher.cost) {
-      Alert.alert('Points insuffisants', `Il vous faut ${voucher.cost} points. Vous en avez ${data.points}.`);
+  const handleRedeem = (reward) => {
+    if (points < reward.points) {
+      Alert.alert('Points insuffisants', `Il vous faut ${reward.points} points. Vous en avez ${points}.`);
       return;
     }
-    Alert.alert('Échanger ?', `Utiliser ${voucher.cost} points pour : ${voucher.title} ?`, [
+    Alert.alert('Échanger ?', `Utiliser ${reward.points} points pour : ${reward.label} ?`, [
       { text: 'Annuler', style: 'cancel' },
       {
         text: 'Confirmer', onPress: async () => {
-          setRedeeming(voucher.id);
+          setRedeeming(reward.id);
           try {
-            await api.post('/api/client/rewards/redeem', { voucherId: voucher.id });
-            setData(d => ({ ...d, points: d.points - voucher.cost }));
-            Alert.alert('✅ Bon activé !', 'Votre bon a été ajouté à votre compte.');
-          } catch {
-            setData(d => ({ ...d, points: d.points - voucher.cost }));
-            Alert.alert('✅ Bon activé !', 'Votre bon a été ajouté à votre compte.');
+            await api.post('/api/loyalty/redeem', { rewardId: reward.id });
+            // Re-fetch real balance/history from server instead of guessing locally
+            load();
+            Alert.alert('✅ Récompense activée !', 'Votre récompense a été ajoutée à votre compte.');
+          } catch (err) {
+            const msg = err?.response?.data?.error || 'Échange impossible. Réessayez.';
+            Alert.alert('Erreur', msg);
           } finally { setRedeeming(null); }
         },
       },
@@ -87,6 +90,29 @@ export default function ClientRewardsScreen({ navigation }) {
     return (
       <SafeAreaView style={styles.container}>
         <ActivityIndicator color={COLORS.accent} size="large" style={{ flex: 1 }} />
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+            <Text style={styles.backArrow}>‹</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>🎁 Récompenses</Text>
+          <View style={{ width: 40 }} />
+        </View>
+        <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 30 }}>
+          <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, fontSize: 14, textAlign: 'center', marginBottom: 16 }}>
+            Impossible de charger vos récompenses. Vérifiez votre connexion.
+          </Text>
+          <TouchableOpacity onPress={() => { setLoading(true); load(); }} style={{ backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
+            <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
     );
   }
@@ -109,7 +135,7 @@ export default function ClientRewardsScreen({ navigation }) {
         <View style={[styles.heroCard, { borderColor: currentLevel.color + '50' }]}>
           <Text style={styles.heroEmoji}>{currentLevel.icon}</Text>
           <Text style={[styles.heroLevel, { color: currentLevel.color }]}>{currentLevel.label}</Text>
-          <Text style={styles.heroPoints}>{data.points.toLocaleString()}</Text>
+          <Text style={styles.heroPoints}>{points.toLocaleString()}</Text>
           <Text style={styles.heroLabel}>points EasyWay</Text>
 
           {nextLevel && (
@@ -118,7 +144,7 @@ export default function ClientRewardsScreen({ navigation }) {
                 <View style={[styles.progressFill, { width: `${Math.min(progress * 100, 100)}%`, backgroundColor: currentLevel.color }]} />
               </View>
               <Text style={styles.progressText}>
-                {data.pointsToNext} pts pour atteindre {nextLevel.label} {nextLevel.icon}
+                {pointsToNext} pts pour atteindre {nextLevel.label} {nextLevel.icon}
               </Text>
             </>
           )}
@@ -127,7 +153,7 @@ export default function ClientRewardsScreen({ navigation }) {
         {/* Level ladder */}
         <View style={styles.levelsRow}>
           {LEVELS.map((l, i) => {
-            const isActive = l.key === data.level;
+            const isActive = l.key === currentLevel.key;
             const isDone = LEVELS.indexOf(currentLevel) > i;
             return (
               <View key={l.key} style={styles.levelStep}>
@@ -158,49 +184,62 @@ export default function ClientRewardsScreen({ navigation }) {
 
         <View style={{ padding: 16 }}>
           {tab === 'VOUCHERS' ? (
-            VOUCHERS.map(v => (
-              <TouchableOpacity
-                key={v.id}
-                style={[styles.voucherCard, !v.available && { opacity: 0.5 }]}
-                onPress={() => handleRedeem(v)}
-                activeOpacity={0.85}
-              >
-                <View style={styles.voucherLeft}>
-                  <Text style={{ fontSize: 28 }}>{v.icon}</Text>
-                  <View style={{ flex: 1, marginLeft: 12 }}>
-                    <Text style={styles.voucherTitle}>{v.title}</Text>
-                    <Text style={[styles.voucherCost, data.points >= v.cost ? { color: COLORS.green } : { color: COLORS.red }]}>
-                      {v.cost} points
-                    </Text>
-                  </View>
-                </View>
-                <View style={[styles.redeemBtn, data.points < v.cost && { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
-                  {redeeming === v.id
-                    ? <ActivityIndicator size="small" color="#000" />
-                    : <Text style={[styles.redeemBtnText, data.points < v.cost && { color: COLORS.muted }]}>
-                        {data.points >= v.cost ? 'Échanger' : 'Insuffisant'}
-                      </Text>
-                  }
-                </View>
-              </TouchableOpacity>
-            ))
-          ) : (
-            (data.history || []).map(h => (
-              <View key={h.id} style={styles.historyRow}>
-                <View style={[styles.historyDot, {
-                  backgroundColor: h.type === 'EARN' ? COLORS.green : h.type === 'BONUS' ? COLORS.blue : COLORS.red,
-                }]} />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.historyLabel}>{h.label}</Text>
-                  <Text style={styles.historyDate}>{h.date}</Text>
-                </View>
-                <Text style={[styles.historyPoints, {
-                  color: h.points > 0 ? COLORS.green : COLORS.red,
-                }]}>
-                  {h.points > 0 ? '+' : ''}{h.points} pts
-                </Text>
+            rewards.length === 0 ? (
+              <View style={{ alignItems: 'center', paddingVertical: 30 }}>
+                <Text style={{ color: COLORS.muted, fontSize: 14 }}>Aucune récompense disponible</Text>
               </View>
-            ))
+            ) : (
+              rewards.map(v => (
+                <TouchableOpacity
+                  key={v.id}
+                  style={styles.voucherCard}
+                  onPress={() => handleRedeem(v)}
+                  activeOpacity={0.85}
+                >
+                  <View style={styles.voucherLeft}>
+                    <Text style={{ fontSize: 28 }}>{v.icon}</Text>
+                    <View style={{ flex: 1, marginLeft: 12 }}>
+                      <Text style={styles.voucherTitle}>{v.label}</Text>
+                      {!!v.description && <Text style={styles.historyDate}>{v.description}</Text>}
+                      <Text style={[styles.voucherCost, points >= v.points ? { color: COLORS.green } : { color: COLORS.red }]}>
+                        {v.points} points
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={[styles.redeemBtn, points < v.points && { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+                    {redeeming === v.id
+                      ? <ActivityIndicator size="small" color="#000" />
+                      : <Text style={[styles.redeemBtnText, points < v.points && { color: COLORS.muted }]}>
+                          {points >= v.points ? 'Échanger' : 'Insuffisant'}
+                        </Text>
+                    }
+                  </View>
+                </TouchableOpacity>
+              ))
+            )
+          ) : (
+            history.length === 0 ? (
+              <View style={{ alignItems: 'center', paddingVertical: 30 }}>
+                <Text style={{ color: COLORS.muted, fontSize: 14 }}>Aucun historique</Text>
+              </View>
+            ) : (
+              history.map(h => (
+                <View key={h.id} style={styles.historyRow}>
+                  <View style={[styles.historyDot, {
+                    backgroundColor: h.points > 0 ? COLORS.green : COLORS.red,
+                  }]} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.historyLabel}>{h.description || h.type}</Text>
+                    <Text style={styles.historyDate}>{fmtDate(h.createdAt)}</Text>
+                  </View>
+                  <Text style={[styles.historyPoints, {
+                    color: h.points > 0 ? COLORS.green : COLORS.red,
+                  }]}>
+                    {h.points > 0 ? '+' : ''}{h.points} pts
+                  </Text>
+                </View>
+              ))
+            )
           )}
         </View>
 
