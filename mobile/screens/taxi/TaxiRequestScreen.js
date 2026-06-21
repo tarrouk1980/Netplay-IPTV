@@ -122,25 +122,25 @@ export default function TaxiRequestScreen({ route, navigation }) {
     })();
   }, [origin]);
 
-  // Fetch fare estimate when mode=A and origin known
+  // Fetch fare estimate when mode=A and both origin and destination are known
   useEffect(() => {
-    if (mode === 'A' && origin) {
+    if (mode === 'A' && origin && destinationCoords) {
       fetchEstimate();
     } else {
       setFareEstimate(null);
     }
-  }, [mode, origin]);
+  }, [mode, origin, destinationCoords]);
 
   const fetchEstimate = useCallback(async () => {
-    if (!origin) return;
+    if (!origin || !destinationCoords) return;
     setLoadingEstimate(true);
     try {
       const body = {
         originLat: origin.lat,
         originLng: origin.lng,
+        destLat: destinationCoords.lat,
+        destLng: destinationCoords.lng,
         mode: 'A',
-        // Destination not required for estimate — uses straight-line to dummy point if missing
-        // In production: parse destination text to coords via Mapbox Geocoding API
       };
 
       const response = await api.post('/api/taxi/estimate', body);
@@ -150,7 +150,7 @@ export default function TaxiRequestScreen({ route, navigation }) {
     } finally {
       setLoadingEstimate(false);
     }
-  }, [origin]);
+  }, [origin, destinationCoords]);
 
   const handleDestinationChange = (text) => {
     setDestination(text);
