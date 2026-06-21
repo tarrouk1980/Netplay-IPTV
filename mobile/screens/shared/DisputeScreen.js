@@ -47,8 +47,8 @@ export default function DisputeScreen({ navigation, route }) {
     if (!canSubmit) return;
     setSubmitting(true);
     try {
-      const res = await api.post('/api/disputes', {
-        orderId, orderType, disputeType, urgency, description,
+      const res = await api.post(`/api/orders/${orderId}/dispute`, {
+        disputeType, urgency, description,
       });
       setTicketId(res.data?.ticketId || `DSP-${Date.now().toString().slice(-6)}`);
       setSubmitted(true);

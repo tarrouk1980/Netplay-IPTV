@@ -74,9 +74,7 @@ export default function LiveOrderMapScreen({ route, navigation }) {
 
   const fetchData = useCallback(async () => {
     try {
-      const serviceMap = { TAXI: 'taxi', SOS: 'sos', DELIVERY: 'delivery', GROCERY: 'grocery' };
-      const path = serviceMap[serviceType] || 'taxi';
-      const res = await api.get(`/api/${path}/orders/${orderId}/tracking`);
+      const res = await api.get(`/api/orders/${orderId}/tracking`);
       const data = res.data;
       setProvider(data?.provider || null);
       setOrder(data?.order || null);
