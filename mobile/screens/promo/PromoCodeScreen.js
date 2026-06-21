@@ -21,11 +21,12 @@ const COLORS = {
 const SUGGESTED_CODES = [
   { code: 'BIENVENUE', desc: '20% sur la première commande', icon: '🎉' },
   { code: 'TAXI10', desc: '10% sur les courses taxi', icon: '🚕' },
-  { code: 'SOS15', desc: '15% sur interventions SOS', icon: '🚨' },
-  { code: 'LIVRAISON5', desc: '-5% livraisons', icon: '🛵' },
+  { code: 'SOS5', desc: '5 TND sur dépannage SOS', icon: '🚨' },
+  { code: 'LIVRAISON0', desc: '-2 TND livraisons', icon: '🛵' },
 ];
 
 export default function PromoCodeScreen({ navigation, route }) {
+  const { amount, serviceType } = route.params || {};
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [applied, setApplied] = useState(null);
@@ -48,12 +49,19 @@ export default function PromoCodeScreen({ navigation, route }) {
     setLoading(true);
     setApplied(null);
     try {
-      const res = await api.post('/api/promo/apply', { code: c });
+      const res = await api.post('/api/promo/apply', {
+        code: c,
+        amount: amount ?? 9999,
+        serviceType,
+      });
       const d = res.data;
-      setApplied({ ...d, code: c });
-      if (d.walletCredit) {
-        setHistory(prev => [{ code: c, appliedAt: new Date().toISOString(), reward: d.label || d.type }, ...prev]);
-      }
+      setApplied({
+        label: d.label,
+        discountPercent: d.type === 'PERCENT' ? d.value : null,
+        discountAmount: d.type === 'FIXED' ? d.discount : null,
+        code: c,
+      });
+      setHistory(prev => [{ code: c, appliedAt: new Date().toISOString(), reward: d.label }, ...prev]);
     } catch (err) {
       const msg = err?.response?.data?.error || 'Code invalide ou expiré.';
       Alert.alert('Code non valide', msg);
@@ -123,11 +131,8 @@ export default function PromoCodeScreen({ navigation, route }) {
               {applied.discountPercent && (
                 <Text style={styles.successDetail}>-{applied.discountPercent}% sur votre prochaine commande</Text>
               )}
-              {applied.walletCredit && (
-                <Text style={styles.successDetail}>+{Number(applied.walletCredit).toFixed(2)} TND crédité sur votre wallet</Text>
-              )}
-              {applied.freePass && (
-                <Text style={styles.successDetail}>1 pass journalier offert</Text>
+              {applied.discountAmount && (
+                <Text style={styles.successDetail}>-{Number(applied.discountAmount).toFixed(2)} TND sur votre prochaine commande</Text>
               )}
             </View>
           </View>

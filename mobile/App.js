@@ -372,7 +372,6 @@ import ClientLoyaltyScreen from './screens/client/ClientLoyaltyScreen';
 import GroceryReviewsScreen from './screens/grocery/GroceryReviewsScreen';
 import AdminNotificationsScreen from './screens/admin/AdminNotificationsScreen';
 import TaxiScheduledTripsScreen from './screens/taxi/TaxiScheduledTripsScreen';
-import ClientPromoCodesScreen from './screens/client/ClientPromoCodesScreen';
 import AdminDriverPerformanceScreen from './screens/admin/AdminDriverPerformanceScreen';
 import ClientFeedbackScreen from './screens/client/ClientFeedbackScreen';
 import MerchantStockAlertScreen from './screens/merchant/MerchantStockAlertScreen';
@@ -585,7 +584,6 @@ import MerchantLiveOrdersScreen from './screens/merchant/MerchantLiveOrdersScree
 import AdminVehicleInspectionScreen from './screens/admin/AdminVehicleInspectionScreen';
 
 // Batch 92
-import PromoCodesClientScreen from './screens/promo/PromoCodesClientScreen';
 import ProviderIncidentScreen from './screens/provider/ProviderIncidentScreen';
 import AdminSOSInterventionsScreen from './screens/admin/AdminSOSInterventionsScreen';
 
@@ -880,7 +878,6 @@ function MainStack() {
       <Stack.Screen name="AdminFinancialDashboard" component={AdminFinancialDashboardScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MerchantLiveOrders" component={MerchantLiveOrdersScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminVehicleInspection" component={AdminVehicleInspectionScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="PromoCodesClient" component={PromoCodesClientScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ProviderIncident" component={ProviderIncidentScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminSOSInterventions" component={AdminSOSInterventionsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="WalletHistory" component={WalletHistoryScreen} options={{ headerShown: false }} />
@@ -1033,7 +1030,6 @@ function MainStack() {
       <Stack.Screen name="LegalMentions" component={LegalMentionsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminDriverPerformance" component={AdminDriverPerformanceScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiScheduledTrips" component={TaxiScheduledTripsScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="ClientPromoCodes" component={ClientPromoCodesScreen} options={{ headerShown: false }} />
       <Stack.Screen name="GroceryReviews" component={GroceryReviewsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminNotifications" component={AdminNotificationsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientLoyalty" component={ClientLoyaltyScreen} options={{ headerShown: false }} />

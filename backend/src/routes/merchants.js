@@ -78,13 +78,16 @@ router.patch(
       return res.status(404).json({ error: 'Merchant profile not found', code: 'NOT_FOUND' });
     }
 
-    const { name, address, lat, lng, isOpen } = req.body;
+    const { name, address, lat, lng, isOpen, metadata } = req.body;
     const data = {};
     if (name !== undefined) data.name = name;
     if (address !== undefined) data.address = address;
     if (lat !== undefined) data.lat = lat;
     if (lng !== undefined) data.lng = lng;
     if (isOpen !== undefined) data.isOpen = isOpen;
+    if (metadata !== undefined && typeof metadata === 'object') {
+      data.metadata = { ...(merchant.metadata || {}), ...metadata };
+    }
 
     const updated = await prisma.merchant.update({ where: { id: merchant.id }, data });
     return res.json({ merchant: updated });

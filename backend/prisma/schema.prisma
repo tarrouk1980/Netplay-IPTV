@@ -217,6 +217,7 @@ model Merchant {
   priceAgreementSigned Boolean   @default(false)
   isBoosted            Boolean   @default(false)
   boostedUntil         DateTime?
+  metadata             Json?
   createdAt            DateTime  @default(now())
 
   products Product[]

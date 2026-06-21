@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  StatusBar, TextInput, Alert, Switch,
+  StatusBar, TextInput, Alert, Switch, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', surfaceAlt: '#16161F',
@@ -43,9 +44,34 @@ const MOCK_STORE = {
   },
 };
 
+const fromApi = (m) => ({
+  name: m.name,
+  category: m.category,
+  address: m.address,
+  phone: m.metadata?.phone || '',
+  description: m.metadata?.description || '',
+  minOrder: m.metadata?.minOrder ?? 0,
+  deliveryFee: m.metadata?.deliveryFee ?? 0,
+  freeDeliveryThreshold: m.metadata?.freeDeliveryThreshold ?? 0,
+  active: m.isOpen,
+  acceptsPreorders: m.metadata?.acceptsPreorders ?? false,
+  schedule: m.metadata?.schedule || MOCK_STORE.schedule,
+});
+
 export default function MerchantSettingsScreen({ navigation }) {
-  const [store, setStore] = useState(MOCK_STORE);
+  const [store, setStore] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
+
+  const load = useCallback(() => {
+    setLoading(true);
+    api.get('/api/merchants/me')
+      .then(r => setStore(fromApi(r.data.merchant)))
+      .catch(() => setStore(MOCK_STORE))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   const update = (key, value) => setStore(p => ({ ...p, [key]: value }));
 
@@ -57,13 +83,34 @@ export default function MerchantSettingsScreen({ navigation }) {
 
   const handleSave = async () => {
     try {
-      // await api.put('/merchant/settings', store);
+      await api.patch('/api/merchants/me', {
+        name: store.name,
+        address: store.address,
+        isOpen: store.active,
+        metadata: {
+          phone: store.phone,
+          description: store.description,
+          minOrder: store.minOrder,
+          deliveryFee: store.deliveryFee,
+          freeDeliveryThreshold: store.freeDeliveryThreshold,
+          acceptsPreorders: store.acceptsPreorders,
+          schedule: store.schedule,
+        },
+      });
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch {
       Alert.alert('Erreur', 'La sauvegarde a échoué.');
     }
   };
+
+  if (loading || !store) {
+    return (
+      <SafeAreaView style={styles.root}>
+        <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 80 }} />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.root}>
