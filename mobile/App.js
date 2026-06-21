@@ -322,20 +322,17 @@ import ClientAddressMapScreen from './screens/client/ClientAddressMapScreen';
 // Batch 115
 import AdminTransactionsScreen from './screens/admin/AdminTransactionsScreen';
 import ClientTripDetailScreen from './screens/client/ClientTripDetailScreen';
-import MerchantHoursScreen from './screens/merchant/MerchantHoursScreen';
 // Batch 116
 import AdminFeedbackScreen from './screens/admin/AdminFeedbackScreen';
 import TaxiSurgePricingScreen from './screens/taxi/TaxiSurgePricingScreen';
 import ClientSubscriptionScreen from './screens/client/ClientSubscriptionScreen';
 // Batch 117
-import MerchantCouponsScreen from './screens/merchant/MerchantCouponsScreen';
 import LivreurZonesScreen from './screens/delivery/LivreurZonesScreen';
 import ClientLanguageScreen from './screens/client/ClientLanguageScreen';
 // Batch 118
 import TaxiDriverOnboardingScreen from './screens/taxi/TaxiDriverOnboardingScreen';
 import GroceryShopScreen from './screens/grocery/GroceryShopScreen';
 import ClientEmergencyScreen from './screens/client/ClientEmergencyScreen';
-import MerchantStaffScreen from './screens/merchant/MerchantStaffScreen';
 import TaxiDispatchScreen from './screens/taxi/TaxiDispatchScreen';
 import ClientReferralScreen from './screens/client/ClientReferralScreen';
 import TaxiRatingsScreen from './screens/taxi/TaxiRatingsScreen';
@@ -346,13 +343,11 @@ import TaxiEarningsScreen from './screens/taxi/TaxiEarningsScreen';
 import ClientChatScreen from './screens/client/ClientChatScreen';
 import LivreurHomeScreen from './screens/delivery/LivreurHomeScreen';
 import MerchantMenuScreen from './screens/merchant/MerchantMenuScreen';
-import MerchantNotificationsScreen from './screens/merchant/MerchantNotificationsScreen';
 import LivreurRatingsScreen from './screens/delivery/LivreurRatingsScreen';
 import ClientHomeScreen from './screens/client/ClientHomeScreen';
 import ClientOrderDetailScreen from './screens/client/ClientOrderDetailScreen';
 import TaxiDriverHomeScreen from './screens/taxi/TaxiDriverHomeScreen';
 import SOSMapScreen from './screens/sos/SOSMapScreen';
-import MerchantQRCodeScreen from './screens/merchant/MerchantQRCodeScreen';
 import ClientSupportScreen from './screens/client/ClientSupportScreen';
 import ClientWalletDetailScreen from './screens/client/ClientWalletScreen';
 import MerchantPromotionsScreen from './screens/merchant/MerchantPromotionsScreen';
@@ -416,7 +411,6 @@ import ProviderStatsScreen from './screens/provider/ProviderStatsScreen';
 import GroceryCheckoutReviewScreen from './screens/grocery/GroceryCheckoutReviewScreen';
 // Batch 135
 import ClientMapScreen from './screens/client/ClientMapScreen';
-import MerchantAnalyticsScreen from './screens/merchant/MerchantAnalyticsScreen';
 // Batch 136
 import LivreurHistoryScreen from './screens/delivery/LivreurHistoryScreen';
 // Batch 137
@@ -550,7 +544,6 @@ import DeliveryScheduleScreen from './screens/delivery/DeliveryScheduleScreen';
 import AdminPromoCreateScreen from './screens/admin/AdminPromoCreateScreen';
 import GroceryOrderSuccessScreen from './screens/grocery/GroceryOrderSuccessScreen';
 import DriverWithdrawScreen from './screens/driver/DriverWithdrawScreen';
-import MerchantPayoutsScreen from './screens/merchant/MerchantPayoutsScreen';
 import EmergencyContactScreen from './screens/shared/EmergencyContactScreen';
 import AdminLiveStatsScreen from './screens/admin/AdminLiveStatsScreen';
 import TaxiActiveRideV2Screen from './screens/taxi/TaxiActiveRideV2Screen';
@@ -844,11 +837,9 @@ function MainStack() {
       <Stack.Screen name="DriverIncident" component={DriverIncidentScreen} options={{ headerShown: false }} />
       <Stack.Screen name="EasyPointsHistory" component={EasyPointsHistoryScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DeliverySchedule" component={DeliveryScheduleScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="MerchantAnalytics" component={MerchantAnalyticsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminPromoCreate" component={AdminPromoCreateScreen} options={{ headerShown: false }} />
       <Stack.Screen name="GroceryOrderSuccess" component={GroceryOrderSuccessScreen} options={{ headerShown: false, gestureEnabled: false }} />
       <Stack.Screen name="DriverWithdraw" component={DriverWithdrawScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="MerchantPayouts" component={MerchantPayoutsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="EmergencyContact" component={EmergencyContactScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminLiveStats" component={AdminLiveStatsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiActiveRideV2" component={TaxiActiveRideV2Screen} options={{ headerShown: false }} />
@@ -977,17 +968,14 @@ function MainStack() {
       <Stack.Screen name="ClientAddressMap" component={ClientAddressMapScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminTransactions" component={AdminTransactionsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientTripDetail" component={ClientTripDetailScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="MerchantHours" component={MerchantHoursScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminFeedback" component={AdminFeedbackScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiSurgePricing" component={TaxiSurgePricingScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientSubscription" component={ClientSubscriptionScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="MerchantCoupons" component={MerchantCouponsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="LivreurZones" component={LivreurZonesScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientLanguage" component={ClientLanguageScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiDriverOnboarding" component={TaxiDriverOnboardingScreen} options={{ headerShown: false }} />
       <Stack.Screen name="GroceryShop" component={GroceryShopScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientEmergency" component={ClientEmergencyScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="MerchantStaff" component={MerchantStaffScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiDispatch" component={TaxiDispatchScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientReferral" component={ClientReferralScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiRatings" component={TaxiRatingsScreen} options={{ headerShown: false }} />
@@ -998,13 +986,11 @@ function MainStack() {
       <Stack.Screen name="ClientChat" component={ClientChatScreen} options={{ headerShown: false }} />
       <Stack.Screen name="LivreurHome" component={LivreurHomeScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MerchantMenu" component={MerchantMenuScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="MerchantNotifications" component={MerchantNotificationsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="LivreurRatings" component={LivreurRatingsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientHome" component={ClientHomeScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientOrderDetail" component={ClientOrderDetailScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiDriverHome" component={TaxiDriverHomeScreen} options={{ headerShown: false }} />
       <Stack.Screen name="SOSMap" component={SOSMapScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="MerchantQRCode" component={MerchantQRCodeScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientSupport" component={ClientSupportScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientWalletDetail" component={ClientWalletDetailScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MerchantPromotions" component={MerchantPromotionsScreen} options={{ headerShown: false }} />
