@@ -9,7 +9,16 @@ module.exports = {
     backgroundColor: '#0A0A0F',
     splash: { image: './assets/splash.png', backgroundColor: '#0A0A0F' },
     assetBundlePatterns: ['**/*'],
-    ios: { supportsTablet: false, bundleIdentifier: 'com.easyway.app', scheme: 'easyway' },
+    ios: {
+      supportsTablet: false,
+      bundleIdentifier: 'com.easyway.app',
+      scheme: 'easyway',
+      infoPlist: {
+        NSLocationWhenInUseUsageDescription: 'EasyWay a besoin de votre position pour trouver les prestataires les plus proches et suivre vos interventions en temps réel.',
+        NSCameraUsageDescription: 'EasyWay a besoin de la caméra pour vérifier votre identité et vos documents.',
+        NSPhotoLibraryUsageDescription: 'EasyWay a besoin d\'accéder à vos photos pour envoyer des documents et justificatifs.',
+      },
+    },
     android: {
       adaptiveIcon: {
         foregroundImage: './assets/adaptive-icon.png',

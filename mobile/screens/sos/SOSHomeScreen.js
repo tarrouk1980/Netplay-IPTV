@@ -25,6 +25,8 @@ export default function SOSHomeScreen({ navigation }) {
     fetchMyContract();
   }, []);
 
+  const contractValid = myContract && myContract.verified && new Date(myContract.expiresAt) >= new Date();
+
   const handleInsurance = () => {
     navigation.navigate('SOSRequest', {
       mode: 'INSURANCE',
@@ -39,8 +41,6 @@ export default function SOSHomeScreen({ navigation }) {
   const handleIndependent = () => {
     navigation.navigate('SOSPreDiagnostic', { mode: 'INDEPENDENT' });
   };
-
-  const contractValid = myContract && new Date(myContract.expiresAt) >= new Date();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -72,9 +72,11 @@ export default function SOSHomeScreen({ navigation }) {
             <Text style={styles.modeSubtitle}>
               {contractValid
                 ? `✅ Contrat actif · expire le ${new Date(myContract.expiresAt).toLocaleDateString('fr-TN')}`
-                : myContract
-                  ? '⚠️ Contrat expiré — renseignez vos infos dans le formulaire'
-                  : 'Renseignez vos infos d\'assurance dans le formulaire suivant'}
+                : myContract && !myContract.verified
+                  ? '⏳ Contrat en attente de vérification par EasyWay'
+                  : myContract
+                    ? '⚠️ Contrat expiré — renseignez vos infos dans le formulaire'
+                    : 'Renseignez vos infos d\'assurance dans le formulaire suivant'}
             </Text>
             {contractValid && (
               <View style={styles.coverageTags}>

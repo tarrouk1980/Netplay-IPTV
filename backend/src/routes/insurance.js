@@ -29,7 +29,9 @@ router.post(
 
     try {
       const existing = await prisma.insuranceContract.findFirst({ where: { providerId: req.user.id } });
-      const data = { companyName, expiresAt: new Date(expiresAt), quotaTotal, amountFixed };
+      // Any change to a self-declared contract resets verification — an admin must re-check it
+      // before it can be used to grant free SOS interventions (see /api/sos/request).
+      const data = { companyName, expiresAt: new Date(expiresAt), quotaTotal, amountFixed, verified: false };
       const contract = existing
         ? await prisma.insuranceContract.update({ where: { id: existing.id }, data })
         : await prisma.insuranceContract.create({ data: { providerId: req.user.id, ...data } });
@@ -67,6 +69,24 @@ router.get('/contracts', authenticate, requireRole('ADMIN'), async (req, res) =>
     return res.json({ contracts, count: contracts.length });
   } catch (err) {
     console.error('[Insurance] findMany error:', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// PATCH /api/insurance/contracts/:id/verify — ADMIN approves or rejects a self-declared contract
+router.patch('/contracts/:id/verify', authenticate, requireRole('ADMIN'), async (req, res) => {
+  const { verified } = req.body;
+  if (typeof verified !== 'boolean') {
+    return res.status(422).json({ error: 'verified must be a boolean', code: 'VALIDATION_ERROR' });
+  }
+  try {
+    const contract = await prisma.insuranceContract.update({
+      where: { id: req.params.id },
+      data: { verified },
+    });
+    return res.json({ contract });
+  } catch (err) {
+    console.error('[Insurance] verify error:', err);
     return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
   }
 });

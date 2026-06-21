@@ -95,6 +95,9 @@ router.post(
         if (!contract) {
           return res.status(400).json({ error: 'No insurance contract found', code: 'NO_CONTRACT' });
         }
+        if (!contract.verified) {
+          return res.status(400).json({ error: 'Your insurance contract is pending verification', code: 'CONTRACT_NOT_VERIFIED' });
+        }
         if (new Date(contract.expiresAt) < new Date()) {
           return res.status(400).json({ error: 'Insurance contract has expired', code: 'CONTRACT_EXPIRED' });
         }

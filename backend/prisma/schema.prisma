@@ -245,6 +245,7 @@ model InsuranceContract {
   quotaUsed    Int      @default(0)
   amountFixed  Decimal
   expiresAt    DateTime
+  verified     Boolean  @default(false)
   createdAt    DateTime @default(now())
 }
 
