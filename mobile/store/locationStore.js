@@ -1,8 +1,25 @@
 import { create } from 'zustand';
+import { getCurrentLocationWithAddress } from '../utils/locationUtils';
 
 const useLocationStore = create((set, get) => ({
   nearbyProviders: {}, // keyed by userId
   myLocation: null,
+  myAddress: null,
+  fetchingMyLocation: false,
+
+  // Triggers the OS location permission prompt and a first GPS fix right
+  // after login, like other apps do, instead of waiting until the client
+  // opens a specific service screen.
+  prefetchMyLocation: async () => {
+    if (get().fetchingMyLocation) return;
+    set({ fetchingMyLocation: true });
+    const result = await getCurrentLocationWithAddress();
+    if (result) {
+      set({ myLocation: result.coords, myAddress: result.address, fetchingMyLocation: false });
+    } else {
+      set({ fetchingMyLocation: false });
+    }
+  },
 
   updateFromSocket: (data) => {
     // data: { userId, lat, lng, serviceType }

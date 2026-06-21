@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api, { setTokens, clearTokens } from '../services/api';
+import useLocationStore from './locationStore';
 
 const useAuthStore = create((set, get) => ({
   user: null,
@@ -26,6 +27,7 @@ const useAuthStore = create((set, get) => ({
       await AsyncStorage.setItem('user', JSON.stringify(user));
 
       set({ user, accessToken, refreshToken, isAuthenticated: true, isLoading: false });
+      useLocationStore.getState().prefetchMyLocation();
       return { success: true, user };
     } catch (error) {
       const message = error.response?.data?.error || 'Login failed';
@@ -73,6 +75,7 @@ const useAuthStore = create((set, get) => ({
           user,
           isAuthenticated: true,
         });
+        useLocationStore.getState().prefetchMyLocation();
       }
     } catch (err) {
       console.error('[AuthStore] Failed to load from storage:', err);

@@ -10,8 +10,14 @@ async function seed() {
     { name: 'Pet Shop Minou', category: 'PETS', address: 'Ariana, Tunis' },
     { name: 'TechWorld', category: 'HIGHTECH', address: 'Centre Urbain Nord, Tunis' },
   ];
-  // Create demo user for merchants if not exists
+  // Idempotent: skip any demo whose merchant name already exists, so re-running
+  // this script (e.g. on every deploy) doesn't create duplicate stores.
   for (const m of demos) {
+    const existing = await prisma.merchant.findFirst({ where: { name: m.name } });
+    if (existing) {
+      console.log('Skip (exists):', m.name);
+      continue;
+    }
     const phone = `+21699${Math.floor(100000 + Math.random()*900000)}`;
     try {
       const user = await prisma.user.create({
@@ -21,7 +27,7 @@ async function seed() {
         data: { userId: user.id, name: m.name, category: m.category, address: m.address, priceAgreementSigned: true }
       });
       console.log('Created:', m.name);
-    } catch(e) { console.log('Skip (exists):', m.name); }
+    } catch(e) { console.log('Skip (failed):', m.name); }
   }
   await prisma.$disconnect();
 }

@@ -19,6 +19,7 @@ import * as ImagePicker from 'expo-image-picker';
 import axios from 'axios';
 import api, { setTokens } from '../../services/api';
 import { getCurrentLocationWithAddress } from '../../utils/locationUtils';
+import useLocationStore from '../../store/locationStore';
 import useAuthStore from '../../store/authStore';
 import ServiceIcon from '../../components/ServiceIcon';
 
@@ -627,6 +628,7 @@ export default function RegisterScreen({ navigation }) {
       await AsyncStorage.setItem('user', JSON.stringify(user));
       setUser(user);
       storeSetTokens(accessToken, refreshToken);
+      useLocationStore.getState().prefetchMyLocation();
 
       // 2. Role-specific follow-up calls
       if (role === 'CHAUFFEUR') {
