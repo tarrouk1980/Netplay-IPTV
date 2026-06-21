@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   StatusBar, TextInput, Modal, Alert, ActivityIndicator, Switch,
@@ -12,14 +12,10 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB',
 };
 
-const MOCK_CATEGORIES = ['Entrées', 'Plats', 'Desserts', 'Boissons', 'Accompagnements'];
-const MOCK_ITEMS = [
-  { id: 'MI1', name: 'Tajine poulet citron', category: 'Plats', price: 12.500, available: true, icon: '🍲', description: 'Tajine traditionnel au citron confit et olives' },
-  { id: 'MI2', name: 'Brick au thon', category: 'Entrées', price: 3.500, available: true, icon: '🥟', description: 'Brick croustillante farcie au thon et oeuf' },
-  { id: 'MI3', name: 'Couscous agneau', category: 'Plats', price: 14.000, available: false, icon: '🍛', description: 'Couscous royal aux légumes de saison' },
-  { id: 'MI4', name: 'Makroudh', category: 'Desserts', price: 2.000, available: true, icon: '🍮', description: 'Gâteau aux dattes et eau de fleur d\'oranger' },
-  { id: 'MI5', name: 'Citronnade', category: 'Boissons', price: 2.500, available: true, icon: '🍋', description: 'Citronnade fraîche maison' },
-];
+const fromApi = (p) => ({
+  id: p.id, name: p.name, category: p.category, price: parseFloat(p.price),
+  available: p.active, icon: p.metadata?.icon || '🍽️', description: p.description || '',
+});
 
 function MenuItem({ item, onEdit, onToggle }) {
   return (
@@ -57,14 +53,24 @@ function MenuItem({ item, onEdit, onToggle }) {
 const EMPTY_FORM = { name: '', category: 'Plats', price: '', description: '', icon: '🍽️', available: true };
 
 export default function MerchantMenuScreen({ navigation }) {
-  const [items, setItems] = useState(MOCK_ITEMS);
-  const [loading, setLoading] = useState(false);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('Tout');
   const [modal, setModal] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+
+  const load = useCallback(() => {
+    setLoading(true);
+    api.get('/api/merchants/me/products')
+      .then(r => setItems((r.data.products || []).map(fromApi)))
+      .catch(() => setItems([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   const filtered = items.filter(i => {
     const q = search.toLowerCase();
@@ -83,33 +89,46 @@ export default function MerchantMenuScreen({ navigation }) {
 
   const handleToggle = (item) => {
     setItems(prev => prev.map(i => i.id === item.id ? { ...i, available: !i.available } : i));
-    api.patch(`/api/merchant/menu/${item.id}/toggle`).catch(() => {});
+    api.patch(`/api/merchants/me/products/${item.id}`, { active: !item.available }).catch(() => {
+      setItems(prev => prev.map(i => i.id === item.id ? { ...i, available: item.available } : i));
+    });
   };
 
   const handleSave = async () => {
     if (!form.name.trim() || !form.price) { Alert.alert('Champs requis', 'Nom et prix obligatoires.'); return; }
     setSaving(true);
-    const payload = { ...form, price: parseFloat(form.price) || 0 };
+    const payload = {
+      name: form.name, category: form.category, price: parseFloat(form.price) || 0,
+      description: form.description, metadata: { icon: form.icon },
+    };
     try {
       if (editing) {
-        await api.put(`/api/merchant/menu/${editing.id}`, payload);
-        setItems(prev => prev.map(i => i.id === editing.id ? { ...i, ...payload } : i));
+        const r = await api.patch(`/api/merchants/me/products/${editing.id}`, payload);
+        setItems(prev => prev.map(i => i.id === editing.id ? fromApi(r.data.product) : i));
       } else {
-        const r = await api.post('/api/merchant/menu', payload);
-        setItems(prev => [...prev, r.data.item || { ...payload, id: `MI${Date.now()}` }]);
+        const r = await api.post('/api/merchants/me/products', payload);
+        setItems(prev => [...prev, fromApi(r.data.product)]);
       }
       setModal(false);
     } catch {
-      if (editing) setItems(prev => prev.map(i => i.id === editing.id ? { ...i, ...payload } : i));
-      else setItems(prev => [...prev, { ...payload, id: `MI${Date.now()}` }]);
-      setModal(false);
+      Alert.alert('Erreur', "Impossible d'enregistrer cet article.");
     } finally { setSaving(false); }
   };
 
   const handleDelete = (item) => {
     Alert.alert('Supprimer cet article ?', `"${item.name}" sera retiré du menu.`, [
       { text: 'Annuler', style: 'cancel' },
-      { text: 'Supprimer', style: 'destructive', onPress: () => { setItems(prev => prev.filter(i => i.id !== item.id)); setModal(false); api.delete(`/api/merchant/menu/${item.id}`).catch(() => {}); } },
+      {
+        text: 'Supprimer', style: 'destructive', onPress: async () => {
+          try {
+            await api.delete(`/api/merchants/me/products/${item.id}`);
+            setItems(prev => prev.filter(i => i.id !== item.id));
+            setModal(false);
+          } catch {
+            Alert.alert('Erreur', 'Impossible de supprimer cet article.');
+          }
+        },
+      },
     ]);
   };
 

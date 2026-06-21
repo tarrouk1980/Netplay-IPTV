@@ -144,7 +144,12 @@ router.post(
       return res.status(404).json({ error: 'Merchant profile not found', code: 'NOT_FOUND' });
     }
 
-    const { name, description, price, category, imageUrl, stock, promoPrice, promoLabel } = req.body;
+    const { name, description, price, category, imageUrl, stock, promoPrice, promoLabel, metadata } = req.body;
+
+    const mergedMetadata = {
+      ...(metadata && typeof metadata === 'object' ? metadata : {}),
+      ...(promoPrice ? { promoPrice: promoPrice.toString(), promoLabel: promoLabel || null } : {}),
+    };
 
     const product = await prisma.product.create({
       data: {
@@ -155,7 +160,7 @@ router.post(
         category,
         imageUrl: imageUrl || null,
         stock: stock !== undefined ? parseInt(stock) : 0,
-        metadata: promoPrice ? { promoPrice: promoPrice.toString(), promoLabel: promoLabel || null } : undefined,
+        metadata: Object.keys(mergedMetadata).length ? mergedMetadata : undefined,
       },
     });
 
@@ -192,7 +197,7 @@ router.patch(
       return res.status(404).json({ error: 'Product not found', code: 'NOT_FOUND' });
     }
 
-    const { name, description, price, category, imageUrl, stock, active } = req.body;
+    const { name, description, price, category, imageUrl, stock, active, metadata } = req.body;
     const data = {};
     if (name !== undefined) data.name = name;
     if (description !== undefined) data.description = description;
@@ -201,6 +206,9 @@ router.patch(
     if (imageUrl !== undefined) data.imageUrl = imageUrl;
     if (stock !== undefined) data.stock = parseInt(stock);
     if (active !== undefined) data.active = active;
+    if (metadata !== undefined && typeof metadata === 'object') {
+      data.metadata = { ...(product.metadata || {}), ...metadata };
+    }
 
     const updated = await prisma.product.update({ where: { id: product.id }, data });
     return res.json({ product: updated });

@@ -66,11 +66,17 @@ export default function MerchantInventoryScreen({ navigation }) {
   const [form, setForm] = useState({ name: '', price: '', stock: '', unit: 'kg', category: 'Fruits', image: '🛒' });
   const [saving, setSaving] = useState(false);
 
+  const fromApi = (p) => ({
+    id: p.id, name: p.name, category: p.category, price: parseFloat(p.price),
+    stock: p.stock, unit: p.metadata?.unit || 'pièce', available: p.active,
+    image: p.metadata?.image || '🛒',
+  });
+
   const load = useCallback(() => {
     setLoading(true);
-    api.get('/api/merchant/products')
-      .then(r => setProducts(r.data.products || MOCK_PRODUCTS))
-      .catch(() => setProducts(MOCK_PRODUCTS))
+    api.get('/api/merchants/me/products')
+      .then(r => setProducts((r.data.products || []).map(fromApi)))
+      .catch(() => setProducts([]))
       .finally(() => setLoading(false));
   }, []);
 
@@ -95,25 +101,28 @@ export default function MerchantInventoryScreen({ navigation }) {
     }
     setSaving(true);
     try {
-      const payload = { ...form, price: parseFloat(form.price), stock: parseInt(form.stock) || 0, available: true };
+      const payload = {
+        name: form.name, price: parseFloat(form.price), stock: parseInt(form.stock) || 0,
+        category: form.category, metadata: { unit: form.unit, image: form.image },
+      };
       if (editing) {
-        await api.put(`/api/merchant/products/${editing.id}`, payload);
-        setProducts(prev => prev.map(p => p.id === editing.id ? { ...p, ...payload } : p));
+        const r = await api.patch(`/api/merchants/me/products/${editing.id}`, payload);
+        setProducts(prev => prev.map(p => p.id === editing.id ? fromApi(r.data.product) : p));
       } else {
-        const r = await api.post('/api/merchant/products', payload);
-        setProducts(prev => [...prev, r.data.product || { ...payload, id: `P${Date.now()}` }]);
+        const r = await api.post('/api/merchants/me/products', payload);
+        setProducts(prev => [...prev, fromApi(r.data.product)]);
       }
       setModal(false);
     } catch {
-      // fallback local
-      if (editing) setProducts(prev => prev.map(p => p.id === editing.id ? { ...p, name: form.name, price: parseFloat(form.price), stock: parseInt(form.stock) || 0 } : p));
-      setModal(false);
+      Alert.alert('Erreur', "Impossible d'enregistrer ce produit. Vérifiez votre connexion et réessayez.");
     } finally { setSaving(false); }
   };
 
   const handleToggle = async (item) => {
     setProducts(prev => prev.map(p => p.id === item.id ? { ...p, available: !p.available } : p));
-    api.patch(`/api/merchant/products/${item.id}/toggle`).catch(() => {});
+    api.patch(`/api/merchants/me/products/${item.id}`, { active: !item.available }).catch(() => {
+      setProducts(prev => prev.map(p => p.id === item.id ? { ...p, available: item.available } : p));
+    });
   };
 
   const handleDelete = (item) => {
@@ -121,9 +130,13 @@ export default function MerchantInventoryScreen({ navigation }) {
       { text: 'Annuler', style: 'cancel' },
       {
         text: 'Supprimer', style: 'destructive', onPress: async () => {
-          setProducts(prev => prev.filter(p => p.id !== item.id));
-          setModal(false);
-          api.delete(`/api/merchant/products/${item.id}`).catch(() => {});
+          try {
+            await api.delete(`/api/merchants/me/products/${item.id}`);
+            setProducts(prev => prev.filter(p => p.id !== item.id));
+            setModal(false);
+          } catch {
+            Alert.alert('Erreur', 'Impossible de supprimer ce produit.');
+          }
         },
       },
     ]);

@@ -12,16 +12,13 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C',
 };
 
-const MOCK_ITEMS = [
-  { id: 1, name: 'Pizza Margherita', price: 18.5, category: 'Pizzas', available: true, description: 'Tomate, mozzarella, basilic' },
-  { id: 2, name: 'Pizza Reine', price: 22.0, category: 'Pizzas', available: true, description: 'Jambon, champignons, fromage' },
-  { id: 3, name: 'Burger Classic', price: 14.0, category: 'Burgers', available: false, description: 'Boeuf, salade, tomate' },
-  { id: 4, name: 'Salade César', price: 12.5, category: 'Salades', available: true, description: 'Poulet grillé, parmesan, croûtons' },
-  { id: 5, name: 'Tiramisu', price: 7.0, category: 'Desserts', available: true, description: 'Mascarpone, café, cacao' },
-];
+const fromApi = (p) => ({
+  id: p.id, name: p.name, price: parseFloat(p.price), category: p.category,
+  available: p.active, description: p.description || '',
+});
 
 export default function MerchantMenuEditorScreen({ navigation }) {
-  const [items, setItems] = useState(MOCK_ITEMS);
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(null);
   const [editingId, setEditingId] = useState(null);
@@ -33,8 +30,8 @@ export default function MerchantMenuEditorScreen({ navigation }) {
   useEffect(() => {
     (async () => {
       try {
-        const res = await api.get('/api/merchant/menu');
-        if (res.data?.items?.length > 0) setItems(res.data.items);
+        const res = await api.get('/api/merchants/me/products');
+        setItems((res.data.products || []).map(fromApi));
       } catch {} finally { setLoading(false); }
     })();
   }, []);
@@ -44,7 +41,7 @@ export default function MerchantMenuEditorScreen({ navigation }) {
     const newVal = !item.available;
     setItems(prev => prev.map(i => i.id === item.id ? { ...i, available: newVal } : i));
     try {
-      await api.patch(`/api/merchant/menu/${item.id}`, { available: newVal });
+      await api.patch(`/api/merchants/me/products/${item.id}`, { active: newVal });
     } catch {
       setItems(prev => prev.map(i => i.id === item.id ? { ...i, available: item.available } : i));
       Alert.alert('Erreur', 'Impossible de modifier la disponibilité.');
@@ -58,7 +55,7 @@ export default function MerchantMenuEditorScreen({ navigation }) {
     setItems(prev => prev.map(i => i.id === item.id ? { ...i, price } : i));
     setEditingId(null);
     try {
-      await api.patch(`/api/merchant/menu/${item.id}`, { price });
+      await api.patch(`/api/merchants/me/products/${item.id}`, { price });
     } catch {
       Alert.alert('Erreur', 'Impossible de sauvegarder le prix.');
     } finally { setSaving(null); }
@@ -69,8 +66,12 @@ export default function MerchantMenuEditorScreen({ navigation }) {
       { text: 'Annuler', style: 'cancel' },
       {
         text: 'Supprimer', style: 'destructive', onPress: async () => {
-          setItems(prev => prev.filter(i => i.id !== item.id));
-          try { await api.delete(`/api/merchant/menu/${item.id}`); } catch {}
+          try {
+            await api.delete(`/api/merchants/me/products/${item.id}`);
+            setItems(prev => prev.filter(i => i.id !== item.id));
+          } catch {
+            Alert.alert('Erreur', 'Impossible de supprimer cet article.');
+          }
         },
       },
     ]);

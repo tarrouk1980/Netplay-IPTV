@@ -80,10 +80,10 @@ export default function GroceryOrderHistoryScreen({ navigation }) {
 
   const load = useCallback(async (silent = false) => {
     try {
-      const res = await api.get('/api/grocery/orders/history');
+      const res = await api.get('/api/grocery/history');
       setOrders(res.data.orders || []);
     } catch {
-      if (!silent) setOrders(MOCK_ORDERS);
+      if (!silent) setOrders([]);
     } finally {
       setLoading(false);
       setRefreshing(false);

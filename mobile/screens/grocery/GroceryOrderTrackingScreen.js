@@ -13,38 +13,23 @@ const COLORS = {
 };
 
 const STEPS = [
-  { key: 'CONFIRMED', icon: '✅', label: 'Commande confirmée', sub: 'Le magasin a accepté votre commande' },
-  { key: 'PREPARING', icon: '🛒', label: 'En préparation', sub: 'On rassemble vos articles' },
-  { key: 'READY', icon: '📦', label: 'Prête pour la livraison', sub: 'Un livreur va être assigné' },
-  { key: 'PICKED_UP', icon: '🚴', label: 'En route', sub: 'Votre livreur est parti' },
-  { key: 'DELIVERED', icon: '🎉', label: 'Livré !', sub: 'Commande remise avec succès' },
+  { key: 'PENDING', icon: '✅', label: 'Commande envoyée', sub: 'En attente d\'un livreur' },
+  { key: 'ACCEPTED', icon: '🛒', label: 'Acceptée', sub: 'Un livreur prépare votre commande' },
+  { key: 'IN_PROGRESS', icon: '🚴', label: 'En route', sub: 'Votre livreur est en chemin' },
+  { key: 'COMPLETED', icon: '🎉', label: 'Livré !', sub: 'Commande remise avec succès' },
 ];
-
-const MOCK_ORDER = {
-  id: 'GRO-4821',
-  status: 'PICKED_UP',
-  storeName: 'Monoprix El Manar',
-  livreurName: 'Sami K.',
-  eta: '12 min',
-  items: [
-    { name: 'Lait Délice 1L', qty: 2, price: 3.600 },
-    { name: 'Pain de mie', qty: 1, price: 2.800 },
-    { name: 'Eau minérale 1.5L x6', qty: 1, price: 5.400 },
-    { name: 'Yaourt nature x4', qty: 1, price: 4.200 },
-  ],
-  deliveryFee: 2.500,
-  total: 18.500,
-};
 
 export default function GroceryOrderTrackingScreen({ navigation, route }) {
   const { orderId } = route.params || {};
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const load = useCallback(() => {
-    api.get('/api/grocery/' + (orderId || 'GRO-4821'))
-      .then(r => setOrder(r.data || MOCK_ORDER))
-      .catch(() => setOrder(MOCK_ORDER))
+    if (!orderId) { setLoading(false); setError(true); return; }
+    api.get('/api/grocery/' + orderId)
+      .then(r => { setOrder(r.data.order); setError(false); })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [orderId]);
 
@@ -64,7 +49,40 @@ export default function GroceryOrderTrackingScreen({ navigation, route }) {
     );
   }
 
-  const o = order || MOCK_ORDER;
+  if (!order || error) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+            <Text style={styles.backText}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>🛒 Suivi commande</Text>
+          <View style={{ width: 36 }} />
+        </View>
+        <View style={{ alignItems: 'center', marginTop: 80, paddingHorizontal: 30 }}>
+          <Text style={{ color: COLORS.muted, fontSize: 14, textAlign: 'center' }}>
+            Impossible de récupérer cette commande. Vérifiez votre connexion et réessayez.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const meta = order.metadata || {};
+  const items = meta.items || [];
+  const deliveryFee = Number(meta.deliveryFee) || 0;
+  const total = Number(meta.total ?? order.finalPrice ?? order.price) || 0;
+  const o = {
+    id: order.id,
+    storeName: meta.storeName || 'Votre magasin',
+    livreurName: order.provider?.name || null,
+    eta: meta.eta || null,
+    status: order.status,
+    items,
+    deliveryFee,
+    total,
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -81,14 +99,14 @@ export default function GroceryOrderTrackingScreen({ navigation, route }) {
         <View style={styles.heroCard}>
           <Text style={styles.orderId}>#{o.id}</Text>
           <Text style={styles.storeName}>{o.storeName}</Text>
-          {o.status === 'PICKED_UP' && o.eta && (
+          {o.eta && (
             <View style={styles.etaBadge}>
               <Text style={styles.etaText}>⏱ Livraison estimée : {o.eta}</Text>
             </View>
           )}
         </View>
 
-        {o.livreurName && o.status !== 'DELIVERED' && (
+        {o.livreurName && o.status !== 'COMPLETED' && (
           <View style={styles.livreurCard}>
             <Text style={{ fontSize: 32 }}>🚴</Text>
             <View style={{ flex: 1 }}>
@@ -128,9 +146,9 @@ export default function GroceryOrderTrackingScreen({ navigation, route }) {
           <Text style={styles.cardTitle}>ARTICLES ({o.items.length})</Text>
           {o.items.map((item, i) => (
             <View key={i} style={styles.itemRow}>
-              <Text style={styles.itemQty}>{item.qty}×</Text>
-              <Text style={styles.itemName}>{item.name}</Text>
-              <Text style={styles.itemPrice}>{(item.qty * item.price).toFixed(3)} TND</Text>
+              <Text style={styles.itemQty}>{item.quantity}×</Text>
+              <Text style={styles.itemName}>{item.name || 'Article'}</Text>
+              <Text style={styles.itemPrice}>{(Number(item.lineTotal ?? item.quantity * item.price) || 0).toFixed(3)} TND</Text>
             </View>
           ))}
           <View style={styles.divider} />

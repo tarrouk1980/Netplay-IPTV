@@ -22,13 +22,6 @@ const CATEGORIES = [
   { id: 'boissons', label: 'Boissons', icon: '🥤' },
 ];
 
-const MOCK_SHOPS = [
-  { id: 'S1', name: 'Carrefour Market', category: 'Supermarché', rating: 4.8, deliveryTime: '25-35 min', minOrder: 10, deliveryFee: 2.5, promoted: true, open: true, tag: '🔥 Populaire' },
-  { id: 'S2', name: 'Monoprix Berges du Lac', category: 'Supermarché', rating: 4.6, deliveryTime: '30-45 min', minOrder: 15, deliveryFee: 3.0, promoted: false, open: true, tag: null },
-  { id: 'S3', name: 'Boulangerie Tunisoise', category: 'Boulangerie', rating: 4.9, deliveryTime: '15-25 min', minOrder: 5, deliveryFee: 1.5, promoted: false, open: true, tag: '⚡ Rapide' },
-  { id: 'S4', name: 'Marché Bio Sidi Bou Said', category: 'Bio', rating: 4.7, deliveryTime: '35-50 min', minOrder: 20, deliveryFee: 2.0, promoted: false, open: false, tag: null },
-  { id: 'S5', name: 'Épicerie El Amal', category: 'Épicerie', rating: 4.5, deliveryTime: '20-30 min', minOrder: 8, deliveryFee: 2.5, promoted: true, open: true, tag: '🆕 Nouveau' },
-];
 
 const BANNERS = [
   { id: 'B1', title: 'Livraison offerte', subtitle: 'Dès 30 TND de commande', color: COLORS.green, icon: '🚴' },
@@ -75,9 +68,13 @@ export default function GroceryHomeScreen({ navigation }) {
   const [category, setCategory] = useState('all');
 
   useEffect(() => {
-    api.get('/api/grocery/shops')
-      .then(r => setShops(r.data.shops || MOCK_SHOPS))
-      .catch(() => setShops(MOCK_SHOPS))
+    api.get('/api/merchants', { params: { category: 'SUPERMARKET' } })
+      .then(r => setShops((r.data.merchants || []).map(m => ({
+        id: m.id, name: m.name, category: 'Supermarché', rating: 4.5,
+        deliveryTime: '25-45 min', minOrder: 0, deliveryFee: 0,
+        promoted: m.isBoosted, open: m.isOpen, tag: null,
+      }))))
+      .catch(() => setShops([]))
       .finally(() => setLoading(false));
   }, []);
 
