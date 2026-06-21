@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
+import { getCurrentLocationWithAddress } from '../../utils/locationUtils';
 
 const COLORS = {
   bg: '#0A0A0F',
@@ -95,7 +96,8 @@ export default function SOSNearbyDepanneursScreen({ navigation, route }) {
 
   const load = useCallback(async (silent = false) => {
     try {
-      const res = await api.get('/api/sos/nearby', { params: { problemType } });
+      const loc = await getCurrentLocationWithAddress();
+      const res = await api.get('/api/sos/nearby', { params: { lat: loc?.coords?.lat, lng: loc?.coords?.lng } });
       setDepanneurs(res.data.depanneurs || []);
     } catch {
       if (!silent) setDepanneurs(MOCK_DEPANNEURS);

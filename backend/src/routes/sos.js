@@ -29,6 +29,39 @@ function determineSosType(vehicleState) {
 }
 
 // ─────────────────────────────────────────────
+// GET /api/sos/nearby — CLIENT browses nearby DEPANNEUR providers
+// ─────────────────────────────────────────────
+router.get(
+  '/nearby',
+  authenticate,
+  async (req, res) => {
+    const lat = parseFloat(req.query.lat);
+    const lng = parseFloat(req.query.lng);
+    if (Number.isNaN(lat) || Number.isNaN(lng)) {
+      return res.status(422).json({ error: 'lat and lng query params required' });
+    }
+    try {
+      const nearby = await findNearby(lat, lng, parseFloat(req.query.radius) || 20, 'SOS');
+      const ids = nearby.map((d) => d.userId);
+      const users = ids.length
+        ? await prisma.user.findMany({
+            where: { id: { in: ids } },
+            select: { id: true, name: true, phone: true, avgRating: true },
+          })
+        : [];
+      const byId = new Map(users.map((u) => [u.id, u]));
+      const depanneurs = nearby
+        .filter((d) => byId.has(d.userId))
+        .map((d) => ({ ...byId.get(d.userId), lat: d.lat, lng: d.lng, distanceKm: d.distance }));
+      return res.json({ depanneurs });
+    } catch (err) {
+      console.warn('[SOS] /nearby findNearby failed:', err.message);
+      return res.json({ depanneurs: [] });
+    }
+  }
+);
+
+// ─────────────────────────────────────────────
 // POST /api/sos/request — CLIENT submits SOS request
 // ─────────────────────────────────────────────
 router.post(

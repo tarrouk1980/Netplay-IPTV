@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
+import { getCurrentLocationWithAddress } from '../../utils/locationUtils';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', surfaceAlt: '#16161F',
@@ -40,7 +41,8 @@ export default function SOSDepanneurMapScreen({ navigation }) {
 
   const fetchDepanneurs = async () => {
     try {
-      const res = await api.get('/api/sos/depanneurs/nearby');
+      const loc = await getCurrentLocationWithAddress();
+      const res = await api.get('/api/sos/nearby', { params: { lat: loc?.coords?.lat, lng: loc?.coords?.lng } });
       if (res.data?.depanneurs?.length > 0) setDepanneurs(res.data.depanneurs);
     } catch {
       // garder mock
