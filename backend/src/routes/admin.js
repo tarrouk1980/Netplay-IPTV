@@ -1583,6 +1583,43 @@ router.post('/notifications/push', async (req, res) => {
   }
 });
 
+router.get('/promo-codes', async (req, res) => {
+  const codes = [...promoStore.values()].map((p) => ({
+    ...p, usedCount: p.usageCount, isActive: p.active, minOrder: p.minOrderAmount,
+  }));
+  return res.json({ codes, promoCodes: codes, promos: codes });
+});
+
+router.post('/promo-codes', async (req, res) => {
+  try {
+    const {
+      code, discountType, type, discountValue, value,
+      maxUses, services, service, expiresAt, expiryDate,
+      minOrderAmount, minOrder, isActive,
+    } = req.body;
+    if (!code) return res.status(400).json({ error: 'code required' });
+    const id = String(promoSeq++);
+    const exp = expiresAt || expiryDate || null;
+    const promo = {
+      id,
+      code: String(code).trim().toUpperCase(),
+      type: discountType || type || 'PERCENT',
+      value: parseFloat(discountValue ?? value) || 0,
+      service: (services && services.length) ? services[0] : (service || 'ALL'),
+      maxUsage: parseInt(maxUses) || 1,
+      usageCount: 0,
+      active: isActive !== undefined ? !!isActive : true,
+      expiresAt: exp ? new Date(exp).toISOString() : null,
+      minOrderAmount: parseFloat(minOrderAmount ?? minOrder) || 0,
+      createdAt: new Date().toISOString(),
+    };
+    promoStore.set(id, promo);
+    res.status(201).json({ promo: { ...promo, usedCount: promo.usageCount, isActive: promo.active, minOrder: promo.minOrderAmount } });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.post('/promo-codes/bulk', async (req, res) => {
   try {
     const { codes, discountType, discountValue, maxUses, services, expiresAt, minOrderAmount } = req.body;
@@ -1657,12 +1694,13 @@ router.get('/promo-codes/:id', async (req, res) => {
 router.patch('/promo-codes/:id', async (req, res) => {
   const promo = promoStore.get(req.params.id);
   if (!promo) return res.status(404).json({ error: 'Not found' });
-  const { maxUses, expiresAt, active } = req.body;
+  const { maxUses, expiresAt, active, isActive } = req.body;
   if (maxUses !== undefined) promo.maxUsage = maxUses || null;
   if (expiresAt !== undefined) promo.expiresAt = expiresAt ? new Date(expiresAt).toISOString() : null;
   if (active !== undefined) promo.active = active;
+  if (isActive !== undefined) promo.active = isActive;
   promoStore.set(promo.id, promo);
-  return res.json({ promo });
+  return res.json({ promo: { ...promo, usedCount: promo.usageCount, isActive: promo.active, minOrder: promo.minOrderAmount } });
 });
 
 // ─────────────────────────────────────────────
