@@ -217,23 +217,27 @@ export default function LoginScreen({ navigation }) {
               </TouchableOpacity>
             ) : null}
 
-            {/* Mode démo */}
-            <View style={{ marginBottom: 16 }}>
-              <Text style={{ color: COLORS.textMuted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, textAlign: 'center' }}>
-                — Mode démo —
-              </Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
-                {DEMO_ACCOUNTS.map((acc) => (
-                  <TouchableOpacity
-                    key={acc.role}
-                    style={{ backgroundColor: COLORS.surface, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: COLORS.border }}
-                    onPress={() => handleDemoLogin(acc)}
-                  >
-                    <Text style={{ color: COLORS.text, fontSize: 12, fontWeight: '700' }}>{acc.label}</Text>
-                  </TouchableOpacity>
-                ))}
+            {/* Mode démo — dev-only: writes a fake session to the same AsyncStorage
+                keys as a real login, so it must never be reachable in production
+                builds (it would silently hijack/overwrite a real tester session). */}
+            {__DEV__ && (
+              <View style={{ marginBottom: 16 }}>
+                <Text style={{ color: COLORS.textMuted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, textAlign: 'center' }}>
+                  — Mode démo (dev only) —
+                </Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
+                  {DEMO_ACCOUNTS.map((acc) => (
+                    <TouchableOpacity
+                      key={acc.role}
+                      style={{ backgroundColor: COLORS.surface, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: COLORS.border }}
+                      onPress={() => handleDemoLogin(acc)}
+                    >
+                      <Text style={{ color: COLORS.text, fontSize: 12, fontWeight: '700' }}>{acc.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
-            </View>
+            )}
 
             <TouchableOpacity
               style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
