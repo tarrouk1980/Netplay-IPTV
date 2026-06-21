@@ -23,9 +23,23 @@ const FALLBACK_CATEGORIES = [
   { key: 'AUTRE', label: 'Autre service', icon: '🧰', remote: false },
 ];
 
+// Sous-problèmes par catégorie : remplace le texte libre comme critère de
+// sélection — évite qu'une demande mal décrite (ex: douleur au ventre)
+// parte vers le mauvais prestataire (ex: plombier).
+const SUB_ISSUES = {
+  PLOMBIER: ['Fuite d\'eau', 'Canalisation bouchée', 'Chauffe-eau en panne', 'Installation sanitaire', 'Autre problème de plomberie'],
+  ELECTRICIEN: ['Coupure de courant', 'Prise / interrupteur défectueux', 'Court-circuit', 'Installation électrique', 'Autre problème électrique'],
+  MEDECIN: ['Douleur / symptôme', 'Consultation de routine', 'Renouvellement d\'ordonnance', 'Suivi d\'un traitement', 'Autre motif médical'],
+  AVOCAT: ['Litige civil', 'Droit du travail', 'Droit de la famille', 'Contrat / document juridique', 'Autre question juridique'],
+  PEDAGOGUE: ['Soutien scolaire', 'Préparation examen', 'Méthodologie / orientation', 'Autre besoin pédagogique'],
+  COACH_SPORTIF: ['Remise en forme', 'Perte de poids', 'Préparation physique', 'Suivi nutritionnel', 'Autre objectif sportif'],
+  AUTRE: ['Décrivez votre besoin ci-dessous'],
+};
+
 export default function EasyServicesScreen({ navigation }) {
   const [categories, setCategories] = useState(FALLBACK_CATEGORIES);
   const [selected, setSelected] = useState(null);
+  const [subIssue, setSubIssue] = useState(null);
   const [description, setDescription] = useState('');
   const [videoMode, setVideoMode] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -38,9 +52,12 @@ export default function EasyServicesScreen({ navigation }) {
 
   const selectedCategory = categories.find((c) => c.key === selected);
   const canGoRemote = !!selectedCategory?.remote;
+  const subIssueOptions = selected ? (SUB_ISSUES[selected] || SUB_ISSUES.AUTRE) : [];
+  const isFreeTextIssue = selected === 'AUTRE' || (subIssue && subIssue.startsWith('Autre'));
 
   const handleSelect = (key) => {
     setSelected(key);
+    setSubIssue(null);
     const cat = categories.find((c) => c.key === key);
     if (!cat?.remote) setVideoMode(false);
   };
@@ -50,7 +67,11 @@ export default function EasyServicesScreen({ navigation }) {
       Alert.alert('Choisissez un service', 'Sélectionnez une catégorie de service.');
       return;
     }
-    if (!description.trim()) {
+    if (!subIssue) {
+      Alert.alert('Précisez votre besoin', 'Sélectionnez le problème qui correspond le mieux dans la liste.');
+      return;
+    }
+    if (isFreeTextIssue && !description.trim()) {
       Alert.alert('Description requise', 'Décrivez votre besoin en quelques mots.');
       return;
     }
@@ -62,9 +83,10 @@ export default function EasyServicesScreen({ navigation }) {
         setSubmitting(false);
         return;
       }
+      const fullDescription = description.trim() ? `${subIssue} — ${description.trim()}` : subIssue;
       const res = await api.post('/api/homeservices/request', {
         category: selected,
-        description: description.trim(),
+        description: fullDescription,
         lat: loc.coords.lat,
         lng: loc.coords.lng,
         address: loc.address,
@@ -80,7 +102,7 @@ export default function EasyServicesScreen({ navigation }) {
     } finally {
       setSubmitting(false);
     }
-  }, [selected, description, videoMode, canGoRemote, navigation]);
+  }, [selected, subIssue, description, videoMode, canGoRemote, isFreeTextIssue, navigation]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -111,7 +133,27 @@ export default function EasyServicesScreen({ navigation }) {
           ))}
         </View>
 
-        <Text style={styles.sectionTitle}>DÉCRIVEZ VOTRE BESOIN</Text>
+        {selected && (
+          <>
+            <Text style={styles.sectionTitle}>QUEL EST LE PROBLÈME ?</Text>
+            <View style={styles.subIssueList}>
+              {subIssueOptions.map((opt) => (
+                <TouchableOpacity
+                  key={opt}
+                  style={[styles.subIssueRow, subIssue === opt && styles.subIssueRowActive]}
+                  onPress={() => setSubIssue(opt)}
+                >
+                  <Text style={[styles.subIssueText, subIssue === opt && styles.subIssueTextActive]}>{opt}</Text>
+                  {subIssue === opt && <Text style={styles.subIssueCheck}>✓</Text>}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
+        )}
+
+        <Text style={styles.sectionTitle}>
+          {isFreeTextIssue ? 'DÉCRIVEZ VOTRE BESOIN' : 'PRÉCISIONS (OPTIONNEL)'}
+        </Text>
         <TextInput
           style={styles.input}
           value={description}
@@ -178,6 +220,16 @@ const styles = StyleSheet.create({
   categoryIcon: { fontSize: 26, marginBottom: 6 },
   categoryLabel: { color: COLORS.text, fontSize: 12, fontWeight: '700', textAlign: 'center' },
   categoryLabelActive: { color: COLORS.accent },
+  subIssueList: { marginBottom: 20, gap: 8 },
+  subIssueRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: COLORS.surface, borderRadius: 12, borderWidth: 1.5, borderColor: COLORS.border,
+    paddingHorizontal: 14, paddingVertical: 12,
+  },
+  subIssueRowActive: { borderColor: COLORS.accent, backgroundColor: COLORS.accent + '10' },
+  subIssueText: { color: COLORS.text, fontSize: 13, flex: 1 },
+  subIssueTextActive: { color: COLORS.accent, fontWeight: '700' },
+  subIssueCheck: { color: COLORS.accent, fontWeight: '900', fontSize: 14 },
   input: {
     backgroundColor: COLORS.surface, borderRadius: 14, borderWidth: 1, borderColor: COLORS.border,
     color: COLORS.text, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, minHeight: 90, marginBottom: 24,
