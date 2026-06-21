@@ -22,12 +22,29 @@ const SOS_TYPES = [
   { key: 'AUTRE', icon: '❓', label: 'Autre', desc: 'Autre type de panne' },
 ];
 
-export default function SOSRequestScreen({ navigation }) {
+const BREAKDOWN_TO_SOS_TYPE = {
+  battery: 'BATTERIE',
+  flat_tire: 'CREVAISON',
+  engine: 'PANNE',
+  fuel: 'PANNE',
+  key: 'AUTRE',
+  accident: 'ACCIDENT',
+  electrical: 'PANNE',
+  other: 'AUTRE',
+};
+
+export default function SOSRequestScreen({ navigation, route }) {
+  const mode = route.params?.mode || 'INDEPENDENT';
+  const contract = route.params?.contract || null;
+  const breakdownType = route.params?.breakdownType || null;
+  const subcause = route.params?.subcause || null;
+  const preselectedSosType = breakdownType ? (BREAKDOWN_TO_SOS_TYPE[breakdownType] || null) : null;
+
   const [step, setStep] = useState(1);
-  const [sosType, setSosType] = useState(null);
+  const [sosType, setSosType] = useState(preselectedSosType);
   const [location, setLocation] = useState(null);
   const [address, setAddress] = useState('');
-  const [note, setNote] = useState('');
+  const [note, setNote] = useState(subcause || '');
   const [locating, setLocating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -47,12 +64,16 @@ export default function SOSRequestScreen({ navigation }) {
 
   const handleSubmit = async () => {
     if (!sosType) { Alert.alert('Sélectionnez', 'Choisissez le type de panne.'); return; }
+    if (mode === 'INSURANCE' && !contract) {
+      Alert.alert('Contrat requis', 'Aucun contrat d\'assurance valide trouvé. Renseignez vos informations d\'assurance avant de continuer.');
+      return;
+    }
     setSubmitting(true);
     try {
       const body = {
         lat: location?.lat,
         lng: location?.lng,
-        mode: 'INDEPENDENT',
+        mode,
         vehicleState: {
           battery: sosType === 'BATTERIE',
           fuel: false,
@@ -62,12 +83,20 @@ export default function SOSRequestScreen({ navigation }) {
           sosType,
         },
         vehicleInfo: { address },
+        ...(mode === 'INSURANCE' && contract ? { insuranceContractId: contract.id } : {}),
       };
       const res = await api.post('/api/sos/request', body);
       const orderId = res.data?.order?.id || res.data?.id;
       navigation.replace('SOSTracking', { orderId, sosType });
-    } catch {
-      Alert.alert('Erreur', 'Impossible d\'envoyer la demande. Vérifiez votre connexion.');
+    } catch (err) {
+      const code = err?.response?.data?.code;
+      const messages = {
+        NO_CONTRACT: 'Aucun contrat d\'assurance trouvé.',
+        CONTRACT_NOT_VERIFIED: 'Votre contrat d\'assurance est en attente de vérification.',
+        CONTRACT_EXPIRED: 'Votre contrat d\'assurance a expiré.',
+        QUOTA_EXHAUSTED: 'Votre quota d\'interventions gratuites est épuisé.',
+      };
+      Alert.alert('Erreur', messages[code] || 'Impossible d\'envoyer la demande. Vérifiez votre connexion.');
     } finally {
       setSubmitting(false);
     }
@@ -92,22 +121,32 @@ export default function SOSRequestScreen({ navigation }) {
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
-        {/* Step 1 — type */}
-        <Text style={styles.sectionTitle}>TYPE DE PANNE</Text>
-        <View style={styles.typesGrid}>
-          {SOS_TYPES.map(t => (
-            <TouchableOpacity
-              key={t.key}
-              style={[styles.typeCard, sosType === t.key && styles.typeCardActive]}
-              onPress={() => setSosType(t.key)}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.typeIcon}>{t.icon}</Text>
-              <Text style={[styles.typeLabel, sosType === t.key && styles.typeLabelActive]}>{t.label}</Text>
-              <Text style={styles.typeDesc}>{t.desc}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        {/* Step 1 — type (skipped if already diagnosed via SOSPreDiagnostic) */}
+        {preselectedSosType ? (
+          <View style={styles.diagnosedBanner}>
+            <Text style={styles.diagnosedText}>
+              ✅ Panne déjà diagnostiquée : {SOS_TYPES.find(t => t.key === preselectedSosType)?.icon} {SOS_TYPES.find(t => t.key === preselectedSosType)?.label}
+            </Text>
+          </View>
+        ) : (
+          <>
+            <Text style={styles.sectionTitle}>TYPE DE PANNE</Text>
+            <View style={styles.typesGrid}>
+              {SOS_TYPES.map(t => (
+                <TouchableOpacity
+                  key={t.key}
+                  style={[styles.typeCard, sosType === t.key && styles.typeCardActive]}
+                  onPress={() => setSosType(t.key)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.typeIcon}>{t.icon}</Text>
+                  <Text style={[styles.typeLabel, sosType === t.key && styles.typeLabelActive]}>{t.label}</Text>
+                  <Text style={styles.typeDesc}>{t.desc}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
+        )}
 
         {/* Step 2 — location */}
         <Text style={styles.sectionTitle}>VOTRE LOCALISATION</Text>
@@ -162,8 +201,14 @@ export default function SOSRequestScreen({ navigation }) {
               <Text style={styles.summaryValue} numberOfLines={1}>{address || 'GPS activé'}</Text>
             </View>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Commission</Text>
-              <Text style={[styles.summaryValue, { color: COLORS.green }]}>0.000 TND ✓</Text>
+              <Text style={styles.summaryLabel}>Prise en charge</Text>
+              {mode === 'INSURANCE' && contract ? (
+                <Text style={[styles.summaryValue, { color: COLORS.green }]}>
+                  Gratuit · {contract.companyName} ({contract.quotaUsed}/{contract.quotaTotal})
+                </Text>
+              ) : (
+                <Text style={[styles.summaryValue, { color: COLORS.accent }]}>Paiement direct au dépanneur</Text>
+              )}
             </View>
           </View>
         )}
@@ -204,6 +249,11 @@ const styles = StyleSheet.create({
   scroll: { padding: 16 },
   sectionTitle: { color: COLORS.muted, fontSize: 10, fontWeight: '700', letterSpacing: 1.4, marginBottom: 12, marginTop: 8 },
   typesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20 },
+  diagnosedBanner: {
+    backgroundColor: COLORS.green + '15', borderRadius: 12, padding: 12,
+    marginBottom: 20, borderWidth: 1, borderColor: COLORS.green + '40',
+  },
+  diagnosedText: { color: COLORS.green, fontSize: 13, fontWeight: '700' },
   typeCard: {
     width: '47%', backgroundColor: COLORS.surface, borderRadius: 14, padding: 14,
     alignItems: 'center', borderWidth: 1.5, borderColor: COLORS.border,
