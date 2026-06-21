@@ -194,7 +194,6 @@ import GroceryStoreMapScreen from './screens/grocery/GroceryStoreMapScreen';
 
 // Batch 71
 import EasyAccessScreen from './screens/taxi/EasyAccessScreen';
-import SOSPrePaymentScreen from './screens/sos/SOSPrePaymentScreen';
 import ReferralLeaderboardScreen from './screens/shared/ReferralLeaderboardScreen';
 
 // Rating
@@ -361,7 +360,6 @@ import LivreurBonusScreen from './screens/delivery/LivreurBonusScreen';
 import GroceryStoreProfileScreen from './screens/grocery/GroceryStoreProfileScreen';
 import ClientInvoiceScreen from './screens/client/ClientInvoiceScreen';
 import MerchantEarningsScreen from './screens/merchant/MerchantEarningsScreen';
-import SOSRatingDetailScreen from './screens/sos/SOSRatingDetailScreen';
 import AdminLiveDriversScreen from './screens/admin/AdminLiveDriversScreen';
 import ClientAddressBookScreen from './screens/client/ClientAddressBookScreen';
 import LivreurScheduleScreen from './screens/delivery/LivreurScheduleScreen';
@@ -531,7 +529,6 @@ import DepanneurStatusScreen from './screens/sos/DepanneurStatusScreen';
 
 // Batch 61
 import TaxiSearchScreen from './screens/taxi/TaxiSearchScreen';
-import DepanneurProfileScreen from './screens/sos/DepanneurProfileScreen';
 import SecurityScreen from './screens/profile/SecurityScreen';
 import HelpCenterScreen from './screens/profile/HelpCenterScreen';
 import AdminSOSScreen from './screens/admin/AdminSOSScreen';
@@ -602,7 +599,6 @@ import AdminMerchantDetailScreen from './screens/admin/AdminMerchantDetailScreen
 
 // Batch 96
 import PaymentHistoryScreen from './screens/payment/PaymentHistoryScreen';
-import SOSDepanneurProfileScreen from './screens/sos/SOSDepanneurProfileScreen';
 import AdminDeliveryStatsScreen from './screens/admin/AdminDeliveryStatsScreen';
 
 // Batch 97
@@ -828,7 +824,6 @@ function MainStack() {
       <Stack.Screen name="DriverNavigation" component={DriverNavigationScreen} options={{ headerShown: false }} />
       <Stack.Screen name="GroceryStoreMap" component={GroceryStoreMapScreen} options={{ headerShown: false }} />
       <Stack.Screen name="EasyAccess" component={EasyAccessScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="SOSPrePayment" component={SOSPrePaymentScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ReferralLeaderboard" component={ReferralLeaderboardScreen} options={{ headerShown: false }} />
       <Stack.Screen name="EasyPackage" component={EasyPackageScreen} options={{ headerShown: false }} />
       <Stack.Screen name="PaymentMethods" component={PaymentMethodsScreen} options={{ headerShown: false }} />
@@ -886,7 +881,6 @@ function MainStack() {
       <Stack.Screen name="GroceryBrowse" component={GroceryBrowseScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminMerchantDetail" component={AdminMerchantDetailScreen} options={{ headerShown: false }} />
       <Stack.Screen name="PaymentHistory" component={PaymentHistoryScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="SOSDepanneurProfile" component={SOSDepanneurProfileScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminDeliveryStats" component={AdminDeliveryStatsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="VehicleRegistration" component={VehicleRegistrationScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DeliveryZone" component={DeliveryZoneScreen} options={{ headerShown: false }} />
@@ -1018,7 +1012,6 @@ function MainStack() {
       <Stack.Screen name="GroceryStoreProfile" component={GroceryStoreProfileScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientInvoice" component={ClientInvoiceScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MerchantEarnings" component={MerchantEarningsScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="SOSRatingDetail" component={SOSRatingDetailScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminLiveDrivers" component={AdminLiveDriversScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ClientAddressBook" component={ClientAddressBookScreen} options={{ headerShown: false }} />
       <Stack.Screen name="LivreurSchedule" component={LivreurScheduleScreen} options={{ headerShown: false }} />
@@ -1110,7 +1103,6 @@ function MainStack() {
       <Stack.Screen name="DeliveryOrderHistory" component={DeliveryOrderHistoryScreen} options={{ headerShown: false }} />
       <Stack.Screen name="NotificationPreferences" component={NotificationPreferencesScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TaxiSearch" component={TaxiSearchScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="DepanneurProfile" component={DepanneurProfileScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Security" component={SecurityScreen} options={{ headerShown: false }} />
       <Stack.Screen name="HelpCenter" component={HelpCenterScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminSOS" component={AdminSOSScreen} options={{ headerShown: false }} />

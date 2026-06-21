@@ -20,14 +20,6 @@ const SOS_TYPES = {
   REMORQUAGE: { label: 'Remorquage', icon: '🚛' },
 };
 
-const MOCK_REQUESTS = [
-  { id: 'SOS001', type: 'PANNE', clientName: 'Ahmed B.', distance: 1.2, address: 'Route GP1, Km 22, Grombalia', createdAt: '14:32', urgent: true },
-  { id: 'SOS002', type: 'CREVAISON', clientName: 'Nadia K.', distance: 3.7, address: 'Avenue Habib Bourguiba, Nabeul', createdAt: '14:28', urgent: false },
-  { id: 'SOS003', type: 'BATTERIE', clientName: 'Sami R.', distance: 5.1, address: 'Zone Industrielle, Grombalia', createdAt: '14:15', urgent: false },
-];
-
-const MOCK_STATS = { todayEarnings: 87.500, todayJobs: 3, rating: 4.8, totalJobs: 412 };
-
 function SOSCard({ item, onAccept }) {
   const typeInfo = SOS_TYPES[item.type] || { label: item.type, icon: '🔧' };
   return (
@@ -59,21 +51,24 @@ function SOSCard({ item, onAccept }) {
 export default function DepanneurDashboardScreen({ navigation }) {
   const [online, setOnline] = useState(false);
   const [requests, setRequests] = useState([]);
-  const [stats, setStats] = useState(MOCK_STATS);
+  const [stats, setStats] = useState({ todayEarnings: 0, todayJobs: 0, rating: 5.0 });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [togglingOnline, setTogglingOnline] = useState(false);
 
   const load = useCallback(() => {
+    setLoading(true);
     Promise.all([
-      api.get('/api/sos/depanneur/requests').catch(() => ({ data: { requests: MOCK_REQUESTS } })),
-      api.get('/api/sos/depanneur/dashboard').catch(() => ({ data: { stats: MOCK_STATS } })),
-      api.get('/api/sos/depanneur/status').catch(() => ({ data: { online: false } })),
+      api.get('/api/sos/depanneur/requests'),
+      api.get('/api/sos/depanneur/dashboard'),
+      api.get('/api/sos/depanneur/status'),
     ]).then(([reqRes, statsRes, statusRes]) => {
-      setRequests(reqRes.data.requests || MOCK_REQUESTS);
+      setRequests(reqRes.data.requests || []);
       const s = statsRes.data?.stats;
-      setStats(s ? { todayEarnings: s.revenue, todayJobs: s.interventions, rating: s.rating, totalJobs: s.interventions } : MOCK_STATS);
+      setStats(s ? { todayEarnings: s.revenue, todayJobs: s.interventions, rating: s.rating } : { todayEarnings: 0, todayJobs: 0, rating: 5.0 });
       setOnline(statusRes.data.online || false);
-    }).finally(() => setLoading(false));
+      setError(false);
+    }).catch(() => setError(true)).finally(() => setLoading(false));
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -133,6 +128,12 @@ export default function DepanneurDashboardScreen({ navigation }) {
 
       {loading ? (
         <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} />
+      ) : error ? (
+        <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 30 }}>
+          <Text style={{ color: COLORS.muted, fontSize: 14, textAlign: 'center' }}>
+            Impossible de récupérer votre tableau de bord. Vérifiez votre connexion et réessayez.
+          </Text>
+        </View>
       ) : (
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
