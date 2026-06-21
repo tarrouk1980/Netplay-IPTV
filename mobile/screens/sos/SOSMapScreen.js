@@ -69,9 +69,11 @@ export default function SOSMapScreen({ navigation, route }) {
     setSending(true);
     try {
       await api.post('/api/sos/request', {
-        type: sosType,
-        depanneurId: depanneur.id,
-        location,
+        lat: location?.lat,
+        lng: location?.lng,
+        mode: 'INDEPENDENT',
+        vehicleState: { battery: sosType === 'BATTERIE', fuel: false, keysLocked: false, accident: sosType === 'ACCIDENT', sosType },
+        vehicleInfo: {},
       });
       navigation.replace('SOSTracking', { depanneurId: depanneur.id, sosType });
     } catch {

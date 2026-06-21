@@ -50,11 +50,18 @@ export default function SOSRequestScreen({ navigation }) {
     setSubmitting(true);
     try {
       const body = {
-        type: sosType,
         lat: location?.lat,
         lng: location?.lng,
-        address,
-        note,
+        mode: 'INDEPENDENT',
+        vehicleState: {
+          battery: sosType === 'BATTERIE',
+          fuel: false,
+          keysLocked: false,
+          accident: sosType === 'ACCIDENT',
+          note: note || null,
+          sosType,
+        },
+        vehicleInfo: { address },
       };
       const res = await api.post('/api/sos/request', body);
       const orderId = res.data?.order?.id || res.data?.id;
