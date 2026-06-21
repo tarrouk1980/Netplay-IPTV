@@ -18,23 +18,6 @@ const usePassStore = create((set, get) => ({
     }
   },
 
-  purchasePass: async (planType, paymentProvider = 'STRIPE') => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await api.post('/api/subscriptions/purchase', {
-        planType,
-        paymentProvider,
-      });
-      set({ subscription: response.data.subscription, isLoading: false });
-      return { success: true, data: response.data };
-    } catch (error) {
-      const message = error.response?.data?.error || 'Purchase failed';
-      const code = error.response?.data?.code || 'PURCHASE_FAILED';
-      set({ error: message, isLoading: false });
-      return { success: false, error: message, code };
-    }
-  },
-
   fetchPassStatus: async () => {
     try {
       const response = await api.get('/api/subscriptions/status');

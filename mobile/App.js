@@ -548,7 +548,6 @@ import MerchantAddProductScreen from './screens/merchant/MerchantAddProductScree
 import PackageTrackingScreen from './screens/delivery/PackageTrackingScreen';
 import DeleteAccountScreen from './screens/profile/DeleteAccountScreen';
 import DriverIncidentScreen from './screens/driver/DriverIncidentScreen';
-import PassBenefitsScreen from './screens/subscriptions/PassBenefitsScreen';
 import EasyPointsHistoryScreen from './screens/loyalty/EasyPointsHistoryScreen';
 import DeliveryScheduleScreen from './screens/delivery/DeliveryScheduleScreen';
 import AdminPromoCreateScreen from './screens/admin/AdminPromoCreateScreen';
@@ -848,7 +847,6 @@ function MainStack() {
       <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} options={{ headerShown: false }} />
       <Stack.Screen name="GroceryProductDetail" component={GroceryProductDetailScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DriverIncident" component={DriverIncidentScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="PassBenefits" component={PassBenefitsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="EasyPointsHistory" component={EasyPointsHistoryScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DeliverySchedule" component={DeliveryScheduleScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MerchantAnalytics" component={MerchantAnalyticsScreen} options={{ headerShown: false }} />

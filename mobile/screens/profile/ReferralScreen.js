@@ -123,10 +123,6 @@ export default function ReferralScreen({ navigation }) {
               <Text style={[styles.statValue, { color: COLORS.accent }]}>{stats.totalRewardsEarned}</Text>
               <Text style={styles.statLabel}>Jours gagnés</Text>
             </View>
-            <View style={styles.statBox}>
-              <Text style={[styles.statValue, { color: '#27AE60' }]}>{(stats.referrals || 0) * 100}</Text>
-              <Text style={styles.statLabel}>EasyPoints</Text>
-            </View>
           </View>
         )}
 

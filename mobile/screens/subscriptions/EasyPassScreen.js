@@ -22,55 +22,56 @@ const COLORS = {
 
 const PLANS = [
   {
-    key: 'BASIC',
-    name: 'EasyPass Basic',
-    price: 9.9,
-    period: 'mois',
+    key: 'DAILY',
+    name: 'Pass Journalier',
+    price: 1,
+    period: 'jour',
     color: COLORS.blue,
     icon: '🔵',
     features: [
-      '5% réduction sur chaque course taxi',
-      'Support prioritaire',
-      'Historique illimité',
-      '2 courses taxi gratuites/mois',
+      'Valable 1 jour',
+      'Accès illimité aux courses',
     ],
     popular: false,
   },
   {
-    key: 'PREMIUM',
-    name: 'EasyPass Premium',
-    price: 19.9,
-    period: 'mois',
+    key: 'SEMAINE',
+    name: 'Pass Semaine',
+    price: 6,
+    period: 'semaine',
     color: COLORS.accent,
     icon: '⭐',
     features: [
-      '15% réduction sur toutes les courses',
-      '5 courses taxi gratuites/mois',
-      '3 livraisons gratuites/mois',
-      'Support 24/7 dédié',
-      'Annulation gratuite',
-      'EasyPoints x2',
+      'Valable 7 jours + 1 jour offert',
+      'Accès illimité aux courses',
     ],
     popular: true,
   },
   {
-    key: 'GOLD',
-    name: 'EasyPass Gold',
-    price: 39.9,
+    key: 'MENSUEL',
+    name: 'Pass Mensuel',
+    price: 30,
     period: 'mois',
+    color: COLORS.purple,
+    icon: '🟣',
+    features: [
+      'Valable 30 jours + 5 jours offerts',
+      'Accès illimité aux courses',
+    ],
+    popular: false,
+  },
+  {
+    key: 'PRO',
+    name: 'Pass Pro',
+    price: 75,
+    period: '90 jours',
     color: COLORS.gold,
     icon: '👑',
     features: [
-      '25% réduction sur tout',
-      'Courses illimitées incluses*',
-      'Livraisons illimitées incluses*',
-      'SOS prioritaire < 10 min',
-      'Conciergerie dédiée',
-      'EasyPoints x5',
-      'Accès fonctionnalités beta',
+      'Valable 90 jours + 15 jours offerts',
+      'Accès illimité aux courses',
     ],
     popular: false,
-    note: '* Jusqu\'à 30 trajets/mois, 15 km max',
   },
 ];
 
@@ -149,7 +150,7 @@ export default function EasyPassScreen({ navigation }) {
   const handleSelect = (plan) => {
     Alert.alert(
       `Souscrire à ${plan.name}`,
-      `${plan.price.toFixed(1)} TND / mois. Le montant sera prélevé de votre wallet EASYWAY.`,
+      `${plan.price.toFixed(1)} TND / ${plan.period}. Le montant sera prélevé de votre wallet EASYWAY.`,
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -174,7 +175,7 @@ export default function EasyPassScreen({ navigation }) {
   const handleCancel = () => {
     Alert.alert(
       'Annuler mon abonnement',
-      'Votre abonnement restera actif jusqu\'à la fin de la période en cours.',
+      'Votre abonnement sera désactivé immédiatement. Cette action est irréversible.',
       [
         { text: 'Garder', style: 'cancel' },
         {
@@ -182,7 +183,7 @@ export default function EasyPassScreen({ navigation }) {
           onPress: async () => {
             try {
               await api.post('/api/subscriptions/cancel');
-              setSubscription(s => ({ ...s, cancelAtPeriodEnd: true }));
+              setSubscription(null);
             } catch {
               Alert.alert('Erreur', 'Annulation échouée');
             }
@@ -218,11 +219,11 @@ export default function EasyPassScreen({ navigation }) {
         {/* Hero */}
         <View style={styles.hero}>
           <Text style={styles.heroTitle}>Voyagez sans limites</Text>
-          <Text style={styles.heroSub}>Abonnements sans engagement. Résiliez à tout moment.</Text>
+          <Text style={styles.heroSub}>Passes sans engagement, payés en une fois depuis votre wallet.</Text>
         </View>
 
         {/* Active subscription banner */}
-        {subscription && !subscription.cancelAtPeriodEnd && (
+        {subscription && (
           <View style={styles.activeBanner}>
             <Text style={styles.activeBannerTitle}>✅ Abonnement actif</Text>
             <Text style={styles.activeBannerSub}>
@@ -232,13 +233,6 @@ export default function EasyPassScreen({ navigation }) {
             <TouchableOpacity style={styles.cancelSubBtn} onPress={handleCancel}>
               <Text style={styles.cancelSubText}>Annuler l'abonnement</Text>
             </TouchableOpacity>
-          </View>
-        )}
-
-        {subscription?.cancelAtPeriodEnd && (
-          <View style={[styles.activeBanner, { borderColor: COLORS.muted }]}>
-            <Text style={styles.activeBannerTitle}>⚠️ Résiliation planifiée</Text>
-            <Text style={styles.activeBannerSub}>Votre abonnement prend fin le {expiresAt}</Text>
           </View>
         )}
 
@@ -254,7 +248,7 @@ export default function EasyPassScreen({ navigation }) {
           <PlanCard
             key={plan.key}
             plan={plan}
-            isActive={activePlan === plan.key && !subscription?.cancelAtPeriodEnd}
+            isActive={activePlan === plan.key}
             onSelect={handleSelect}
           />
         ))}
@@ -263,9 +257,9 @@ export default function EasyPassScreen({ navigation }) {
         <View style={styles.faqBox}>
           <Text style={styles.faqTitle}>Questions fréquentes</Text>
           {[
-            ['Comment fonctionne la facturation ?', 'Le montant est prélevé depuis votre wallet EASYWAY au début de chaque période.'],
-            ['Puis-je changer de plan ?', 'Oui, le changement est immédiat. La différence est calculée au prorata.'],
-            ['Y a-t-il un engagement ?', 'Non, vous pouvez résilier à tout moment. Aucun frais de résiliation.'],
+            ['Comment fonctionne la facturation ?', 'Le montant est prélevé en une fois depuis votre wallet EASYWAY au moment de l\'achat. Le pass n\'est pas renouvelé automatiquement.'],
+            ['Puis-je changer de plan ?', 'Oui, vous pouvez acheter un nouveau pass à tout moment.'],
+            ['Y a-t-il un engagement ?', 'Non, aucun engagement. Le pass expire simplement à la fin de sa durée.'],
           ].map(([q, a], i) => (
             <View key={i} style={styles.faqItem}>
               <Text style={styles.faqQ}>{q}</Text>
