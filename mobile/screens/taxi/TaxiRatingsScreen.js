@@ -12,19 +12,6 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB',
 };
 
-const MOCK_RATINGS = {
-  avg: 4.82,
-  total: 248,
-  dist: [3, 6, 12, 58, 169],
-  recent: [
-    { id: 'RA1', clientName: 'Sana T.', stars: 5, comment: 'Chauffeur très professionnel, voiture propre !', date: 'Il y a 2h', route: 'Lac 1 → Aéroport' },
-    { id: 'RA2', clientName: 'Karim B.', stars: 5, comment: 'Ponctuel et agréable.', date: 'Il y a 5h', route: 'La Marsa → Bardo' },
-    { id: 'RA3', clientName: 'Rim H.', stars: 4, comment: 'Bonne conduite, légèrement en retard.', date: 'Hier', route: 'Centre → Ennasr' },
-    { id: 'RA4', clientName: 'Nabil R.', stars: 5, comment: '', date: 'Hier', route: 'Sousse → Monastir' },
-    { id: 'RA5', clientName: 'Hedi B.', stars: 3, comment: 'Trajet correct mais GPS mal configuré.', date: 'Il y a 3j', route: 'Bizerte → Tunis' },
-  ],
-};
-
 function StarRow({ stars }) {
   return (
     <Text style={{ fontSize: 14, letterSpacing: 1 }}>
@@ -57,11 +44,31 @@ function RatingCard({ item }) {
 export default function TaxiRatingsScreen({ navigation }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    api.get('/api/taxi/driver/ratings')
-      .then(r => setData(r.data || MOCK_RATINGS))
-      .catch(() => setData(MOCK_RATINGS))
+    api.get('/api/provider/reviews')
+      .then(r => {
+        const reviews = r.data.reviews || [];
+        const dist = [0, 0, 0, 0, 0];
+        reviews.forEach(rv => { if (rv.rating >= 1 && rv.rating <= 5) dist[rv.rating - 1] += 1; });
+        const avg = reviews.length ? reviews.reduce((s, rv) => s + rv.rating, 0) / reviews.length : 0;
+        setData({
+          avg: avg.toFixed(2),
+          total: reviews.length,
+          dist,
+          recent: reviews.map(rv => ({
+            id: rv.id,
+            clientName: rv.clientName || 'Client',
+            stars: rv.rating,
+            comment: rv.comment || '',
+            date: new Date(rv.createdAt).toLocaleDateString('fr-FR'),
+            route: rv.serviceType || '',
+          })),
+        });
+        setError(false);
+      })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -78,7 +85,13 @@ export default function TaxiRatingsScreen({ navigation }) {
         <View style={{ width: 40 }} />
       </View>
 
-      {loading ? <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} /> : (
+      {loading ? <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} /> : error || !data ? (
+        <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 30 }}>
+          <Text style={{ color: COLORS.muted, fontSize: 14, textAlign: 'center' }}>
+            Impossible de récupérer vos évaluations. Vérifiez votre connexion et réessayez.
+          </Text>
+        </View>
+      ) : (
         <FlatList
           data={data.recent}
           keyExtractor={r => r.id}
