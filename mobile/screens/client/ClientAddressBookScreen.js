@@ -27,7 +27,7 @@ export default function ClientAddressBookScreen({ navigation }) {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    api.get('/api/client/addresses')
+    api.get('/api/users/clients/addresses')
       .then(r => setAddresses(r.data || MOCK_ADDRESSES))
       .catch(() => setAddresses(MOCK_ADDRESSES))
       .finally(() => setLoading(false));
@@ -35,7 +35,7 @@ export default function ClientAddressBookScreen({ navigation }) {
 
   const handleSetDefault = (id) => {
     setAddresses(prev => prev.map(a => ({ ...a, isDefault: a.id === id })));
-    api.patch(`/api/client/addresses/${id}/default`).catch(() => {});
+    api.patch(`/api/users/clients/addresses/${id}/default`).catch(() => {});
   };
 
   const handleDelete = (id) => {
@@ -45,7 +45,7 @@ export default function ClientAddressBookScreen({ navigation }) {
         text: 'Supprimer', style: 'destructive',
         onPress: () => {
           setAddresses(prev => prev.filter(a => a.id !== id));
-          api.delete(`/api/client/addresses/${id}`).catch(() => {});
+          api.delete(`/api/users/clients/addresses/${id}`).catch(() => {});
         },
       },
     ]);
@@ -58,7 +58,7 @@ export default function ClientAddressBookScreen({ navigation }) {
     }
     setSaving(true);
     const newAddr = { id: `A${Date.now()}`, label: newLabel, icon: '📍', address: newAddress, isDefault: false };
-    try { await api.post('/api/client/addresses', newAddr); } catch {}
+    try { await api.post('/api/users/clients/addresses', newAddr); } catch {}
     setAddresses(prev => [...(prev || []), newAddr]);
     setAdding(false);
     setNewLabel('');

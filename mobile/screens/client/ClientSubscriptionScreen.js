@@ -62,11 +62,12 @@ export default function ClientSubscriptionScreen({ navigation }) {
   const [renewalDate, setRenewalDate] = useState(null);
 
   useEffect(() => {
-    api.get('/api/client/subscription')
+    api.get('/api/subscriptions/me')
       .then(r => {
-        setCurrentPlan(r.data.plan || 'FREE');
-        setSelected(r.data.plan || 'PLUS');
-        setRenewalDate(r.data.renewalDate || null);
+        const sub = r.data?.subscription;
+        setCurrentPlan(sub?.planType || 'FREE');
+        setSelected(sub?.planType || 'PLUS');
+        setRenewalDate(sub?.expiresAt || null);
       })
       .catch(() => { setCurrentPlan('FREE'); setSelected('PLUS'); })
       .finally(() => setLoading(false));
@@ -81,7 +82,7 @@ export default function ClientSubscriptionScreen({ navigation }) {
           text: 'Résilier', style: 'destructive', onPress: async () => {
             setSubscribing(true);
             try {
-              await api.post('/api/client/subscription/cancel');
+              await api.post('/api/subscriptions/cancel');
               setCurrentPlan('FREE');
               Alert.alert('Abonnement résilié', 'Vous êtes revenu au plan gratuit.');
             } catch {
@@ -102,7 +103,7 @@ export default function ClientSubscriptionScreen({ navigation }) {
           text: 'Confirmer', onPress: async () => {
             setSubscribing(true);
             try {
-              await api.post('/api/client/subscription/subscribe', { plan: planKey });
+              await api.post('/api/subscriptions/subscribe', { plan: planKey });
               setCurrentPlan(planKey);
               Alert.alert(`✅ Bienvenue sur ${plan.label} !`, 'Votre abonnement est actif.');
             } catch {

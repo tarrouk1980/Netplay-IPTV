@@ -53,7 +53,7 @@ export default function ClientNotificationsScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(() => {
-    api.get('/api/client/notifications')
+    api.get('/api/notifications')
       .then(r => setNotifs(r.data.notifications || MOCK))
       .catch(() => setNotifs(MOCK))
       .finally(() => setLoading(false));
@@ -63,12 +63,12 @@ export default function ClientNotificationsScreen({ navigation }) {
 
   const markRead = (item) => {
     setNotifs(prev => prev.map(n => n.id === item.id ? { ...n, read: true } : n));
-    api.post('/api/client/notifications/' + item.id + '/read').catch(() => {});
+    api.post('/api/notifications/' + item.id + '/read').catch(() => {});
   };
 
   const markAllRead = () => {
     setNotifs(prev => prev.map(n => ({ ...n, read: true })));
-    api.post('/api/client/notifications/read-all').catch(() => {});
+    api.post('/api/notifications/read-all').catch(() => {});
   };
 
   const unreadCount = notifs.filter(n => !n.read).length;

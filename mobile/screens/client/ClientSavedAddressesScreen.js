@@ -64,7 +64,7 @@ export default function ClientSavedAddressesScreen({ navigation }) {
   const [form, setForm] = useState({ label: '', address: '', icon: '📍' });
 
   useEffect(() => {
-    api.get('/api/client/addresses')
+    api.get('/api/users/clients/addresses')
       .then(r => setAddresses(r.data.addresses || MOCK_ADDRESSES))
       .catch(() => setAddresses(MOCK_ADDRESSES))
       .finally(() => setLoading(false));
@@ -89,11 +89,11 @@ export default function ClientSavedAddressesScreen({ navigation }) {
     }
     try {
       if (editing) {
-        await api.put(`/api/client/addresses/${editing.id}`, form).catch(() => {});
+        await api.put(`/api/users/clients/addresses/${editing.id}`, form).catch(() => {});
         setAddresses(prev => prev.map(a => a.id === editing.id ? { ...a, ...form } : a));
       } else {
         const newAddr = { id: Date.now().toString(), ...form, isDefault: addresses.length === 0 };
-        await api.post('/api/client/addresses', form).catch(() => {});
+        await api.post('/api/users/clients/addresses', form).catch(() => {});
         setAddresses(prev => [...prev, newAddr]);
       }
       setModalVisible(false);
@@ -105,7 +105,7 @@ export default function ClientSavedAddressesScreen({ navigation }) {
       { text: 'Annuler', style: 'cancel' },
       {
         text: 'Supprimer', style: 'destructive', onPress: async () => {
-          await api.delete(`/api/client/addresses/${id}`).catch(() => {});
+          await api.delete(`/api/users/clients/addresses/${id}`).catch(() => {});
           setAddresses(prev => prev.filter(a => a.id !== id));
         },
       },
@@ -113,7 +113,7 @@ export default function ClientSavedAddressesScreen({ navigation }) {
   };
 
   const handleSetDefault = async (id) => {
-    await api.post(`/api/client/addresses/${id}/default`).catch(() => {});
+    await api.patch(`/api/users/clients/addresses/${id}/default`).catch(() => {});
     setAddresses(prev => prev.map(a => ({ ...a, isDefault: a.id === id })));
   };
 

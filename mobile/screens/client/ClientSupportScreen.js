@@ -40,10 +40,10 @@ export default function ClientSupportScreen({ navigation }) {
     if (message.trim().length < 10) { Alert.alert('Message trop court'); return; }
     setSending(true);
     try {
-      await api.post('/api/support/ticket', { topic, message });
+      await api.post('/api/support/tickets', { category: topic, subject: topic, message });
       setSent(true);
     } catch {
-      setSent(true);
+      Alert.alert('Erreur', 'Impossible d\'envoyer votre message. Réessayez.');
     } finally {
       setSending(false);
     }

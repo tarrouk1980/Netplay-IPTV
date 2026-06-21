@@ -52,7 +52,7 @@ export default function ClientAddressesScreen({ navigation }) {
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(() => {
-    api.get('/api/client/addresses')
+    api.get('/api/users/clients/addresses')
       .then(r => setAddresses(r.data.addresses || MOCK))
       .catch(() => setAddresses(MOCK));
   }, []);
@@ -76,10 +76,10 @@ export default function ClientAddressesScreen({ navigation }) {
     setSaving(true);
     try {
       if (editing) {
-        await api.put('/api/client/addresses/' + editing.id, form);
+        await api.put('/api/users/clients/addresses/' + editing.id, form);
         setAddresses(prev => prev.map(a => a.id === editing.id ? { ...a, ...form } : a));
       } else {
-        const res = await api.post('/api/client/addresses', form);
+        const res = await api.post('/api/users/clients/addresses', form);
         setAddresses(prev => [...prev, res.data.address || { id: Date.now().toString(), ...form }]);
       }
       setShowModal(false);
@@ -98,7 +98,7 @@ export default function ClientAddressesScreen({ navigation }) {
       { text: 'Annuler', style: 'cancel' },
       {
         text: 'Supprimer', style: 'destructive', onPress: () => {
-          api.delete('/api/client/addresses/' + item.id).catch(() => {});
+          api.delete('/api/users/clients/addresses/' + item.id).catch(() => {});
           setAddresses(prev => prev.filter(a => a.id !== item.id));
         }
       },

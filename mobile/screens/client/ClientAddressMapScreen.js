@@ -29,7 +29,7 @@ export default function ClientAddressMapScreen({ navigation }) {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    api.get('/api/client/addresses')
+    api.get('/api/users/clients/addresses')
       .then(r => setAddresses(r.data.addresses || MOCK_ADDRESSES))
       .catch(() => setAddresses(MOCK_ADDRESSES))
       .finally(() => setLoading(false));
@@ -53,7 +53,7 @@ export default function ClientAddressMapScreen({ navigation }) {
     }
     setSaving(true);
     try {
-      const r = await api.post('/api/client/addresses', form);
+      const r = await api.post('/api/users/clients/addresses', form);
       setAddresses(prev => [...prev, r.data.address || { ...form, id: `A${Date.now()}`, isDefault: addresses.length === 0 }]);
       setAdding(false);
       setForm({ label: '', icon: '📍', address: '', lat: null, lng: null });
@@ -70,7 +70,7 @@ export default function ClientAddressMapScreen({ navigation }) {
       {
         text: 'Supprimer', style: 'destructive', onPress: () => {
           setAddresses(prev => prev.filter(a => a.id !== addr.id));
-          api.delete(`/api/client/addresses/${addr.id}`).catch(() => {});
+          api.delete(`/api/users/clients/addresses/${addr.id}`).catch(() => {});
         },
       },
     ]);
@@ -78,7 +78,7 @@ export default function ClientAddressMapScreen({ navigation }) {
 
   const handleSetDefault = async (addr) => {
     setAddresses(prev => prev.map(a => ({ ...a, isDefault: a.id === addr.id })));
-    api.patch(`/api/client/addresses/${addr.id}/default`).catch(() => {});
+    api.patch(`/api/users/clients/addresses/${addr.id}/default`).catch(() => {});
   };
 
   return (
