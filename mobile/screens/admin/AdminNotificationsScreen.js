@@ -51,11 +51,14 @@ export default function AdminNotificationsScreen({ navigation }) {
           text: 'Envoyer', onPress: async () => {
             setSending(true);
             try {
-              await api.post('/api/admin/notifications/send', { title, body, target, scheduled, schedDate });
-            } catch {}
-            Alert.alert('✅ Notification envoyée', `Message diffusé à ${targetLabel}.`);
-            setTitle(''); setBody(''); setScheduled(false); setSchedDate('');
-            setSending(false);
+              await api.post('/api/admin/notifications/push', { title, body, audience: target });
+              Alert.alert('✅ Notification envoyée', `Message diffusé à ${targetLabel}.`);
+              setTitle(''); setBody(''); setScheduled(false); setSchedDate('');
+            } catch {
+              Alert.alert('Erreur', 'Impossible d\'envoyer la notification.');
+            } finally {
+              setSending(false);
+            }
           },
         },
       ]

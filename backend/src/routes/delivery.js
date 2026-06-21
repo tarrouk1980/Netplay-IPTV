@@ -873,4 +873,19 @@ router.get("/livreur/earnings", authenticate, requireRole("LIVREUR"), async (req
   } catch(err) { res.status(500).json({error:err.message}); }
 });
 
+// PATCH /api/delivery/livreur/toggle
+router.patch('/livreur/toggle', authenticate, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user.id }, select: { isOnline: true } });
+    const nextOnline = typeof req.body?.online === 'boolean' ? req.body.online : !user?.isOnline;
+    const updated = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { isOnline: nextOnline },
+    });
+    return res.json({ isOnline: updated.isOnline, online: updated.isOnline });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
