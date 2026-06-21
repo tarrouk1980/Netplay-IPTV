@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  StatusBar, TextInput,
+  StatusBar, TextInput, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', surfaceAlt: '#16161F',
@@ -11,33 +12,51 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB', orange: '#E67E22',
 };
 
-const MOCK_BALANCE = { current: 142.50, pending: 14.00 };
-
-const MOCK_TXN = [
-  { id: 'TXN-0091', type: 'credit', icon: '🚕', desc: 'Course taxi TXI-7741', amount: 16.50, date: 'Auj. 14:32', category: 'taxi' },
-  { id: 'TXN-0090', type: 'debit',  icon: '🔄', desc: 'Remboursement RFD-0031', amount: -14.00, date: 'Auj. 13:10', category: 'refund' },
-  { id: 'TXN-0089', type: 'credit', icon: '💳', desc: 'Rechargement Konnect', amount: 50.00, date: 'Hier 20:15', category: 'topup' },
-  { id: 'TXN-0088', type: 'debit',  icon: '🛵', desc: 'Livraison DEL-4421', amount: -8.50, date: 'Hier 13:00', category: 'delivery' },
-  { id: 'TXN-0087', type: 'credit', icon: '🎁', desc: 'Bonus parrainage Sana B.', amount: 10.00, date: '02/06', category: 'bonus' },
-  { id: 'TXN-0086', type: 'debit',  icon: '🔧', desc: 'SOS Dépannage SOS-0041', amount: -65.00, date: '01/06', category: 'sos' },
-  { id: 'TXN-0085', type: 'credit', icon: '💳', desc: 'Rechargement D17', amount: 100.00, date: '30/05', category: 'topup' },
-  { id: 'TXN-0084', type: 'debit',  icon: '🍕', desc: 'Épicerie GRC-1120', amount: -22.00, date: '29/05', category: 'grocery' },
-  { id: 'TXN-0083', type: 'debit',  icon: '↗️', desc: 'Transfert vers Karim M.', amount: -30.00, date: '28/05', category: 'transfer' },
-  { id: 'TXN-0082', type: 'credit', icon: '⭐', desc: 'Remise EasyPass', amount: 5.00, date: '27/05', category: 'bonus' },
-];
-
 const CATEGORIES = [
   ['all', 'Toutes'], ['credit', 'Entrées'], ['debit', 'Sorties'],
-  ['topup', 'Recharges'], ['bonus', 'Bonus'],
 ];
+
+function fmtDate(iso) {
+  try {
+    return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  } catch {
+    return '';
+  }
+}
 
 export default function WalletHistoryScreen({ navigation }) {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
+  const [balance, setBalance] = useState(0);
+  const [txns, setTxns] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  const filtered = MOCK_TXN.filter(t => {
-    const matchSearch = !search || t.desc.toLowerCase().includes(search.toLowerCase()) || t.id.includes(search);
-    const matchFilter = filter === 'all' || t.type === filter || t.category === filter;
+  const load = useCallback(async () => {
+    try {
+      const res = await api.get('/api/wallet');
+      setBalance(res.data?.balance || 0);
+      const list = (res.data?.transactions || []).map(t => ({
+        id: t.id,
+        type: t.type === 'CREDIT' ? 'credit' : 'debit',
+        desc: t.label || 'Transaction',
+        amount: t.amount,
+        date: fmtDate(t.date),
+      }));
+      setTxns(list);
+      setError(false);
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const filtered = txns.filter(t => {
+    const matchSearch = !search || t.desc.toLowerCase().includes(search.toLowerCase()) || String(t.id).includes(search);
+    const matchFilter = filter === 'all' || t.type === filter;
     return matchSearch && matchFilter;
   });
 
@@ -47,11 +66,11 @@ export default function WalletHistoryScreen({ navigation }) {
   const renderItem = ({ item: t }) => (
     <View style={styles.txnRow}>
       <View style={[styles.txnIconWrap, { backgroundColor: t.type === 'credit' ? '#0D2E0D' : '#1A0808' }]}>
-        <Text style={{ fontSize: 18 }}>{t.icon}</Text>
+        <Text style={{ fontSize: 18 }}>{t.type === 'credit' ? '↓' : '↑'}</Text>
       </View>
       <View style={{ flex: 1 }}>
         <Text style={styles.txnDesc} numberOfLines={1}>{t.desc}</Text>
-        <Text style={styles.txnMeta}>{t.date} · {t.id}</Text>
+        <Text style={styles.txnMeta}>{t.date}</Text>
       </View>
       <Text style={[styles.txnAmount, { color: t.type === 'credit' ? COLORS.green : COLORS.red }]}>
         {t.type === 'credit' ? '+' : ''}{t.amount.toFixed(2)} TND
@@ -68,78 +87,85 @@ export default function WalletHistoryScreen({ navigation }) {
           <Text style={{ color: COLORS.accent, fontSize: 24 }}>‹</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Historique portefeuille</Text>
-        <TouchableOpacity>
-          <Text style={{ color: COLORS.accent, fontSize: 13, fontWeight: '600' }}>Export</Text>
-        </TouchableOpacity>
+        <View style={{ width: 24 }} />
       </View>
 
-      {/* Balance banner */}
-      <View style={styles.balanceBanner}>
-        <View style={styles.balanceItem}>
-          <Text style={styles.balanceLbl}>Solde actuel</Text>
-          <Text style={styles.balanceNum}>{MOCK_BALANCE.current.toFixed(2)} TND</Text>
-        </View>
-        <View style={styles.balanceDivider} />
-        <View style={styles.balanceItem}>
-          <Text style={styles.balanceLbl}>En attente</Text>
-          <Text style={[styles.balanceNum, { color: COLORS.orange }]}>{MOCK_BALANCE.pending.toFixed(2)} TND</Text>
-        </View>
-      </View>
-
-      {/* Summary */}
-      <View style={styles.summaryRow}>
-        <View style={[styles.summaryChip, { backgroundColor: '#0D2E0D' }]}>
-          <Text style={{ color: COLORS.green, fontSize: 12, fontWeight: '700' }}>↓ +{totalIn.toFixed(2)} TND</Text>
-        </View>
-        <View style={[styles.summaryChip, { backgroundColor: '#1A0808' }]}>
-          <Text style={{ color: COLORS.red, fontSize: 12, fontWeight: '700' }}>↑ -{totalOut.toFixed(2)} TND</Text>
-        </View>
-        <Text style={styles.summaryCount}>{filtered.length} opérations</Text>
-      </View>
-
-      {/* Search */}
-      <View style={styles.searchRow}>
-        <Text style={{ color: COLORS.muted }}>🔍</Text>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Rechercher..."
-          placeholderTextColor={COLORS.muted}
-          value={search}
-          onChangeText={setSearch}
-        />
-        {search.length > 0 && (
-          <TouchableOpacity onPress={() => setSearch('')}>
-            <Text style={{ color: COLORS.muted }}>✕</Text>
+      {loading ? (
+        <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 60 }} />
+      ) : error ? (
+        <View style={styles.emptyBox}>
+          <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+          <Text style={styles.emptyText}>Impossible de charger votre portefeuille.</Text>
+          <TouchableOpacity onPress={() => { setLoading(true); load(); }} style={styles.retryBtn}>
+            <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
           </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Category filters */}
-      <View style={styles.filtersRow}>
-        {CATEGORIES.map(([val, lbl]) => (
-          <TouchableOpacity
-            key={val}
-            style={[styles.filterChip, filter === val && styles.filterChipActive]}
-            onPress={() => setFilter(val)}
-          >
-            <Text style={[styles.filterText, filter === val && { color: '#000' }]}>{lbl}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <FlatList
-        data={filtered}
-        keyExtractor={t => t.id}
-        renderItem={renderItem}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        ListEmptyComponent={
-          <View style={styles.emptyBox}>
-            <Text style={{ fontSize: 48, marginBottom: 12 }}>💳</Text>
-            <Text style={styles.emptyText}>Aucune transaction</Text>
+        </View>
+      ) : (
+        <>
+          {/* Balance banner */}
+          <View style={styles.balanceBanner}>
+            <View style={styles.balanceItem}>
+              <Text style={styles.balanceLbl}>Solde actuel</Text>
+              <Text style={styles.balanceNum}>{balance.toFixed(2)} TND</Text>
+            </View>
           </View>
-        }
-      />
+
+          {/* Summary */}
+          <View style={styles.summaryRow}>
+            <View style={[styles.summaryChip, { backgroundColor: '#0D2E0D' }]}>
+              <Text style={{ color: COLORS.green, fontSize: 12, fontWeight: '700' }}>↓ +{totalIn.toFixed(2)} TND</Text>
+            </View>
+            <View style={[styles.summaryChip, { backgroundColor: '#1A0808' }]}>
+              <Text style={{ color: COLORS.red, fontSize: 12, fontWeight: '700' }}>↑ -{totalOut.toFixed(2)} TND</Text>
+            </View>
+            <Text style={styles.summaryCount}>{filtered.length} opérations</Text>
+          </View>
+
+          {/* Search */}
+          <View style={styles.searchRow}>
+            <Text style={{ color: COLORS.muted }}>🔍</Text>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Rechercher..."
+              placeholderTextColor={COLORS.muted}
+              value={search}
+              onChangeText={setSearch}
+            />
+            {search.length > 0 && (
+              <TouchableOpacity onPress={() => setSearch('')}>
+                <Text style={{ color: COLORS.muted }}>✕</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Category filters */}
+          <View style={styles.filtersRow}>
+            {CATEGORIES.map(([val, lbl]) => (
+              <TouchableOpacity
+                key={val}
+                style={[styles.filterChip, filter === val && styles.filterChipActive]}
+                onPress={() => setFilter(val)}
+              >
+                <Text style={[styles.filterText, filter === val && { color: '#000' }]}>{lbl}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <FlatList
+            data={filtered}
+            keyExtractor={t => String(t.id)}
+            renderItem={renderItem}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
+            ItemSeparatorComponent={() => <View style={styles.separator} />}
+            ListEmptyComponent={
+              <View style={styles.emptyBox}>
+                <Text style={{ fontSize: 48, marginBottom: 12 }}>💳</Text>
+                <Text style={styles.emptyText}>Aucune transaction</Text>
+              </View>
+            }
+          />
+        </>
+      )}
     </SafeAreaView>
   );
 }
@@ -186,5 +212,6 @@ const styles = StyleSheet.create({
   txnAmount: { fontSize: 14, fontWeight: '800' },
   separator: { height: 1, backgroundColor: COLORS.border },
   emptyBox: { alignItems: 'center', paddingTop: 80 },
-  emptyText: { color: COLORS.muted, fontSize: 15 },
+  emptyText: { color: COLORS.muted, fontSize: 15, textAlign: 'center', paddingHorizontal: 30 },
+  retryBtn: { marginTop: 16, backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 },
 });

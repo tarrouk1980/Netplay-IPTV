@@ -18,17 +18,18 @@ const COLORS = {
   success: '#34C759',
 };
 
-const MOCK_PAYMENT = {
-  amount: '34.50',
-  currency: 'TND',
-  transactionId: 'TXN-2025-84721',
-  service: "Taxi — Av. Bourguiba → Aéroport",
-  date: '03/06/2025',
-  heure: '14:32',
-  method: 'Carte bancaire',
-};
+export default function PaymentSuccessScreen({ navigation, route }) {
+  const p = route?.params || {};
+  const payment = {
+    amount: p.amount != null ? Number(p.amount).toFixed(2) : null,
+    currency: p.currency || 'TND',
+    transactionId: p.transactionId || null,
+    service: p.service || null,
+    date: p.date || new Date().toLocaleDateString('fr-FR'),
+    heure: p.heure || new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+    method: p.method || null,
+  };
 
-export default function PaymentSuccessScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -43,44 +44,54 @@ export default function PaymentSuccessScreen({ navigation }) {
         <Text style={styles.subtitle}>Votre transaction a été traitée avec succès.</Text>
 
         {/* Amount */}
-        <View style={styles.amountContainer}>
-          <Text style={styles.amountLabel}>Montant payé</Text>
-          <Text style={styles.amount}>{MOCK_PAYMENT.amount} {MOCK_PAYMENT.currency}</Text>
-        </View>
+        {payment.amount != null && (
+          <View style={styles.amountContainer}>
+            <Text style={styles.amountLabel}>Montant payé</Text>
+            <Text style={styles.amount}>{payment.amount} {payment.currency}</Text>
+          </View>
+        )}
 
         {/* Details Card */}
         <View style={styles.card}>
-          <View style={styles.row}>
-            <Text style={styles.rowLabel}>Référence</Text>
-            <Text style={styles.rowValue}>{MOCK_PAYMENT.transactionId}</Text>
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.row}>
-            <Text style={styles.rowLabel}>Service</Text>
-            <Text style={[styles.rowValue, styles.rowValueWrap]}>{MOCK_PAYMENT.service}</Text>
-          </View>
-          <View style={styles.divider} />
+          {payment.transactionId && (
+            <>
+              <View style={styles.row}>
+                <Text style={styles.rowLabel}>Référence</Text>
+                <Text style={styles.rowValue}>{payment.transactionId}</Text>
+              </View>
+              <View style={styles.divider} />
+            </>
+          )}
+          {payment.service && (
+            <>
+              <View style={styles.row}>
+                <Text style={styles.rowLabel}>Service</Text>
+                <Text style={[styles.rowValue, styles.rowValueWrap]}>{payment.service}</Text>
+              </View>
+              <View style={styles.divider} />
+            </>
+          )}
           <View style={styles.row}>
             <Text style={styles.rowLabel}>Date</Text>
-            <Text style={styles.rowValue}>{MOCK_PAYMENT.date}</Text>
+            <Text style={styles.rowValue}>{payment.date}</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.row}>
             <Text style={styles.rowLabel}>Heure</Text>
-            <Text style={styles.rowValue}>{MOCK_PAYMENT.heure}</Text>
+            <Text style={styles.rowValue}>{payment.heure}</Text>
           </View>
-          <View style={styles.divider} />
-          <View style={styles.row}>
-            <Text style={styles.rowLabel}>Méthode</Text>
-            <Text style={styles.rowValue}>{MOCK_PAYMENT.method}</Text>
-          </View>
+          {payment.method && (
+            <>
+              <View style={styles.divider} />
+              <View style={styles.row}>
+                <Text style={styles.rowLabel}>Méthode</Text>
+                <Text style={styles.rowValue}>{payment.method}</Text>
+              </View>
+            </>
+          )}
         </View>
 
         {/* Buttons */}
-        <TouchableOpacity style={styles.outlinedButton} onPress={() => {}}>
-          <Text style={styles.outlinedButtonText}>Voir le reçu</Text>
-        </TouchableOpacity>
-
         <TouchableOpacity
           style={styles.primaryButton}
           onPress={() => navigation.navigate('Home')}

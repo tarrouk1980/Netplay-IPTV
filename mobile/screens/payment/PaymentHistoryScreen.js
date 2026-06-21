@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  StatusBar, TextInput,
+  StatusBar, TextInput, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', surfaceAlt: '#16161F',
@@ -11,60 +12,70 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB', orange: '#E67E22',
 };
 
-const MOCK_PAYMENTS = [
-  { id: 'PAY-9001', type: 'taxi', icon: '🚕', desc: 'Course taxi TXI-7741', amount: 16.50, date: 'Auj. 14:32', method: 'Wallet', status: 'success' },
-  { id: 'PAY-9000', type: 'delivery', icon: '🛵', desc: 'Livraison DEL-4421', amount: 8.50, date: 'Auj. 13:10', method: 'Wallet', status: 'success' },
-  { id: 'PAY-8999', type: 'sos', icon: '🔧', desc: 'SOS Dépannage SOS-0041', amount: 65.00, date: 'Hier 18:22', method: 'D17', status: 'success' },
-  { id: 'PAY-8998', type: 'grocery', icon: '🍕', desc: 'Épicerie GRC-1120', amount: 22.00, date: 'Hier 12:05', method: 'Konnect', status: 'success' },
-  { id: 'PAY-8997', type: 'topup', icon: '💳', desc: 'Rechargement wallet', amount: 100.00, date: '02/06 09:00', method: 'Konnect', status: 'success' },
-  { id: 'PAY-8996', type: 'taxi', icon: '🚕', desc: 'Course taxi TXI-7612', amount: 11.00, date: '01/06 20:44', method: 'Espèces', status: 'success' },
-  { id: 'PAY-8995', type: 'delivery', icon: '🛵', desc: 'Livraison DEL-4301', amount: 9.00, date: '01/06 13:30', method: 'Wallet', status: 'refunded' },
-  { id: 'PAY-8994', type: 'pass', icon: '⭐', desc: 'Abonnement EasyPass Mensuel', amount: 29.00, date: '01/06 08:00', method: 'Konnect', status: 'success' },
-];
+const TYPE_FILTERS = [['all', 'Tous'], ['credit', 'Entrées'], ['debit', 'Sorties']];
 
-const METHOD_ICONS = { Wallet: '👛', D17: '📱', Konnect: '💳', Espèces: '💵' };
-const STATUS_META = {
-  success:  { label: 'Réussi',    color: COLORS.green },
-  refunded: { label: 'Remboursé', color: COLORS.blue },
-  failed:   { label: 'Échoué',    color: COLORS.red },
-};
-const TYPE_FILTERS = [['all', 'Tous'], ['taxi', 'Taxi'], ['delivery', 'Livraison'], ['sos', 'SOS'], ['grocery', 'Épicerie']];
+function fmtDate(iso) {
+  try {
+    return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  } catch {
+    return '';
+  }
+}
 
 export default function PaymentHistoryScreen({ navigation }) {
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  const filtered = MOCK_PAYMENTS.filter(p => {
-    const matchSearch = !search || p.desc.toLowerCase().includes(search.toLowerCase()) || p.id.includes(search);
+  const load = useCallback(async () => {
+    try {
+      const res = await api.get('/api/wallet');
+      const list = (res.data?.transactions || []).map(t => ({
+        id: t.id,
+        type: t.type === 'CREDIT' ? 'credit' : 'debit',
+        desc: t.label || 'Transaction',
+        amount: t.amount,
+        date: fmtDate(t.date),
+      }));
+      setItems(list);
+      setError(false);
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const filtered = items.filter(p => {
+    const matchSearch = !search || p.desc.toLowerCase().includes(search.toLowerCase()) || String(p.id).includes(search);
     const matchType = typeFilter === 'all' || p.type === typeFilter;
     return matchSearch && matchType;
   });
 
-  const totalSpent = filtered.filter(p => p.status === 'success' && p.type !== 'topup').reduce((s, p) => s + p.amount, 0);
+  const totalSpent = filtered.filter(p => p.type === 'debit').reduce((s, p) => s + Math.abs(p.amount), 0);
 
-  const renderItem = ({ item: p }) => {
-    const meta = STATUS_META[p.status];
-    return (
-      <View style={styles.payRow}>
-        <View style={[styles.payIconWrap, { backgroundColor: p.status === 'refunded' ? '#0A1A2E' : '#0D1A0D' }]}>
-          <Text style={{ fontSize: 22 }}>{p.icon}</Text>
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.payDesc} numberOfLines={1}>{p.desc}</Text>
-          <View style={styles.payMeta}>
-            <Text style={styles.payDate}>{p.date}</Text>
-            <Text style={styles.payMethod}>{METHOD_ICONS[p.method]} {p.method}</Text>
-          </View>
-        </View>
-        <View style={{ alignItems: 'flex-end' }}>
-          <Text style={[styles.payAmount, { color: p.status === 'refunded' ? COLORS.blue : COLORS.white }]}>
-            {p.status === 'refunded' ? '↩ ' : ''}{p.amount.toFixed(2)} TND
-          </Text>
-          <Text style={[styles.payStatus, { color: meta.color }]}>{meta.label}</Text>
+  const renderItem = ({ item: p }) => (
+    <View style={styles.payRow}>
+      <View style={[styles.payIconWrap, { backgroundColor: p.type === 'credit' ? '#0D1A0D' : '#1A0808' }]}>
+        <Text style={{ fontSize: 22 }}>{p.type === 'credit' ? '↓' : '↑'}</Text>
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.payDesc} numberOfLines={1}>{p.desc}</Text>
+        <View style={styles.payMeta}>
+          <Text style={styles.payDate}>{p.date}</Text>
         </View>
       </View>
-    );
-  };
+      <View style={{ alignItems: 'flex-end' }}>
+        <Text style={[styles.payAmount, { color: p.type === 'credit' ? COLORS.green : COLORS.white }]}>
+          {p.type === 'credit' ? '+' : ''}{p.amount.toFixed(2)} TND
+        </Text>
+      </View>
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.root}>
@@ -75,74 +86,79 @@ export default function PaymentHistoryScreen({ navigation }) {
           <Text style={{ color: COLORS.accent, fontSize: 24 }}>‹</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Historique paiements</Text>
-        <TouchableOpacity>
-          <Text style={{ color: COLORS.accent, fontSize: 13, fontWeight: '600' }}>Export</Text>
-        </TouchableOpacity>
+        <View style={{ width: 24 }} />
       </View>
 
-      {/* Summary */}
-      <View style={styles.summaryCard}>
-        <View style={styles.summaryItem}>
-          <Text style={styles.summaryLbl}>Total dépensé</Text>
-          <Text style={styles.summaryVal}>{totalSpent.toFixed(2)} TND</Text>
-        </View>
-        <View style={styles.summaryDivider} />
-        <View style={styles.summaryItem}>
-          <Text style={styles.summaryLbl}>Transactions</Text>
-          <Text style={styles.summaryVal}>{filtered.length}</Text>
-        </View>
-        <View style={styles.summaryDivider} />
-        <View style={styles.summaryItem}>
-          <Text style={styles.summaryLbl}>Remboursés</Text>
-          <Text style={[styles.summaryVal, { color: COLORS.blue }]}>
-            {filtered.filter(p => p.status === 'refunded').length}
-          </Text>
-        </View>
-      </View>
-
-      {/* Search */}
-      <View style={styles.searchRow}>
-        <Text style={{ color: COLORS.muted }}>🔍</Text>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Référence, description..."
-          placeholderTextColor={COLORS.muted}
-          value={search}
-          onChangeText={setSearch}
-        />
-        {search.length > 0 && (
-          <TouchableOpacity onPress={() => setSearch('')}>
-            <Text style={{ color: COLORS.muted }}>✕</Text>
+      {loading ? (
+        <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 60 }} />
+      ) : error ? (
+        <View style={styles.emptyBox}>
+          <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+          <Text style={styles.emptyText}>Impossible de charger l'historique.</Text>
+          <TouchableOpacity onPress={() => { setLoading(true); load(); }} style={styles.retryBtn}>
+            <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
           </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Type filters */}
-      <View style={styles.filtersRow}>
-        {TYPE_FILTERS.map(([val, lbl]) => (
-          <TouchableOpacity
-            key={val}
-            style={[styles.filterChip, typeFilter === val && styles.filterChipActive]}
-            onPress={() => setTypeFilter(val)}
-          >
-            <Text style={[styles.filterText, typeFilter === val && { color: '#000' }]}>{lbl}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <FlatList
-        data={filtered}
-        keyExtractor={p => p.id}
-        renderItem={renderItem}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        ListEmptyComponent={
-          <View style={styles.emptyBox}>
-            <Text style={{ fontSize: 48, marginBottom: 12 }}>💳</Text>
-            <Text style={styles.emptyText}>Aucun paiement</Text>
+        </View>
+      ) : (
+        <>
+          {/* Summary */}
+          <View style={styles.summaryCard}>
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryLbl}>Total sorties</Text>
+              <Text style={styles.summaryVal}>{totalSpent.toFixed(2)} TND</Text>
+            </View>
+            <View style={styles.summaryDivider} />
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryLbl}>Transactions</Text>
+              <Text style={styles.summaryVal}>{filtered.length}</Text>
+            </View>
           </View>
-        }
-      />
+
+          {/* Search */}
+          <View style={styles.searchRow}>
+            <Text style={{ color: COLORS.muted }}>🔍</Text>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Description..."
+              placeholderTextColor={COLORS.muted}
+              value={search}
+              onChangeText={setSearch}
+            />
+            {search.length > 0 && (
+              <TouchableOpacity onPress={() => setSearch('')}>
+                <Text style={{ color: COLORS.muted }}>✕</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Type filters */}
+          <View style={styles.filtersRow}>
+            {TYPE_FILTERS.map(([val, lbl]) => (
+              <TouchableOpacity
+                key={val}
+                style={[styles.filterChip, typeFilter === val && styles.filterChipActive]}
+                onPress={() => setTypeFilter(val)}
+              >
+                <Text style={[styles.filterText, typeFilter === val && { color: '#000' }]}>{lbl}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <FlatList
+            data={filtered}
+            keyExtractor={p => String(p.id)}
+            renderItem={renderItem}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
+            ItemSeparatorComponent={() => <View style={styles.separator} />}
+            ListEmptyComponent={
+              <View style={styles.emptyBox}>
+                <Text style={{ fontSize: 48, marginBottom: 12 }}>💳</Text>
+                <Text style={styles.emptyText}>Aucun paiement</Text>
+              </View>
+            }
+          />
+        </>
+      )}
     </SafeAreaView>
   );
 }
@@ -185,5 +201,6 @@ const styles = StyleSheet.create({
   payStatus: { fontSize: 10, fontWeight: '700' },
   separator: { height: 1, backgroundColor: COLORS.border },
   emptyBox: { alignItems: 'center', paddingTop: 80 },
-  emptyText: { color: COLORS.muted, fontSize: 15 },
+  emptyText: { color: COLORS.muted, fontSize: 15, textAlign: 'center', paddingHorizontal: 30 },
+  retryBtn: { marginTop: 16, backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 },
 });

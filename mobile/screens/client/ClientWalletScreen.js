@@ -12,35 +12,46 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB',
 };
 
-const MOCK = {
-  balance: 45.250,
-  transactions: [
-    { id: 'T1', type: 'CREDIT', label: 'Recharge portefeuille', amount: 50.000, date: '03/06/2026 10:00', icon: '➕' },
-    { id: 'T2', type: 'DEBIT', label: 'Course taxi — Lac 1 → Berges', amount: -8.500, date: '03/06/2026 14:52', icon: '🚕' },
-    { id: 'T3', type: 'DEBIT', label: 'Livraison Pizza Roma', amount: -12.800, date: '02/06/2026 19:30', icon: '📦' },
-    { id: 'T4', type: 'CREDIT', label: 'Remboursement course annulée', amount: 6.000, date: '01/06/2026 11:20', icon: '↩️' },
-    { id: 'T5', type: 'DEBIT', label: 'Épicerie Monoprix', amount: -18.500, date: '31/05/2026 16:10', icon: '🛒' },
-    { id: 'T6', type: 'CREDIT', label: 'Bonus parrainage', amount: 10.000, date: '28/05/2026 09:00', icon: '🎁' },
-  ],
-};
-
 const RECHARGE_AMOUNTS = [10, 20, 50, 100];
+
+function fmtDate(iso) {
+  try {
+    return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  } catch {
+    return '';
+  }
+}
 
 export default function ClientWalletScreen({ navigation }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [tab, setTab] = useState('history');
 
   const load = useCallback(() => {
     api.get('/api/wallet')
-      .then(r => setData(r.data || MOCK))
-      .catch(() => setData(MOCK))
+      .then(r => {
+        const balance = r.data?.balance || 0;
+        const transactions = (r.data?.transactions || []).map(t => ({
+          id: t.id,
+          type: t.type === 'CREDIT' ? 'CREDIT' : 'DEBIT',
+          label: t.label || 'Transaction',
+          amount: t.amount,
+          date: fmtDate(t.date),
+          icon: t.amount >= 0 ? '➕' : '➖',
+        }));
+        setData({ balance, transactions });
+        setError(false);
+      })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => { load(); }, [load]);
 
-  const d = data || MOCK;
+  const d = data || { balance: 0, transactions: [] };
+  const totalIn = d.transactions.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
+  const totalOut = d.transactions.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
 
   const recharge = (amount) => {
     navigation.navigate('Payment', { amount, purpose: 'WALLET_RECHARGE' });
@@ -59,6 +70,16 @@ export default function ClientWalletScreen({ navigation }) {
 
       {loading ? (
         <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 60 }} />
+      ) : error ? (
+        <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 30 }}>
+          <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, fontSize: 14, textAlign: 'center', marginBottom: 16 }}>
+            Impossible de charger votre portefeuille. Vérifiez votre connexion.
+          </Text>
+          <TouchableOpacity onPress={() => { setLoading(true); load(); }} style={{ backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
+            <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
@@ -96,26 +117,32 @@ export default function ClientWalletScreen({ navigation }) {
           </View>
 
           {tab === 'history' ? (
-            d.transactions.map(tx => (
-              <View key={tx.id} style={styles.txRow}>
-                <View style={[styles.txIcon, { backgroundColor: tx.type === 'CREDIT' ? COLORS.green + '20' : COLORS.red + '20' }]}>
-                  <Text style={{ fontSize: 18 }}>{tx.icon}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.txLabel}>{tx.label}</Text>
-                  <Text style={styles.txDate}>{tx.date}</Text>
-                </View>
-                <Text style={[styles.txAmount, { color: tx.type === 'CREDIT' ? COLORS.green : COLORS.red }]}>
-                  {tx.amount > 0 ? '+' : ''}{tx.amount.toFixed(3)} TND
-                </Text>
+            d.transactions.length === 0 ? (
+              <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+                <Text style={{ fontSize: 40, marginBottom: 10 }}>💳</Text>
+                <Text style={{ color: COLORS.muted, fontSize: 14 }}>Aucune transaction</Text>
               </View>
-            ))
+            ) : (
+              d.transactions.map(tx => (
+                <View key={tx.id} style={styles.txRow}>
+                  <View style={[styles.txIcon, { backgroundColor: tx.type === 'CREDIT' ? COLORS.green + '20' : COLORS.red + '20' }]}>
+                    <Text style={{ fontSize: 18 }}>{tx.icon}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.txLabel}>{tx.label}</Text>
+                    <Text style={styles.txDate}>{tx.date}</Text>
+                  </View>
+                  <Text style={[styles.txAmount, { color: tx.type === 'CREDIT' ? COLORS.green : COLORS.red }]}>
+                    {tx.amount > 0 ? '+' : ''}{tx.amount.toFixed(3)} TND
+                  </Text>
+                </View>
+              ))
+            )
           ) : (
             <View style={styles.statsCard}>
               {[
-                { label: 'Total rechargé', value: '+60.000 TND', color: COLORS.green },
-                { label: 'Total dépensé', value: '-39.800 TND', color: COLORS.red },
-                { label: 'Économies coupons', value: '8.500 TND', color: COLORS.accent },
+                { label: 'Total entrées', value: `+${totalIn.toFixed(3)} TND`, color: COLORS.green },
+                { label: 'Total sorties', value: `-${totalOut.toFixed(3)} TND`, color: COLORS.red },
               ].map((s, i) => (
                 <View key={i} style={[styles.statRow, i > 0 && { borderTopWidth: 1, borderTopColor: COLORS.border }]}>
                   <Text style={styles.statLabel}>{s.label}</Text>
