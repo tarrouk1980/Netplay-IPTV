@@ -76,7 +76,6 @@ export default function HomeScreen({ navigation }) {
   const { currentSOSOrder: sosOrder } = useSosStore();
   const [recentActivity, setRecentActivity] = useState([]);
   const [promos, setPromos] = useState(DEFAULT_PROMOS);
-  const [heroBanner, setHeroBanner] = useState(null);
   const promoBannerRef = useRef(null);
   const [promoBannerIndex, setPromoBannerIndex] = useState(0);
 
@@ -91,12 +90,7 @@ export default function HomeScreen({ navigation }) {
 
   const fetchAds = useCallback(async () => {
     try {
-      const [heroRes, promoRes] = await Promise.all([
-        api.get('/api/ads?placement=home_hero&limit=1'),
-        api.get('/api/ads?placement=home_promos&limit=8'),
-      ]);
-      const hero = (heroRes.data?.ads || heroRes.data || [])[0];
-      if (hero) setHeroBanner(hero);
+      const promoRes = await api.get('/api/ads?placement=home_promos&limit=8');
       const ads = promoRes.data?.ads || promoRes.data || [];
       if (ads.length > 0) {
         setPromos(ads.map((ad, i) => ({
@@ -267,56 +261,25 @@ export default function HomeScreen({ navigation }) {
         {/* Widget météo + suggestion taxi si pluie */}
         <WeatherWidget onTaxiSuggest={() => navigation.navigate('TaxiHome')} />
 
-        {/* Bannière pub héro dynamique */}
-        {heroBanner && (
+        {/* Raccourcis compacts */}
+        <View style={styles.shortcutsRow}>
           <TouchableOpacity
-            style={styles.heroBanner}
-            activeOpacity={0.9}
-            onPress={() => heroBanner.ctaUrl && Linking.openURL(heroBanner.ctaUrl)}
+            style={styles.shortcutCard}
+            onPress={() => navigation.navigate('NearbyProviders')}
+            activeOpacity={0.8}
           >
-            {heroBanner.imageUrl ? (
-              <Image source={{ uri: heroBanner.imageUrl }} style={styles.heroBannerImage} resizeMode="cover" />
-            ) : (
-              <View style={[styles.heroBannerFallback, { backgroundColor: heroBanner.color || '#D32F2F' }]}>
-                <Text style={styles.heroBannerTitle}>{heroBanner.title || ''}</Text>
-                <Text style={styles.heroBannerSub}>{heroBanner.description || ''}</Text>
-                {heroBanner.ctaLabel && (
-                  <View style={styles.heroBannerCta}>
-                    <Text style={styles.heroBannerCtaText}>{heroBanner.ctaLabel}</Text>
-                  </View>
-                )}
-              </View>
-            )}
+            <Text style={styles.shortcutEmoji}>📍</Text>
+            <Text style={styles.shortcutLabel}>À proximité</Text>
           </TouchableOpacity>
-        )}
-
-        {/* Nearby providers shortcut */}
-        <TouchableOpacity
-          style={{ marginHorizontal: 16, marginBottom: 16, backgroundColor: '#1C1C28', borderRadius: 14, padding: 14, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#2C2C3E' }}
-          onPress={() => navigation.navigate('NearbyProviders')}
-          activeOpacity={0.8}
-        >
-          <Text style={{ fontSize: 22, marginRight: 10 }}>📍</Text>
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: '#FFF', fontWeight: '700', fontSize: 14 }}>Prestataires à proximité</Text>
-            <Text style={{ color: '#8E8E9A', fontSize: 12, marginTop: 2 }}>Taxis, dépanneurs, livreurs disponibles</Text>
-          </View>
-          <Text style={{ color: '#F5A623', fontSize: 20 }}>›</Text>
-        </TouchableOpacity>
-
-        {/* Multi-order tracker shortcut */}
-        <TouchableOpacity
-          style={{ marginHorizontal: 16, marginBottom: 16, backgroundColor: '#1C1C28', borderRadius: 14, padding: 14, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#2C2C3E' }}
-          onPress={() => navigation.navigate('MultiOrderTracker')}
-          activeOpacity={0.8}
-        >
-          <Text style={{ fontSize: 22, marginRight: 10 }}>📡</Text>
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: '#FFF', fontWeight: '700', fontSize: 14 }}>Suivi de commandes</Text>
-            <Text style={{ color: '#8E8E9A', fontSize: 12, marginTop: 2 }}>Suivez toutes vos commandes en temps réel</Text>
-          </View>
-          <Text style={{ color: '#F5A623', fontSize: 20 }}>›</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.shortcutCard}
+            onPress={() => navigation.navigate('MultiOrderTracker')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.shortcutEmoji}>📡</Text>
+            <Text style={styles.shortcutLabel}>Mes commandes</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Offres du moment */}
         <View style={styles.sectionHeader}>
@@ -417,13 +380,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     gap: 8,
   },
-  heroBanner: { marginHorizontal: 16, marginTop: 8, borderRadius: 16, overflow: 'hidden' },
-  heroBannerImage: { width: '100%', height: 160, borderRadius: 16 },
-  heroBannerFallback: { borderRadius: 16, padding: 24, minHeight: 120, justifyContent: 'center' },
-  heroBannerTitle: { color: '#FFF', fontSize: 20, fontWeight: '900', marginBottom: 6 },
-  heroBannerSub: { color: 'rgba(255,255,255,0.85)', fontSize: 13, marginBottom: 12 },
-  heroBannerCta: { alignSelf: 'flex-start', backgroundColor: 'rgba(0,0,0,0.25)', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 7 },
-  heroBannerCtaText: { color: '#FFF', fontWeight: '700', fontSize: 13 },
+  shortcutsRow: { flexDirection: 'row', gap: 10, marginHorizontal: 16, marginBottom: 16, marginTop: 8 },
+  shortcutCard: {
+    flex: 1, backgroundColor: '#1C1C28', borderRadius: 14, paddingVertical: 14,
+    alignItems: 'center', borderWidth: 1, borderColor: '#2C2C3E', gap: 6,
+  },
+  shortcutEmoji: { fontSize: 20 },
+  shortcutLabel: { color: '#FFF', fontWeight: '700', fontSize: 12 },
   promosContainer: {
     paddingHorizontal: 16,
     gap: 12,
