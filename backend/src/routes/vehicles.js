@@ -22,6 +22,8 @@ router.post(
     body('model').trim().notEmpty().withMessage('model is required'),
     body('plate').trim().notEmpty().withMessage('plate is required'),
     body('licenseNumber').optional().trim(),
+    body('year').optional().trim(),
+    body('color').optional().trim(),
     body('vehicleType')
       .isIn(VEHICLE_TYPES)
       .withMessage(`vehicleType must be one of: ${VEHICLE_TYPES.join(', ')}`),
@@ -32,7 +34,7 @@ router.post(
       return res.status(422).json({ error: 'Validation failed', code: 'VALIDATION_ERROR', details: errors.array() });
     }
 
-    const { make, model, plate, licenseNumber, vehicleType } = req.body;
+    const { make, model, plate, licenseNumber, vehicleType, year, color } = req.body;
 
     // Check for duplicate plate
     const existing = await prisma.vehicle.findUnique({ where: { plate } });
@@ -48,6 +50,8 @@ router.post(
         plate: plate.toUpperCase().trim(),
         licenseNumber: licenseNumber || null,
         vehicleType,
+        year: year ? parseInt(year, 10) || null : null,
+        color: color || null,
         verified: false,
       },
     });

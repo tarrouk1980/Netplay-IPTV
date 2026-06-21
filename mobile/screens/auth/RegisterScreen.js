@@ -18,6 +18,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import axios from 'axios';
 import api, { setTokens } from '../../services/api';
+import { getCurrentLocationWithAddress } from '../../utils/locationUtils';
 import useAuthStore from '../../store/authStore';
 import ServiceIcon from '../../components/ServiceIcon';
 
@@ -634,6 +635,7 @@ export default function RegisterScreen({ navigation }) {
             make: vMake.trim(),
             model: vModel.trim(),
             year: vYear.trim(),
+            color: vColor.trim(),
             plate: vPlate.trim(),
             licenseNumber: licenseNumber.trim(),
             vehicleType: chauffeurVehicleType,
@@ -665,13 +667,14 @@ export default function RegisterScreen({ navigation }) {
 
       if (role === 'MARCHAND') {
         try {
+          const loc = await getCurrentLocationWithAddress();
           await api.post('/api/merchants/register', {
             name: shopName.trim(),
             category: shopCategory,
             address: shopAddress.trim(),
             phone: shopPhone.trim(),
-            lat: 0,
-            lng: 0,
+            lat: loc?.coords?.lat ?? 0,
+            lng: loc?.coords?.lng ?? 0,
           });
         } catch (mErr) {
           console.warn('[RegisterScreen] Merchant registration failed (non-blocking):', mErr?.response?.data);
