@@ -12,25 +12,10 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB', orange: '#E67E22',
 };
 
-const MOCK_DATA = {
-  code: 'EASY-KARIM7',
-  totalInvited: 8,
-  totalEarned: 24.000,
-  pendingEarned: 6.000,
-  rewardPerReferral: 3.000,
-  referrals: [
-    { id: 'R1', name: 'Sana T.', joined: '12 Jan 2025', status: 'active', reward: 3.000 },
-    { id: 'R2', name: 'Nabil R.', joined: '28 Jan 2025', status: 'active', reward: 3.000 },
-    { id: 'R3', name: 'Rim H.', joined: '05 Fév 2025', status: 'pending', reward: 3.000 },
-    { id: 'R4', name: 'Hedi B.', joined: '18 Mar 2025', status: 'active', reward: 3.000 },
-  ],
-};
-
-const STATUS_COLORS = { active: COLORS.green, pending: COLORS.orange };
-
 export default function ClientReferralScreen({ navigation }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -38,23 +23,19 @@ export default function ClientReferralScreen({ navigation }) {
       .then(([statsRes, historyRes]) => {
         const stats = statsRes.data;
         const history = historyRes.data || [];
-        const rewardPerReferral = stats.referrals > 0 ? stats.totalRewardsEarned / stats.referrals : 3.0;
         setData({
           code: stats.code,
           totalInvited: stats.referrals,
-          totalEarned: stats.totalRewardsEarned,
-          pendingEarned: 0,
-          rewardPerReferral,
+          totalPassDays: stats.totalRewardsEarned,
           referrals: history.map((u) => ({
             id: u.id,
             name: u.name,
             joined: new Date(u.createdAt).toLocaleDateString('fr-FR'),
-            status: 'active',
-            reward: rewardPerReferral,
           })),
         });
+        setError(false);
       })
-      .catch(() => setData(MOCK_DATA))
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -67,21 +48,10 @@ export default function ClientReferralScreen({ navigation }) {
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `🚖 Utilise mon code EasyWay et gagne 3 TND sur ta première course !\nCode: ${data.code}\nTélécharge l'app: https://easyway.tn`,
+        message: `🚖 Utilise mon code EasyWay et gagne 1 jour de pass gratuit !\nCode: ${data.code}\nTélécharge l'app: https://easyway.tn`,
         title: 'Inviter un ami sur EasyWay',
       });
     } catch {}
-  };
-
-  const handleWithdraw = () => {
-    if (!data || data.totalEarned < 5) {
-      Alert.alert('Solde insuffisant', 'Minimum 5 TND requis pour retirer.');
-      return;
-    }
-    Alert.alert('Retrait des gains', `${data.totalEarned.toFixed(3)} TND seront crédités sur votre portefeuille EasyWay.`, [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Confirmer', onPress: () => Alert.alert('✅ Crédité !', 'Vos gains ont été ajoutés à votre portefeuille.') },
-    ]);
   };
 
   return (
@@ -95,14 +65,20 @@ export default function ClientReferralScreen({ navigation }) {
         <View style={{ width: 40 }} />
       </View>
 
-      {loading ? <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} /> : (
+      {loading ? <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} /> : error || !data ? (
+        <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 30 }}>
+          <Text style={{ color: COLORS.muted, fontSize: 14, textAlign: 'center' }}>
+            Impossible de récupérer vos données de parrainage. Vérifiez votre connexion et réessayez.
+          </Text>
+        </View>
+      ) : (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
 
           {/* Hero */}
           <View style={styles.heroCard}>
             <Text style={styles.heroIcon}>🎉</Text>
-            <Text style={styles.heroTitle}>Invite tes amis, gagne de l'argent</Text>
-            <Text style={styles.heroSub}>Toi et ton filleul recevez chacun <Text style={{ color: COLORS.accent, fontWeight: '900' }}>3 TND</Text> après sa première course.</Text>
+            <Text style={styles.heroTitle}>Invite tes amis, gagne des jours gratuits</Text>
+            <Text style={styles.heroSub}>Toi et ton filleul recevez chacun <Text style={{ color: COLORS.accent, fontWeight: '900' }}>1 jour de pass gratuit</Text> après sa première course.</Text>
           </View>
 
           {/* Code */}
@@ -122,24 +98,14 @@ export default function ClientReferralScreen({ navigation }) {
           {/* Stats */}
           <View style={styles.statsRow}>
             <View style={styles.statCard}>
-              <Text style={[styles.statVal, { color: COLORS.accent }]}>{data.totalEarned.toFixed(3)}</Text>
-              <Text style={styles.statSub}>TND gagnés</Text>
+              <Text style={[styles.statVal, { color: COLORS.accent }]}>{data.totalPassDays}</Text>
+              <Text style={styles.statSub}>Jours de pass gagnés</Text>
             </View>
             <View style={styles.statCard}>
               <Text style={[styles.statVal, { color: COLORS.text }]}>{data.totalInvited}</Text>
               <Text style={styles.statSub}>Invités</Text>
             </View>
-            <View style={styles.statCard}>
-              <Text style={[styles.statVal, { color: COLORS.orange }]}>{data.pendingEarned.toFixed(3)}</Text>
-              <Text style={styles.statSub}>TND en attente</Text>
-            </View>
           </View>
-
-          {data.totalEarned > 0 && (
-            <TouchableOpacity style={styles.withdrawBtn} onPress={handleWithdraw}>
-              <Text style={styles.withdrawBtnText}>💰 Retirer {data.totalEarned.toFixed(3)} TND</Text>
-            </TouchableOpacity>
-          )}
 
           {/* How it works */}
           <View style={styles.section}>
@@ -148,7 +114,7 @@ export default function ClientReferralScreen({ navigation }) {
               { n: '1', t: 'Partage ton code', d: 'Envoie ton code unique à tes amis.' },
               { n: '2', t: 'Ils s\'inscrivent', d: 'Ils créent un compte avec ton code.' },
               { n: '3', t: 'Première course', d: 'Dès qu\'ils complètent leur 1ère course.' },
-              { n: '4', t: 'Vous gagnez tous les deux', d: '3 TND chacun, automatiquement crédités.' },
+              { n: '4', t: 'Vous gagnez tous les deux', d: '1 jour de pass gratuit chacun, automatiquement crédité.' },
             ].map(step => (
               <View key={step.n} style={styles.stepRow}>
                 <View style={styles.stepNum}><Text style={styles.stepNumText}>{step.n}</Text></View>
@@ -171,12 +137,7 @@ export default function ClientReferralScreen({ navigation }) {
                     <Text style={styles.refName}>{r.name}</Text>
                     <Text style={styles.refDate}>Inscrit le {r.joined}</Text>
                   </View>
-                  <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={[styles.refReward, { color: r.status === 'active' ? COLORS.green : COLORS.orange }]}>
-                      {r.status === 'active' ? '+' : '⏳'}{r.reward.toFixed(3)} TND
-                    </Text>
-                    <Text style={[styles.refStatus, { color: STATUS_COLORS[r.status] }]}>{r.status}</Text>
-                  </View>
+                  <Text style={[styles.refReward, { color: COLORS.green }]}>+1 jour</Text>
                 </View>
               ))}
             </View>
