@@ -20,15 +20,6 @@ const COLORS = {
 
 const SERVICE_ICONS = { TAXI: '🚕', SOS: '🛻', DELIVERY: '🛵', GROCERY: '🛒' };
 
-const MOCK_REVIEWS = [
-  { id: 'r1', rating: 5, comment: 'Très professionnel, ponctuel et courtois.', serviceType: 'TAXI', clientName: 'Salim B.', createdAt: new Date(Date.now() - 1 * 86400000).toISOString() },
-  { id: 'r2', rating: 4, comment: 'Bonne conduite, légèrement en retard.', serviceType: 'TAXI', clientName: 'Amira K.', createdAt: new Date(Date.now() - 3 * 86400000).toISOString() },
-  { id: 'r3', rating: 5, comment: 'Excellent service ! Je recommande vivement.', serviceType: 'TAXI', clientName: 'Nizar R.', createdAt: new Date(Date.now() - 5 * 86400000).toISOString() },
-  { id: 'r4', rating: 3, comment: 'Correct mais voiture un peu vieille.', serviceType: 'TAXI', clientName: 'Ines H.', createdAt: new Date(Date.now() - 7 * 86400000).toISOString() },
-  { id: 'r5', rating: 5, comment: null, serviceType: 'TAXI', clientName: 'Tarek M.', createdAt: new Date(Date.now() - 9 * 86400000).toISOString() },
-  { id: 'r6', rating: 4, comment: 'Rapide et efficace.', serviceType: 'TAXI', clientName: 'Rania T.', createdAt: new Date(Date.now() - 12 * 86400000).toISOString() },
-];
-
 function Stars({ rating, size = 16 }) {
   return (
     <View style={{ flexDirection: 'row', gap: 2 }}>
@@ -90,14 +81,16 @@ export default function ProviderReviewsScreen({ navigation }) {
   const { user } = useAuthStore();
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [filter, setFilter] = useState(0); // 0=all, 1-5=star
 
   const load = useCallback(async () => {
     try {
       const res = await api.get(`/api/reviews/${user?.id}`);
-      setReviews(res.data?.reviews?.length ? res.data.reviews : MOCK_REVIEWS);
+      setReviews(res.data?.reviews || []);
+      setError(false);
     } catch {
-      setReviews(MOCK_REVIEWS);
+      setError(true);
     } finally {
       setLoading(false);
     }
