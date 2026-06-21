@@ -1,0 +1,1 @@
+ALTER TYPE "ServiceType" ADD VALUE 'CAR_RENTAL';

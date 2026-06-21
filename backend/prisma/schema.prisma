@@ -47,6 +47,7 @@ enum ServiceType {
   DELIVERY
   GROCERY
   HOME_SERVICE
+  CAR_RENTAL
 }
 
 enum SubscriptionStatus {

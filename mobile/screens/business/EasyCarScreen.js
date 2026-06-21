@@ -1,53 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  StatusBar, Image, Alert,
+  StatusBar, Image, Alert, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', surfaceAlt: '#16161F',
   accent: '#F5A623', white: '#FFFFFF', muted: '#8A8A9A',
   border: '#2A2A3A', green: '#27AE60', red: '#E74C3C',
 };
-
-const CARS = [
-  {
-    id: '1', brand: 'Renault', model: 'Clio 5', year: 2022,
-    type: 'Citadine', seats: 5, fuel: 'Essence', ac: true,
-    priceDay: 65, priceWeek: 390, deposit: 500,
-    available: true, emoji: '🚗',
-    features: ['Climatisation', 'Bluetooth', 'GPS', 'Caméra recul'],
-  },
-  {
-    id: '2', brand: 'Hyundai', model: 'Tucson', year: 2023,
-    type: 'SUV', seats: 5, fuel: 'Diesel', ac: true,
-    priceDay: 110, priceWeek: 660, deposit: 800,
-    available: true, emoji: '🚙',
-    features: ['Climatisation', 'Bluetooth', '4x4', 'Toit panoramique'],
-  },
-  {
-    id: '3', brand: 'Volkswagen', model: 'Golf 8', year: 2022,
-    type: 'Berline', seats: 5, fuel: 'Essence', ac: true,
-    priceDay: 85, priceWeek: 510, deposit: 600,
-    available: false, emoji: '🚘',
-    features: ['Climatisation', 'CarPlay', 'Lane Assist'],
-  },
-  {
-    id: '4', brand: 'Mercedes', model: 'Classe C', year: 2021,
-    type: 'Berline Luxe', seats: 5, fuel: 'Diesel', ac: true,
-    priceDay: 180, priceWeek: 1080, deposit: 1500,
-    available: true, emoji: '🚀',
-    features: ['Cuir', 'Massage', 'Ambiance LED', 'Aide au stationnement'],
-  },
-  {
-    id: '5', brand: 'Peugeot', model: 'Partner', year: 2020,
-    type: 'Utilitaire', seats: 2, fuel: 'Diesel', ac: true,
-    priceDay: 75, priceWeek: 450, deposit: 700,
-    available: true, emoji: '🚐',
-    features: ['Grand coffre', 'Attaches de charge', 'GPS'],
-  },
-];
 
 const TYPES = ['Tous', 'Citadine', 'SUV', 'Berline', 'Berline Luxe', 'Utilitaire'];
 
@@ -62,8 +25,8 @@ function CarCard({ car, onPress }) {
       <View style={styles.cardHeader}>
         <Text style={styles.carEmoji}>{car.emoji}</Text>
         <View style={{ flex: 1 }}>
-          <Text style={styles.carName}>{car.brand} {car.model}</Text>
-          <Text style={styles.carMeta}>{car.type} · {car.year} · {car.fuel}</Text>
+          <Text style={styles.carName}>{car.name}</Text>
+          <Text style={styles.carMeta}>{car.type} · {car.agencyName}</Text>
         </View>
         <View style={[styles.badge, { backgroundColor: car.available ? COLORS.green : COLORS.red }]}>
           <Text style={styles.badgeText}>{car.available ? 'Dispo' : 'Réservé'}</Text>
@@ -101,19 +64,56 @@ export default function EasyCarScreen({ navigation }) {
   const [filter, setFilter] = useState('Tous');
   const [selected, setSelected] = useState(null);
   const [days, setDays] = useState(1);
+  const [cars, setCars] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [booking, setBooking] = useState(false);
 
-  const filtered = filter === 'Tous' ? CARS : CARS.filter((c) => c.type === filter);
+  useEffect(() => {
+    api.get('/api/merchants', { params: { category: 'CAR_RENTAL' } })
+      .then((res) => {
+        const agencies = res.data?.merchants || [];
+        const vehicles = agencies.flatMap((agency) =>
+          (agency.products || []).map((p) => ({
+            id: p.id,
+            agencyName: agency.name,
+            name: p.name,
+            type: p.category,
+            priceDay: parseFloat(p.price),
+            priceWeek: p.metadata?.priceWeek ?? Math.round(parseFloat(p.price) * 6),
+            deposit: p.metadata?.deposit ?? 0,
+            seats: p.metadata?.seats ?? 5,
+            fuel: p.metadata?.fuel ?? '',
+            emoji: p.metadata?.emoji ?? '🚗',
+            features: p.metadata?.features ?? [],
+            available: p.active && p.stock > 0,
+          }))
+        );
+        setCars(vehicles);
+      })
+      .catch(() => setCars([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = filter === 'Tous' ? cars : cars.filter((c) => c.type === filter);
 
   const handleBook = () => {
     if (!selected) return;
     Alert.alert(
       "Réservation EasyCar",
-      `${selected.brand} ${selected.model} — ${days} jour(s)\nTotal: ${selected.priceDay * days} TND + caution ${selected.deposit} TND\n\nVotre demande sera envoyée à notre équipe qui vous contactera sous 30 minutes.`,
+      `${selected.name} (${selected.agencyName}) — ${days} jour(s)\nTotal: ${selected.priceDay * days} TND + caution ${selected.deposit} TND`,
       [
         { text: 'Annuler', style: 'cancel' },
-        { text: 'Confirmer', onPress: () => {
-          Alert.alert("Réservation envoyée ✅", "Notre équipe vous contactera très bientôt.");
-          setSelected(null);
+        { text: 'Confirmer', onPress: async () => {
+          setBooking(true);
+          try {
+            await api.post('/api/car-rental/book', { vehicleId: selected.id, days });
+            Alert.alert("Réservation envoyée ✅", `${selected.agencyName} va confirmer votre réservation.`);
+            setSelected(null);
+          } catch (err) {
+            Alert.alert('Erreur', err?.response?.data?.error || 'Impossible de réserver ce véhicule.');
+          } finally {
+            setBooking(false);
+          }
         }},
       ]
     );
@@ -155,20 +155,31 @@ export default function EasyCarScreen({ navigation }) {
 
         {/* Cars */}
         <View style={{ paddingHorizontal: 16, gap: 12, paddingBottom: 100 }}>
-          {filtered.map((car) => (
-            <CarCard
-              key={car.id}
-              car={car}
-              onPress={() => setSelected(selected?.id === car.id ? null : car)}
-            />
-          ))}
+          {loading ? (
+            <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} />
+          ) : filtered.length === 0 ? (
+            <View style={{ alignItems: 'center', marginTop: 40 }}>
+              <Text style={{ fontSize: 40 }}>🚗</Text>
+              <Text style={{ color: COLORS.muted, marginTop: 12, textAlign: 'center' }}>
+                Aucune agence partenaire de location disponible pour le moment.
+              </Text>
+            </View>
+          ) : (
+            filtered.map((car) => (
+              <CarCard
+                key={car.id}
+                car={car}
+                onPress={() => setSelected(selected?.id === car.id ? null : car)}
+              />
+            ))
+          )}
         </View>
       </ScrollView>
 
       {/* Booking panel */}
       {selected && (
         <View style={styles.bookingPanel}>
-          <Text style={styles.bookingTitle}>{selected.brand} {selected.model} sélectionné</Text>
+          <Text style={styles.bookingTitle}>{selected.name} sélectionné</Text>
           <View style={styles.daysRow}>
             <Text style={styles.bookingLabel}>Durée :</Text>
             <TouchableOpacity style={styles.daysBtn} onPress={() => setDays(Math.max(1, days - 1))}>
@@ -183,8 +194,8 @@ export default function EasyCarScreen({ navigation }) {
             <Text style={styles.bookingTotalLabel}>Total estimé</Text>
             <Text style={styles.bookingTotalValue}>{selected.priceDay * days} TND</Text>
           </View>
-          <TouchableOpacity style={styles.bookBtn} onPress={handleBook}>
-            <Text style={styles.bookBtnText}>Réserver maintenant</Text>
+          <TouchableOpacity style={[styles.bookBtn, booking && { opacity: 0.6 }]} onPress={handleBook} disabled={booking}>
+            {booking ? <ActivityIndicator color="#000" /> : <Text style={styles.bookBtnText}>Réserver maintenant</Text>}
           </TouchableOpacity>
         </View>
       )}

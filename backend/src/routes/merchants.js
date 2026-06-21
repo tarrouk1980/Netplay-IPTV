@@ -25,7 +25,7 @@ router.post(
   requireRole('MARCHAND'),
   [
     body('name').trim().notEmpty(),
-    body('category').isIn(['RESTAURANT', 'PHARMACY', 'SUPERMARKET', 'BEAUTY', 'PETS', 'HIGHTECH', 'ELECTRO', 'OTHER']),
+    body('category').isIn(['RESTAURANT', 'PHARMACY', 'SUPERMARKET', 'BEAUTY', 'PETS', 'HIGHTECH', 'ELECTRO', 'CAR_RENTAL', 'OTHER']),
     body('address').trim().notEmpty(),
     body('lat').isFloat({ min: -90, max: 90 }),
     body('lng').isFloat({ min: -180, max: 180 }),
@@ -347,7 +347,7 @@ router.get('/stats', authenticate, requireRole('MARCHAND'), async (req, res) => 
 router.get(
   '/',
   [
-    query('category').optional().isIn(['RESTAURANT', 'PHARMACY', 'SUPERMARKET', 'BEAUTY', 'PETS', 'HIGHTECH', 'ELECTRO', 'OTHER']),
+    query('category').optional().isIn(['RESTAURANT', 'PHARMACY', 'SUPERMARKET', 'BEAUTY', 'PETS', 'HIGHTECH', 'ELECTRO', 'CAR_RENTAL', 'OTHER']),
     query('promoOnly').optional().isBoolean(),
     query('lat').optional().isFloat({ min: -90, max: 90 }),
     query('lng').optional().isFloat({ min: -180, max: 180 }),
