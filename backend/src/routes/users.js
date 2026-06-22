@@ -161,6 +161,7 @@ router.get('/me/orders', authenticate, async (req, res) => {
         completedAt: true,
         clientId: true,
         providerId: true,
+        provider: { select: { name: true } },
       },
     });
     return res.json({ orders, count: orders.length });

@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   FlatList,
   TouchableOpacity,
   StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COULEURS = {
   bg: '#0A0A0F',
@@ -17,82 +19,15 @@ const COULEURS = {
   border: '#2C2C3A',
 };
 
-const DEMANDES = [
-  {
-    id: '1',
-    type: 'Crevaison',
-    depanneur: 'Mohamed A.',
-    date: '28 mai 2026',
-    duree: '35 min',
-    prix: 350,
-    statut: 'Terminé',
-  },
-  {
-    id: '2',
-    type: 'Batterie déchargée',
-    depanneur: 'Karim B.',
-    date: '20 mai 2026',
-    duree: '20 min',
-    prix: 200,
-    statut: 'Terminé',
-  },
-  {
-    id: '3',
-    type: 'Panne moteur',
-    depanneur: 'Youssef D.',
-    date: '15 mai 2026',
-    duree: '90 min',
-    prix: 800,
-    statut: 'Terminé',
-  },
-  {
-    id: '4',
-    type: 'Carburant vide',
-    depanneur: 'Ali S.',
-    date: '10 mai 2026',
-    duree: '25 min',
-    prix: 250,
-    statut: 'Annulé',
-  },
-  {
-    id: '5',
-    type: 'Accident léger',
-    depanneur: 'Hamza T.',
-    date: '3 mai 2026',
-    duree: '60 min',
-    prix: 600,
-    statut: 'Terminé',
-  },
-  {
-    id: '6',
-    type: 'Remorquage',
-    depanneur: 'Nassim R.',
-    date: '25 avr 2026',
-    duree: '45 min',
-    prix: 500,
-    statut: 'Terminé',
-  },
-  {
-    id: '7',
-    type: 'Crevaison',
-    depanneur: 'En recherche...',
-    date: "2 juin 2026",
-    duree: '-',
-    prix: 0,
-    statut: 'En cours',
-  },
-  {
-    id: '8',
-    type: 'Batterie déchargée',
-    depanneur: 'Omar Z.',
-    date: '18 avr 2026',
-    duree: '30 min',
-    prix: 220,
-    statut: 'Annulé',
-  },
-];
-
 const FILTRES = ['Tous', 'Terminé', 'En cours', 'Annulé'];
+
+const STATUT_LABEL = {
+  COMPLETED: 'Terminé',
+  IN_PROGRESS: 'En cours',
+  ACCEPTED: 'En cours',
+  PENDING: 'En cours',
+  CANCELLED: 'Annulé',
+};
 
 const couleurStatut = (statut) => {
   if (statut === 'Terminé') return '#4CAF50';
@@ -103,18 +38,45 @@ const couleurStatut = (statut) => {
 
 export default function ClientSOSHistoryScreen({ navigation }) {
   const [filtreActif, setFiltreActif] = useState('Tous');
+  const [demandes, setDemandes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const load = useCallback(() => {
+    setLoading(true);
+    api.get('/api/users/me/orders')
+      .then((r) => {
+        const orders = (r.data.orders || []).filter((o) => o.serviceType === 'SOS');
+        setDemandes(orders.map((o) => ({
+          id: o.id,
+          type: o.description || 'Dépannage',
+          depanneur: o.provider?.name || 'En recherche...',
+          date: o.createdAt ? new Date(o.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '',
+          duree: o.completedAt && o.createdAt
+            ? `${Math.round((new Date(o.completedAt) - new Date(o.createdAt)) / 60000)} min`
+            : '-',
+          prix: Number(o.finalPrice ?? o.price ?? 0),
+          statut: STATUT_LABEL[o.status] || o.status,
+        })));
+        setError(false);
+      })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   const demandesFiltrees =
     filtreActif === 'Tous'
-      ? DEMANDES
-      : DEMANDES.filter((d) => d.statut === filtreActif);
+      ? demandes
+      : demandes.filter((d) => d.statut === filtreActif);
 
-  const totalDepense = DEMANDES.filter((d) => d.statut === 'Terminé').reduce(
+  const totalDepense = demandes.filter((d) => d.statut === 'Terminé').reduce(
     (acc, d) => acc + d.prix,
     0
   );
 
-  const nombreInterventions = DEMANDES.filter(
+  const nombreInterventions = demandes.filter(
     (d) => d.statut === 'Terminé'
   ).length;
 
@@ -154,6 +116,28 @@ export default function ClientSOSHistoryScreen({ navigation }) {
       </View>
     </TouchableOpacity>
   );
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.conteneur, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator color={COULEURS.primary} size="large" />
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={[styles.conteneur, { alignItems: 'center', justifyContent: 'center', padding: 30 }]}>
+        <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+        <Text style={{ color: COULEURS.muted, textAlign: 'center', marginBottom: 16 }}>
+          Impossible de charger l'historique.
+        </Text>
+        <TouchableOpacity onPress={load} style={{ backgroundColor: COULEURS.primary, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 }}>
+          <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.conteneur}>
