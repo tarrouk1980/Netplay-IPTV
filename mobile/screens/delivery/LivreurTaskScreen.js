@@ -13,40 +13,35 @@ const COLORS = {
 };
 
 const STEPS = [
-  { key: 'accepted', label: 'Commande acceptée', icon: '✅' },
-  { key: 'pickup', label: 'En route vers le resto', icon: '🏃' },
-  { key: 'picked', label: 'Commande récupérée', icon: '📦' },
-  { key: 'delivering', label: 'En livraison', icon: '🛵' },
-  { key: 'delivered', label: 'Livraison effectuée', icon: '🎉' },
+  { key: 'ACCEPTED', label: 'Commande acceptée', icon: '✅' },
+  { key: 'IN_PROGRESS', label: 'En livraison', icon: '🛵' },
+  { key: 'COMPLETED', label: 'Livraison effectuée', icon: '🎉' },
 ];
-
-const MOCK_TASK = {
-  id: 'T001',
-  orderRef: '#CMD-20250604-0042',
-  restaurant: { name: 'Restaurant El Bey', address: 'Rue de la Liberté, Tunis', phone: '+21671001001' },
-  client: { name: 'Sana Trabelsi', address: '12 Rue Habib Bourguiba, Lac 1', phone: '+21625002002', notes: 'Sonner 2x, 3ème étage' },
-  items: [
-    { name: 'Tajine poulet', qty: 2 },
-    { name: 'Brick thon × 3', qty: 1 },
-    { name: 'Eau 1.5L', qty: 2 },
-  ],
-  deliveryFee: 4.500,
-  tip: 1.000,
-  distance: 3.2,
-  eta: '12 min',
-  currentStep: 'pickup',
-};
 
 export default function LivreurTaskScreen({ navigation, route }) {
   const taskId = route?.params?.taskId;
   const [task, setTask] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
-    api.get(`/api/livreur/tasks/${taskId || 'current'}`)
-      .then(r => setTask(r.data.task || MOCK_TASK))
-      .catch(() => setTask(MOCK_TASK))
+    if (!taskId) { setError(true); setLoading(false); return; }
+    api.get(`/api/orders/${taskId}`)
+      .then(r => {
+        const o = r.data.order;
+        setTask({
+          id: o.id,
+          orderRef: '#' + o.id,
+          client: { name: o.client?.name || 'Client', address: o.destinationAddress || '', phone: o.client?.phone || '', notes: o.metadata?.notes || '' },
+          items: o.metadata?.items || [],
+          deliveryFee: Number(o.finalPrice ?? o.price ?? 0),
+          tip: Number(o.metadata?.tip || 0),
+          currentStep: o.status,
+        });
+        setError(false);
+      })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [taskId]);
 
@@ -56,7 +51,7 @@ export default function LivreurTaskScreen({ navigation, route }) {
     if (!task || currentStepIdx >= STEPS.length - 1) return;
     const nextStep = STEPS[currentStepIdx + 1];
 
-    if (nextStep.key === 'delivered') {
+    if (nextStep.key === 'COMPLETED') {
       Alert.alert('Confirmer la livraison ?', 'Marquer cette commande comme livrée ?', [
         { text: 'Annuler', style: 'cancel' },
         { text: 'Confirmer', onPress: () => advanceStep(nextStep.key) },
@@ -68,16 +63,19 @@ export default function LivreurTaskScreen({ navigation, route }) {
 
   const advanceStep = async (stepKey) => {
     setUpdating(true);
+    const endpoint = stepKey === 'IN_PROGRESS' ? 'pickup' : 'complete';
     try {
-      await api.patch(`/api/livreur/tasks/${task.id}/step`, { step: stepKey });
-    } catch {}
-    setTask(prev => ({ ...prev, currentStep: stepKey }));
-    setUpdating(false);
-
-    if (stepKey === 'delivered') {
-      Alert.alert('🎉 Livraison confirmée !', `+${(task.deliveryFee + task.tip).toFixed(3)} TND crédités sur votre portefeuille.`, [
-        { text: 'OK', onPress: () => navigation.goBack() },
-      ]);
+      await api.post(`/api/delivery/${task.id}/${endpoint}`);
+      setTask(prev => ({ ...prev, currentStep: stepKey }));
+      if (stepKey === 'COMPLETED') {
+        Alert.alert('🎉 Livraison confirmée !', `+${(task.deliveryFee + task.tip).toFixed(3)} TND crédités sur votre portefeuille.`, [
+          { text: 'OK', onPress: () => navigation.goBack() },
+        ]);
+      }
+    } catch {
+      Alert.alert('Erreur', "Impossible de mettre à jour la livraison. Vérifiez votre connexion.");
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -101,7 +99,14 @@ export default function LivreurTaskScreen({ navigation, route }) {
         <View style={{ width: 40 }} />
       </View>
 
-      {loading ? <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} /> : (
+      {loading ? <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} /> : error ? (
+        <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 30 }}>
+          <Text style={{ fontSize: 40 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, marginTop: 12, textAlign: 'center' }}>
+            Impossible de charger cette livraison.
+          </Text>
+        </View>
+      ) : (
         <>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
 
@@ -134,23 +139,6 @@ export default function LivreurTaskScreen({ navigation, route }) {
                 {task.items.map((item, i) => (
                   <Text key={i} style={styles.itemRow}>• {item.qty > 1 ? `${item.qty}× ` : ''}{item.name}</Text>
                 ))}
-              </View>
-            </View>
-
-            {/* Restaurant */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>RESTAURANT (COLLECTE)</Text>
-              <View style={styles.contactCard}>
-                <Text style={styles.contactName}>🍽️ {task.restaurant.name}</Text>
-                <Text style={styles.contactAddr}>{task.restaurant.address}</Text>
-                <View style={styles.contactActions}>
-                  <TouchableOpacity style={styles.callBtn} onPress={() => handleCall(task.restaurant.phone)}>
-                    <Text style={styles.callBtnText}>📞 Appeler</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.mapBtn} onPress={() => handleOpenMap(task.restaurant.address)}>
-                    <Text style={styles.mapBtnText}>🗺️ Naviguer</Text>
-                  </TouchableOpacity>
-                </View>
               </View>
             </View>
 
@@ -194,7 +182,7 @@ export default function LivreurTaskScreen({ navigation, route }) {
             </View>
           </ScrollView>
 
-          {nextStep && task.currentStep !== 'delivered' && (
+          {nextStep && task.currentStep !== 'COMPLETED' && (
             <View style={styles.footer}>
               <TouchableOpacity
                 style={[styles.nextBtn, updating && { opacity: 0.6 }]}

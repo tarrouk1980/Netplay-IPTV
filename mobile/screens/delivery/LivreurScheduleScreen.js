@@ -53,9 +53,14 @@ export default function LivreurScheduleScreen({ navigation }) {
 
   const handleSave = async () => {
     setSaving(true);
-    try { await api.put('/api/delivery/livreur/schedule', schedule); } catch {}
-    setSaving(false);
-    Alert.alert('✅ Planning enregistré', 'Vos disponibilités ont été mises à jour.');
+    try {
+      await api.put('/api/delivery/livreur/schedule', schedule);
+      setSaving(false);
+      Alert.alert('✅ Planning enregistré', 'Vos disponibilités ont été mises à jour.');
+    } catch {
+      setSaving(false);
+      Alert.alert('Erreur', "Impossible d'enregistrer votre planning. Vérifiez votre connexion.");
+    }
   };
 
   const totalHours = Object.values(schedule).reduce((acc, day) => {

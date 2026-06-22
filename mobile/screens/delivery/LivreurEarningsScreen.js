@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COLORS = {
   background: '#0A0A0F',
@@ -17,21 +19,27 @@ const COLORS = {
   border: '#2C2C3A',
 };
 
-const DELIVERIES = [
-  { id: '1', heure: '08:30', marchand: 'Pizza Roma', adresse: "Rue de l'Indépendance, Tunis", distance: '3.1 km', montant: 8.5, bonus: null },
-  { id: '2', heure: '09:55', marchand: 'Burger House', adresse: 'Avenue Habib Bourguiba, Lac 1', distance: '5.2 km', montant: 11.0, bonus: 'Bonus rush' },
-  { id: '3', heure: '11:10', marchand: 'Sushi Express', adresse: 'Cité El Khadra, Tunis', distance: '7.8 km', montant: 16.5, bonus: null },
-  { id: '4', heure: '12:40', marchand: 'Chez Mounir', adresse: 'Ariana Soghra', distance: '4.5 km', montant: 9.5, bonus: null },
-  { id: '5', heure: '14:15', marchand: 'Green Garden', adresse: 'Menzah 9, Tunis', distance: '6.3 km', montant: 13.0, bonus: 'Bonus fidélité' },
-  { id: '6', heure: '16:00', marchand: 'Tacos Nation', adresse: 'La Marsa Centre', distance: '2.8 km', montant: 7.0, bonus: null },
-  { id: '7', heure: '17:30', marchand: 'Café Orient', adresse: 'Ennasr 2, Ariana', distance: '5.0 km', montant: 10.5, bonus: null },
-  { id: '8', heure: '19:20', marchand: 'Le Gourmet', adresse: 'Les Berges du Lac 2', distance: '8.5 km', montant: 18.0, bonus: 'Bonus soirée' },
+const PERIODS = [
+  { key: 'today', label: "Aujourd'hui" },
+  { key: 'week', label: 'Semaine' },
+  { key: 'month', label: 'Mois' },
 ];
 
-const PERIODS = ["Aujourd'hui", 'Semaine', 'Mois'];
-
 export default function LivreurEarningsScreen({ navigation }) {
-  const [activePeriod, setActivePeriod] = useState(0);
+  const [period, setPeriod] = useState('week');
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const load = useCallback(() => {
+    setLoading(true);
+    api.get('/api/delivery/livreur/earnings', { params: { period } })
+      .then(r => { setData(r.data); setError(false); })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, [period]);
+
+  useEffect(() => { load(); }, [load]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -43,86 +51,85 @@ export default function LivreurEarningsScreen({ navigation }) {
         <View style={styles.headerRight} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Summary Cards */}
-        <View style={styles.summaryRow}>
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>{"Aujourd'hui"}</Text>
-            <Text style={styles.summaryValue}>93,50</Text>
-            <Text style={styles.summaryUnit}>TND</Text>
-          </View>
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>Cette semaine</Text>
-            <Text style={styles.summaryValue}>487,00</Text>
-            <Text style={styles.summaryUnit}>TND</Text>
-          </View>
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>Ce mois</Text>
-            <Text style={styles.summaryValue}>1 920,00</Text>
-            <Text style={styles.summaryUnit}>TND</Text>
-          </View>
+      {loading ? (
+        <ActivityIndicator color={COLORS.primary} size="large" style={{ marginTop: 60 }} />
+      ) : error ? (
+        <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 30 }}>
+          <Text style={{ fontSize: 40 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, marginTop: 12, textAlign: 'center' }}>
+            Impossible de charger vos gains.
+          </Text>
+          <TouchableOpacity onPress={load} style={{ marginTop: 14, backgroundColor: COLORS.primary, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
+            <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+          </TouchableOpacity>
         </View>
+      ) : (
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          {/* Period Tabs */}
+          <View style={styles.tabsRow}>
+            {PERIODS.map((p) => (
+              <TouchableOpacity
+                key={p.key}
+                style={[styles.tab, period === p.key && styles.tabActive]}
+                onPress={() => setPeriod(p.key)}
+              >
+                <Text style={[styles.tabText, period === p.key && styles.tabTextActive]}>{p.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
 
-        {/* Performance Stats */}
-        <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <Text style={styles.statEmoji}>📦</Text>
-            <Text style={styles.statValue}>142</Text>
-            <Text style={styles.statLabel}>Livraisons réussies</Text>
+          {/* Summary Cards */}
+          <View style={styles.summaryRow}>
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryLabel}>Revenu</Text>
+              <Text style={styles.summaryValue}>{data.totalRevenue.toFixed(2)}</Text>
+              <Text style={styles.summaryUnit}>TND</Text>
+            </View>
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryLabel}>Pourboires</Text>
+              <Text style={styles.summaryValue}>{data.totalTips.toFixed(2)}</Text>
+              <Text style={styles.summaryUnit}>TND</Text>
+            </View>
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryLabel}>Moy./livraison</Text>
+              <Text style={styles.summaryValue}>{data.avgPerDelivery.toFixed(2)}</Text>
+              <Text style={styles.summaryUnit}>TND</Text>
+            </View>
           </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statEmoji}>⭐</Text>
-            <Text style={styles.statValue}>4.8</Text>
-            <Text style={styles.statLabel}>Note moyenne</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statEmoji}>✅</Text>
-            <Text style={styles.statValue}>94%</Text>
-            <Text style={styles.statLabel}>Taux acceptation</Text>
-          </View>
-        </View>
 
-        {/* Period Tabs */}
-        <View style={styles.tabsRow}>
-          {PERIODS.map((p, i) => (
-            <TouchableOpacity
-              key={p}
-              style={[styles.tab, activePeriod === i && styles.tabActive]}
-              onPress={() => setActivePeriod(i)}
-            >
-              <Text style={[styles.tabText, activePeriod === i && styles.tabTextActive]}>{p}</Text>
-            </TouchableOpacity>
+          {/* Performance Stats */}
+          <View style={styles.statsRow}>
+            <View style={styles.statCard}>
+              <Text style={styles.statEmoji}>📦</Text>
+              <Text style={styles.statValue}>{data.totalDeliveries}</Text>
+              <Text style={styles.statLabel}>Livraisons réussies</Text>
+            </View>
+          </View>
+
+          {/* Deliveries List */}
+          <Text style={styles.sectionTitle}>Livraisons récentes</Text>
+          {data.orders.length === 0 ? (
+            <Text style={{ color: COLORS.muted, textAlign: 'center', marginTop: 10 }}>Aucune livraison sur cette période</Text>
+          ) : data.orders.map((o) => (
+            <View key={o.id} style={styles.deliveryCard}>
+              <View style={styles.deliveryLeft}>
+                <Text style={styles.deliveryTime}>{new Date(o.createdAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</Text>
+                <Text style={styles.deliveryRoute}>{o.client?.name || 'Client'}</Text>
+                <Text style={styles.deliveryAddress} numberOfLines={1}>{o.destinationAddress || o.originAddress || ''}</Text>
+              </View>
+              <View style={styles.deliveryRight}>
+                <Text style={styles.deliveryAmount}>{Number(o.finalPrice ?? o.price ?? 0).toFixed(2)}</Text>
+                <Text style={styles.deliveryAmountUnit}>TND</Text>
+                {o.tips && o.tips.length > 0 && (
+                  <View style={styles.bonusBadge}>
+                    <Text style={styles.bonusBadgeText}>+{o.tips.reduce((s, t) => s + Number(t.amount || 0), 0).toFixed(2)} pourboire</Text>
+                  </View>
+                )}
+              </View>
+            </View>
           ))}
-        </View>
-
-        {/* Deliveries List */}
-        <Text style={styles.sectionTitle}>Livraisons récentes</Text>
-        {DELIVERIES.map((d) => (
-          <View key={d.id} style={styles.deliveryCard}>
-            <View style={styles.deliveryLeft}>
-              <Text style={styles.deliveryTime}>{d.heure}</Text>
-              <Text style={styles.deliveryRoute}>{d.marchand} → client</Text>
-              <Text style={styles.deliveryAddress} numberOfLines={1}>{d.adresse}</Text>
-              <Text style={styles.deliveryMeta}>{d.distance}</Text>
-            </View>
-            <View style={styles.deliveryRight}>
-              <Text style={styles.deliveryAmount}>{d.montant.toFixed(2)}</Text>
-              <Text style={styles.deliveryAmountUnit}>TND</Text>
-              {d.bonus && (
-                <View style={styles.bonusBadge}>
-                  <Text style={styles.bonusBadgeText}>{d.bonus}</Text>
-                </View>
-              )}
-            </View>
-          </View>
-        ))}
-      </ScrollView>
-
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.withdrawBtn}>
-          <Text style={styles.withdrawBtnText}>Retirer mes gains</Text>
-        </TouchableOpacity>
-      </View>
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 }
@@ -141,7 +148,7 @@ const styles = StyleSheet.create({
   backArrow: { color: COLORS.text, fontSize: 22 },
   headerTitle: { flex: 1, color: COLORS.text, fontSize: 18, fontWeight: '700', textAlign: 'center' },
   headerRight: { width: 36 },
-  scrollContent: { padding: 16, paddingBottom: 100 },
+  scrollContent: { padding: 16, paddingBottom: 40 },
   summaryRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
   summaryCard: {
     flex: 1,
@@ -210,16 +217,4 @@ const styles = StyleSheet.create({
     borderColor: '#2ECC71',
   },
   bonusBadgeText: { color: '#2ECC71', fontSize: 10, fontWeight: '600' },
-  footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 16,
-    backgroundColor: COLORS.background,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-  },
-  withdrawBtn: { backgroundColor: COLORS.primary, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
-  withdrawBtnText: { color: '#000000', fontSize: 16, fontWeight: '700' },
 });

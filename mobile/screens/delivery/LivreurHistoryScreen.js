@@ -12,45 +12,37 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB',
 };
 
-const MOCK = [
-  { id: 'D001', clientName: 'Nadia K.', pickup: 'Pizza Roma, Lac 1', dropoff: 'Berges du Lac 2', distance: 2.3, amount: 5.000, status: 'DELIVERED', date: '03/06/2026 14:52', rating: 5 },
-  { id: 'D002', clientName: 'Ahmed B.', pickup: 'Carrefour Market', dropoff: 'Sidi Bou Said', distance: 4.1, amount: 7.500, status: 'DELIVERED', date: '03/06/2026 13:10', rating: 4 },
-  { id: 'D003', clientName: 'Lina M.', pickup: 'Monoprix Menzah', dropoff: 'Ariana Centre', distance: 3.8, amount: 6.500, status: 'CANCELLED', date: '03/06/2026 11:30', rating: null },
-  { id: 'D004', clientName: 'Youssef T.', pickup: 'KFC Tunis City', dropoff: 'Lafayette', distance: 1.5, amount: 4.000, status: 'DELIVERED', date: '02/06/2026 19:45', rating: 5 },
-  { id: 'D005', clientName: 'Rim S.', pickup: 'Géant Casino', dropoff: 'El Manar', distance: 5.2, amount: 8.500, status: 'DELIVERED', date: '02/06/2026 17:22', rating: 4 },
-];
-
-const STATUS_LABELS = { DELIVERED: 'Livré', CANCELLED: 'Annulé', IN_PROGRESS: 'En cours' };
-const STATUS_COLORS = { DELIVERED: COLORS.green, CANCELLED: COLORS.red, IN_PROGRESS: COLORS.blue };
+const STATUS_LABELS = { COMPLETED: 'Livré', CANCELLED: 'Annulé', IN_PROGRESS: 'En cours', ACCEPTED: 'Acceptée', PENDING: 'En attente' };
+const STATUS_COLORS = { COMPLETED: COLORS.green, CANCELLED: COLORS.red, IN_PROGRESS: COLORS.blue, ACCEPTED: COLORS.blue, PENDING: COLORS.accent };
 
 function DeliveryCard({ item }) {
+  const statusColor = STATUS_COLORS[item.status] || COLORS.muted;
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
         <Text style={styles.cardId}>#{item.id}</Text>
-        <View style={[styles.statusBadge, { backgroundColor: STATUS_COLORS[item.status] + '20', borderColor: STATUS_COLORS[item.status] + '50' }]}>
-          <Text style={[styles.statusText, { color: STATUS_COLORS[item.status] }]}>{STATUS_LABELS[item.status]}</Text>
+        <View style={[styles.statusBadge, { backgroundColor: statusColor + '20', borderColor: statusColor + '50' }]}>
+          <Text style={[styles.statusText, { color: statusColor }]}>{STATUS_LABELS[item.status] || item.status}</Text>
         </View>
       </View>
 
       <View style={styles.routeSection}>
         <View style={styles.routeRow}>
           <View style={[styles.dot, { backgroundColor: COLORS.green }]} />
-          <Text style={styles.routeText} numberOfLines={1}>{item.pickup}</Text>
+          <Text style={styles.routeText} numberOfLines={1}>{item.originAddress || '—'}</Text>
         </View>
         <View style={styles.routeLine} />
         <View style={styles.routeRow}>
           <View style={[styles.dot, { backgroundColor: COLORS.accent }]} />
-          <Text style={styles.routeText} numberOfLines={1}>{item.dropoff}</Text>
+          <Text style={styles.routeText} numberOfLines={1}>{item.destinationAddress || '—'}</Text>
         </View>
       </View>
 
       <View style={styles.cardFooter}>
-        <Text style={styles.footerDate}>{item.date}</Text>
-        <Text style={styles.footerDist}>📍 {item.distance} km</Text>
+        <Text style={styles.footerDate}>{new Date(item.createdAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</Text>
+        <Text style={styles.footerClient} numberOfLines={1}>{item.client?.name || ''}</Text>
         <View style={{ flex: 1 }} />
-        <Text style={styles.footerAmount}>{item.amount.toFixed(3)} TND</Text>
-        {item.rating && <Text style={styles.footerRating}>{'★'.repeat(item.rating)}</Text>}
+        <Text style={styles.footerAmount}>{Number(item.price || 0).toFixed(3)} TND</Text>
       </View>
     </View>
   );
@@ -59,23 +51,19 @@ function DeliveryCard({ item }) {
 export default function LivreurHistoryScreen({ navigation }) {
   const [deliveries, setDeliveries] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ total: 0, earnings: 0, avgRating: 0 });
+  const [error, setError] = useState(false);
+  const [stats, setStats] = useState({ total: 0, earnings: 0 });
 
   const load = useCallback(() => {
-    api.get('/api/livreur/deliveries/history')
+    setLoading(true);
+    api.get('/api/delivery/livreur/earnings', { params: { period: 'month' } })
       .then(r => {
-        const data = r.data.deliveries || MOCK;
-        setDeliveries(data);
-        const delivered = data.filter(d => d.status === 'DELIVERED');
-        const earnings = delivered.reduce((s, d) => s + d.amount, 0);
-        const ratings = delivered.filter(d => d.rating).map(d => d.rating);
-        const avgRating = ratings.length ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1) : '—';
-        setStats({ total: delivered.length, earnings, avgRating });
+        const orders = r.data.orders || [];
+        setDeliveries(orders);
+        setStats({ total: r.data.totalDeliveries || 0, earnings: r.data.totalRevenue || 0 });
+        setError(false);
       })
-      .catch(() => {
-        setDeliveries(MOCK);
-        setStats({ total: 4, earnings: 25.000, avgRating: '4.7' });
-      })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -94,6 +82,16 @@ export default function LivreurHistoryScreen({ navigation }) {
 
       {loading ? (
         <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 60 }} />
+      ) : error ? (
+        <View style={styles.empty}>
+          <Text style={{ fontSize: 40 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, marginTop: 12, textAlign: 'center', paddingHorizontal: 30 }}>
+            Impossible de charger votre historique.
+          </Text>
+          <TouchableOpacity onPress={load} style={{ marginTop: 14, backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
+            <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
         <>
           <View style={styles.statsRow}>
@@ -104,10 +102,6 @@ export default function LivreurHistoryScreen({ navigation }) {
             <View style={styles.statCard}>
               <Text style={styles.statNum}>{stats.total}</Text>
               <Text style={styles.statLabel}>Livraisons</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={[styles.statNum, { color: COLORS.accent }]}>★ {stats.avgRating}</Text>
-              <Text style={styles.statLabel}>Note moy.</Text>
             </View>
           </View>
 
@@ -163,8 +157,7 @@ const styles = StyleSheet.create({
   routeText: { flex: 1, color: COLORS.text, fontSize: 13 },
   cardFooter: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   footerDate: { color: COLORS.muted, fontSize: 11 },
-  footerDist: { color: COLORS.muted, fontSize: 11 },
+  footerClient: { color: COLORS.muted, fontSize: 11, maxWidth: 100 },
   footerAmount: { color: COLORS.accent, fontSize: 14, fontWeight: '800' },
-  footerRating: { color: COLORS.accent, fontSize: 12 },
   empty: { alignItems: 'center', paddingVertical: 60 },
 });
