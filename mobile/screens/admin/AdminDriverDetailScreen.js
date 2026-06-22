@@ -1,44 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  StatusBar, Alert,
+  StatusBar, Alert, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', surfaceAlt: '#16161F',
   accent: '#F5A623', white: '#FFFFFF', muted: '#8A8A9A', border: '#2A2A3A',
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB', orange: '#E67E22', purple: '#9B59B6',
-};
-
-const MOCK_DRIVER = {
-  id: 'DRV-0087',
-  name: 'Achraf Bouaziz',
-  phone: '+216 20 444 555',
-  email: 'achraf.b@easyway.tn',
-  status: 'online',
-  verifiedKYC: true,
-  joinedAt: '12/01/2024',
-  serviceType: 'TAXI',
-  zone: 'Tunis Centre',
-  vehicle: { make: 'Renault', model: 'Clio 5', color: 'Grise', plate: 'TUN-2234', year: 2022 },
-  rating: 4.9,
-  totalRides: 1240,
-  totalEarnings: 8420.50,
-  thisMonth: 1604.50,
-  cancelRate: '2.1%',
-  completionRate: '97.9%',
-  avgResponseTime: '4s',
-  incidents: 1,
-  warnings: 0,
-  lastRide: '03/06/2024 à 14:28',
-  documents: [
-    { label: 'CIN', status: 'valid' },
-    { label: 'Permis B', status: 'valid' },
-    { label: 'Assurance', status: 'expiring' },
-    { label: 'Carte grise', status: 'valid' },
-    { label: 'Visite technique', status: 'valid' },
-  ],
 };
 
 const DOC_STATUS = {
@@ -56,21 +27,84 @@ const DRIVER_STATUS = {
 };
 
 export default function AdminDriverDetailScreen({ navigation, route }) {
-  const driver = route.params?.driver || MOCK_DRIVER;
+  const driverId = route.params?.driverId || route.params?.driver?.id;
+  const [driver, setDriver] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [tab, setTab] = useState('info');
 
-  const ds = DRIVER_STATUS[driver.status] || DRIVER_STATUS.offline;
+  const load = useCallback(() => {
+    if (!driverId) { setError(true); setLoading(false); return; }
+    setLoading(true);
+    api.get(`/api/admin/users/${driverId}`)
+      .then(r => { setDriver(r.data.user); setError(false); })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, [driverId]);
+
+  useEffect(() => { load(); }, [load]);
 
   const handleAction = (action) => {
-    Alert.alert(
-      action,
-      `Confirmer : ${action} pour ${driver.name} ?`,
-      [
+    if (action === 'Suspension') {
+      Alert.alert('Suspendre le compte', `Confirmer la suspension de ${driver.name} ?`, [
         { text: 'Annuler', style: 'cancel' },
-        { text: 'Confirmer', style: action.includes('Suspend') ? 'destructive' : 'default', onPress: () => {} },
-      ]
-    );
+        { text: 'Confirmer', style: 'destructive', onPress: async () => {
+          try { await api.patch(`/api/admin/users/${driverId}/suspend`); load(); }
+          catch { Alert.alert('Erreur', 'Impossible de suspendre ce compte.'); }
+        } },
+      ]);
+    } else if (action === 'Activation') {
+      Alert.alert('Réactiver le compte', `Confirmer la réactivation de ${driver.name} ?`, [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Confirmer', onPress: async () => {
+          try { await api.patch(`/api/admin/users/${driverId}/reactivate`); load(); }
+          catch { Alert.alert('Erreur', 'Impossible de réactiver ce compte.'); }
+        } },
+      ]);
+    } else if (action === 'Suppression') {
+      Alert.alert('Supprimer le compte', `Supprimer définitivement ${driver.name} ?`, [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Supprimer', style: 'destructive', onPress: async () => {
+          try { await api.delete(`/api/admin/users/${driverId}`); navigation.goBack(); }
+          catch { Alert.alert('Erreur', 'Impossible de supprimer ce compte.'); }
+        } },
+      ]);
+    } else {
+      Alert.alert('Non disponible', "Cette action n'est pas encore disponible.");
+    }
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator color={COLORS.accent} size="large" />
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !driver) {
+    return (
+      <SafeAreaView style={[styles.root, { alignItems: 'center', justifyContent: 'center', padding: 30 }]}>
+        <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+        <Text style={{ color: COLORS.muted, textAlign: 'center', marginBottom: 16 }}>
+          Impossible de charger ce profil chauffeur.
+        </Text>
+        <TouchableOpacity onPress={load} style={{ backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 }}>
+          <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
+  const ds = DRIVER_STATUS[driver.suspended ? 'suspended' : (driver.isOnline ? 'online' : 'offline')] || DRIVER_STATUS.offline;
+  const vehicle = Array.isArray(driver.vehicle) ? driver.vehicle[0] : driver.vehicle;
+  const orders = [...(driver.ordersAsProvider || []), ...(driver.ordersAsClient || [])];
+  const completedOrders = orders.filter(o => o.status === 'COMPLETED');
+  const totalEarnings = completedOrders.reduce((sum, o) => sum + Number(o.price || 0), 0);
+  const cancelledCount = orders.filter(o => o.status === 'CANCELLED').length;
+  const completionRate = orders.length ? `${((completedOrders.length / orders.length) * 100).toFixed(1)}%` : '—';
+  const cancelRate = orders.length ? `${((cancelledCount / orders.length) * 100).toFixed(1)}%` : '—';
+  const lastOrder = orders[0];
 
   return (
     <SafeAreaView style={styles.root}>
@@ -89,7 +123,7 @@ export default function AdminDriverDetailScreen({ navigation, route }) {
       <View style={styles.identityCard}>
         <View style={styles.driverAvatar}>
           <Text style={{ fontSize: 32 }}>🧔</Text>
-          {driver.verifiedKYC && (
+          {driver.kycStatus === 'APPROVED' && (
             <View style={styles.kycBadge}>
               <Text style={{ fontSize: 10 }}>✓</Text>
             </View>
@@ -97,24 +131,24 @@ export default function AdminDriverDetailScreen({ navigation, route }) {
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.driverName}>{driver.name}</Text>
-          <Text style={styles.driverId}>{driver.id} · {driver.serviceType}</Text>
+          <Text style={styles.driverId}>{driver.id} · {driver.role}</Text>
           <Text style={styles.driverPhone}>{driver.phone}</Text>
         </View>
         <View style={{ alignItems: 'flex-end', gap: 6 }}>
           <View style={[styles.statusBadge, { backgroundColor: ds.bg }]}>
             <Text style={[styles.statusText, { color: ds.color }]}>● {ds.label}</Text>
           </View>
-          <Text style={styles.ratingText}>⭐ {driver.rating}</Text>
+          <Text style={styles.ratingText}>⭐ {(driver.rating || 5).toFixed(1)}</Text>
         </View>
       </View>
 
       {/* KPI Row */}
       <View style={styles.kpiRow}>
         {[
-          { v: driver.totalRides, l: 'Courses' },
-          { v: `${driver.totalEarnings.toFixed(0)} TND`, l: 'Gains total' },
-          { v: driver.completionRate, l: 'Complétion' },
-          { v: driver.cancelRate, l: 'Annulation' },
+          { v: orders.length, l: 'Courses' },
+          { v: `${totalEarnings.toFixed(0)} TND`, l: 'Gains total' },
+          { v: completionRate, l: 'Complétion' },
+          { v: cancelRate, l: 'Annulation' },
         ].map((k, i) => (
           <View key={i} style={styles.kpiCard}>
             <Text style={styles.kpiVal}>{k.v}</Text>
@@ -127,7 +161,6 @@ export default function AdminDriverDetailScreen({ navigation, route }) {
       <View style={styles.tabs}>
         {[
           { id: 'info', label: '📋 Infos' },
-          { id: 'docs', label: '📄 Documents' },
           { id: 'actions', label: '⚙️ Actions' },
         ].map((t) => (
           <TouchableOpacity
@@ -145,13 +178,31 @@ export default function AdminDriverDetailScreen({ navigation, route }) {
         {tab === 'info' && (
           <View style={styles.tabContent}>
             {/* Vehicle */}
-            <Text style={styles.groupTitle}>🚗 Véhicule</Text>
+            {vehicle && (
+              <>
+                <Text style={styles.groupTitle}>🚗 Véhicule</Text>
+                <View style={styles.infoCard}>
+                  {[
+                    ['Marque / Modèle', `${vehicle.make || ''} ${vehicle.model || ''}`],
+                    ['Plaque', vehicle.plate || '—'],
+                    ['Type', vehicle.vehicleType || '—'],
+                  ].map(([l, v]) => (
+                    <View key={l} style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>{l}</Text>
+                      <Text style={styles.infoValue}>{v}</Text>
+                    </View>
+                  ))}
+                </View>
+              </>
+            )}
+
+            {/* Stats */}
+            <Text style={styles.groupTitle}>📊 Statistiques</Text>
             <View style={styles.infoCard}>
               {[
-                ['Marque / Modèle', `${driver.vehicle.make} ${driver.vehicle.model}`],
-                ['Couleur', driver.vehicle.color],
-                ['Plaque', driver.vehicle.plate],
-                ['Année', String(driver.vehicle.year)],
+                ['KYC', driver.kycStatus || '—'],
+                ['Dernière course', lastOrder ? new Date(lastOrder.createdAt).toLocaleDateString('fr-FR') : '—'],
+                ['Membre depuis', driver.createdAt ? new Date(driver.createdAt).toLocaleDateString('fr-FR') : '—'],
               ].map(([l, v]) => (
                 <View key={l} style={styles.infoRow}>
                   <Text style={styles.infoLabel}>{l}</Text>
@@ -159,51 +210,12 @@ export default function AdminDriverDetailScreen({ navigation, route }) {
                 </View>
               ))}
             </View>
-
-            {/* Stats */}
-            <Text style={styles.groupTitle}>📊 Statistiques</Text>
-            <View style={styles.infoCard}>
-              {[
-                ['Zone de travail', driver.zone],
-                ['Temps de réponse', driver.avgResponseTime],
-                ['Incidents signalés', String(driver.incidents)],
-                ['Avertissements', String(driver.warnings)],
-                ['Gains ce mois', `${driver.thisMonth.toFixed(2)} TND`],
-                ['Dernière course', driver.lastRide],
-                ['Membre depuis', driver.joinedAt],
-              ].map(([l, v]) => (
-                <View key={l} style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>{l}</Text>
-                  <Text style={[styles.infoValue, l === 'Incidents signalés' && driver.incidents > 0 && { color: COLORS.orange }]}>
-                    {v}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        )}
-
-        {tab === 'docs' && (
-          <View style={styles.tabContent}>
-            {driver.documents.map((doc) => {
-              const ds2 = DOC_STATUS[doc.status];
-              return (
-                <View key={doc.label} style={styles.docRow}>
-                  <Text style={styles.docLabel}>📄 {doc.label}</Text>
-                  <View style={[styles.docBadge, { backgroundColor: ds2.bg }]}>
-                    <Text style={[styles.docStatus, { color: ds2.color }]}>{ds2.label}</Text>
-                  </View>
-                </View>
-              );
-            })}
           </View>
         )}
 
         {tab === 'actions' && (
           <View style={styles.tabContent}>
             {[
-              { label: '💬 Envoyer un message', color: COLORS.blue, action: 'Message' },
-              { label: '⚠️ Envoyer un avertissement', color: COLORS.orange, action: 'Avertissement' },
               { label: '🔒 Suspendre le compte', color: COLORS.red, action: 'Suspension' },
               { label: '✅ Activer / Réactiver', color: COLORS.green, action: 'Activation' },
               { label: '🗑 Supprimer le compte', color: COLORS.red, action: 'Suppression' },

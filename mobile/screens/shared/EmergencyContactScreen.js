@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   StatusBar, TextInput, Alert, Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', surfaceAlt: '#16161F',
@@ -14,16 +15,17 @@ const COLORS = {
 
 const RELATIONS = ['Famille', 'Ami(e)', 'Collègue', 'Médecin', 'Autre'];
 
-const MOCK_CONTACTS = [
-  { id: 1, name: 'Sana Ben Ali', phone: '+216 20 123 456', relation: 'Famille', notify: true },
-  { id: 2, name: 'Dr. Karim Meddeb', phone: '+216 71 234 567', relation: 'Médecin', notify: false },
-];
-
 export default function EmergencyContactScreen({ navigation }) {
-  const [contacts, setContacts] = useState(MOCK_CONTACTS);
+  const [contacts, setContacts] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState({ name: '', phone: '', relation: 'Famille', notify: true });
+
+  useEffect(() => {
+    api.get('/api/emergency/contacts')
+      .then(r => setContacts((r.data.contacts || []).map((c, i) => ({ id: c.id || i, ...c }))))
+      .catch(() => {});
+  }, []);
 
   const openEdit = (contact) => {
     setForm({ name: contact.name, phone: contact.phone, relation: contact.relation, notify: contact.notify });
