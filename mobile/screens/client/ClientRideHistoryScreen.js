@@ -20,14 +20,7 @@ const STATUS_LABEL = {
   PENDING: { label: 'En attente', color: COLORS.accent },
 };
 
-const MOCK_RIDES = [
-  { id: '1', type: 'TAXI', status: 'COMPLETED', date: '2025-06-03', origin: 'Tunis Centre', destination: 'Aéroport Tunis-Carthage', amount: 18.500, rating: 5, driver: 'Karim B.' },
-  { id: '2', type: 'LIVRAISON', status: 'COMPLETED', date: '2025-06-02', origin: 'Pizza Roma, Lac 1', destination: 'Berges du Lac 2', amount: 5.000, rating: 4, driver: 'Yassine M.' },
-  { id: '3', type: 'TAXI', status: 'CANCELLED', date: '2025-06-01', origin: 'La Marsa', destination: 'Sidi Bou Said', amount: 0, rating: null, driver: null },
-  { id: '4', type: 'SOS', status: 'COMPLETED', date: '2025-05-30', origin: 'Route GP1, Km 22', destination: null, amount: 45.000, rating: 5, driver: 'Mounir T.' },
-  { id: '5', type: 'TAXI', status: 'COMPLETED', date: '2025-05-28', origin: 'Bab Bhar', destination: 'El Menzah 9', amount: 12.750, rating: 3, driver: 'Sami R.' },
-  { id: '6', type: 'LIVRAISON', status: 'COMPLETED', date: '2025-05-27', origin: 'Carrefour Market', destination: 'Cité Mahrajène', amount: 3.500, rating: 4, driver: 'Aymen K.' },
-];
+const TYPE_MAP = { TAXI: 'TAXI', DELIVERY: 'LIVRAISON', GROCERY: 'LIVRAISON', SOS: 'SOS' };
 
 function Stars({ rating }) {
   if (!rating) return null;
@@ -86,14 +79,29 @@ function RideCard({ item, onPress }) {
 export default function ClientRideHistoryScreen({ navigation }) {
   const [rides, setRides] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [filter, setFilter] = useState('Tous');
   const [search, setSearch] = useState('');
 
   useEffect(() => {
     setLoading(true);
-    api.get('/api/client/rides?limit=50')
-      .then(r => setRides(r.data.rides || MOCK_RIDES))
-      .catch(() => setRides(MOCK_RIDES))
+    api.get('/api/users/me/orders')
+      .then(r => {
+        const mapped = (r.data.orders || []).map(o => ({
+          id: o.id,
+          type: TYPE_MAP[o.serviceType] || o.serviceType,
+          status: o.status,
+          date: o.createdAt ? new Date(o.createdAt).toLocaleDateString('fr-TN') : '',
+          origin: o.originAddress,
+          destination: o.destinationAddress,
+          amount: o.finalPrice ?? Number(o.price || 0),
+          rating: null,
+          driver: null,
+        }));
+        setRides(mapped);
+        setError(false);
+      })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -159,6 +167,13 @@ export default function ClientRideHistoryScreen({ navigation }) {
 
       {loading ? (
         <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} />
+      ) : error ? (
+        <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 30 }}>
+          <Text style={{ fontSize: 40 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, marginTop: 12, textAlign: 'center' }}>
+            Impossible de charger vos courses. Vérifiez votre connexion.
+          </Text>
+        </View>
       ) : (
         <FlatList
           data={filtered}

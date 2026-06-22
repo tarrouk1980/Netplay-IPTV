@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   StatusBar, TextInput, Alert, ActivityIndicator,
@@ -13,8 +13,8 @@ const COLORS = {
   border: '#2A2A3A', green: '#27AE60', red: '#D32F2F',
 };
 
-const PAYMENT_METHODS = [
-  { key: 'wallet',  label: 'Portefeuille EASYWAY', emoji: '💳', balance: 34.5 },
+const BASE_PAYMENT_METHODS = [
+  { key: 'wallet',  label: 'Portefeuille EASYWAY', emoji: '💳' },
   { key: 'cash',    label: 'Espèces à la livraison', emoji: '💵' },
   { key: 'card',    label: 'Carte bancaire', emoji: '🏦' },
   { key: 'konnect', label: 'Konnect', emoji: '📱' },
@@ -36,6 +36,17 @@ export default function GroceryCheckoutScreen({ navigation, route }) {
   const [promoCode, setPromoCode] = useState('');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(null);
+
+  useEffect(() => {
+    api.get('/api/wallet/balance')
+      .then(r => setWalletBalance(r.data?.walletBalance || 0))
+      .catch(() => setWalletBalance(null));
+  }, []);
+
+  const paymentMethods = BASE_PAYMENT_METHODS.map(m =>
+    m.key === 'wallet' ? { ...m, balance: walletBalance } : m
+  );
 
   const canOrder = address.trim() && slot;
 
@@ -133,7 +144,7 @@ export default function GroceryCheckoutScreen({ navigation, route }) {
 
         {/* Payment */}
         <Text style={styles.label}>Paiement</Text>
-        {PAYMENT_METHODS.map(m => (
+        {paymentMethods.map(m => (
           <TouchableOpacity
             key={m.key}
             style={[styles.payRow, payment === m.key && styles.payRowActive]}
@@ -142,7 +153,7 @@ export default function GroceryCheckoutScreen({ navigation, route }) {
             <Text style={{ fontSize: 22 }}>{m.emoji}</Text>
             <View style={{ flex: 1, marginLeft: 10 }}>
               <Text style={[styles.payLabel, payment === m.key && { color: COLORS.white }]}>{m.label}</Text>
-              {m.balance !== undefined && <Text style={styles.payBalance}>Solde : {m.balance.toFixed(3)} TND</Text>}
+              {m.balance != null && <Text style={styles.payBalance}>Solde : {m.balance.toFixed(3)} TND</Text>}
             </View>
             <View style={[styles.radio, payment === m.key && styles.radioActive]}>
               {payment === m.key && <View style={styles.radioDot} />}

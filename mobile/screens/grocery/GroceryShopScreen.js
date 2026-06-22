@@ -12,26 +12,6 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB',
 };
 
-const MOCK_CATEGORIES = [
-  { id: 'all', label: 'Tout' },
-  { id: 'fruits', label: '🍎 Fruits' },
-  { id: 'legumes', label: '🥦 Légumes' },
-  { id: 'boulangerie', label: '🥖 Boulangerie' },
-  { id: 'laitiers', label: '🥛 Laitiers' },
-  { id: 'boissons', label: '🥤 Boissons' },
-];
-
-const MOCK_PRODUCTS = [
-  { id: 'P1', name: 'Pommes Golden', category: 'fruits', price: 3.500, unit: 'kg', icon: '🍎', inStock: true },
-  { id: 'P2', name: 'Tomates cerises', category: 'legumes', price: 4.200, unit: 'kg', icon: '🍅', inStock: true },
-  { id: 'P3', name: 'Pain complet', category: 'boulangerie', price: 1.800, unit: 'pièce', icon: '🍞', inStock: true },
-  { id: 'P4', name: 'Lait entier 1L', category: 'laitiers', price: 2.100, unit: 'L', icon: '🥛', inStock: false },
-  { id: 'P5', name: 'Jus d\'orange', category: 'boissons', price: 3.900, unit: 'L', icon: '🍊', inStock: true },
-  { id: 'P6', name: 'Bananes', category: 'fruits', price: 2.500, unit: 'kg', icon: '🍌', inStock: true },
-  { id: 'P7', name: 'Carottes', category: 'legumes', price: 1.200, unit: 'kg', icon: '🥕', inStock: true },
-  { id: 'P8', name: 'Yaourt nature', category: 'laitiers', price: 0.900, unit: 'pot', icon: '🍶', inStock: true },
-];
-
 function ProductCard({ item, qty, onAdd, onRemove }) {
   return (
     <View style={[styles.productCard, !item.inStock && styles.productCardOut]}>
@@ -42,7 +22,7 @@ function ProductCard({ item, qty, onAdd, onRemove }) {
         )}
       </View>
       <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
-      <Text style={styles.productPrice}>{item.price.toFixed(3)} TND/{item.unit}</Text>
+      <Text style={styles.productPrice}>{item.price.toFixed(3)} TND</Text>
       {item.inStock ? (
         qty > 0 ? (
           <View style={styles.qtyRow}>
@@ -72,16 +52,30 @@ export default function GroceryShopScreen({ navigation, route }) {
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
   const [cart, setCart] = useState({});
 
   useEffect(() => {
     api.get(`/api/merchants/${shopId}`)
-      .then(r => setProducts(r.data.merchant?.products || MOCK_PRODUCTS))
-      .catch(() => setProducts(MOCK_PRODUCTS))
+      .then(r => {
+        const mapped = (r.data.merchant?.products || []).map(p => ({
+          id: p.id,
+          name: p.name,
+          category: p.category,
+          price: parseFloat(p.price),
+          icon: p.metadata?.icon ?? '🛒',
+          inStock: p.stock == null || p.stock > 0,
+        }));
+        setProducts(mapped);
+        setError(false);
+      })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [shopId]);
+
+  const categories = [{ id: 'all', label: 'Tout' }, ...Array.from(new Set(products.map(p => p.category))).map(c => ({ id: c, label: c }))];
 
   const addToCart = (item) => setCart(c => ({ ...c, [item.id]: (c[item.id] || 0) + 1 }));
   const removeFromCart = (item) => setCart(c => {
@@ -136,7 +130,7 @@ export default function GroceryShopScreen({ navigation, route }) {
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.catsRow}>
-        {MOCK_CATEGORIES.map(c => (
+        {categories.map(c => (
           <TouchableOpacity
             key={c.id}
             style={[styles.catBtn, category === c.id && styles.catBtnActive]}
@@ -149,6 +143,13 @@ export default function GroceryShopScreen({ navigation, route }) {
 
       {loading ? (
         <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} />
+      ) : error ? (
+        <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 30 }}>
+          <Text style={{ fontSize: 40 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, marginTop: 12, textAlign: 'center' }}>
+            Impossible de charger les produits. Vérifiez votre connexion.
+          </Text>
+        </View>
       ) : (
         <ScrollView contentContainerStyle={styles.grid} showsVerticalScrollIndicator={false}>
           {filtered.map(p => (

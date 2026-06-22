@@ -12,27 +12,13 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C',
 };
 
-const MOCK_CATEGORIES = ['Tout', 'Fruits & Légumes', 'Produits laitiers', 'Boulangerie', 'Boissons', 'Épicerie', 'Hygiène'];
-
-const MOCK_PRODUCTS = [
-  { id: 'P001', name: 'Lait Délice entier 1L', category: 'Produits laitiers', price: 1.800, unit: 'bouteille', stock: 24, icon: '🥛' },
-  { id: 'P002', name: 'Pain complet 400g', category: 'Boulangerie', price: 1.200, unit: 'pain', stock: 8, icon: '🍞' },
-  { id: 'P003', name: 'Tomates 1kg', category: 'Fruits & Légumes', price: 2.500, unit: 'kg', stock: 15, icon: '🍅' },
-  { id: 'P004', name: 'Eau minérale Safia 1.5L', category: 'Boissons', price: 0.900, unit: 'bouteille', stock: 48, icon: '💧' },
-  { id: 'P005', name: 'Yaourt nature x4', category: 'Produits laitiers', price: 2.100, unit: 'pack', stock: 12, icon: '🥣' },
-  { id: 'P006', name: 'Huile végétale 1L', category: 'Épicerie', price: 4.500, unit: 'bouteille', stock: 20, icon: '🫙' },
-  { id: 'P007', name: 'Bananes 1kg', category: 'Fruits & Légumes', price: 3.200, unit: 'kg', stock: 6, icon: '🍌' },
-  { id: 'P008', name: 'Savon Palmolive x3', category: 'Hygiène', price: 3.800, unit: 'pack', stock: 18, icon: '🧼' },
-];
-
 function ProductCard({ item, qty, onAdd, onRemove }) {
   return (
     <View style={styles.productCard}>
       <Text style={styles.productIcon}>{item.icon}</Text>
       <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
-      <Text style={styles.productUnit}>{item.unit}</Text>
       <Text style={styles.productPrice}>{item.price.toFixed(3)} TND</Text>
-      {item.stock <= 5 && <Text style={styles.lowStock}>⚠️ Stock bas</Text>}
+      {item.stock != null && item.stock <= 5 && <Text style={styles.lowStock}>⚠️ Stock bas</Text>}
       {qty > 0 ? (
         <View style={styles.qtyRow}>
           <TouchableOpacity style={styles.qtyBtn} onPress={onRemove}>
@@ -56,18 +42,32 @@ export default function GroceryStoreScreen({ navigation, route }) {
   const { storeId, storeName = 'Épicerie' } = route.params || {};
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('Tout');
   const [cart, setCart] = useState({});
 
   const load = useCallback(() => {
     api.get('/api/merchants/' + (storeId || '1'))
-      .then(r => setProducts(r.data.merchant?.products || MOCK_PRODUCTS))
-      .catch(() => setProducts(MOCK_PRODUCTS))
+      .then(r => {
+        const mapped = (r.data.merchant?.products || []).map(p => ({
+          id: p.id,
+          name: p.name,
+          category: p.category,
+          price: parseFloat(p.price),
+          stock: p.stock,
+          icon: p.metadata?.icon ?? '🛒',
+        }));
+        setProducts(mapped);
+        setError(false);
+      })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [storeId]);
 
   useEffect(() => { load(); }, [load]);
+
+  const categories = ['Tout', ...Array.from(new Set(products.map(p => p.category)))];
 
   const addToCart = (id) => setCart(prev => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
   const removeFromCart = (id) => setCart(prev => {
@@ -117,7 +117,7 @@ export default function GroceryStoreScreen({ navigation, route }) {
       />
 
       <FlatList
-        data={MOCK_CATEGORIES}
+        data={categories}
         horizontal
         showsHorizontalScrollIndicator={false}
         keyExtractor={item => item}
@@ -135,6 +135,13 @@ export default function GroceryStoreScreen({ navigation, route }) {
 
       {loading ? (
         <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 60 }} />
+      ) : error ? (
+        <View style={styles.empty}>
+          <Text style={{ fontSize: 36 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, marginTop: 10, textAlign: 'center', paddingHorizontal: 30 }}>
+            Impossible de charger les produits.
+          </Text>
+        </View>
       ) : (
         <FlatList
           data={filtered}
