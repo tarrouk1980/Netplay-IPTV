@@ -33,16 +33,6 @@ const TIERS = [
   { name: 'Diamond', min: 5000, max: Infinity, color: '#89CFF0', icon: '💠' },
 ];
 
-// Fallback only used if /api/loyalty/balance is unreachable — the real
-// catalog (and the only set of ids /api/loyalty/redeem actually accepts)
-// is fetched from the backend below.
-const FALLBACK_REWARDS = [
-  { id: 'r1', title: '-10% Taxi', description: 'Réduction sur prochaine course taxi', cost: 500, icon: '🚕' },
-  { id: 'r2', title: 'Livraison gratuite', description: 'Frais de livraison offerts', cost: 300, icon: '🛵' },
-  { id: 'r3', title: '-50% SOS', description: 'Moitié prix sur intervention SOS', cost: 800, icon: '🚑' },
-  { id: 'r4', title: 'Course offerte', description: 'Une course taxi gratuite', cost: 2000, icon: '🎁' },
-];
-
 function ProgressBar({ pct, color }) {
   return (
     <View style={{ height: 6, backgroundColor: COLORS.border, borderRadius: 3, overflow: 'hidden' }}>
@@ -73,22 +63,22 @@ export default function EasyRewardsScreen({ navigation }) {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [redeeming, setRedeeming] = useState(null);
-  const [rewards, setRewards] = useState(FALLBACK_REWARDS);
+  const [rewards, setRewards] = useState([]);
+  const [error, setError] = useState(false);
 
   const load = useCallback(async () => {
+    setLoading(true);
     try {
       const res = await api.get('/api/loyalty/balance');
       setPoints(res.data.points || 0);
       const currentTier = TIERS.slice().reverse().find((t) => res.data.points >= t.min) || TIERS[0];
       setTier(currentTier);
-      if (Array.isArray(res.data.rewards) && res.data.rewards.length) {
-        setRewards(res.data.rewards.map((r) => ({
-          id: r.id, title: r.label, description: r.description, cost: r.points, icon: r.icon,
-        })));
-      }
+      setRewards((res.data.rewards || []).map((r) => ({
+        id: r.id, title: r.label, description: r.description, cost: r.points, icon: r.icon,
+      })));
+      setError(false);
     } catch {
-      setPoints(680);
-      setTier(TIERS[1]);
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -129,6 +119,20 @@ export default function EasyRewardsScreen({ navigation }) {
   };
 
   if (loading) return <View style={s.centered}><ActivityIndicator color={COLORS.gold} size="large" /></View>;
+
+  if (error) {
+    return (
+      <SafeAreaView style={[s.root, { alignItems: 'center', justifyContent: 'center', padding: 30 }]}>
+        <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+        <Text style={{ color: COLORS.muted, textAlign: 'center', marginBottom: 16 }}>
+          Impossible de charger vos EasyPoints.
+        </Text>
+        <TouchableOpacity onPress={load} style={{ backgroundColor: COLORS.gold, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 }}>
+          <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={s.root}>
@@ -176,6 +180,9 @@ export default function EasyRewardsScreen({ navigation }) {
 
         {/* Rewards catalogue */}
         <Text style={s.sectionTitle}>Catalogue de récompenses</Text>
+        {rewards.length === 0 && (
+          <Text style={{ color: COLORS.muted, fontSize: 13 }}>Aucune récompense disponible</Text>
+        )}
         {rewards.map((reward) => {
           const canAfford = points >= reward.cost;
           const isRedeeming = redeeming === reward.id;
@@ -186,9 +193,6 @@ export default function EasyRewardsScreen({ navigation }) {
                 <View style={{ flex: 1, marginLeft: 12 }}>
                   <Text style={s.rewardTitle}>{reward.title}</Text>
                   <Text style={s.rewardDesc}>{reward.description}</Text>
-                  {reward.stock < 20 && (
-                    <Text style={s.stockWarn}>⚠️ Plus que {reward.stock} disponibles</Text>
-                  )}
                 </View>
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
