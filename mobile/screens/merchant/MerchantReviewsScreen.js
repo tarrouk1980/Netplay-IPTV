@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  StatusBar, TextInput,
+  StatusBar, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
+import useAuthStore from '../../store/authStore';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', surfaceAlt: '#16161F',
@@ -11,96 +13,79 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB', orange: '#E67E22',
 };
 
-const MOCK_REVIEWS = [
-  { id: 1, client: 'Sana B.', avatar: '👩', rating: 5, comment: 'Pizza excellente, livrée chaude et à temps. Je recommande !', date: 'Auj. 15:30', order: 'CMD-4441', replied: false },
-  { id: 2, client: 'Karim L.', avatar: '👨', rating: 4, comment: 'Bonne qualité, juste un peu de retard sur la livraison.', date: 'Hier 20:10', order: 'CMD-4430', replied: true, reply: 'Merci Karim ! Nous nous excusons pour le retard. À très bientôt !' },
-  { id: 3, client: 'Ines M.', avatar: '👩', rating: 5, comment: 'Toujours aussi délicieux, c\'est ma pizza préférée à Tunis !', date: '02/06', order: 'CMD-4420', replied: false },
-  { id: 4, client: 'Youssef T.', avatar: '👨', rating: 3, comment: 'Commande incomplète, il manquait les desserts. Déçu.', date: '01/06', order: 'CMD-4410', replied: true, reply: 'Bonjour Youssef, nous sommes vraiment désolés. Un bon de réduction vous a été envoyé.' },
-  { id: 5, client: 'Amira K.', avatar: '👩', rating: 5, comment: 'Service parfait, pizza cuite à la perfection. Bravo !', date: '30/05', order: 'CMD-4400', replied: false },
-];
-
-const MOCK_STATS = {
-  avgRating: 4.4,
-  total: 287,
-  dist: [
-    { stars: 5, count: 178, pct: 62 },
-    { stars: 4, count: 63, pct: 22 },
-    { stars: 3, count: 29, pct: 10 },
-    { stars: 2, count: 11, pct: 4 },
-    { stars: 1, count: 6, pct: 2 },
-  ],
-};
-
 export default function MerchantReviewsScreen({ navigation }) {
+  const { user } = useAuthStore();
   const [filterRating, setFilterRating] = useState(0);
-  const [replyingTo, setReplyingTo] = useState(null);
-  const [replyText, setReplyText] = useState('');
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const load = useCallback(() => {
+    if (!user?.id) return;
+    setLoading(true);
+    api.get(`/api/reviews/${user.id}`)
+      .then((r) => { setReviews(r.data.reviews || []); setError(false); })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, [user?.id]);
+
+  useEffect(() => { load(); }, [load]);
 
   const filtered = filterRating === 0
-    ? MOCK_REVIEWS
-    : MOCK_REVIEWS.filter(r => r.rating === filterRating);
+    ? reviews
+    : reviews.filter(r => r.rating === filterRating);
 
-  const submitReply = (id) => {
-    if (!replyText.trim()) return;
-    setReplyingTo(null);
-    setReplyText('');
-  };
+  const total = reviews.length;
+  const avgRating = total > 0
+    ? (reviews.reduce((acc, r) => acc + r.rating, 0) / total).toFixed(1)
+    : '—';
+
+  const dist = [5, 4, 3, 2, 1].map(stars => {
+    const count = reviews.filter(r => r.rating === stars).length;
+    return { stars, count, pct: total > 0 ? Math.round((count / total) * 100) : 0 };
+  });
 
   const renderItem = ({ item: r }) => (
     <View style={styles.reviewCard}>
       <View style={styles.reviewTop}>
-        <Text style={{ fontSize: 28 }}>{r.avatar}</Text>
+        <Text style={{ fontSize: 28 }}>👤</Text>
         <View style={{ flex: 1 }}>
           <View style={styles.reviewHeader}>
-            <Text style={styles.reviewClient}>{r.client}</Text>
+            <Text style={styles.reviewClient}>{r.author}</Text>
             <Text style={styles.reviewDate}>{r.date}</Text>
           </View>
           <View style={styles.starsRow}>
             {[1, 2, 3, 4, 5].map(s => (
               <Text key={s} style={{ fontSize: 14, opacity: s <= r.rating ? 1 : 0.2 }}>⭐</Text>
             ))}
-            <Text style={styles.orderRef}>{r.order}</Text>
           </View>
         </View>
       </View>
-      <Text style={styles.reviewComment}>{r.comment}</Text>
-
-      {r.replied && r.reply && (
-        <View style={styles.replyBubble}>
-          <Text style={styles.replyLabel}>🏪 Votre réponse :</Text>
-          <Text style={styles.replyText}>{r.reply}</Text>
-        </View>
-      )}
-
-      {!r.replied && replyingTo !== r.id && (
-        <TouchableOpacity style={styles.replyBtn} onPress={() => setReplyingTo(r.id)}>
-          <Text style={styles.replyBtnText}>↩ Répondre</Text>
-        </TouchableOpacity>
-      )}
-
-      {replyingTo === r.id && (
-        <View style={styles.replyInput}>
-          <TextInput
-            style={styles.replyInputField}
-            placeholder="Votre réponse..."
-            placeholderTextColor={COLORS.muted}
-            value={replyText}
-            onChangeText={setReplyText}
-            multiline
-            autoFocus
-          />
-          <View style={styles.replyActions}>
-            <TouchableOpacity style={styles.replyCancelBtn} onPress={() => { setReplyingTo(null); setReplyText(''); }}>
-              <Text style={styles.replyCancelText}>Annuler</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.replySendBtn} onPress={() => submitReply(r.id)}>
-              <Text style={styles.replySendText}>Envoyer</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
+      {r.comment ? <Text style={styles.reviewComment}>{r.comment}</Text> : null}
     </View>
   );
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator color={COLORS.accent} size="large" />
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={[styles.root, { alignItems: 'center', justifyContent: 'center', padding: 30 }]}>
+        <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+        <Text style={{ color: COLORS.muted, textAlign: 'center', marginBottom: 16 }}>
+          Impossible de charger les avis.
+        </Text>
+        <TouchableOpacity onPress={load} style={{ backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 }}>
+          <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.root}>
@@ -117,12 +102,12 @@ export default function MerchantReviewsScreen({ navigation }) {
       {/* Rating summary */}
       <View style={styles.summaryCard}>
         <View style={styles.summaryLeft}>
-          <Text style={styles.bigRating}>{MOCK_STATS.avgRating}</Text>
+          <Text style={styles.bigRating}>{avgRating}</Text>
           <Text style={{ fontSize: 24 }}>⭐</Text>
-          <Text style={styles.totalReviews}>{MOCK_STATS.total} avis</Text>
+          <Text style={styles.totalReviews}>{total} avis</Text>
         </View>
         <View style={styles.summaryRight}>
-          {MOCK_STATS.dist.map(d => (
+          {dist.map(d => (
             <View key={d.stars} style={styles.distRow}>
               <Text style={styles.distStars}>{d.stars}⭐</Text>
               <View style={styles.distBarWrap}>
@@ -200,20 +185,7 @@ const styles = StyleSheet.create({
   reviewClient: { color: COLORS.white, fontSize: 14, fontWeight: '700' },
   reviewDate: { color: COLORS.muted, fontSize: 11 },
   starsRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  orderRef: { color: COLORS.muted, fontSize: 10, marginLeft: 8 },
-  reviewComment: { color: COLORS.muted, fontSize: 13, marginBottom: 10 },
-  replyBubble: { backgroundColor: COLORS.accent + '11', borderRadius: 10, padding: 10, borderWidth: 1, borderColor: COLORS.accent + '33' },
-  replyLabel: { color: COLORS.accent, fontSize: 11, fontWeight: '700', marginBottom: 4 },
-  replyText: { color: COLORS.white, fontSize: 12 },
-  replyBtn: { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.border },
-  replyBtnText: { color: COLORS.accent, fontSize: 12, fontWeight: '700' },
-  replyInput: { marginTop: 8 },
-  replyInputField: { backgroundColor: COLORS.surfaceAlt, borderRadius: 10, borderWidth: 1, borderColor: COLORS.border, padding: 12, color: COLORS.white, fontSize: 13, minHeight: 70, marginBottom: 8 },
-  replyActions: { flexDirection: 'row', gap: 8, justifyContent: 'flex-end' },
-  replyCancelBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.border },
-  replyCancelText: { color: COLORS.muted, fontSize: 12, fontWeight: '600' },
-  replySendBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, backgroundColor: COLORS.accent },
-  replySendText: { color: '#000', fontSize: 12, fontWeight: '800' },
+  reviewComment: { color: COLORS.muted, fontSize: 13 },
   emptyBox: { alignItems: 'center', paddingTop: 80 },
   emptyText: { color: COLORS.muted, fontSize: 15 },
 });
