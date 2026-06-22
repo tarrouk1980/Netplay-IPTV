@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  StatusBar, Alert,
+  StatusBar, Alert, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', surfaceAlt: '#16161F',
@@ -12,88 +13,118 @@ const COLORS = {
 };
 
 const STATUS_META = {
-  new:        { label: 'Nouvelle',     color: COLORS.blue,   bg: '#0A1A2E' },
-  preparing:  { label: 'En préparation', color: COLORS.orange, bg: '#1A100A' },
-  ready:      { label: 'Prête',        color: COLORS.green,  bg: '#0D2E0D' },
-  picked:     { label: 'Récupérée',    color: COLORS.muted,  bg: COLORS.surface },
+  PENDING:     { label: 'Nouvelle',       color: COLORS.blue,   bg: '#0A1A2E' },
+  ACCEPTED:    { label: 'En préparation', color: COLORS.orange, bg: '#1A100A' },
+  IN_PROGRESS: { label: 'Prête',          color: COLORS.green,  bg: '#0D2E0D' },
+  COMPLETED:   { label: 'Récupérée',      color: COLORS.muted,  bg: COLORS.surface },
 };
 
-const MOCK_ORDERS = [
-  {
-    id: 'CMD-0441', client: 'Sana B.', items: ['Pizza Margherita x1', 'Coca x2'],
-    total: 24.50, eta: '22 min', status: 'new', time: '14:32', address: '12 Rue de la Liberté, Tunis',
-  },
-  {
-    id: 'CMD-0440', client: 'Karim L.', items: ['Burger double x2', 'Frites x2', 'Jus x1'],
-    total: 38.00, eta: '18 min', status: 'preparing', time: '14:20', address: 'Av. Mohamed V, La Marsa',
-  },
-  {
-    id: 'CMD-0439', client: 'Ines M.', items: ['Salade César x1', 'Eau x1'],
-    total: 14.00, eta: '5 min', status: 'ready', time: '14:05', address: 'Route de Soukra',
-  },
-  {
-    id: 'CMD-0438', client: 'Youssef T.', items: ['Couscous x1'],
-    total: 18.00, eta: '—', status: 'picked', time: '13:50', address: 'Carthage',
-  },
-];
-
-const NEXT_STATUS = { new: 'preparing', preparing: 'ready', ready: 'picked' };
-const NEXT_LABEL  = { new: 'Commencer', preparing: 'Prête', ready: 'Livreur notifié', ready_done: 'Récupérée' };
+const NEXT_STATUS = { PENDING: 'ACCEPTED', ACCEPTED: 'IN_PROGRESS', IN_PROGRESS: 'COMPLETED' };
+const NEXT_BTN_LABEL = { PENDING: '▶ Commencer', ACCEPTED: '✓ Prête', IN_PROGRESS: '📦 Livreur arrivé' };
 
 export default function MerchantLiveOrdersScreen({ navigation }) {
-  const [orders, setOrders] = useState(MOCK_ORDERS);
+  const [orders, setOrders] = useState([]);
   const [filter, setFilter] = useState('all');
-  const [tick, setTick] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  useEffect(() => {
-    const t = setInterval(() => setTick(p => p + 1), 30000);
-    return () => clearInterval(t);
+  const load = useCallback(() => {
+    setLoading(true);
+    api.get('/api/merchants/me/orders')
+      .then(res => { setOrders(res.data.orders || []); setError(false); })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
   }, []);
 
-  const advance = (id) => {
-    setOrders(prev => prev.map(o => {
-      if (o.id !== id) return o;
-      const next = NEXT_STATUS[o.status];
-      if (!next) return o;
-      return { ...o, status: next };
-    }));
+  useEffect(() => {
+    load();
+    const t = setInterval(load, 30000);
+    return () => clearInterval(t);
+  }, [load]);
+
+  const advance = async (id) => {
+    const order = orders.find(o => o.id === id);
+    const next = NEXT_STATUS[order?.status];
+    if (!next) return;
+    try {
+      await api.patch(`/api/merchants/me/orders/${id}/status`, { status: next });
+      setOrders(prev => prev.map(o => (o.id === id ? { ...o, status: next } : o)));
+    } catch {
+      Alert.alert('Erreur', "Impossible de mettre à jour la commande.");
+    }
   };
 
   const cancelOrder = (id) => {
     Alert.alert('Annuler la commande ?', 'Le client sera remboursé.', [
       { text: 'Non', style: 'cancel' },
-      { text: 'Oui, annuler', style: 'destructive', onPress: () => setOrders(prev => prev.filter(o => o.id !== id)) },
+      {
+        text: 'Oui, annuler',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await api.patch(`/api/merchants/me/orders/${id}/status`, { status: 'CANCELLED' });
+            setOrders(prev => prev.filter(o => o.id !== id));
+          } catch {
+            Alert.alert('Erreur', "Impossible d'annuler la commande.");
+          }
+        },
+      },
     ]);
   };
 
   const filtered = filter === 'all' ? orders : orders.filter(o => o.status === filter);
-  const newCount = orders.filter(o => o.status === 'new').length;
+  const newCount = orders.filter(o => o.status === 'PENDING').length;
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator color={COLORS.accent} size="large" />
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={[styles.root, { alignItems: 'center', justifyContent: 'center', padding: 30 }]}>
+        <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+        <Text style={{ color: COLORS.muted, textAlign: 'center', marginBottom: 16 }}>
+          Impossible de charger les commandes. Vérifiez votre connexion.
+        </Text>
+        <TouchableOpacity onPress={load} style={{ backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 }}>
+          <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
 
   const renderOrder = ({ item: o }) => {
-    const meta = STATUS_META[o.status];
+    const meta = STATUS_META[o.status] || STATUS_META.PENDING;
     const nextStatus = NEXT_STATUS[o.status];
+    const items = Array.isArray(o.metadata?.items) ? o.metadata.items : [];
+    const time = o.createdAt ? new Date(o.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '';
     return (
       <View style={[styles.card, { backgroundColor: meta.bg, borderColor: meta.color + '55' }]}>
         <View style={styles.cardTop}>
           <View>
-            <Text style={styles.orderId}>{o.id}</Text>
-            <Text style={styles.orderClient}>👤 {o.client}</Text>
+            <Text style={styles.orderId}>{o.id.slice(0, 8).toUpperCase()}</Text>
+            <Text style={styles.orderClient}>👤 {o.client?.name || 'Client'}</Text>
           </View>
           <View style={[styles.statusBadge, { backgroundColor: meta.color + '22' }]}>
             <Text style={[styles.statusText, { color: meta.color }]}>{meta.label}</Text>
           </View>
         </View>
-        <View style={styles.itemsList}>
-          {o.items.map((it, i) => (
-            <Text key={i} style={styles.itemLine}>· {it}</Text>
-          ))}
-        </View>
+        {items.length > 0 && (
+          <View style={styles.itemsList}>
+            {items.map((it, i) => (
+              <Text key={i} style={styles.itemLine}>· {it.name || it.label} {it.qty ? `x${it.qty}` : ''}</Text>
+            ))}
+          </View>
+        )}
         <View style={styles.cardMeta}>
-          <Text style={styles.metaText}>🕐 {o.time}</Text>
-          <Text style={styles.metaText}>⏱ {o.eta}</Text>
-          <Text style={[styles.totalText]}>{o.total.toFixed(2)} TND</Text>
+          <Text style={styles.metaText}>🕐 {time}</Text>
+          <Text style={[styles.totalText]}>{Number(o.finalPrice ?? o.price ?? 0).toFixed(2)} TND</Text>
         </View>
-        <Text style={styles.addressText} numberOfLines={1}>📍 {o.address}</Text>
+        {o.destinationAddress && <Text style={styles.addressText} numberOfLines={1}>📍 {o.destinationAddress}</Text>}
         {nextStatus && (
           <View style={styles.cardActions}>
             <TouchableOpacity style={styles.cancelBtn} onPress={() => cancelOrder(o.id)}>
@@ -103,9 +134,7 @@ export default function MerchantLiveOrdersScreen({ navigation }) {
               style={[styles.advanceBtn, { backgroundColor: meta.color }]}
               onPress={() => advance(o.id)}
             >
-              <Text style={styles.advanceBtnText}>
-                {o.status === 'new' ? '▶ Commencer' : o.status === 'preparing' ? '✓ Prête' : '📦 Livreur arrivé'}
-              </Text>
+              <Text style={styles.advanceBtnText}>{NEXT_BTN_LABEL[o.status]}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -134,7 +163,7 @@ export default function MerchantLiveOrdersScreen({ navigation }) {
 
       {/* Filters */}
       <View style={styles.filtersRow}>
-        {[['all', 'Toutes'], ['new', 'Nouvelles'], ['preparing', 'En cours'], ['ready', 'Prêtes']].map(([val, lbl]) => (
+        {[['all', 'Toutes'], ['PENDING', 'Nouvelles'], ['ACCEPTED', 'En cours'], ['IN_PROGRESS', 'Prêtes']].map(([val, lbl]) => (
           <TouchableOpacity
             key={val}
             style={[styles.filterChip, filter === val && styles.filterChipActive]}

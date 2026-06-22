@@ -121,7 +121,7 @@ export default function NotificationsScreen({ navigation }) {
 
   const handleMarkAllRead = () => {
     notifications.forEach(n => {
-      if (!n.read) markAsRead(n.id);
+      if (!n.read) markRead(n.id);
     });
   };
 
