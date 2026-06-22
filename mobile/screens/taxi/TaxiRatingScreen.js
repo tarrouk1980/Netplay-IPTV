@@ -32,10 +32,13 @@ export default function TaxiRatingScreen({ navigation, route }) {
     if (rating === 0) { Alert.alert('Veuillez attribuer une note'); return; }
     setSubmitting(true);
     try {
-      await api.post('/api/taxi/orders/' + orderId + '/rate', { rating, comment, tags: selectedTags });
-    } catch {}
-    setSubmitting(false);
-    navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+      await api.post('/api/taxi/' + orderId + '/rate', { rating, comment, tags: selectedTags });
+      setSubmitting(false);
+      navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+    } catch {
+      setSubmitting(false);
+      Alert.alert('Erreur', "Impossible d'envoyer votre note. Vérifiez votre connexion.");
+    }
   };
 
   return (
