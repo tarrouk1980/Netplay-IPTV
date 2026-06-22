@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  StatusBar, TextInput,
+  StatusBar, TextInput, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', surfaceAlt: '#16161F',
@@ -11,41 +12,54 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB', orange: '#E67E22',
 };
 
-const CATEGORIES = [
-  { id: 'all', label: 'Tout', icon: '🛒' },
-  { id: 'fruits', label: 'Fruits & Légumes', icon: '🥦' },
-  { id: 'dairy', label: 'Laitiers', icon: '🥛' },
-  { id: 'meat', label: 'Viandes', icon: '🥩' },
-  { id: 'bakery', label: 'Boulangerie', icon: '🥖' },
-  { id: 'drinks', label: 'Boissons', icon: '🧃' },
-  { id: 'snacks', label: 'Snacks', icon: '🍿' },
-];
-
-const MOCK_PRODUCTS = [
-  { id: 1, name: 'Tomates fraîches', category: 'fruits', price: 2.50, unit: 'kg', rating: 4.7, stock: true, promo: true, promoPrice: 1.90 },
-  { id: 2, name: 'Lait entier Délice', category: 'dairy', price: 1.80, unit: 'L', rating: 4.9, stock: true, promo: false },
-  { id: 3, name: 'Escalopes de poulet', category: 'meat', price: 12.50, unit: 'kg', rating: 4.6, stock: true, promo: false },
-  { id: 4, name: 'Baguette tradition', category: 'bakery', price: 0.80, unit: 'pce', rating: 4.8, stock: true, promo: false },
-  { id: 5, name: 'Jus d\'orange 1L', category: 'drinks', price: 3.20, unit: 'btl', rating: 4.5, stock: false, promo: false },
-  { id: 6, name: 'Fromage Gouda', category: 'dairy', price: 8.90, unit: '400g', rating: 4.4, stock: true, promo: true, promoPrice: 6.90 },
-  { id: 7, name: 'Pommes Golden', category: 'fruits', price: 3.50, unit: 'kg', rating: 4.6, stock: true, promo: false },
-  { id: 8, name: 'Chips paprika', category: 'snacks', price: 2.20, unit: 'pce', rating: 4.3, stock: true, promo: false },
-];
+const CATEGORY_ICON = {
+  fruits: '🥦', dairy: '🥛', meat: '🥩', bakery: '🥖', drinks: '🧃', snacks: '🍿',
+};
 
 export default function GroceryBrowseScreen({ navigation }) {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
   const [cart, setCart] = useState({});
   const [sort, setSort] = useState('default');
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  const filtered = MOCK_PRODUCTS.filter(p => {
+  const load = useCallback(() => {
+    setLoading(true);
+    api.get('/api/merchants', { params: { category: 'SUPERMARKET' } })
+      .then((r) => {
+        const merchants = r.data.merchants || [];
+        const list = merchants.flatMap((m) => (m.products || []).map((p) => ({
+          id: p.id,
+          name: p.name,
+          category: p.category,
+          price: Number(p.price),
+          unit: '',
+          stock: (p.stock ?? 0) > 0,
+          promo: !!(p.metadata && p.metadata.promoPrice),
+          promoPrice: p.metadata?.promoPrice ? Number(p.metadata.promoPrice) : null,
+          merchantId: m.id,
+          merchantName: m.name,
+        })));
+        setProducts(list);
+        setError(false);
+      })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const categories = ['all', ...Array.from(new Set(products.map(p => p.category)))];
+
+  const filtered = products.filter(p => {
     const matchSearch = !search || p.name.toLowerCase().includes(search.toLowerCase());
     const matchCat = category === 'all' || p.category === category;
     return matchSearch && matchCat;
   }).sort((a, b) => {
     if (sort === 'price_asc') return (a.promoPrice || a.price) - (b.promoPrice || b.price);
     if (sort === 'price_desc') return (b.promoPrice || b.price) - (a.promoPrice || a.price);
-    if (sort === 'rating') return b.rating - a.rating;
     return 0;
   });
 
@@ -58,10 +72,32 @@ export default function GroceryBrowseScreen({ navigation }) {
   });
 
   const cartTotal = Object.entries(cart).reduce((sum, [id, qty]) => {
-    const p = MOCK_PRODUCTS.find(pr => pr.id === Number(id));
+    const p = products.find(pr => pr.id === id);
     return sum + (p ? (p.promoPrice || p.price) * qty : 0);
   }, 0);
   const cartCount = Object.values(cart).reduce((s, q) => s + q, 0);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator color={COLORS.accent} size="large" />
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={[styles.root, { alignItems: 'center', justifyContent: 'center', padding: 30 }]}>
+        <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+        <Text style={{ color: COLORS.muted, textAlign: 'center', marginBottom: 16 }}>
+          Impossible de charger les produits.
+        </Text>
+        <TouchableOpacity onPress={load} style={{ backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 }}>
+          <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.root}>
@@ -104,7 +140,7 @@ export default function GroceryBrowseScreen({ navigation }) {
 
       {/* Sort */}
       <View style={styles.sortRow}>
-        {[['default', 'Pertinence'], ['price_asc', 'Prix ↑'], ['price_desc', 'Prix ↓'], ['rating', '⭐ Note']].map(([val, lbl]) => (
+        {[['default', 'Pertinence'], ['price_asc', 'Prix ↑'], ['price_desc', 'Prix ↓']].map(([val, lbl]) => (
           <TouchableOpacity
             key={val}
             style={[styles.sortChip, sort === val && styles.sortChipActive]}
@@ -117,14 +153,14 @@ export default function GroceryBrowseScreen({ navigation }) {
 
       {/* Categories */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catScroll} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
-        {CATEGORIES.map(c => (
+        {categories.map(c => (
           <TouchableOpacity
-            key={c.id}
-            style={[styles.catChip, category === c.id && styles.catChipActive]}
-            onPress={() => setCategory(c.id)}
+            key={c}
+            style={[styles.catChip, category === c && styles.catChipActive]}
+            onPress={() => setCategory(c)}
           >
-            <Text style={{ fontSize: 16 }}>{c.icon}</Text>
-            <Text style={[styles.catText, category === c.id && { color: '#000' }]}>{c.label}</Text>
+            <Text style={{ fontSize: 16 }}>{c === 'all' ? '🛒' : (CATEGORY_ICON[c] || '🛍️')}</Text>
+            <Text style={[styles.catText, category === c && { color: '#000' }]}>{c === 'all' ? 'Tout' : c}</Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -132,19 +168,22 @@ export default function GroceryBrowseScreen({ navigation }) {
       {/* Products grid */}
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, paddingBottom: cartCount > 0 ? 100 : 40 }}>
         <View style={styles.grid}>
+          {filtered.length === 0 && (
+            <View style={{ width: '100%', alignItems: 'center', paddingTop: 40 }}>
+              <Text style={{ color: COLORS.muted }}>Aucun produit trouvé</Text>
+            </View>
+          )}
           {filtered.map(p => {
             const qty = cart[p.id] || 0;
             return (
               <View key={p.id} style={[styles.productCard, !p.stock && { opacity: 0.5 }]}>
                 <View style={styles.productImgWrap}>
-                  <Text style={{ fontSize: 36 }}>
-                    {p.category === 'fruits' ? '🥦' : p.category === 'dairy' ? '🥛' : p.category === 'meat' ? '🥩' : p.category === 'bakery' ? '🥖' : p.category === 'drinks' ? '🧃' : '🍿'}
-                  </Text>
+                  <Text style={{ fontSize: 36 }}>{CATEGORY_ICON[p.category] || '🛍️'}</Text>
                   {p.promo && <View style={styles.promoBadge}><Text style={styles.promoText}>PROMO</Text></View>}
                   {!p.stock && <View style={styles.outOfStockBadge}><Text style={styles.outOfStockText}>Indispo.</Text></View>}
                 </View>
                 <Text style={styles.productName} numberOfLines={2}>{p.name}</Text>
-                <Text style={styles.productUnit}>{p.unit}</Text>
+                <Text style={styles.productUnit}>{p.merchantName}</Text>
                 <View style={styles.priceRow}>
                   {p.promo ? (
                     <>
@@ -155,7 +194,6 @@ export default function GroceryBrowseScreen({ navigation }) {
                     <Text style={styles.priceNormal}>{p.price.toFixed(2)} TND</Text>
                   )}
                 </View>
-                <Text style={styles.productRating}>⭐ {p.rating}</Text>
                 {p.stock && (
                   qty > 0 ? (
                     <View style={styles.qtyRow}>
@@ -229,11 +267,10 @@ const styles = StyleSheet.create({
   outOfStockText: { color: COLORS.white, fontSize: 9, fontWeight: '700' },
   productName: { color: COLORS.white, fontSize: 12, fontWeight: '700', marginBottom: 2, minHeight: 32 },
   productUnit: { color: COLORS.muted, fontSize: 10, marginBottom: 6 },
-  priceRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
+  priceRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
   priceNormal: { color: COLORS.white, fontSize: 14, fontWeight: '900' },
   pricePromo: { color: COLORS.red, fontSize: 14, fontWeight: '900' },
   priceOld: { color: COLORS.muted, fontSize: 11, textDecorationLine: 'line-through' },
-  productRating: { color: COLORS.muted, fontSize: 10, marginBottom: 8 },
   addBtn: { backgroundColor: COLORS.accent, borderRadius: 8, paddingVertical: 8, alignItems: 'center' },
   addBtnText: { color: '#000', fontSize: 12, fontWeight: '800' },
   qtyRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: COLORS.surfaceAlt, borderRadius: 8, paddingHorizontal: 4 },
