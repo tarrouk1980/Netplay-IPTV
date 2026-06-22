@@ -12,19 +12,13 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB', orange: '#E67E22',
 };
 
-const MOCK_PROMOS = [
-  { id: 'P1', type: 'percent', label: '-20% sur les pizzas', discount: 20, minOrder: 25, uses: 48, maxUses: 100, active: true, expiry: '10/06/2026' },
-  { id: 'P2', type: 'fixed', label: 'Menu du jour -5 TND', discount: 5, minOrder: 20, uses: 12, maxUses: 50, active: true, expiry: '05/06/2026' },
-  { id: 'P3', type: 'free_delivery', label: 'Livraison offerte', discount: 0, minOrder: 30, uses: 25, maxUses: 200, active: false, expiry: '30/06/2026' },
-  { id: 'P4', type: 'percent', label: 'Happy Hour -15%', discount: 15, minOrder: 15, uses: 100, maxUses: 100, active: false, expiry: '01/06/2026' },
-];
-
 const TYPE_LABELS = { percent: 'Réduction %', fixed: 'Montant fixe', free_delivery: 'Livraison offerte' };
 const TYPE_COLORS = { percent: COLORS.accent, fixed: COLORS.blue, free_delivery: COLORS.green };
 
 export default function MerchantPromotionsScreen({ navigation }) {
   const [promos, setPromos] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const load = () => {
     api.get('/api/merchants/me/products')
@@ -44,8 +38,9 @@ export default function MerchantPromotionsScreen({ navigation }) {
             expiry: null,
           }));
         setPromos(withPromo);
+        setError(false);
       })
-      .catch(() => setPromos(MOCK_PROMOS))
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   };
 
@@ -83,7 +78,17 @@ export default function MerchantPromotionsScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {loading ? <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} /> : (
+      {loading ? <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} /> : error ? (
+        <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 30 }}>
+          <Text style={{ fontSize: 40 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, marginTop: 12, textAlign: 'center' }}>
+            Impossible de charger vos promotions.
+          </Text>
+          <TouchableOpacity onPress={load} style={{ marginTop: 14, backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
+            <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
 
           <View style={styles.summaryRow}>

@@ -17,13 +17,6 @@ const STATUS_LABELS = { PENDING: 'Nouvelle', ACCEPTED: 'Acceptée', IN_PROGRESS:
 const NEXT_STATUS = { PENDING: 'ACCEPTED', ACCEPTED: 'IN_PROGRESS', IN_PROGRESS: 'COMPLETED' };
 const NEXT_LABELS = { PENDING: 'Accepter', ACCEPTED: 'Démarrer préparation', IN_PROGRESS: 'Marquer livrée' };
 
-const MOCK = [
-  { id: 'CMD-001', clientName: 'Nadia K.', items: [{ name: 'Kafteji', qty: 2 }, { name: 'Brik', qty: 1 }], total: 18.500, status: 'PENDING', createdAt: '16:42', address: 'Berges du Lac 2' },
-  { id: 'CMD-002', clientName: 'Ahmed B.', items: [{ name: 'Sandwich Tunisien', qty: 3 }], total: 12.000, status: 'CONFIRMED', createdAt: '16:28', address: 'Menzah 6' },
-  { id: 'CMD-003', clientName: 'Lina M.', items: [{ name: 'Lablabi', qty: 2 }, { name: 'Thé', qty: 2 }], total: 14.800, status: 'READY', createdAt: '15:55', address: 'Ariana Centre' },
-  { id: 'CMD-004', clientName: 'Youssef T.', items: [{ name: 'Couscous complet', qty: 1 }], total: 22.000, status: 'DELIVERED', createdAt: '15:10', address: 'Lafayette' },
-];
-
 const TABS = ['Toutes', 'PENDING', 'ACCEPTED', 'IN_PROGRESS', 'COMPLETED'];
 
 function OrderCard({ item, onAction }) {
@@ -72,20 +65,24 @@ function OrderCard({ item, onAction }) {
 export default function MerchantOrdersScreen({ navigation }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [tab, setTab] = useState('Toutes');
 
   const load = useCallback(() => {
     api.get('/api/merchants/me/orders')
-      .then(r => setOrders((r.data.orders || []).map(o => ({
-        id: o.id,
-        clientName: o.client?.name || 'Client',
-        items: o.metadata?.items || [],
-        total: Number(o.finalPrice ?? o.price ?? 0),
-        status: o.status,
-        createdAt: new Date(o.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-        address: o.destinationAddress || o.originAddress || '',
-      }))))
-      .catch(() => setOrders(MOCK))
+      .then(r => {
+        setOrders((r.data.orders || []).map(o => ({
+          id: o.id,
+          clientName: o.client?.name || 'Client',
+          items: o.metadata?.items || [],
+          total: Number(o.finalPrice ?? o.price ?? 0),
+          status: o.status,
+          createdAt: new Date(o.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+          address: o.destinationAddress || o.originAddress || '',
+        })));
+        setError(false);
+      })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -108,7 +105,12 @@ export default function MerchantOrdersScreen({ navigation }) {
 
   const updateStatus = async (order, newStatus) => {
     setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: newStatus } : o));
-    api.patch('/api/merchants/me/orders/' + order.id + '/status', { status: newStatus }).catch(() => {});
+    try {
+      await api.patch('/api/merchants/me/orders/' + order.id + '/status', { status: newStatus });
+    } catch {
+      setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: order.status } : o));
+      Alert.alert('Erreur', "Impossible de mettre à jour la commande. Vérifiez votre connexion.");
+    }
   };
 
   const filtered = tab === 'Toutes' ? orders : orders.filter(o => o.status === tab);
@@ -150,6 +152,16 @@ export default function MerchantOrdersScreen({ navigation }) {
 
       {loading ? (
         <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 60 }} />
+      ) : error ? (
+        <View style={styles.empty}>
+          <Text style={{ fontSize: 40 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, marginTop: 12, textAlign: 'center', paddingHorizontal: 30 }}>
+            Impossible de charger les commandes.
+          </Text>
+          <TouchableOpacity onPress={load} style={{ marginTop: 14, backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
+            <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
         <FlatList
           data={filtered}

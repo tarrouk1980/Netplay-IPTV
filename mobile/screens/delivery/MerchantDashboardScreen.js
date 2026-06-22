@@ -13,15 +13,9 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB', orange: '#E67E22',
 };
 
-const MOCK_STATS = {
-  todayRevenue: 127.500, todayOrders: 18, pendingOrders: 3,
-  monthRevenue: 3840.250, rating: 4.7, totalOrders: 612,
-  topItems: [
-    { name: 'Kafteji', count: 42 },
-    { name: 'Sandwich Tunisien', count: 38 },
-    { name: 'Lablabi', count: 31 },
-  ],
-  hourlyOrders: [0, 0, 0, 0, 0, 1, 2, 5, 8, 12, 9, 14, 18, 11, 7, 9, 13, 16, 11, 6, 3, 2, 1, 0],
+const EMPTY_STATS = {
+  todayRevenue: 0, todayOrders: 0, pendingOrders: 0,
+  monthRevenue: 0, rating: 0,
 };
 
 function KPICard({ icon, value, label, color, onPress }) {
@@ -38,12 +32,13 @@ export default function MerchantDashboardScreen({ navigation }) {
   const { logout } = useAuthStore();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [isOpen, setIsOpen] = useState(true);
 
   const load = useCallback(() => {
     api.get('/api/merchants/stats')
-      .then(r => setStats(r.data || MOCK_STATS))
-      .catch(() => setStats(MOCK_STATS))
+      .then(r => { setStats(r.data || EMPTY_STATS); setError(false); })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -54,8 +49,6 @@ export default function MerchantDashboardScreen({ navigation }) {
     setIsOpen(next);
     await api.patch('/api/merchants/me/toggle').catch(() => setIsOpen(v => !v));
   };
-
-  const peakHour = stats ? stats.hourlyOrders.indexOf(Math.max(...stats.hourlyOrders)) : 0;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -78,6 +71,16 @@ export default function MerchantDashboardScreen({ navigation }) {
 
       {loading ? (
         <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 60 }} />
+      ) : error ? (
+        <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 30 }}>
+          <Text style={{ fontSize: 40 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, marginTop: 12, textAlign: 'center' }}>
+            Impossible de charger vos statistiques.
+          </Text>
+          <TouchableOpacity onPress={load} style={{ marginTop: 14, backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
+            <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
@@ -109,41 +112,6 @@ export default function MerchantDashboardScreen({ navigation }) {
           <View style={styles.kpiGrid}>
             <KPICard icon="📅" value={`${stats.monthRevenue.toFixed(0)} TND`} label="CA ce mois" color={COLORS.accent} />
             <KPICard icon="★" value={stats.rating} label="Note clients" color={COLORS.accent} />
-            <KPICard icon="📦" value={stats.totalOrders} label="Total commandes" />
-            <KPICard icon="🕐" value={`${peakHour}h`} label="Heure de pointe" color={COLORS.blue} />
-          </View>
-
-          {/* Top items */}
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>TOP ARTICLES DU JOUR</Text>
-            {stats.topItems.map((item, i) => (
-              <View key={i} style={styles.topItemRow}>
-                <View style={[styles.rankBadge, i === 0 && { backgroundColor: COLORS.accent }]}>
-                  <Text style={[styles.rankText, i === 0 && { color: '#000' }]}>#{i + 1}</Text>
-                </View>
-                <Text style={styles.topItemName}>{item.name}</Text>
-                <Text style={styles.topItemCount}>{item.count}×</Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Hourly chart */}
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>ACTIVITÉ PAR HEURE</Text>
-            <View style={styles.hourChart}>
-              {stats.hourlyOrders.map((v, h) => {
-                const maxV = Math.max(...stats.hourlyOrders, 1);
-                return (
-                  <View key={h} style={styles.hourCol}>
-                    <View style={[styles.hourBar, {
-                      height: Math.max(2, (v / maxV) * 60),
-                      backgroundColor: h === peakHour ? COLORS.accent : COLORS.accent + '50',
-                    }]} />
-                    {h % 4 === 0 && <Text style={styles.hourLabel}>{h}h</Text>}
-                  </View>
-                );
-              })}
-            </View>
           </View>
 
           {/* Quick actions */}
