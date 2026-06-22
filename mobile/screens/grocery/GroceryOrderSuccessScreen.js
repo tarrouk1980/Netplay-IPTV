@@ -12,27 +12,8 @@ const COLORS = {
   accent: '#F5A623', red: '#E74C3C',
 };
 
-const MOCK = {
-  orderId: 'GRO-20240603-8821',
-  storeName: 'Carrefour Market',
-  items: [
-    { name: 'Lait demi-écrémé 1L', qty: 2, price: 3.80 },
-    { name: 'Pain de mie complet', qty: 1, price: 2.50 },
-    { name: 'Yaourt nature x6', qty: 1, price: 5.20 },
-    { name: 'Jus d\'orange 1L', qty: 3, price: 9.00 },
-  ],
-  subtotal: 20.50,
-  delivery: 1.50,
-  promo: { code: 'FRESH5', discount: 1.03 },
-  total: 20.97,
-  deliveryTime: '30–45 min',
-  address: 'Av. Habib Bourguiba, Tunis',
-  paymentMethod: 'Carte bancaire',
-  estimatedArrival: '14:35',
-};
-
 export default function GroceryOrderSuccessScreen({ navigation, route }) {
-  const data = route.params?.order || MOCK;
+  const data = route.params?.order;
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -42,6 +23,20 @@ export default function GroceryOrderSuccessScreen({ navigation, route }) {
       Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
     ]).start();
   }, []);
+
+  if (!data) {
+    return (
+      <SafeAreaView style={[styles.root, { alignItems: 'center', justifyContent: 'center', padding: 30 }]}>
+        <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+        <Text style={{ color: COLORS.muted, textAlign: 'center', marginBottom: 16 }}>
+          Détails de commande indisponibles.
+        </Text>
+        <TouchableOpacity onPress={() => navigation.navigate('GroceryHome')} style={{ backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 }}>
+          <Text style={{ color: '#000', fontWeight: '700' }}>Retour à l'accueil</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
 
   const handleShare = async () => {
     try {
