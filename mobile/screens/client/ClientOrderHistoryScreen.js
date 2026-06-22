@@ -12,19 +12,18 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB', orange: '#E67E22',
 };
 
-const TYPE_ICONS = { TAXI: '🚕', DELIVERY: '📦', GROCERY: '🛒', SOS: '🔧' };
-const TYPE_LABELS = { TAXI: 'Taxi', DELIVERY: 'Livraison', GROCERY: 'Épicerie', SOS: 'SOS' };
-const STATUS_COLORS = { COMPLETED: COLORS.green, CANCELLED: COLORS.red, IN_PROGRESS: COLORS.blue };
-const STATUS_LABELS = { COMPLETED: 'Terminé', CANCELLED: 'Annulé', IN_PROGRESS: 'En cours' };
+const TYPE_ICONS = { TAXI: '🚕', DELIVERY: '📦', GROCERY: '🛒', SOS: '🔧', HOME_SERVICE: '🛠️', CAR_RENTAL: '🚗' };
+const TYPE_LABELS = { TAXI: 'Taxi', DELIVERY: 'Livraison', GROCERY: 'Épicerie', SOS: 'SOS', HOME_SERVICE: 'Service', CAR_RENTAL: 'Location' };
+const STATUS_COLORS = { COMPLETED: COLORS.green, CANCELLED: COLORS.red, IN_PROGRESS: COLORS.blue, ACCEPTED: COLORS.blue, PENDING: COLORS.orange, DISPUTED: COLORS.red };
+const STATUS_LABELS = { COMPLETED: 'Terminé', CANCELLED: 'Annulé', IN_PROGRESS: 'En cours', ACCEPTED: 'Accepté', PENDING: 'En attente', DISPUTED: 'Contesté' };
 
-const MOCK = [
-  { id: 'ORD-001', type: 'TAXI', from: 'Lac 1', to: 'Berges du Lac 2', amount: 8.500, status: 'COMPLETED', date: '03/06/2026 15:40', rating: 5 },
-  { id: 'ORD-002', type: 'GROCERY', from: 'Monoprix El Manar', to: 'Domicile', amount: 34.500, status: 'COMPLETED', date: '03/06/2026 12:20', rating: 4 },
-  { id: 'ORD-003', type: 'DELIVERY', from: 'Pizza Roma', to: 'Bureau', amount: 18.800, status: 'CANCELLED', date: '02/06/2026 19:10', rating: null },
-  { id: 'ORD-004', type: 'SOS', from: 'A1 km42', to: null, amount: 45.000, status: 'COMPLETED', date: '01/06/2026 16:30', rating: 5 },
-  { id: 'ORD-005', type: 'TAXI', from: 'Tunis Centre', to: 'Aéroport Tunis-Carthage', amount: 22.000, status: 'COMPLETED', date: '28/05/2026 08:15', rating: 4 },
-  { id: 'ORD-006', type: 'GROCERY', from: 'Carrefour Market', to: 'Menzah 6', amount: 67.200, status: 'COMPLETED', date: '25/05/2026 11:00', rating: 5 },
-];
+function fmtDate(iso) {
+  try {
+    return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  } catch {
+    return '';
+  }
+}
 
 const TYPE_FILTERS = ['Tous', 'TAXI', 'DELIVERY', 'GROCERY', 'SOS'];
 
@@ -60,13 +59,27 @@ function OrderCard({ item, onPress }) {
 export default function ClientOrderHistoryScreen({ navigation }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('Tous');
 
   const load = useCallback(() => {
-    api.get('/api/client/orders/history')
-      .then(r => setOrders(r.data.orders || MOCK))
-      .catch(() => setOrders(MOCK))
+    api.get('/api/users/me/orders')
+      .then(r => {
+        const list = (r.data?.orders || []).map(o => ({
+          id: o.id,
+          type: o.serviceType,
+          from: o.originAddress || '—',
+          to: o.destinationAddress || null,
+          amount: o.finalPrice ?? o.price ?? 0,
+          status: o.status,
+          date: fmtDate(o.completedAt || o.createdAt),
+          rating: null,
+        }));
+        setOrders(list);
+        setError(false);
+      })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -133,6 +146,16 @@ export default function ClientOrderHistoryScreen({ navigation }) {
 
       {loading ? (
         <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 60 }} />
+      ) : error ? (
+        <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 30 }}>
+          <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, fontSize: 14, textAlign: 'center', marginBottom: 16 }}>
+            Impossible de charger vos commandes. Vérifiez votre connexion.
+          </Text>
+          <TouchableOpacity onPress={() => { setLoading(true); load(); }} style={{ backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
+            <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
         <FlatList
           data={filtered}

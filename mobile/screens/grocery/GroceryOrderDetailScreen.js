@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,8 +6,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COULEURS = {
   bg: '#0A0A0F',
@@ -20,36 +22,55 @@ const COULEURS = {
   info: '#3B82F6',
 };
 
-const COMMANDE_MOCK = {
-  id: 'GRO-2026-0847',
-  dateCommande: '2 juin 2026 à 10h15',
-  statut: 'En livraison',
-  adresse: '14 Rue des Flamboyants, Hamdallaye ACI 2000, Bamako',
-  articles: [
-    { id: 'A1', nom: 'Riz long grain (5 kg)', quantite: 2, prixUnitaire: 4500 },
-    { id: 'A2', nom: 'Huile de palme (1 L)', quantite: 3, prixUnitaire: 1200 },
-    { id: 'A3', nom: 'Tomates fraîches (1 kg)', quantite: 1, prixUnitaire: 800 },
-    { id: 'A4', nom: 'Oignons (filet 3 kg)', quantite: 1, prixUnitaire: 1500 },
-    { id: 'A5', nom: 'Farine de blé (1 kg)', quantite: 4, prixUnitaire: 600 },
-    { id: 'A6', nom: 'Savon de ménage ×6', quantite: 1, prixUnitaire: 2200 },
-    { id: 'A7', nom: 'Sucre en poudre (2 kg)', quantite: 2, prixUnitaire: 1800 },
-  ],
-  fraisLivraison: 500,
-};
+const ETAPE_LABELS = ['Confirmé', 'Préparation', 'En livraison', 'Livré'];
+const STATUS_TO_STEP = { PENDING: 0, ACCEPTED: 1, IN_PROGRESS: 2, COMPLETED: 3, CANCELLED: 3, DISPUTED: 3 };
 
-const ETAPES = [
-  { label: 'Confirmé', icone: '✅', fait: true, actif: false },
-  { label: 'Préparation', icone: '✅', fait: true, actif: false },
-  { label: 'En livraison', icone: '🔄', fait: false, actif: true },
-  { label: 'Livré', icone: '📦', fait: false, actif: false },
-];
+function fmtDateFr(iso) {
+  try {
+    return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  } catch {
+    return '';
+  }
+}
 
-export default function GroceryOrderDetailScreen({ navigation }) {
-  const sousTotal = COMMANDE_MOCK.articles.reduce(
-    (acc, a) => acc + a.prixUnitaire * a.quantite,
-    0
-  );
-  const total = sousTotal + COMMANDE_MOCK.fraisLivraison;
+export default function GroceryOrderDetailScreen({ navigation, route }) {
+  const orderId = route?.params?.orderId;
+  const [commande, setCommande] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    if (!orderId) { setError(true); setLoading(false); return; }
+    api.get(`/api/grocery/${orderId}`)
+      .then(r => {
+        const o = r.data.order;
+        setCommande({
+          id: o.id,
+          dateCommande: fmtDateFr(o.createdAt),
+          stepIdx: STATUS_TO_STEP[o.status] ?? 0,
+          adresse: o.destinationAddress || o.metadata?.deliveryAddress || '—',
+          articles: (o.metadata?.items || []).map((it, i) => ({
+            id: it.productId || String(i),
+            nom: it.name || it.label || 'Article',
+            quantite: it.quantity || 1,
+            prixUnitaire: it.price || 0,
+          })),
+          sousTotal: o.metadata?.subtotal ?? 0,
+          fraisLivraison: o.metadata?.deliveryFee ?? 0,
+          total: o.metadata?.total ?? o.finalPrice ?? parseFloat(o.price) || 0,
+        });
+        setError(false);
+      })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, [orderId]);
+
+  const ETAPES = ETAPE_LABELS.map((label, i) => ({
+    label,
+    icone: i === 2 ? '🔄' : (i === 3 ? '📦' : '✅'),
+    fait: commande ? i < commande.stepIdx : false,
+    actif: commande ? i === commande.stepIdx : false,
+  }));
 
   const signalerProbleme = () => {
     Alert.alert(
@@ -65,13 +86,37 @@ export default function GroceryOrderDetailScreen({ navigation }) {
     );
   };
 
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.conteneur}>
+        <ActivityIndicator color={COULEURS.primary} size="large" style={{ marginTop: 60 }} />
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !commande) {
+    return (
+      <SafeAreaView style={styles.conteneur}>
+        <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 30 }}>
+          <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+          <Text style={{ color: COULEURS.muet, fontSize: 14, textAlign: 'center', marginBottom: 16 }}>
+            Impossible de charger cette commande.
+          </Text>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={{ backgroundColor: COULEURS.primary, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
+            <Text style={{ color: COULEURS.bg, fontWeight: '700' }}>Retour</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.conteneur}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.entete}>
           <Text style={styles.titre}>Détail de commande</Text>
-          <Text style={styles.idCommande}>{COMMANDE_MOCK.id}</Text>
-          <Text style={styles.dateCommande}>{COMMANDE_MOCK.dateCommande}</Text>
+          <Text style={styles.idCommande}>{commande.id}</Text>
+          <Text style={styles.dateCommande}>{commande.dateCommande}</Text>
         </View>
 
         <View style={styles.section}>
@@ -120,7 +165,7 @@ export default function GroceryOrderDetailScreen({ navigation }) {
         <View style={styles.section}>
           <Text style={styles.sectionTitre}>Articles commandés</Text>
           <View style={styles.articlesList}>
-            {COMMANDE_MOCK.articles.map((article, index) => (
+            {commande.articles.map((article, index) => (
               <View key={article.id}>
                 <View style={styles.articleRangee}>
                   <View style={styles.articleGauche}>
@@ -128,13 +173,13 @@ export default function GroceryOrderDetailScreen({ navigation }) {
                     <Text style={styles.articleNom}>{article.nom}</Text>
                   </View>
                   <Text style={styles.articlePrix}>
-                    {(article.prixUnitaire * article.quantite).toLocaleString()} FCFA
+                    {(article.prixUnitaire * article.quantite).toFixed(3)} TND
                   </Text>
                 </View>
                 <Text style={styles.articlePrixUnit}>
-                  {article.prixUnitaire.toLocaleString()} FCFA / unité
+                  {article.prixUnitaire.toFixed(3)} TND / unité
                 </Text>
-                {index < COMMANDE_MOCK.articles.length - 1 && (
+                {index < commande.articles.length - 1 && (
                   <View style={styles.separateur} />
                 )}
               </View>
@@ -147,17 +192,17 @@ export default function GroceryOrderDetailScreen({ navigation }) {
           <View style={styles.recapCard}>
             <View style={styles.recapLigne}>
               <Text style={styles.recapLabel}>Sous-total</Text>
-              <Text style={styles.recapValeur}>{sousTotal.toLocaleString()} FCFA</Text>
+              <Text style={styles.recapValeur}>{commande.sousTotal.toFixed(3)} TND</Text>
             </View>
             <View style={styles.recapLigne}>
               <Text style={styles.recapLabel}>Frais de livraison</Text>
               <Text style={styles.recapValeur}>
-                {COMMANDE_MOCK.fraisLivraison.toLocaleString()} FCFA
+                {commande.fraisLivraison.toFixed(3)} TND
               </Text>
             </View>
             <View style={[styles.recapLigne, styles.recapLigneTotal]}>
               <Text style={styles.recapTotalLabel}>Total</Text>
-              <Text style={styles.recapTotalValeur}>{total.toLocaleString()} FCFA</Text>
+              <Text style={styles.recapTotalValeur}>{commande.total.toFixed(3)} TND</Text>
             </View>
           </View>
         </View>
@@ -166,14 +211,14 @@ export default function GroceryOrderDetailScreen({ navigation }) {
           <Text style={styles.sectionTitre}>Adresse de livraison</Text>
           <View style={styles.adresseCard}>
             <Text style={styles.adresseEmoji}>📍</Text>
-            <Text style={styles.adresseTexte}>{COMMANDE_MOCK.adresse}</Text>
+            <Text style={styles.adresseTexte}>{commande.adresse}</Text>
           </View>
         </View>
 
         <View style={styles.boutonSection}>
           <TouchableOpacity
             style={styles.boutonSuivi}
-            onPress={() => navigation.navigate('GroceryTracking')}
+            onPress={() => navigation.navigate('GroceryTracking', { orderId: commande.id })}
             activeOpacity={0.85}
           >
             <Text style={styles.boutonSuiviTexte}>🗺️  Suivre la livraison</Text>

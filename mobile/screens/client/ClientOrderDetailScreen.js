@@ -19,37 +19,46 @@ const STATUS_STEPS = [
   { key: 'delivered', icon: '🎉', label: 'Livrée' },
 ];
 
-const MOCK_ORDER = {
-  id: 'CMD-20250604-0042',
-  status: 'delivering',
-  merchant: { name: 'Restaurant El Bey', address: 'Rue de la Liberté, Tunis', phone: '+21671001001' },
-  deliveryAddress: '12 Rue Habib Bourguiba, Lac 1, Tunis',
-  livreur: { name: 'Mohamed Ali', phone: '+21698001001', rating: 4.9 },
-  eta: '8 min',
-  items: [
-    { name: 'Tajine poulet citron', qty: 2, price: 12.500 },
-    { name: 'Brick au thon', qty: 3, price: 3.500 },
-    { name: 'Eau 1.5L', qty: 2, price: 1.200 },
-  ],
-  subtotal: 40.600,
-  deliveryFee: 3.500,
-  discount: 5.000,
-  total: 39.100,
-  paymentMethod: 'Portefeuille EasyWay',
-  placedAt: '13:05',
-  date: '04/06/2025',
-  note: 'Sonner 2x svp',
-};
+const STATUS_TO_STEP = { PENDING: 'confirmed', ACCEPTED: 'confirmed', IN_PROGRESS: 'delivering', COMPLETED: 'delivered', CANCELLED: 'delivered', DISPUTED: 'delivered' };
+
+function fmtDateParts(iso) {
+  try {
+    const d = new Date(iso);
+    return {
+      date: d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+      time: d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+    };
+  } catch {
+    return { date: '', time: '' };
+  }
+}
 
 export default function ClientOrderDetailScreen({ navigation, route }) {
   const orderId = route?.params?.orderId;
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    api.get(`/api/client/orders/${orderId || 'CMD-20250604-0042'}`)
-      .then(r => setOrder(r.data.order || MOCK_ORDER))
-      .catch(() => setOrder(MOCK_ORDER))
+    if (!orderId) { setError(true); setLoading(false); return; }
+    api.get(`/api/orders/${orderId}`)
+      .then(r => {
+        const o = r.data.order;
+        const { date, time } = fmtDateParts(o.completedAt || o.createdAt);
+        setOrder({
+          id: o.id,
+          status: STATUS_TO_STEP[o.status] || 'confirmed',
+          merchant: { name: o.originAddress || 'Adresse de départ' },
+          provider: o.provider ? { name: o.provider.name, phone: o.provider.phone, rating: o.provider.avgRating } : null,
+          deliveryAddress: o.destinationAddress,
+          total: o.finalPrice ?? o.price ?? 0,
+          paymentMethod: o.metadata?.payment?.method || null,
+          date,
+          placedAt: time,
+        });
+        setError(false);
+      })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [orderId]);
 
@@ -84,7 +93,17 @@ export default function ClientOrderDetailScreen({ navigation, route }) {
         </TouchableOpacity>
       </View>
 
-      {loading ? <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} /> : (
+      {loading ? <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} /> : error || !order ? (
+        <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 30 }}>
+          <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, fontSize: 14, textAlign: 'center', marginBottom: 16 }}>
+            Impossible de charger cette commande.
+          </Text>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={{ backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
+            <Text style={{ color: '#000', fontWeight: '700' }}>Retour</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
 
           {/* Order ref + ETA */}
@@ -129,48 +148,26 @@ export default function ClientOrderDetailScreen({ navigation, route }) {
             })}
           </View>
 
-          {/* Livreur */}
-          {(order.status === 'delivering' || order.status === 'delivered') && order.livreur && (
+          {/* Provider */}
+          {(order.status === 'delivering' || order.status === 'delivered') && order.provider && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>LIVREUR</Text>
+              <Text style={styles.sectionTitle}>PRESTATAIRE</Text>
               <View style={styles.livreurCard}>
                 <View style={styles.livreurAvatar}><Text style={{ fontSize: 22 }}>🛵</Text></View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.livreurName}>{order.livreur.name}</Text>
-                  <Text style={styles.livreurRating}>⭐ {order.livreur.rating}</Text>
+                  <Text style={styles.livreurName}>{order.provider.name}</Text>
+                  {!!order.provider.rating && <Text style={styles.livreurRating}>⭐ {order.provider.rating.toFixed?.(1) ?? order.provider.rating}</Text>}
                 </View>
-                <TouchableOpacity style={styles.callBtn} onPress={() => {}}>
-                  <Text style={{ fontSize: 20 }}>📞</Text>
-                </TouchableOpacity>
               </View>
             </View>
           )}
 
-          {/* Merchant */}
+          {/* Addresses */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>RESTAURANT</Text>
+            <Text style={styles.sectionTitle}>ADRESSES</Text>
             <View style={styles.infoCard}>
-              <Text style={styles.merchantName}>{order.merchant.name}</Text>
-              <Text style={styles.merchantAddr}>{order.merchant.address}</Text>
-            </View>
-          </View>
-
-          {/* Items */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>ARTICLES COMMANDÉS</Text>
-            <View style={styles.itemsCard}>
-              {order.items.map((item, i) => (
-                <View key={i} style={[styles.itemRow, i < order.items.length - 1 && styles.itemRowBorder]}>
-                  <Text style={styles.itemQty}>{item.qty}×</Text>
-                  <Text style={styles.itemName}>{item.name}</Text>
-                  <Text style={styles.itemPrice}>{(item.qty * item.price).toFixed(3)} TND</Text>
-                </View>
-              ))}
-              {!!order.note && (
-                <View style={styles.noteRow}>
-                  <Text style={styles.noteText}>💬 Note : {order.note}</Text>
-                </View>
-              )}
+              <Text style={styles.merchantName}>📍 {order.merchant.name}</Text>
+              {!!order.deliveryAddress && <Text style={styles.merchantAddr}>🏁 {order.deliveryAddress}</Text>}
             </View>
           </View>
 
@@ -178,22 +175,11 @@ export default function ClientOrderDetailScreen({ navigation, route }) {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>RÉCAPITULATIF</Text>
             <View style={styles.summaryCard}>
-              {[
-                { l: 'Sous-total', v: order.subtotal.toFixed(3) + ' TND' },
-                { l: 'Livraison', v: order.deliveryFee.toFixed(3) + ' TND' },
-                ...(order.discount > 0 ? [{ l: 'Réduction', v: '-' + order.discount.toFixed(3) + ' TND', color: COLORS.green }] : []),
-              ].map(row => (
-                <View key={row.l} style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>{row.l}</Text>
-                  <Text style={[styles.summaryVal, row.color && { color: row.color }]}>{row.v}</Text>
-                </View>
-              ))}
-              <View style={styles.summaryDivider} />
               <View style={styles.summaryRow}>
                 <Text style={styles.totalLabel}>TOTAL</Text>
                 <Text style={styles.totalVal}>{order.total.toFixed(3)} TND</Text>
               </View>
-              <Text style={styles.paymentMethod}>💳 {order.metadata?.payment?.method || 'N/A'}</Text>
+              {!!order.paymentMethod && <Text style={styles.paymentMethod}>💳 {order.paymentMethod}</Text>}
             </View>
           </View>
 

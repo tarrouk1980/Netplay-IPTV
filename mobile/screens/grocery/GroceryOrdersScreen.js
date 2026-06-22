@@ -12,13 +12,15 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB', orange: '#E67E22',
 };
 
-const MOCK_ORDERS = [
-  { id: 'GO1', shopName: 'Carrefour Market', items: 5, total: 18.400, status: 'delivered', date: 'Aujourd\'hui 14:22', eta: null },
-  { id: 'GO2', shopName: 'Monoprix Lac', items: 3, total: 9.200, status: 'delivering', date: 'Aujourd\'hui 13:05', eta: '8 min' },
-  { id: 'GO3', shopName: 'Aziza Supermarché', items: 8, total: 31.750, status: 'preparing', date: 'Aujourd\'hui 12:40', eta: '20 min' },
-  { id: 'GO4', shopName: 'Géant Casino', items: 12, total: 54.200, status: 'delivered', date: 'Hier 18:30', eta: null },
-  { id: 'GO5', shopName: 'Carrefour Market', items: 2, total: 6.800, status: 'cancelled', date: 'Il y a 3j', eta: null },
-];
+const STATUS_MAP = { PENDING: 'pending', ACCEPTED: 'preparing', IN_PROGRESS: 'delivering', COMPLETED: 'delivered', CANCELLED: 'cancelled', DISPUTED: 'cancelled' };
+
+function fmtDate(iso) {
+  try {
+    return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  } catch {
+    return '';
+  }
+}
 
 const STATUS_CONFIG = {
   pending: { color: COLORS.muted, icon: '⏳', label: 'En attente' },
@@ -57,14 +59,27 @@ function OrderCard({ item, onPress }) {
 export default function GroceryOrdersScreen({ navigation }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
 
   const load = useCallback(() => {
     setLoading(true);
     api.get('/api/grocery/history')
-      .then(r => setOrders(r.data.orders || MOCK_ORDERS))
-      .catch(() => setOrders(MOCK_ORDERS))
+      .then(r => {
+        const list = (r.data?.orders || []).map(o => ({
+          id: o.id,
+          shopName: o.metadata?.merchantName || o.originAddress || 'Épicerie',
+          items: o.metadata?.items?.length || 0,
+          total: o.finalPrice ?? parseFloat(o.price) || 0,
+          status: STATUS_MAP[o.status] || 'pending',
+          date: fmtDate(o.completedAt || o.createdAt),
+          eta: null,
+        }));
+        setOrders(list);
+        setError(false);
+      })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -110,7 +125,17 @@ export default function GroceryOrdersScreen({ navigation }) {
         ))}
       </View>
 
-      {loading ? <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} /> : (
+      {loading ? <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} /> : error ? (
+        <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 30 }}>
+          <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, fontSize: 14, textAlign: 'center', marginBottom: 16 }}>
+            Impossible de charger vos commandes.
+          </Text>
+          <TouchableOpacity onPress={load} style={{ backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
+            <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
         <FlatList
           data={filtered}
           keyExtractor={o => o.id}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  StatusBar, Animated, Alert,
+  StatusBar, Animated, Alert, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
@@ -13,41 +13,6 @@ const COLORS = {
   border: '#2A2A3A', green: '#27AE60', red: '#D32F2F',
   purple: '#8E44AD', blue: '#1565C0',
 };
-
-const NOW = Date.now();
-
-const MOCK_DEALS = [
-  {
-    id: '1', emoji: '🚕', title: '-30% sur EasyTaxy', service: 'EASYTAXY',
-    code: 'FLASH30', discount: 30, type: 'percent',
-    endsAt: NOW + 2 * 3600 * 1000, totalSlots: 100, usedSlots: 67,
-    color: COLORS.accent, minOrder: 0,
-  },
-  {
-    id: '2', emoji: '🛒', title: 'Livraison gratuite courses', service: 'GROCERY',
-    code: 'FREEDELIV', discount: 100, type: 'delivery',
-    endsAt: NOW + 5 * 3600 * 1000, totalSlots: 50, usedSlots: 12,
-    color: COLORS.purple, minOrder: 30,
-  },
-  {
-    id: '3', emoji: '🛻', title: 'SOS -20% dépannage', service: 'SOS',
-    code: 'SOS20', discount: 20, type: 'percent',
-    endsAt: NOW + 1 * 3600 * 1000 + 24 * 60 * 1000, totalSlots: 30, usedSlots: 28,
-    color: COLORS.red, minOrder: 0,
-  },
-  {
-    id: '4', emoji: '📦', title: '5 TND offerts livraison', service: 'DELIVERY',
-    code: 'LIVR5', discount: 5, type: 'fixed',
-    endsAt: NOW + 8 * 3600 * 1000, totalSlots: 200, usedSlots: 43,
-    color: COLORS.green, minOrder: 15,
-  },
-  {
-    id: '5', emoji: '⭐', title: 'Pass Premium -50%', service: 'PASS',
-    code: 'PASS50', discount: 50, type: 'percent',
-    endsAt: NOW + 24 * 3600 * 1000, totalSlots: 20, usedSlots: 8,
-    color: COLORS.blue, minOrder: 0,
-  },
-];
 
 function Countdown({ endsAt }) {
   const [remaining, setRemaining] = useState(Math.max(0, endsAt - Date.now()));
@@ -148,7 +113,8 @@ function DealCard({ deal, onClaim }) {
 
 export default function FlashSaleScreen({ navigation }) {
   const { user } = useAuthStore();
-  const [deals, setDeals] = useState(MOCK_DEALS);
+  const [deals, setDeals] = useState([]);
+  const [loading, setLoading] = useState(true);
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -172,7 +138,9 @@ export default function FlashSaleScreen({ navigation }) {
             minOrder: c.minAmount || 0,
           })));
         }
-      } catch {}
+      } catch {} finally {
+        setLoading(false);
+      }
     })();
 
     Animated.loop(
@@ -216,14 +184,25 @@ export default function FlashSaleScreen({ navigation }) {
         <Text style={styles.bannerText}>🔥 Offres à durée limitée — Profitez-en avant qu'elles expirent !</Text>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list}>
-        {deals.map((deal) => (
-          <DealCard key={deal.id} deal={deal} onClaim={handleClaim} />
-        ))}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>💡 De nouvelles offres flash sont publiées chaque jour à 9h, 13h et 18h.</Text>
-        </View>
-      </ScrollView>
+      {loading ? (
+        <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 60 }} />
+      ) : (
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list}>
+          {deals.length === 0 ? (
+            <View style={{ alignItems: 'center', paddingTop: 40 }}>
+              <Text style={{ fontSize: 40, marginBottom: 12 }}>⚡</Text>
+              <Text style={{ color: COLORS.muted, fontSize: 14 }}>Aucune offre flash pour le moment</Text>
+            </View>
+          ) : (
+            deals.map((deal) => (
+              <DealCard key={deal.id} deal={deal} onClaim={handleClaim} />
+            ))
+          )}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>💡 De nouvelles offres flash sont publiées chaque jour à 9h, 13h et 18h.</Text>
+          </View>
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 }
