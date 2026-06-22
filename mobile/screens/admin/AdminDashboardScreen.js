@@ -14,20 +14,12 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB', purple: '#9B59B6',
 };
 
-const MOCK = {
-  revenue: { today: 4280.750, month: 124850.750, growth: 12.4 },
-  orders: { today: 312, active: 47, pending: 8 },
-  users: { total: 18432, newToday: 24, providers: 342 },
-  services: [
-    { name: 'Taxi', icon: '🚕', active: 28, color: COLORS.accent },
-    { name: 'Livraison', icon: '📦', active: 12, color: COLORS.blue },
-    { name: 'Épicerie', icon: '🛒', active: 5, color: COLORS.green },
-    { name: 'SOS', icon: '🔧', active: 3, color: COLORS.red },
-  ],
-  alerts: [
-    { type: 'KYC', message: '3 dossiers KYC en attente d\'approbation', color: COLORS.accent },
-    { type: 'ORDER', message: '8 commandes sans chauffeur depuis >10min', color: COLORS.red },
-  ],
+const EMPTY = {
+  revenue: { today: 0, month: 0, growth: 0 },
+  orders: { today: 0, active: 0, pending: 0 },
+  users: { total: 0, newToday: 0, providers: 0 },
+  services: [],
+  alerts: [],
 };
 
 function KPICard({ icon, label, value, sub, color, onPress }) {
@@ -50,13 +42,15 @@ export default function AdminDashboardScreen({ navigation }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(false);
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
       const res = await api.get('/api/admin/stats');
       const s = res.data;
-      if (!s) { setData(MOCK); return; }
+      if (!s) { setError(true); return; }
+      setError(false);
 
       const SERVICE_META = {
         TAXI: { name: 'Taxi', icon: '🚕', color: COLORS.accent },
@@ -93,7 +87,7 @@ export default function AdminDashboardScreen({ navigation }) {
           : [],
       });
     } catch {
-      setData(MOCK);
+      setError(true);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -112,7 +106,7 @@ export default function AdminDashboardScreen({ navigation }) {
 
   const onRefresh = () => { setRefreshing(true); load(true); };
 
-  const d = data || MOCK;
+  const d = data || EMPTY;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -135,6 +129,16 @@ export default function AdminDashboardScreen({ navigation }) {
 
       {loading ? (
         <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 60 }} />
+      ) : error ? (
+        <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 30 }}>
+          <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, fontSize: 14, textAlign: 'center', marginBottom: 16 }}>
+            Impossible de charger les statistiques.
+          </Text>
+          <TouchableOpacity onPress={() => load()} style={{ backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
+            <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
         <ScrollView
           contentContainerStyle={styles.scroll}
@@ -197,7 +201,7 @@ export default function AdminDashboardScreen({ navigation }) {
           <Text style={styles.sectionTitle}>GESTION</Text>
           <View style={styles.navGrid}>
             {[
-              { icon: '🪪', label: 'KYC', screen: 'AdminKYC', badge: 3 },
+              { icon: '🪪', label: 'KYC', screen: 'AdminKYC' },
               { icon: '👥', label: 'Utilisateurs', screen: 'AdminUsers' },
               { icon: '🚕', label: 'Chauffeurs', screen: 'AdminDrivers' },
               { icon: '💰', label: 'Revenus', screen: 'AdminRevenue' },

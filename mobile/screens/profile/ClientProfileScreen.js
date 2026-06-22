@@ -13,7 +13,7 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C',
 };
 
-const MOCK_STATS = { totalOrders: 47, totalSpent: 312.750, memberSince: 'Janvier 2025', loyalty: 'Gold' };
+const EMPTY_STATS = { totalOrders: 0, totalSpent: 0, memberSince: null, loyalty: null };
 
 function Field({ label, value, onEdit }) {
   return (
@@ -33,13 +33,23 @@ function Field({ label, value, onEdit }) {
 
 export default function ClientProfileScreen({ navigation }) {
   const { user, updateProfile, logout } = useAuthStore();
-  const [stats, setStats] = useState(MOCK_STATS);
+  const [stats, setStats] = useState(EMPTY_STATS);
   const [editing, setEditing] = useState(null);
   const [editValue, setEditValue] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    api.get('/api/client/stats').then(r => setStats(r.data || MOCK_STATS)).catch(() => {});
+    api.get('/api/users/me/orders').then(r => {
+      const orders = r.data?.orders || [];
+      const completed = orders.filter(o => o.status === 'COMPLETED');
+      const totalSpent = completed.reduce((s, o) => s + (o.finalPrice ?? Number(o.price || 0)), 0);
+      setStats({
+        totalOrders: orders.length,
+        totalSpent,
+        memberSince: user?.createdAt ? new Date(user.createdAt).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }) : null,
+        loyalty: null,
+      });
+    }).catch(() => {});
   }, []);
 
   const startEdit = (field, currentValue) => {
@@ -68,7 +78,6 @@ export default function ClientProfileScreen({ navigation }) {
     ]);
   };
 
-  const loyaltyColor = stats.loyalty === 'Gold' ? '#FFD700' : stats.loyalty === 'Silver' ? '#C0C0C0' : COLORS.accent;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -93,11 +102,6 @@ export default function ClientProfileScreen({ navigation }) {
           </View>
           <Text style={styles.userName}>{user?.name || 'Utilisateur'}</Text>
           <Text style={styles.userEmail}>{user?.email}</Text>
-          <View style={[styles.loyaltyBadge, { borderColor: loyaltyColor + '60', backgroundColor: loyaltyColor + '15' }]}>
-            <Text style={[styles.loyaltyText, { color: loyaltyColor }]}>
-              {stats.loyalty === 'Gold' ? '🥇' : stats.loyalty === 'Silver' ? '🥈' : '🥉'} {stats.loyalty}
-            </Text>
-          </View>
         </View>
 
         {/* Stats */}
@@ -111,7 +115,7 @@ export default function ClientProfileScreen({ navigation }) {
             <Text style={styles.statLabel}>TND dépensés</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statNum}>{stats.memberSince?.split(' ')[1] || '2025'}</Text>
+            <Text style={styles.statNum}>{stats.memberSince || '—'}</Text>
             <Text style={styles.statLabel}>membre depuis</Text>
           </View>
         </View>

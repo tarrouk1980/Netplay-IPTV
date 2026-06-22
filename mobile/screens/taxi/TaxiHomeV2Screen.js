@@ -196,7 +196,10 @@ export default function TaxiHomeV2Screen({ navigation }) {
         <TouchableOpacity
           style={[styles.commandBtn, !selectedDestination && styles.commandBtnDisabled]}
           disabled={!selectedDestination}
-          onPress={() => {}}
+          onPress={() => navigation.navigate('TaxiRequest', {
+            taxiType: selectedVehicle.type.toUpperCase(),
+            destination: selectedDestination,
+          })}
         >
           <Text style={styles.commandBtnText}>
             {selectedDestination ? `Commander un ${selectedVehicle.type}` : 'Choisir une destination'}

@@ -22,15 +22,6 @@ const STATUS_LABELS = {
   IN_PROGRESS: 'En cours', PENDING: 'En attente', ASSIGNED: 'Assigné',
 };
 
-const MOCK = [
-  { id: 'ORD-001', type: 'TAXI', client: 'Nadia K.', provider: 'Mohamed A.', amount: 8.500, status: 'COMPLETED', date: '03/06 15:40', from: 'Lac 1', to: 'Berges Lac 2' },
-  { id: 'ORD-002', type: 'DELIVERY', client: 'Ahmed B.', provider: 'Sami K.', amount: 12.800, status: 'IN_PROGRESS', date: '03/06 16:10', from: 'Pizza Roma', to: 'Menzah 6' },
-  { id: 'ORD-003', type: 'GROCERY', client: 'Lina M.', provider: null, amount: 34.500, status: 'PENDING', date: '03/06 16:25', from: 'Monoprix', to: 'Ariana' },
-  { id: 'ORD-004', type: 'SOS', client: 'Youssef T.', provider: 'Karim M.', amount: 45.000, status: 'ASSIGNED', date: '03/06 15:50', from: 'A1 km42', to: null },
-  { id: 'ORD-005', type: 'TAXI', client: 'Rim S.', provider: 'Nour B.', amount: 18.000, status: 'COMPLETED', date: '03/06 14:30', from: 'Tunis Centre', to: 'Carthage' },
-  { id: 'ORD-006', type: 'DELIVERY', client: 'Slim A.', provider: null, amount: 7.500, status: 'CANCELLED', date: '03/06 13:10', from: 'KFC', to: 'Lafayette' },
-];
-
 const STATUSES = ['Tous', 'PENDING', 'IN_PROGRESS', 'ASSIGNED', 'COMPLETED', 'CANCELLED'];
 
 function OrderRow({ item, onPress }) {
@@ -154,6 +145,16 @@ export default function AdminOrdersScreen({ navigation }) {
 
       {loading ? (
         <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 60 }} />
+      ) : loadError ? (
+        <View style={styles.empty}>
+          <Text style={{ fontSize: 36 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, marginTop: 10, textAlign: 'center', paddingHorizontal: 30 }}>
+            Impossible de charger les commandes.
+          </Text>
+          <TouchableOpacity onPress={load} style={{ marginTop: 14, backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
+            <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
         <FlatList
           data={filtered}

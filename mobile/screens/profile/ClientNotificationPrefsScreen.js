@@ -124,7 +124,7 @@ export default function ClientNotificationPrefsScreen() {
       })
       .catch(() => {
         setLoading(false);
-        Alert.alert('Succès', 'Vos préférences de notifications ont été enregistrées.');
+        Alert.alert('Erreur', 'Impossible d\'enregistrer vos préférences. Vérifiez votre connexion.');
       });
   };
 

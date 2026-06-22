@@ -13,55 +13,50 @@ const COLORS = {
 };
 
 const PERIODS = ['Aujourd\'hui', '7 jours', 'Ce mois', 'Cette année'];
+const PERIOD_KEYS = ['today', 'week', 'month', 'quarter'];
 
-const MOCK = {
-  total: 124850.750,
-  byService: [
-    { name: 'Taxi', icon: '🚕', amount: 68420.500, pct: 54.8, color: COLORS.accent },
-    { name: 'Livraison', icon: '📦', amount: 32180.250, pct: 25.8, color: COLORS.blue },
-    { name: 'Épicerie', icon: '🛒', amount: 15640.000, pct: 12.5, color: COLORS.green },
-    { name: 'SOS', icon: '🔧', amount: 8610.000, pct: 6.9, color: COLORS.red },
-  ],
-  topProviders: [
-    { name: 'Mohamed A.', role: 'Chauffeur', amount: 4280.500, trips: 312 },
-    { name: 'Sami K.', role: 'Livreur', amount: 3840.250, trips: 287 },
-    { name: 'Pizza Roma', role: 'Marchand', amount: 3120.000, trips: 198 },
-    { name: 'Nour B.', role: 'Chauffeur', amount: 2980.750, trips: 241 },
-    { name: 'Karim M.', role: 'Dépanneur', amount: 2640.000, trips: 88 },
-  ],
-  daily: [3200, 4100, 2800, 5100, 4400, 6200, 5800],
-  days: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
-  growth: 12.4,
+const SERVICE_META = {
+  TAXI: { name: 'Taxi', icon: '🚕', color: COLORS.accent },
+  DELIVERY: { name: 'Livraison', icon: '📦', color: COLORS.blue },
+  GROCERY: { name: 'Épicerie', icon: '🛒', color: COLORS.green },
+  SOS: { name: 'SOS', icon: '🔧', color: COLORS.red },
+  HOME_SERVICE: { name: 'EasyServices', icon: '🛠️', color: COLORS.purple },
+  CAR_RENTAL: { name: 'Location', icon: '🚗', color: COLORS.blue },
 };
 
-function Bar({ value, maxValue }) {
-  return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end', height: 64 }}>
-      <View style={{
-        width: '75%', borderRadius: 3, backgroundColor: COLORS.accent,
-        height: Math.max(3, (value / maxValue) * 60),
-      }} />
-    </View>
-  );
-}
+const EMPTY = { total: 0, byService: [], growth: 0 };
 
 export default function AdminRevenueScreen({ navigation }) {
   const [period, setPeriod] = useState(1);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
-    api.get('/api/admin/revenue?period=' + period)
-      .then(r => setData(r.data || MOCK))
-      .catch(() => setData(MOCK))
+    api.get('/api/admin/revenue?period=' + PERIOD_KEYS[period])
+      .then(r => {
+        const s = r.data;
+        setData({
+          total: s.totalTND ?? 0,
+          growth: s.growth ?? 0,
+          byService: (s.byService || []).map(sv => ({
+            name: SERVICE_META[sv.service]?.name || sv.service,
+            icon: SERVICE_META[sv.service]?.icon || '🔹',
+            color: SERVICE_META[sv.service]?.color || COLORS.accent,
+            amount: sv.revenue,
+            pct: sv.pct,
+          })),
+        });
+        setError(false);
+      })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [period]);
 
   useEffect(() => { load(); }, [load]);
 
-  const d = data || MOCK;
-  const maxVal = Math.max(...d.daily, 1);
+  const d = data || EMPTY;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -84,6 +79,16 @@ export default function AdminRevenueScreen({ navigation }) {
 
       {loading ? (
         <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 60 }} />
+      ) : error ? (
+        <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 30 }}>
+          <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, fontSize: 14, textAlign: 'center', marginBottom: 16 }}>
+            Impossible de charger les revenus.
+          </Text>
+          <TouchableOpacity onPress={load} style={{ backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
+            <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
@@ -98,18 +103,10 @@ export default function AdminRevenueScreen({ navigation }) {
             </View>
           </View>
 
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>ÉVOLUTION 7 JOURS</Text>
-            <View style={styles.chartRow}>
-              {d.daily.map((v, i) => <Bar key={i} value={v} maxValue={maxVal} />)}
-            </View>
-            <View style={styles.chartLabels}>
-              {d.days.map((day, i) => <Text key={i} style={styles.chartLabel}>{day}</Text>)}
-            </View>
-          </View>
-
           <Text style={styles.sectionTitle}>PAR SERVICE</Text>
-          {d.byService.map((s, i) => (
+          {d.byService.length === 0 ? (
+            <Text style={{ color: COLORS.muted, fontSize: 13 }}>Aucune donnée pour cette période.</Text>
+          ) : d.byService.map((s, i) => (
             <View key={i} style={styles.serviceRow}>
               <Text style={styles.serviceIcon}>{s.icon}</Text>
               <View style={{ flex: 1 }}>
@@ -124,22 +121,6 @@ export default function AdminRevenueScreen({ navigation }) {
               </View>
             </View>
           ))}
-
-          <Text style={[styles.sectionTitle, { marginTop: 16 }]}>TOP PRESTATAIRES</Text>
-          <View style={styles.card}>
-            {d.topProviders.map((p, i) => (
-              <View key={i} style={[styles.providerRow, i < d.topProviders.length - 1 && styles.providerRowBorder]}>
-                <View style={[styles.providerRank, i === 0 && { backgroundColor: COLORS.accent }]}>
-                  <Text style={[styles.providerRankText, i === 0 && { color: '#000' }]}>#{i + 1}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.providerName}>{p.name}</Text>
-                  <Text style={styles.providerRole}>{p.role} · {p.trips} courses</Text>
-                </View>
-                <Text style={styles.providerAmount}>{p.amount.toFixed(3)} TND</Text>
-              </View>
-            ))}
-          </View>
 
           <View style={{ height: 40 }} />
         </ScrollView>

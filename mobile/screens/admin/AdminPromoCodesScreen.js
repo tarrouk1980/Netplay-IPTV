@@ -12,13 +12,6 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB',
 };
 
-const MOCK_PROMOS = [
-  { id: 'P1', code: 'WELCOME20', type: 'PERCENT', value: 20, service: 'ALL', usageCount: 312, maxUsage: 500, active: true, expiresAt: '2025-12-31' },
-  { id: 'P2', code: 'TAXI5TND', type: 'FIXED', value: 5, service: 'TAXI', usageCount: 88, maxUsage: 200, active: true, expiresAt: '2025-07-31' },
-  { id: 'P3', code: 'SOS15', type: 'PERCENT', value: 15, service: 'SOS', usageCount: 45, maxUsage: 100, active: false, expiresAt: '2025-06-30' },
-  { id: 'P4', code: 'LIVRAISON0', type: 'FIXED', value: 3, service: 'DELIVERY', usageCount: 203, maxUsage: 300, active: true, expiresAt: '2025-09-01' },
-];
-
 const SERVICES_OPTIONS = ['ALL', 'TAXI', 'DELIVERY', 'GROCERY', 'SOS'];
 
 function PromoCard({ item, onToggle, onDelete }) {
@@ -75,12 +68,13 @@ export default function AdminPromoCodesScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [form, setForm] = useState({ code: '', type: 'PERCENT', value: '', service: 'ALL', maxUsage: '', expiresAt: '' });
+  const [error, setError] = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
     api.get('/api/admin/promos')
-      .then(r => setPromos(r.data.promos || MOCK_PROMOS))
-      .catch(() => setPromos(MOCK_PROMOS))
+      .then(r => { setPromos(r.data.promos || []); setError(false); })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -115,7 +109,7 @@ export default function AdminPromoCodesScreen({ navigation }) {
     }
     try {
       const body = { ...form, value: parseFloat(form.value), maxUsage: parseInt(form.maxUsage) };
-      const res = await api.post('/api/admin/promos', body).catch(() => ({ data: { promo: { id: Date.now().toString(), ...body, usageCount: 0, active: true } } }));
+      const res = await api.post('/api/admin/promos', body);
       setPromos(prev => [res.data.promo, ...prev]);
       setModalVisible(false);
       setForm({ code: '', type: 'PERCENT', value: '', service: 'ALL', maxUsage: '', expiresAt: '' });
@@ -157,6 +151,16 @@ export default function AdminPromoCodesScreen({ navigation }) {
 
       {loading ? (
         <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} />
+      ) : error ? (
+        <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 30 }}>
+          <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, fontSize: 14, textAlign: 'center', marginBottom: 16 }}>
+            Impossible de charger les codes promo.
+          </Text>
+          <TouchableOpacity onPress={load} style={{ backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
+            <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
         <FlatList
           data={promos}
