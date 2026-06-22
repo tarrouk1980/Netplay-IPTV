@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,38 +6,63 @@ import {
   ScrollView,
   TouchableOpacity,
   FlatList,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
-const FILTRES = ['Tous', 'Taxi', 'Livraison', 'SOS', 'Épicerie'];
-
-const TRANSACTIONS = [
-  { id: 'TXN-001', service: 'Taxi', montant: 24.50, statut: 'Complété', date: '2026-06-02 18:42' },
-  { id: 'TXN-002', service: 'Livraison', montant: 38.00, statut: 'En attente', date: '2026-06-02 17:30' },
-  { id: 'TXN-003', service: 'Épicerie', montant: 112.75, statut: 'Complété', date: '2026-06-02 16:15' },
-  { id: 'TXN-004', service: 'SOS', montant: 85.00, statut: 'Remboursé', date: '2026-06-02 15:00' },
-  { id: 'TXN-005', service: 'Taxi', montant: 18.00, statut: 'Complété', date: '2026-06-02 13:45' },
-  { id: 'TXN-006', service: 'Livraison', montant: 45.20, statut: 'Complété', date: '2026-06-02 12:30' },
-  { id: 'TXN-007', service: 'Épicerie', montant: 67.90, statut: 'En attente', date: '2026-06-02 11:10' },
-  { id: 'TXN-008', service: 'Taxi', montant: 31.00, statut: 'Complété', date: '2026-06-02 10:00' },
-  { id: 'TXN-009', service: 'SOS', montant: 120.00, statut: 'Remboursé', date: '2026-06-01 22:15' },
-  { id: 'TXN-010', service: 'Livraison', montant: 29.50, statut: 'En attente', date: '2026-06-01 20:40' },
-];
+const FILTRES = ['Tous', 'RECHARGE', 'DEBIT', 'REFUND'];
+const FILTRE_LABEL = { Tous: 'Tous', RECHARGE: 'Recharges', DEBIT: 'Débits', REFUND: 'Remboursements' };
 
 const COULEUR_STATUT = {
-  'Complété': '#22C55E',
-  'En attente': '#F5A623',
-  'Remboursé': '#EF4444',
+  RECHARGE: '#22C55E',
+  DEBIT: '#F5A623',
+  REFUND: '#EF4444',
 };
 
 export default function AdminPaymentsScreen({ navigation }) {
   const [filtreActif, setFiltreActif] = useState('Tous');
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const load = useCallback(() => {
+    setLoading(true);
+    api.get('/api/admin/transactions')
+      .then(r => { setTransactions(r.data.transactions || []); setError(false); })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   const transactionsFiltrees = filtreActif === 'Tous'
-    ? TRANSACTIONS
-    : TRANSACTIONS.filter((t) => t.service === filtreActif);
+    ? transactions
+    : transactions.filter((t) => t.type === filtreActif);
 
-  const total = transactionsFiltrees.reduce((acc, t) => acc + t.montant, 0);
+  const total = transactionsFiltrees.reduce((acc, t) => acc + Math.abs(Number(t.amount) || 0), 0);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator color="#F5A623" size="large" />
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={[styles.container, { alignItems: 'center', justifyContent: 'center', padding: 30 }]}>
+        <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+        <Text style={{ color: '#8E8E9A', textAlign: 'center', marginBottom: 16 }}>
+          Impossible de charger les transactions.
+        </Text>
+        <TouchableOpacity onPress={load} style={{ backgroundColor: '#F5A623', borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 }}>
+          <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -59,7 +84,7 @@ export default function AdminPaymentsScreen({ navigation }) {
             onPress={() => setFiltreActif(f)}
           >
             <Text style={[styles.filtreTexte, filtreActif === f && styles.filtreTexteActif]}>
-              {f}
+              {FILTRE_LABEL[f]}
             </Text>
           </TouchableOpacity>
         ))}
@@ -70,33 +95,41 @@ export default function AdminPaymentsScreen({ navigation }) {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.liste}
         showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View style={{ alignItems: 'center', paddingTop: 60 }}>
+            <Text style={{ color: '#8E8E9A' }}>Aucune transaction</Text>
+          </View>
+        }
         renderItem={({ item }) => (
           <View style={styles.transactionCard}>
             <View style={styles.transactionGauche}>
               <View style={styles.transactionEntete}>
-                <Text style={styles.transactionId}>{item.id}</Text>
+                <Text style={styles.transactionId}>{item.user?.name || 'Utilisateur'}</Text>
                 <View style={[styles.serviceBadge, { backgroundColor: '#2C2C3A' }]}>
-                  <Text style={styles.serviceTexte}>{item.service}</Text>
+                  <Text style={styles.serviceTexte}>{item.type}</Text>
                 </View>
               </View>
-              <Text style={styles.transactionDate}>{item.date}</Text>
+              <Text style={styles.transactionDate}>
+                {new Date(item.createdAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+              </Text>
+              {item.description && <Text style={styles.transactionDate}>{item.description}</Text>}
             </View>
             <View style={styles.transactionDroite}>
-              <Text style={styles.transactionMontant}>{item.montant.toFixed(2)} $</Text>
-              <View style={[styles.statutBadge, { backgroundColor: COULEUR_STATUT[item.statut] + '22' }]}>
-                <Text style={[styles.statutTexte, { color: COULEUR_STATUT[item.statut] }]}>
-                  {item.statut}
+              <Text style={styles.transactionMontant}>{Number(item.amount).toFixed(2)} TND</Text>
+              <View style={[styles.statutBadge, { backgroundColor: (COULEUR_STATUT[item.type] || '#8E8E9A') + '22' }]}>
+                <Text style={[styles.statutTexte, { color: COULEUR_STATUT[item.type] || '#8E8E9A' }]}>
+                  {FILTRE_LABEL[item.type] || item.type}
                 </Text>
               </View>
             </View>
           </View>
         )}
-        ListFooterComponent={
+        ListFooterComponent={transactionsFiltrees.length > 0 ? (
           <View style={styles.totalContainer}>
             <Text style={styles.totalLabel}>Total affiché</Text>
-            <Text style={styles.totalValeur}>{total.toFixed(2)} $</Text>
+            <Text style={styles.totalValeur}>{total.toFixed(2)} TND</Text>
           </View>
-        }
+        ) : null}
       />
     </SafeAreaView>
   );
