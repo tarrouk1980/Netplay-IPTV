@@ -53,9 +53,7 @@ export default function DepanneurQuoteScreen({ navigation, route }) {
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch {
-      Alert.alert('✅ Devis envoyé', 'Le client a reçu votre devis. En attente de confirmation.', [
-        { text: 'OK', onPress: () => navigation.goBack() },
-      ]);
+      Alert.alert('Erreur', "Impossible d'envoyer le devis. Vérifiez votre connexion.");
     } finally { setSending(false); }
   };
 
