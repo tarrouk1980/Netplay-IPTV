@@ -49,6 +49,7 @@ export default function ProviderOnlineStatusScreen({ navigation }) {
   const [toggling, setToggling] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [todayStats, setTodayStats] = useState(null);
+  const [error, setError] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -56,9 +57,9 @@ export default function ProviderOnlineStatusScreen({ navigation }) {
       setProfile(res.data.profile);
       setIsOnline(res.data.isOnline ?? false);
       setTodayStats(res.data.todayStats ?? null);
+      setError(false);
     } catch {
-      setProfile({ role: 'CHAUFFEUR', name: 'Prestataire' });
-      setTodayStats({ orders: 0, revenue: 0, rating: 5.0, hoursOnline: 0 });
+      setError(true);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -90,6 +91,20 @@ export default function ProviderOnlineStatusScreen({ navigation }) {
     return (
       <View style={s.centered}>
         <ActivityIndicator color={COLORS.green} size="large" />
+      </View>
+    );
+  }
+
+  if (error || !profile) {
+    return (
+      <View style={s.centered}>
+        <Text style={{ fontSize: 40 }}>⚠️</Text>
+        <Text style={{ color: COLORS.muted, marginTop: 12, textAlign: 'center', paddingHorizontal: 30 }}>
+          Impossible de charger votre statut.
+        </Text>
+        <TouchableOpacity onPress={load} style={{ marginTop: 14, backgroundColor: COLORS.green, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
+          <Text style={{ color: '#FFF', fontWeight: '700' }}>Réessayer</Text>
+        </TouchableOpacity>
       </View>
     );
   }

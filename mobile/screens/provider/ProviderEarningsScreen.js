@@ -90,48 +90,6 @@ const kpi = StyleSheet.create({
   sub: { color: '#F5A623', fontSize: 10, marginTop: 3, textAlign: 'center' },
 });
 
-const MOCK_DATA = {
-  '7': {
-    totalTND: 42.5,
-    ordersCompleted: 8,
-    avgPerOrder: 5.3,
-    chart: {
-      labels: ['2026-05-25', '2026-05-26', '2026-05-27', '2026-05-28', '2026-05-29', '2026-05-30', '2026-05-31'],
-      data: [4, 8, 5, 10, 6, 7, 2.5],
-    },
-    topDay: { date: '2026-05-28', amount: 10 },
-    byHour: [0, 0, 0, 0, 0, 0, 1, 3, 4, 2, 1, 2, 3, 2, 1, 2, 4, 5, 3, 1, 0, 0, 0, 0],
-  },
-  '14': {
-    totalTND: 89,
-    ordersCompleted: 17,
-    avgPerOrder: 5.2,
-    chart: {
-      labels: Array.from({ length: 14 }, (_, i) => {
-        const d = new Date(Date.now() - (13 - i) * 86400000);
-        return d.toISOString().slice(0, 10);
-      }),
-      data: [3, 5, 4, 8, 6, 7, 4, 5, 8, 5, 7, 10, 6, 11],
-    },
-    topDay: { date: '2026-05-31', amount: 11 },
-    byHour: [0, 0, 0, 0, 0, 0, 1, 3, 4, 2, 1, 2, 3, 2, 1, 2, 4, 5, 3, 1, 0, 0, 0, 0],
-  },
-  '30': {
-    totalTND: 182,
-    ordersCompleted: 35,
-    avgPerOrder: 5.2,
-    chart: {
-      labels: Array.from({ length: 30 }, (_, i) => {
-        const d = new Date(Date.now() - (29 - i) * 86400000);
-        return d.toISOString().slice(0, 10);
-      }),
-      data: Array.from({ length: 30 }, () => Math.round(Math.random() * 12)),
-    },
-    topDay: { date: '2026-05-20', amount: 12 },
-    byHour: [0, 0, 0, 0, 0, 0, 1, 3, 4, 2, 1, 2, 3, 2, 1, 2, 4, 5, 3, 1, 0, 0, 0, 0],
-  },
-};
-
 // Simplified hour bar (horizontal)
 function HourBars({ data = [] }) {
   const max = Math.max(...data, 1);
@@ -172,6 +130,7 @@ export default function ProviderEarningsScreen({ navigation }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(false);
 
   const load = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -179,8 +138,9 @@ export default function ProviderEarningsScreen({ navigation }) {
     try {
       const res = await api.get(`/api/provider/earnings?days=${period}`);
       setData(res.data);
+      setError(false);
     } catch {
-      setData(MOCK_DATA[period]);
+      setError(true);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -226,6 +186,16 @@ export default function ProviderEarningsScreen({ navigation }) {
 
       {loading ? (
         <ActivityIndicator size="large" color={COLORS.accent} style={{ marginTop: 60 }} />
+      ) : error ? (
+        <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 30 }}>
+          <Text style={{ fontSize: 40 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, marginTop: 12, textAlign: 'center' }}>
+            Impossible de charger vos gains.
+          </Text>
+          <TouchableOpacity onPress={() => load()} style={{ marginTop: 14, backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
+            <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
         <ScrollView
           style={styles.scroll}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,8 +6,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const { width } = Dimensions.get('window');
 
@@ -20,38 +22,13 @@ const COLORS = {
   border: '#2C2C3A',
 };
 
-const STATS = {
-  coursesTotales: 347,
-  revenusMonth: 4820,
-  noteMoyenne: 4.7,
-  tauxAcceptation: 91,
-  tempsReponse: 2.3,
-};
-
-const REVENUS_SEMAINES = [1200, 980, 1450, 1190];
-
-const TOP_ZONES = [
-  { zone: 'Centre-Ville', courses: 89, revenus: 1340 },
-  { zone: 'Lac Mariem', courses: 62, revenus: 980 },
-  { zone: 'La Marsa', courses: 54, revenus: 870 },
-  { zone: 'Ariana', courses: 41, revenus: 650 },
-  { zone: 'Manouba', courses: 28, revenus: 420 },
-];
-
-function getBadgeNiveau(courses) {
-  if (courses >= 500) return { label: 'Platine', color: '#E5E4E2' };
-  if (courses >= 300) return { label: 'Or', color: '#F5A623' };
-  if (courses >= 150) return { label: 'Argent', color: '#C0C0C0' };
-  return { label: 'Bronze', color: '#CD7F32' };
-}
-
 function LineChart({ data }) {
-  const maxVal = Math.max(...data);
-  const minVal = Math.min(...data);
+  const maxVal = Math.max(...data, 1);
+  const minVal = Math.min(...data, 0);
   const range = maxVal - minVal || 1;
   const chartWidth = width - 64;
   const chartHeight = 100;
-  const stepX = chartWidth / (data.length - 1);
+  const stepX = chartWidth / Math.max(data.length - 1, 1);
 
   const points = data.map((val, i) => ({
     x: i * stepX,
@@ -120,7 +97,37 @@ function LineChart({ data }) {
 }
 
 export default function ProviderStatsScreen({ navigation }) {
-  const badge = getBadgeNiveau(STATS.coursesTotales);
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const load = useCallback(() => {
+    setLoading(true);
+    Promise.all([
+      api.get('/api/provider/earnings?days=28'),
+      api.get('/api/provider/status'),
+    ])
+      .then(([earnings, status]) => {
+        const data = earnings.data.chart?.data || [];
+        const weekly = [0, 0, 0, 0];
+        data.forEach((v, i) => {
+          const weekIdx = Math.min(Math.floor(i / 7), 3);
+          weekly[weekIdx] += v;
+        });
+        setStats({
+          coursesTotales: earnings.data.ordersCompleted,
+          revenus28j: earnings.data.totalTND,
+          avgPerOrder: earnings.data.avgPerOrder,
+          noteMoyenne: status.data.todayStats?.rating ?? null,
+          weekly,
+        });
+        setError(false);
+      })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -129,70 +136,59 @@ export default function ProviderStatsScreen({ navigation }) {
           <Text style={styles.backArrow}>‹</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Mes Statistiques</Text>
-        <View style={[styles.badge, { borderColor: badge.color }]}>
-          <Text style={[styles.badgeText, { color: badge.color }]}>{badge.label}</Text>
-        </View>
+        <View style={{ width: 30 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.kpiGrid}>
-          <View style={styles.kpiCard}>
-            <Text style={styles.kpiValue}>{STATS.coursesTotales}</Text>
-            <Text style={styles.kpiLabel}>Courses totales</Text>
-          </View>
-          <View style={styles.kpiCard}>
-            <Text style={[styles.kpiValue, { color: COLORS.primary }]}>
-              {STATS.revenusMonth} DT
-            </Text>
-            <Text style={styles.kpiLabel}>Revenus ce mois</Text>
-          </View>
-          <View style={styles.kpiCard}>
-            <Text style={styles.kpiValue}>★ {STATS.noteMoyenne}</Text>
-            <Text style={styles.kpiLabel}>Note moyenne</Text>
-          </View>
-          <View style={styles.kpiCard}>
-            <Text style={styles.kpiValue}>{STATS.tauxAcceptation}%</Text>
-            <Text style={styles.kpiLabel}>Taux d'acceptation</Text>
-          </View>
-          <View style={[styles.kpiCard, styles.kpiCardFull]}>
-            <Text style={styles.kpiValue}>{STATS.tempsReponse} min</Text>
-            <Text style={styles.kpiLabel}>Temps de réponse moyen</Text>
-          </View>
+      {loading ? (
+        <ActivityIndicator color={COLORS.primary} size="large" style={{ marginTop: 60 }} />
+      ) : error ? (
+        <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 30 }}>
+          <Text style={{ fontSize: 40 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, marginTop: 12, textAlign: 'center' }}>
+            Impossible de charger vos statistiques.
+          </Text>
+          <TouchableOpacity onPress={load} style={{ marginTop: 14, backgroundColor: COLORS.primary, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
+            <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+          </TouchableOpacity>
         </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Revenus — 4 dernières semaines</Text>
-          <View style={styles.chartContainer}>
-            <LineChart data={REVENUS_SEMAINES} />
-          </View>
-          <View style={styles.chartLegend}>
-            {REVENUS_SEMAINES.map((v, i) => (
-              <Text key={i} style={styles.chartLegendText}>
-                S{i + 1} : {v} DT
-              </Text>
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Top 5 zones les plus rentables</Text>
-          <View style={styles.tableHeader}>
-            <Text style={[styles.tableCell, styles.tableCellFlex, styles.tableHeaderText]}>Zone</Text>
-            <Text style={[styles.tableCell, styles.tableHeaderText]}>Courses</Text>
-            <Text style={[styles.tableCell, styles.tableHeaderText]}>Revenus</Text>
-          </View>
-          {TOP_ZONES.map((row, i) => (
-            <View key={i} style={[styles.tableRow, i % 2 === 0 && styles.tableRowAlt]}>
-              <View style={styles.tableRankWrap}>
-                <Text style={styles.tableRank}>{i + 1}</Text>
-              </View>
-              <Text style={[styles.tableCell, styles.tableCellFlex, styles.tableText]}>{row.zone}</Text>
-              <Text style={[styles.tableCell, styles.tableText]}>{row.courses}</Text>
-              <Text style={[styles.tableCell, { color: COLORS.primary }]}>{row.revenus} DT</Text>
+      ) : (
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          <View style={styles.kpiGrid}>
+            <View style={styles.kpiCard}>
+              <Text style={styles.kpiValue}>{stats.coursesTotales}</Text>
+              <Text style={styles.kpiLabel}>Courses (28j)</Text>
             </View>
-          ))}
-        </View>
-      </ScrollView>
+            <View style={styles.kpiCard}>
+              <Text style={[styles.kpiValue, { color: COLORS.primary }]}>
+                {stats.revenus28j.toFixed(1)} DT
+              </Text>
+              <Text style={styles.kpiLabel}>Revenus (28j)</Text>
+            </View>
+            <View style={styles.kpiCard}>
+              <Text style={styles.kpiValue}>{stats.noteMoyenne != null ? `★ ${stats.noteMoyenne.toFixed(1)}` : '—'}</Text>
+              <Text style={styles.kpiLabel}>Note moyenne</Text>
+            </View>
+            <View style={styles.kpiCard}>
+              <Text style={styles.kpiValue}>{stats.avgPerOrder.toFixed(1)} DT</Text>
+              <Text style={styles.kpiLabel}>Gain moyen / course</Text>
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Revenus — 4 dernières semaines</Text>
+            <View style={styles.chartContainer}>
+              <LineChart data={stats.weekly} />
+            </View>
+            <View style={styles.chartLegend}>
+              {stats.weekly.map((v, i) => (
+                <Text key={i} style={styles.chartLegendText}>
+                  S{i + 1} : {v.toFixed(1)} DT
+                </Text>
+              ))}
+            </View>
+          </View>
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 }
@@ -224,16 +220,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
   },
-  badge: {
-    borderWidth: 1.5,
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
   scroll: {
     padding: 16,
     paddingBottom: 40,
@@ -251,10 +237,6 @@ const styles = StyleSheet.create({
     width: (width - 42) / 2,
     borderWidth: 1,
     borderColor: COLORS.border,
-  },
-  kpiCardFull: {
-    width: '100%',
-    alignItems: 'center',
   },
   kpiValue: {
     color: COLORS.text,
@@ -292,48 +274,5 @@ const styles = StyleSheet.create({
   chartLegendText: {
     color: COLORS.muted,
     fontSize: 12,
-  },
-  tableHeader: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    paddingBottom: 8,
-    marginBottom: 4,
-  },
-  tableHeaderText: {
-    color: COLORS.muted,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  tableRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderRadius: 6,
-  },
-  tableRowAlt: {
-    backgroundColor: '#ffffff08',
-  },
-  tableRankWrap: {
-    width: 24,
-    alignItems: 'center',
-  },
-  tableRank: {
-    color: COLORS.primary,
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  tableCell: {
-    width: 80,
-    textAlign: 'center',
-  },
-  tableCellFlex: {
-    flex: 1,
-    textAlign: 'left',
-    paddingLeft: 4,
-  },
-  tableText: {
-    color: COLORS.text,
-    fontSize: 13,
   },
 });

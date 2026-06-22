@@ -1,56 +1,44 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  StatusBar, ActivityIndicator,
+  StatusBar, ActivityIndicator, Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
 
 const COLORS = {
-  bg: '#0A0A0F', surface: '#1C1C28',
+  bg: '#0A0A0F', surface: '#1C1C28', surfaceAlt: '#16161F',
   accent: '#F5A623', white: '#FFFFFF', muted: '#8A8A9A',
   border: '#2A2A3A', green: '#27AE60', red: '#D32F2F', blue: '#1565C0',
 };
 
-const MOCK_STEPS = [
-  { key: 'created',    label: 'Colis enregistré',           time: '09:00', done: true },
-  { key: 'picked_up',  label: 'Collecté par le livreur',    time: '09:45', done: true },
-  { key: 'in_transit', label: 'En transit vers la destination', time: '10:30', done: true },
-  { key: 'out',        label: 'En cours de livraison',      time: '11:15', done: false, current: true },
-  { key: 'delivered',  label: 'Livré au destinataire',      time: '—',     done: false },
-];
-
-const MOCK_PKG = {
-  id: 'PKG-00892',
-  from: 'Tarek M. — Menzah 6, Tunis',
-  to: 'Salma R. — Sfax Centre',
-  weight: '1.2 kg',
-  type: 'Standard',
-  estimatedArrival: 'Aujourd\'hui 12h30 – 13h00',
-  livreur: { name: 'Nabil K.', phone: '+216 55 123 456', rating: 4.8 },
+const STEP_ORDER = ['PENDING', 'ACCEPTED', 'IN_PROGRESS', 'COMPLETED'];
+const STEP_META = {
+  PENDING: 'Commande enregistrée',
+  ACCEPTED: 'Acceptée par le livreur',
+  IN_PROGRESS: 'En cours de livraison',
+  COMPLETED: 'Livré au destinataire',
 };
 
 export default function PackageTrackingScreen({ navigation, route }) {
-  const packageId = route?.params?.packageId || MOCK_PKG.id;
-  const [pkg, setPkg] = useState(MOCK_PKG);
-  const [steps, setSteps] = useState(MOCK_STEPS);
-  const [loading, setLoading] = useState(false);
+  const packageId = route?.params?.packageId;
+  const [pkg, setPkg] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      try {
-        const res = await api.get(`/api/packages/${packageId}/track`);
-        if (res.data?.package) setPkg(res.data.package);
-        if (res.data?.steps) setSteps(res.data.steps);
-      } catch {} finally {
-        setLoading(false);
-      }
-    })();
+  const load = useCallback(() => {
+    if (!packageId) { setError(true); setLoading(false); return; }
+    setLoading(true);
+    api.get(`/api/orders/${packageId}`)
+      .then(r => { setPkg(r.data.order); setError(false); })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
   }, [packageId]);
 
-  const currentStep = steps.find((s) => s.current);
-  const progress = steps.filter((s) => s.done).length / steps.length;
+  useEffect(() => { load(); }, [load]);
+
+  const currentIdx = pkg ? STEP_ORDER.indexOf(pkg.status === 'CANCELLED' ? 'PENDING' : pkg.status) : 0;
+  const progress = pkg && pkg.status !== 'CANCELLED' ? (currentIdx + 1) / STEP_ORDER.length : 0;
 
   return (
     <SafeAreaView style={styles.root}>
@@ -66,60 +54,64 @@ export default function PackageTrackingScreen({ navigation, route }) {
 
       {loading ? (
         <ActivityIndicator color={COLORS.accent} style={{ marginTop: 40 }} />
+      ) : error || !pkg ? (
+        <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 30 }}>
+          <Text style={{ fontSize: 40 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, marginTop: 12, textAlign: 'center' }}>
+            Impossible de charger le suivi de ce colis.
+          </Text>
+          <TouchableOpacity onPress={load} style={{ marginTop: 14, backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
+            <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
 
-          {/* Package ID + status */}
           <View style={styles.statusCard}>
-            <Text style={styles.pkgId}>{pkg.id}</Text>
-            {currentStep && (
-              <View style={styles.currentStep}>
-                <View style={styles.currentDot} />
-                <Text style={styles.currentLabel}>{currentStep.label}</Text>
-              </View>
-            )}
-            <Text style={styles.eta}>🕐 Livraison estimée : {pkg.estimatedArrival}</Text>
+            <Text style={styles.pkgId}>#{pkg.id}</Text>
+            <View style={styles.currentStep}>
+              <View style={styles.currentDot} />
+              <Text style={styles.currentLabel}>
+                {pkg.status === 'CANCELLED' ? 'Commande annulée' : STEP_META[pkg.status] || pkg.status}
+              </Text>
+            </View>
             <View style={styles.progressBar}>
               <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
             </View>
           </View>
 
-          {/* Steps timeline */}
           <Text style={styles.sectionLabel}>Étapes</Text>
           <View style={styles.timeline}>
-            {steps.map((step, idx) => (
-              <View key={step.key} style={styles.stepRow}>
-                <View style={styles.stepLeft}>
-                  <View style={[
-                    styles.stepDot,
-                    step.done && styles.stepDotDone,
-                    step.current && styles.stepDotCurrent,
-                  ]}>
-                    {step.done && !step.current && <Text style={{ color: '#000', fontSize: 10, fontWeight: '900' }}>✓</Text>}
-                    {step.current && <View style={styles.stepDotInner} />}
+            {STEP_ORDER.map((key, idx) => {
+              const done = pkg.status !== 'CANCELLED' && idx < currentIdx;
+              const current = pkg.status !== 'CANCELLED' && idx === currentIdx;
+              return (
+                <View key={key} style={styles.stepRow}>
+                  <View style={styles.stepLeft}>
+                    <View style={[styles.stepDot, done && styles.stepDotDone, current && styles.stepDotCurrent]}>
+                      {done && <Text style={{ color: '#000', fontSize: 10, fontWeight: '900' }}>✓</Text>}
+                      {current && <View style={styles.stepDotInner} />}
+                    </View>
+                    {idx < STEP_ORDER.length - 1 && (
+                      <View style={[styles.stepLine, done && styles.stepLineDone]} />
+                    )}
                   </View>
-                  {idx < steps.length - 1 && (
-                    <View style={[styles.stepLine, step.done && styles.stepLineDone]} />
-                  )}
+                  <View style={styles.stepContent}>
+                    <Text style={[styles.stepLabel, !done && !current && { color: COLORS.muted }]}>
+                      {STEP_META[key]}
+                    </Text>
+                  </View>
                 </View>
-                <View style={styles.stepContent}>
-                  <Text style={[styles.stepLabel, !step.done && !step.current && { color: COLORS.muted }]}>
-                    {step.label}
-                  </Text>
-                  <Text style={styles.stepTime}>{step.time}</Text>
-                </View>
-              </View>
-            ))}
+              );
+            })}
           </View>
 
-          {/* Package info */}
           <Text style={styles.sectionLabel}>Informations colis</Text>
           <View style={styles.infoCard}>
             {[
-              { icon: '📤', label: 'Expéditeur', value: pkg.from },
-              { icon: '📥', label: 'Destinataire', value: pkg.to },
-              { icon: '⚖️', label: 'Poids', value: pkg.weight },
-              { icon: '📋', label: 'Type', value: pkg.type },
+              { icon: '📤', label: 'Adresse de collecte', value: pkg.originAddress || '—' },
+              { icon: '📥', label: 'Adresse de livraison', value: pkg.destinationAddress || '—' },
+              { icon: '💰', label: 'Montant', value: `${Number(pkg.finalPrice ?? pkg.price ?? 0).toFixed(3)} TND` },
             ].map((row) => (
               <View key={row.label} style={styles.infoRow}>
                 <Text style={{ fontSize: 18 }}>{row.icon}</Text>
@@ -131,8 +123,7 @@ export default function PackageTrackingScreen({ navigation, route }) {
             ))}
           </View>
 
-          {/* Livreur */}
-          {pkg.livreur && (
+          {pkg.provider && (
             <>
               <Text style={styles.sectionLabel}>Votre livreur</Text>
               <View style={styles.livreurCard}>
@@ -140,12 +131,16 @@ export default function PackageTrackingScreen({ navigation, route }) {
                   <Text style={{ fontSize: 28 }}>🛵</Text>
                 </View>
                 <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={styles.livreurName}>{pkg.livreur.name}</Text>
-                  <Text style={styles.livreurRating}>⭐ {pkg.livreur.rating} · Livreur certifié</Text>
+                  <Text style={styles.livreurName}>{pkg.provider.name}</Text>
+                  {pkg.provider.avgRating != null && (
+                    <Text style={styles.livreurRating}>⭐ {pkg.provider.avgRating.toFixed(1)}</Text>
+                  )}
                 </View>
-                <TouchableOpacity style={styles.callBtn}>
-                  <Text style={{ fontSize: 20 }}>📞</Text>
-                </TouchableOpacity>
+                {pkg.provider.phone && (
+                  <TouchableOpacity style={styles.callBtn} onPress={() => Linking.openURL(`tel:${pkg.provider.phone}`)}>
+                    <Text style={{ fontSize: 20 }}>📞</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </>
           )}
@@ -174,7 +169,6 @@ const styles = StyleSheet.create({
   currentStep: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
   currentDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.accent },
   currentLabel: { color: COLORS.white, fontWeight: '700', fontSize: 14 },
-  eta: { color: COLORS.muted, fontSize: 12, marginBottom: 12 },
   progressBar: { height: 6, backgroundColor: COLORS.border, borderRadius: 3, overflow: 'hidden' },
   progressFill: { height: 6, backgroundColor: COLORS.accent, borderRadius: 3 },
   sectionLabel: { color: COLORS.muted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 },
@@ -194,7 +188,6 @@ const styles = StyleSheet.create({
   stepLineDone: { backgroundColor: COLORS.green },
   stepContent: { flex: 1, paddingBottom: 20 },
   stepLabel: { color: COLORS.white, fontSize: 14, fontWeight: '600' },
-  stepTime: { color: COLORS.muted, fontSize: 12, marginTop: 2 },
   infoCard: { backgroundColor: COLORS.surface, borderRadius: 14, borderWidth: 1, borderColor: COLORS.border, padding: 14, marginBottom: 16 },
   infoRow: { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: COLORS.border },
   infoLabel: { color: COLORS.muted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8 },

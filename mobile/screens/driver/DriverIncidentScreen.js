@@ -36,12 +36,24 @@ export default function DriverIncidentScreen({ navigation, route }) {
   const canSubmit = incidentType && description.trim().length >= 10;
 
   const handleSubmit = async () => {
+    if (!rideId) {
+      Alert.alert('Erreur', "Le signalement d'incident nécessite une course active.");
+      return;
+    }
     setSubmitting(true);
     try {
-      await api.post('/api/driver/incidents', { rideId, type: incidentType, description });
+      const orderRes = await api.get(`/api/orders/${rideId}`);
+      const clientId = orderRes.data.order?.client?.id || orderRes.data.order?.clientId;
+      if (!clientId) throw new Error('no client');
+      await api.post('/api/reports', {
+        orderId: rideId,
+        reportedUserId: clientId,
+        reasons: [incidentType],
+        details: description,
+      });
       setSubmitted(true);
     } catch {
-      setSubmitted(true);
+      Alert.alert('Erreur', "Impossible d'envoyer le signalement. Vérifiez votre connexion.");
     } finally {
       setSubmitting(false);
     }

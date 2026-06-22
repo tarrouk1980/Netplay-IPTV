@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  StatusBar, Switch,
+  StatusBar, Switch, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
+import useAuthStore from '../../store/authStore';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', surfaceAlt: '#16161F',
@@ -11,35 +13,31 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB', orange: '#E67E22',
 };
 
-const MOCK = {
-  name: 'Khaled Mansouri', zone: 'Tunis Nord', rating: 4.8,
-  deliveriesToday: 11, earningsToday: 55.50,
-  deliveriesTotal: 1247, earningsMonth: 1820.00,
-  vehicle: 'Scooter · TUN-5541', status: 'active',
-  joinDate: 'Janvier 2024',
-  docs: [
-    { label: 'Permis de conduire', status: 'valid', expires: '12/2028' },
-    { label: 'Carte d\'identité', status: 'valid', expires: '08/2027' },
-    { label: 'Assurance véhicule', status: 'warning', expires: '30/06/2026' },
-  ],
-  badges: ['⚡ Rapide', '⭐ Top noté', '🔥 100+ livraisons'],
-  recentDeliveries: [
-    { id: 'DEL-4441', merchant: 'Pizza Roma', fare: 6.50, time: '15:02', rating: 5 },
-    { id: 'DEL-4440', merchant: 'Burger House', fare: 7.00, time: '14:20', rating: null },
-    { id: 'DEL-4439', merchant: 'Épicerie Centrale', fare: 5.50, time: '13:45', rating: 4 },
-  ],
-};
-
-const DOC_META = {
-  valid:   { label: 'Valide',    color: COLORS.green },
-  warning: { label: 'Expire bientôt', color: COLORS.orange },
-  expired: { label: 'Expiré',   color: COLORS.red },
-};
-
 export default function LivreurProfileScreen({ navigation }) {
+  const { user } = useAuthStore();
   const [notifEnabled, setNotifEnabled] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [tab, setTab] = useState('info');
+  const [today, setToday] = useState(null);
+  const [month, setMonth] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(() => {
+    setLoading(true);
+    Promise.all([
+      api.get('/api/delivery/livreur/earnings', { params: { period: 'today' } }),
+      api.get('/api/delivery/livreur/earnings', { params: { period: 'month' } }),
+    ])
+      .then(([t, m]) => { setToday(t.data); setMonth(m.data); })
+      .catch(() => { setToday(null); setMonth(null); })
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const joinDate = user?.createdAt
+    ? new Date(user.createdAt).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+    : '—';
 
   return (
     <SafeAreaView style={styles.root}>
@@ -60,41 +58,36 @@ export default function LivreurProfileScreen({ navigation }) {
         <View style={styles.avatar}>
           <Text style={{ fontSize: 40 }}>🛵</Text>
         </View>
-        <Text style={styles.profileName}>{MOCK.name}</Text>
-        <Text style={styles.profileRole}>LIVREUR · {MOCK.zone}</Text>
+        <Text style={styles.profileName}>{user?.name || 'Livreur'}</Text>
+        <Text style={styles.profileRole}>LIVREUR</Text>
         <View style={styles.ratingRow}>
-          <Text style={styles.ratingText}>⭐ {MOCK.rating}</Text>
-          <Text style={styles.ratingDot}>·</Text>
-          <Text style={styles.ratingText}>{MOCK.deliveriesTotal} livraisons</Text>
-          <Text style={styles.ratingDot}>·</Text>
-          <Text style={styles.ratingText}>Depuis {MOCK.joinDate}</Text>
-        </View>
-        <View style={styles.badgeRow}>
-          {MOCK.badges.map(b => (
-            <View key={b} style={styles.badge}><Text style={styles.badgeText}>{b}</Text></View>
-          ))}
+          <Text style={styles.ratingText}>Depuis {joinDate}</Text>
         </View>
       </View>
 
       {/* Today stats */}
-      <View style={styles.statsRow}>
-        <View style={styles.statCard}>
-          <Text style={styles.statNum}>{MOCK.deliveriesToday}</Text>
-          <Text style={styles.statLbl}>Livraisons</Text>
+      {loading ? (
+        <ActivityIndicator color={COLORS.accent} size="small" style={{ marginBottom: 12 }} />
+      ) : (
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}>
+            <Text style={styles.statNum}>{today?.totalDeliveries ?? '—'}</Text>
+            <Text style={styles.statLbl}>Livraisons auj.</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={[styles.statNum, { color: COLORS.accent }]}>{today ? today.totalRevenue.toFixed(2) : '—'} TND</Text>
+            <Text style={styles.statLbl}>Gains auj.</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={[styles.statNum, { color: COLORS.green }]}>{month ? month.totalRevenue.toFixed(0) : '—'} TND</Text>
+            <Text style={styles.statLbl}>Ce mois</Text>
+          </View>
         </View>
-        <View style={styles.statCard}>
-          <Text style={[styles.statNum, { color: COLORS.accent }]}>{MOCK.earningsToday.toFixed(2)} TND</Text>
-          <Text style={styles.statLbl}>Gains auj.</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={[styles.statNum, { color: COLORS.green }]}>{MOCK.earningsMonth.toLocaleString()} TND</Text>
-          <Text style={styles.statLbl}>Ce mois</Text>
-        </View>
-      </View>
+      )}
 
       {/* Tabs */}
       <View style={styles.tabRow}>
-        {[['info', 'Infos'], ['docs', 'Docs'], ['history', 'Historique']].map(([val, lbl]) => (
+        {[['info', 'Infos'], ['history', 'Historique']].map(([val, lbl]) => (
           <TouchableOpacity
             key={val}
             style={[styles.tab, tab === val && styles.tabActive]}
@@ -110,9 +103,8 @@ export default function LivreurProfileScreen({ navigation }) {
         {tab === 'info' && (
           <>
             <View style={styles.infoCard}>
-              <Text style={styles.infoRow2}>🛵 Véhicule : <Text style={{ color: COLORS.white }}>{MOCK.vehicle}</Text></Text>
-              <Text style={styles.infoRow2}>📍 Zone : <Text style={{ color: COLORS.white }}>{MOCK.zone}</Text></Text>
-              <Text style={styles.infoRow2}>🟢 Statut : <Text style={{ color: COLORS.green }}>Actif</Text></Text>
+              <Text style={styles.infoRow2}>📞 Téléphone : <Text style={{ color: COLORS.white }}>{user?.phone || '—'}</Text></Text>
+              <Text style={styles.infoRow2}>🟢 Statut : <Text style={{ color: user?.isOnline ? COLORS.green : COLORS.muted }}>{user?.isOnline ? 'En ligne' : 'Hors ligne'}</Text></Text>
             </View>
 
             <Text style={styles.sectionTitle}>🔔 Préférences notifications</Text>
@@ -148,45 +140,19 @@ export default function LivreurProfileScreen({ navigation }) {
           </>
         )}
 
-        {tab === 'docs' && (
-          <>
-            {MOCK.docs.map((d) => {
-              const meta = DOC_META[d.status];
-              return (
-                <View key={d.label} style={[styles.docCard, { borderColor: meta.color + '55' }]}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.docLabel}>{d.label}</Text>
-                    <Text style={styles.docExpire}>Expire : {d.expires}</Text>
-                  </View>
-                  <View style={[styles.docBadge, { backgroundColor: meta.color + '22' }]}>
-                    <Text style={{ color: meta.color, fontSize: 12, fontWeight: '700' }}>{meta.label}</Text>
-                  </View>
-                </View>
-              );
-            })}
-            <TouchableOpacity style={styles.uploadBtn}>
-              <Text style={styles.uploadBtnText}>📤 Mettre à jour un document</Text>
-            </TouchableOpacity>
-          </>
-        )}
-
         {tab === 'history' && (
           <>
-            {MOCK.recentDeliveries.map((d) => (
+            {(month?.orders || []).slice(0, 5).map((d) => (
               <View key={d.id} style={styles.delivRow}>
-                <Text style={styles.delivTime}>{d.time}</Text>
-                <Text style={styles.delivMerchant} numberOfLines={1}>{d.merchant}</Text>
+                <Text style={styles.delivTime}>{new Date(d.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}</Text>
+                <Text style={styles.delivMerchant} numberOfLines={1}>{d.client?.name || 'Client'}</Text>
                 <View style={{ flex: 1 }} />
-                <Text style={styles.delivFare}>{d.fare.toFixed(2)} TND</Text>
-                {d.rating ? (
-                  <Text style={styles.delivRating}>⭐{d.rating}</Text>
-                ) : (
-                  <View style={styles.pendingBadge}>
-                    <Text style={{ color: COLORS.muted, fontSize: 9 }}>En attente</Text>
-                  </View>
-                )}
+                <Text style={styles.delivFare}>{Number(d.price || 0).toFixed(2)} TND</Text>
               </View>
             ))}
+            {(!month || month.orders.length === 0) && (
+              <Text style={{ color: COLORS.muted, textAlign: 'center', marginTop: 10 }}>Aucune livraison récente</Text>
+            )}
             <TouchableOpacity
               style={styles.seeAllBtn}
               onPress={() => navigation.navigate('LivreurHistory')}
@@ -240,18 +206,10 @@ const styles = StyleSheet.create({
   actionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   actionCard: { width: '22%', backgroundColor: COLORS.surface, borderRadius: 10, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border, gap: 6 },
   actionLabel: { color: COLORS.muted, fontSize: 10, textAlign: 'center' },
-  docCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.surface, borderRadius: 12, padding: 14, borderWidth: 1, marginBottom: 8 },
-  docLabel: { color: COLORS.white, fontSize: 13, fontWeight: '600' },
-  docExpire: { color: COLORS.muted, fontSize: 11, marginTop: 2 },
-  docBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
-  uploadBtn: { backgroundColor: COLORS.surface, borderRadius: 12, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border, marginTop: 8 },
-  uploadBtnText: { color: COLORS.accent, fontSize: 13, fontWeight: '700' },
   delivRow: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: COLORS.surface, borderRadius: 10, padding: 12, marginBottom: 6, borderWidth: 1, borderColor: COLORS.border },
   delivTime: { color: COLORS.muted, fontSize: 12, width: 40 },
   delivMerchant: { color: COLORS.white, fontSize: 13, fontWeight: '600', maxWidth: 120 },
   delivFare: { color: COLORS.accent, fontSize: 13, fontWeight: '700' },
-  delivRating: { color: COLORS.accent, fontSize: 12, fontWeight: '700', width: 36, textAlign: 'right' },
-  pendingBadge: { backgroundColor: COLORS.surfaceAlt, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, borderWidth: 1, borderColor: COLORS.border },
   seeAllBtn: { alignItems: 'center', paddingVertical: 14 },
   seeAllText: { color: COLORS.accent, fontSize: 13, fontWeight: '700' },
 });
