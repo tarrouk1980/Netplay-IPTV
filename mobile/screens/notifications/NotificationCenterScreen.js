@@ -27,19 +27,6 @@ const NOTIF_TYPES = {
 
 const FILTER_TABS = ['Tout', 'Non lus', 'Commandes', 'Promos', 'Système'];
 
-const MOCK_NOTIFS = [
-  { id: '1',  type: 'ORDER_UPDATE',   title: 'Votre chauffeur est en route',  body: 'Mohamed B. arrive dans ~5 min. Soyez prêt(e) !',                    read: false, createdAt: new Date(Date.now() - 120000).toISOString(),   action: { screen: 'MultiOrderTracker' } },
-  { id: '2',  type: 'PAYMENT',        title: 'Paiement reçu',                 body: 'Votre wallet a été rechargé de 50 TND avec succès.',                 read: false, createdAt: new Date(Date.now() - 600000).toISOString(),   action: { screen: 'Wallet' } },
-  { id: '3',  type: 'PROMO',          title: '🎉 Offre exclusive !',           body: '-20% sur votre prochain taxi. Code: EASY20. Valable 48h.',           read: false, createdAt: new Date(Date.now() - 3600000).toISOString(),  action: { screen: 'PromoCode' } },
-  { id: '4',  type: 'POINTS',         title: '+15 EasyPoints gagnés',          body: 'Vous avez gagné 15 points pour votre trajet SOS.',                  read: true,  createdAt: new Date(Date.now() - 7200000).toISOString(),  action: { screen: 'EasyPointsDashboard' } },
-  { id: '5',  type: 'DRIVER_ARRIVED', title: 'Votre livreur est arrivé',       body: 'Slim M. est devant votre porte avec votre commande.',               read: true,  createdAt: new Date(Date.now() - 86400000).toISOString(), action: null },
-  { id: '6',  type: 'KYC',            title: 'KYC approuvé ✅',                body: 'Votre dossier a été validé. Votre compte est maintenant certifié.', read: true,  createdAt: new Date(Date.now() - 86400000 * 2).toISOString(), action: null },
-  { id: '7',  type: 'RATING',         title: 'Notez votre dernier trajet',     body: 'Comment s\'est passé votre course avec Mohamed B. ?',               read: true,  createdAt: new Date(Date.now() - 86400000 * 3).toISOString(), action: { screen: 'History' } },
-  { id: '8',  type: 'PROMO',          title: 'Livraison offerte ce week-end',  body: 'Commandez avant dimanche minuit et profitez de la livraison gratuite.', read: true, createdAt: new Date(Date.now() - 86400000 * 4).toISOString(), action: null },
-  { id: '9',  type: 'SYSTEM',         title: 'Mise à jour disponible',         body: 'Une nouvelle version d\'EASYWAY est disponible sur le store.',      read: true,  createdAt: new Date(Date.now() - 86400000 * 5).toISOString(), action: null },
-  { id: '10', type: 'SUPPORT',        title: 'Réponse de notre équipe',        body: 'Nour a répondu à votre ticket #A1B2C3D4.',                          read: true,  createdAt: new Date(Date.now() - 86400000 * 6).toISOString(), action: { screen: 'LiveChat' } },
-];
-
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr);
   const mins = Math.floor(diff / 60000);
@@ -82,9 +69,10 @@ function NotifCard({ notif, onPress, onDismiss }) {
 }
 
 export default function NotificationCenterScreen({ navigation }) {
-  const [notifs, setNotifs] = useState(MOCK_NOTIFS);
+  const [notifs, setNotifs] = useState([]);
   const [filter, setFilter] = useState('Tout');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const unreadCount = notifs.filter(n => !n.read).length;
 
@@ -92,9 +80,11 @@ export default function NotificationCenterScreen({ navigation }) {
     setLoading(true);
     try {
       const res = await api.get('/api/notifications');
-      if (res.data?.notifications?.length) setNotifs(res.data.notifications);
-    } catch {}
-    finally { setLoading(false); }
+      setNotifs(res.data?.notifications || []);
+      setError(false);
+    } catch {
+      setError(true);
+    } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -169,6 +159,15 @@ export default function NotificationCenterScreen({ navigation }) {
 
       {loading ? (
         <View style={styles.centered}><ActivityIndicator color={COLORS.accent} size="large" /></View>
+      ) : error ? (
+        <View style={styles.centered}>
+          <Text style={styles.emptyEmoji}>⚠️</Text>
+          <Text style={styles.emptyTitle}>Erreur de chargement</Text>
+          <Text style={styles.emptyText}>Vérifiez votre connexion.</Text>
+          <TouchableOpacity onPress={load} style={{ marginTop: 16, backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
+            <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
       ) : filtered.length === 0 ? (
         <View style={styles.centered}>
           <Text style={styles.emptyEmoji}>🔔</Text>

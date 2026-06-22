@@ -26,57 +26,6 @@ const COLORS = {
   orange: '#F57C00',
 };
 
-const SPECIALTIES = {
-  REMORQUAGE: { label: 'Remorquage', icon: '🪝' },
-  BATTERIE: { label: 'Batterie', icon: '🔋' },
-  PNEU: { label: 'Pneu', icon: '⚙️' },
-  SERRURERIE: { label: 'Serrurerie', icon: '🔑' },
-  CARBURANT: { label: 'Carburant', icon: '⛽' },
-  MECANIQUE: { label: 'Mécanique', icon: '🔧' },
-};
-
-const MOCK_DEPANNEURS = [
-  {
-    id: 'dep-001',
-    name: 'Karim Bouzid',
-    rating: 4.8,
-    reviewCount: 124,
-    distanceKm: 1.2,
-    eta: 8,
-    status: 'ONLINE',
-    phone: '+21622345678',
-    specialties: ['REMORQUAGE', 'PNEU', 'BATTERIE'],
-    priceFrom: 35,
-    completedJobs: 312,
-  },
-  {
-    id: 'dep-002',
-    name: 'Sami Mansour',
-    rating: 4.6,
-    reviewCount: 87,
-    distanceKm: 2.4,
-    eta: 14,
-    status: 'ONLINE',
-    phone: '+21655678901',
-    specialties: ['MECANIQUE', 'CARBURANT'],
-    priceFrom: 25,
-    completedJobs: 198,
-  },
-  {
-    id: 'dep-003',
-    name: 'Ahmed Trabelsi',
-    rating: 4.9,
-    reviewCount: 210,
-    distanceKm: 3.8,
-    eta: 20,
-    status: 'ONLINE',
-    phone: '+21698234567',
-    specialties: ['REMORQUAGE', 'SERRURERIE', 'BATTERIE', 'PNEU'],
-    priceFrom: 40,
-    completedJobs: 541,
-  },
-];
-
 function Stars({ rating }) {
   return (
     <View style={{ flexDirection: 'row', gap: 1 }}>
@@ -93,14 +42,24 @@ export default function SOSNearbyDepanneursScreen({ navigation, route }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [sortBy, setSortBy] = useState('distance');
+  const [error, setError] = useState(false);
 
   const load = useCallback(async (silent = false) => {
     try {
       const loc = await getCurrentLocationWithAddress();
       const res = await api.get('/api/sos/nearby', { params: { lat: loc?.coords?.lat, lng: loc?.coords?.lng } });
-      setDepanneurs(res.data.depanneurs || []);
+      const list = (res.data?.depanneurs || []).map((d) => ({
+        id: d.id,
+        name: d.name,
+        phone: d.phone,
+        rating: d.avgRating || 0,
+        distanceKm: d.distanceKm != null ? Math.round(d.distanceKm * 10) / 10 : 0,
+      }));
+      setDepanneurs(list);
+      setError(false);
     } catch {
-      if (!silent) setDepanneurs(MOCK_DEPANNEURS);
+      setError(true);
+      if (!silent) setDepanneurs([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -112,7 +71,6 @@ export default function SOSNearbyDepanneursScreen({ navigation, route }) {
   const sorted = [...depanneurs].sort((a, b) => {
     if (sortBy === 'distance') return a.distanceKm - b.distanceKm;
     if (sortBy === 'rating') return b.rating - a.rating;
-    if (sortBy === 'price') return a.priceFrom - b.priceFrom;
     return 0;
   });
 
@@ -125,6 +83,22 @@ export default function SOSNearbyDepanneursScreen({ navigation, route }) {
   };
 
   if (loading) return <View style={s.centered}><ActivityIndicator color={COLORS.accent} size="large" /></View>;
+
+  if (error && depanneurs.length === 0) {
+    return (
+      <SafeAreaView style={s.root}>
+        <View style={s.centered}>
+          <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, fontSize: 14, textAlign: 'center', marginBottom: 16, paddingHorizontal: 30 }}>
+            Impossible de récupérer les dépanneurs proches. Vérifiez votre connexion.
+          </Text>
+          <TouchableOpacity onPress={() => { setLoading(true); load(); }} style={{ backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
+            <Text style={{ color: '#FFF', fontWeight: '700' }}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={s.root}>
@@ -149,7 +123,6 @@ export default function SOSNearbyDepanneursScreen({ navigation, route }) {
         {[
           { key: 'distance', label: '📍 Distance' },
           { key: 'rating', label: '⭐ Note' },
-          { key: 'price', label: '💰 Prix' },
         ].map((opt) => (
           <TouchableOpacity
             key={opt.key}
@@ -182,33 +155,18 @@ export default function SOSNearbyDepanneursScreen({ navigation, route }) {
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
                   <Stars rating={item.rating} />
-                  <Text style={s.ratingTxt}>{item.rating} ({item.reviewCount})</Text>
+                  <Text style={s.ratingTxt}>{item.rating ? item.rating.toFixed(1) : '—'}</Text>
                 </View>
-                <Text style={s.jobs}>{item.completedJobs} interventions</Text>
               </View>
               <View style={{ alignItems: 'flex-end' }}>
                 <Text style={[s.distance, { color: item.distanceKm < 2 ? COLORS.green : COLORS.orange }]}>
                   {item.distanceKm} km
                 </Text>
-                <Text style={s.eta}>⏱ ~{item.eta} min</Text>
               </View>
             </View>
 
-            {/* Specialties */}
-            <View style={s.specialtiesRow}>
-              {item.specialties.map((sp) => {
-                const cfg = SPECIALTIES[sp] || { label: sp, icon: '🔧' };
-                return (
-                  <View key={sp} style={s.specialtyChip}>
-                    <Text style={{ fontSize: 10 }}>{cfg.icon}</Text>
-                    <Text style={s.specialtyTxt}>{cfg.label}</Text>
-                  </View>
-                );
-              })}
-            </View>
-
             <View style={s.bottomRow}>
-              <Text style={s.price}>À partir de <Text style={{ color: COLORS.accent, fontWeight: '800' }}>{item.priceFrom} TND</Text></Text>
+              <View />
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 <TouchableOpacity style={s.callBtn} onPress={() => handleCall(item.phone)}>
                   <Text style={s.callBtnTxt}>📞</Text>
