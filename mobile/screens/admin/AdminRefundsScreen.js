@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,83 +6,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const REMBOURSEMENTS_INIT = [
-  {
-    id: 'RMB-001',
-    client: 'Karim Benali',
-    service: 'Taxi',
-    montant: 850,
-    raison: 'Chauffeur annulé sans prévenir',
-    date: '02 juin 2026',
-    statut: 'En attente',
-  },
-  {
-    id: 'RMB-002',
-    client: 'Samira Hadj',
-    service: 'Livraison',
-    montant: 1200,
-    raison: 'Colis endommagé à la réception',
-    date: '01 juin 2026',
-    statut: 'En attente',
-  },
-  {
-    id: 'RMB-003',
-    client: 'Yacine Meziane',
-    service: 'SOS',
-    montant: 3500,
-    raison: 'Technicien non qualifié',
-    date: '31 mai 2026',
-    statut: 'Approuvé',
-  },
-  {
-    id: 'RMB-004',
-    client: 'Nadia Ouali',
-    service: 'Livraison',
-    montant: 650,
-    raison: 'Commande incorrecte livrée',
-    date: '30 mai 2026',
-    statut: 'Rejeté',
-  },
-  {
-    id: 'RMB-005',
-    client: 'Omar Cherif',
-    service: 'Taxi',
-    montant: 1100,
-    raison: 'Mauvais itinéraire pris',
-    date: '29 mai 2026',
-    statut: 'En attente',
-  },
-  {
-    id: 'RMB-006',
-    client: 'Fatima Bouzid',
-    service: 'SOS',
-    montant: 2800,
-    raison: 'Panne non résolue',
-    date: '28 mai 2026',
-    statut: 'Approuvé',
-  },
-  {
-    id: 'RMB-007',
-    client: 'Amine Kaci',
-    service: 'Livraison',
-    montant: 400,
-    raison: 'Retard de plus de 2 heures',
-    date: '27 mai 2026',
-    statut: 'Rejeté',
-  },
-  {
-    id: 'RMB-008',
-    client: 'Leila Mansouri',
-    service: 'Taxi',
-    montant: 750,
-    raison: 'Véhicule non conforme',
-    date: '26 mai 2026',
-    statut: 'En attente',
-  },
-];
+import api from '../../services/api';
 
 const FILTRES = ['Tous', 'En attente', 'Approuvé', 'Rejeté'];
 
@@ -99,14 +26,54 @@ const BG_STATUT = {
 };
 
 const ICONE_SERVICE = {
-  Taxi: '🚕',
-  Livraison: '📦',
+  TAXI: '🚕',
+  DELIVERY: '📦',
   SOS: '🆘',
+  GROCERY: '🛒',
+};
+
+const SERVICE_LABEL = {
+  TAXI: 'Taxi',
+  DELIVERY: 'Livraison',
+  SOS: 'SOS',
+  GROCERY: 'Épicerie',
+};
+
+const STATUT_LABEL = {
+  OPEN: 'En attente',
+  IN_REVIEW: 'En attente',
+  RESOLVED: 'Approuvé',
+  DISMISSED: 'Rejeté',
 };
 
 export default function AdminRefundsScreen({ navigation }) {
-  const [remboursements, setRemboursements] = useState(REMBOURSEMENTS_INIT);
+  const [remboursements, setRemboursements] = useState([]);
   const [filtreActif, setFiltreActif] = useState('Tous');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const load = useCallback(() => {
+    setLoading(true);
+    api.get('/api/admin/disputes')
+      .then((r) => {
+        const disputes = r.data.disputes || [];
+        setRemboursements(disputes.map((d) => ({
+          id: d.id,
+          orderId: d.orderId,
+          client: d.order?.client?.name || d.reporter?.name || 'Client',
+          service: d.order?.serviceType || 'SOS',
+          montant: Number(d.order?.price || 0),
+          raison: d.reason,
+          date: d.createdAt ? new Date(d.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }) : '',
+          statut: STATUT_LABEL[d.status] || d.status,
+        })));
+        setError(false);
+      })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   const total = remboursements.length;
   const montantTotal = remboursements.reduce((acc, r) => acc + r.montant, 0);
@@ -117,12 +84,6 @@ export default function AdminRefundsScreen({ navigation }) {
       ? remboursements
       : remboursements.filter((r) => r.statut === filtreActif);
 
-  const changerStatut = (id, nouveauStatut) => {
-    setRemboursements((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, statut: nouveauStatut } : r))
-    );
-  };
-
   const approuver = (remboursement) => {
     Alert.alert(
       'Approuver le remboursement',
@@ -131,7 +92,17 @@ export default function AdminRefundsScreen({ navigation }) {
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Approuver',
-          onPress: () => changerStatut(remboursement.id, 'Approuvé'),
+          onPress: async () => {
+            try {
+              if (remboursement.montant > 0) {
+                await api.post(`/api/admin/disputes/${remboursement.id}/refund`, { amount: remboursement.montant });
+              }
+              await api.patch(`/api/admin/disputes/${remboursement.id}/status`, { status: 'RESOLVED' });
+              load();
+            } catch {
+              Alert.alert('Erreur', "Impossible d'approuver le remboursement.");
+            }
+          },
         },
       ]
     );
@@ -146,11 +117,40 @@ export default function AdminRefundsScreen({ navigation }) {
         {
           text: 'Rejeter',
           style: 'destructive',
-          onPress: () => changerStatut(remboursement.id, 'Rejeté'),
+          onPress: async () => {
+            try {
+              await api.patch(`/api/admin/disputes/${remboursement.id}/status`, { status: 'DISMISSED' });
+              load();
+            } catch {
+              Alert.alert('Erreur', "Impossible de rejeter la demande.");
+            }
+          },
         },
       ]
     );
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator color="#F5A623" size="large" />
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={[styles.container, { alignItems: 'center', justifyContent: 'center', padding: 30 }]}>
+        <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+        <Text style={{ color: '#8E8E9A', textAlign: 'center', marginBottom: 16 }}>
+          Impossible de charger les remboursements.
+        </Text>
+        <TouchableOpacity onPress={load} style={{ backgroundColor: '#F5A623', borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 }}>
+          <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -206,14 +206,19 @@ export default function AdminRefundsScreen({ navigation }) {
         </ScrollView>
 
         <View style={styles.liste}>
+          {remboursementsFiltres.length === 0 && (
+            <View style={{ alignItems: 'center', paddingTop: 40 }}>
+              <Text style={{ color: '#8E8E9A' }}>Aucune demande</Text>
+            </View>
+          )}
           {remboursementsFiltres.map((remboursement) => (
             <View key={remboursement.id} style={styles.remboursementCard}>
               <View style={styles.cardHeader}>
                 <View style={styles.cardHeaderGauche}>
-                  <Text style={styles.serviceIcone}>{ICONE_SERVICE[remboursement.service]}</Text>
+                  <Text style={styles.serviceIcone}>{ICONE_SERVICE[remboursement.service] || '🆘'}</Text>
                   <View>
                     <Text style={styles.clientNom}>{remboursement.client}</Text>
-                    <Text style={styles.serviceTexte}>{remboursement.service} • {remboursement.date}</Text>
+                    <Text style={styles.serviceTexte}>{SERVICE_LABEL[remboursement.service] || remboursement.service} • {remboursement.date}</Text>
                   </View>
                 </View>
                 <View
