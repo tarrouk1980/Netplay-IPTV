@@ -15,12 +15,7 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB',
 };
 
-const MOCK_ORDERS = [
-  { id: 'LIV001', clientName: 'Nadia K.', pickup: 'Pizza Roma, Lac 1', dropoff: 'Berges du Lac 2', distance: 2.3, amount: 5.000, type: 'FOOD', createdAt: '14:45' },
-  { id: 'LIV002', clientName: 'Ahmed B.', pickup: 'Carrefour Market, La Marsa', dropoff: 'Sidi Bou Said', distance: 4.1, amount: 7.500, type: 'GROCERY', createdAt: '14:40' },
-];
-
-const MOCK_STATS = { todayEarnings: 34.500, todayDeliveries: 7, rating: 4.9, streak: 3 };
+const EMPTY_STATS = { todayEarnings: 0, todayDeliveries: 0, rating: null };
 
 function OrderCard({ item, onAccept }) {
   const typeColor = item.type === 'FOOD' ? COLORS.accent : COLORS.blue;
@@ -65,20 +60,26 @@ export default function LivreurDashboardScreen({ navigation }) {
   const { logout } = useAuthStore();
   const [online, setOnline] = useState(false);
   const [orders, setOrders] = useState([]);
-  const [stats, setStats] = useState(MOCK_STATS);
+  const [stats, setStats] = useState(EMPTY_STATS);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState(false);
+  const [error, setError] = useState(false);
 
   const load = useCallback(() => {
     Promise.all([
-      api.get('/api/delivery/livreur/nearby-orders').catch(() => ({ data: { orders: MOCK_ORDERS } })),
-      api.get('/api/delivery/earnings').catch(() => ({ data: MOCK_STATS })),
-      api.get('/api/delivery/livreur/status').catch(() => ({ data: { online: false } })),
+      api.get('/api/delivery/livreur/nearby-orders'),
+      api.get('/api/delivery/earnings'),
+      api.get('/api/delivery/livreur/status'),
     ]).then(([ordRes, statsRes, statusRes]) => {
-      setOrders(ordRes.data.orders || MOCK_ORDERS);
-      setStats(statsRes.data || MOCK_STATS);
+      setOrders(ordRes.data.orders || []);
+      setStats({
+        todayEarnings: statsRes.data.today || 0,
+        todayDeliveries: statsRes.data.todayDeliveries || 0,
+        rating: statsRes.data.rating,
+      });
       setOnline(statusRes.data.online || false);
-    }).finally(() => setLoading(false));
+      setError(false);
+    }).catch(() => setError(true)).finally(() => setLoading(false));
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -96,7 +97,7 @@ export default function LivreurDashboardScreen({ navigation }) {
       await api.patch('/api/delivery/livreur/status', { online: val });
       setOnline(val);
     } catch {
-      setOnline(v => v);
+      Alert.alert('Erreur', 'Impossible de changer votre statut. Vérifiez votre connexion.');
     } finally {
       setToggling(false);
     }
@@ -143,6 +144,16 @@ export default function LivreurDashboardScreen({ navigation }) {
 
       {loading ? (
         <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} />
+      ) : error ? (
+        <View style={{ alignItems: 'center', marginTop: 40, paddingHorizontal: 30 }}>
+          <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, fontSize: 14, textAlign: 'center', marginBottom: 16 }}>
+            Impossible de charger votre tableau de bord. Vérifiez votre connexion.
+          </Text>
+          <TouchableOpacity onPress={() => { setLoading(true); load(); }} style={{ backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
+            <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
@@ -156,16 +167,10 @@ export default function LivreurDashboardScreen({ navigation }) {
               <Text style={styles.statLabel}>livraisons</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={[styles.statNum, { color: COLORS.accent }]}>★ {stats.rating}</Text>
+              <Text style={[styles.statNum, { color: COLORS.accent }]}>{stats.rating ? `★ ${stats.rating.toFixed(1)}` : '—'}</Text>
               <Text style={styles.statLabel}>note</Text>
             </View>
           </View>
-
-          {stats.streak >= 3 && (
-            <View style={styles.streakBanner}>
-              <Text style={styles.streakText}>🔥 Série de {stats.streak} jours consécutifs !</Text>
-            </View>
-          )}
 
           <Text style={styles.sectionTitle}>
             {online ? `LIVRAISONS DISPONIBLES (${orders.length})` : 'PASSEZ EN LIGNE POUR VOIR LES LIVRAISONS'}

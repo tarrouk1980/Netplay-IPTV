@@ -17,17 +17,8 @@ const PANNE_ICON = {
   CARBURANT: '⛽', ACCIDENT: '🚨', AUTRE: '🔧',
 };
 
-const MOCK_HISTORY = [
-  { id: 'SOS1', type: 'BATTERIE', client: 'Nadia K.', address: 'Berges du Lac, Tunis', date: '03 juin 14:32', duration: '18 min', amount: 45, rating: 5, status: 'DONE' },
-  { id: 'SOS2', type: 'CREVAISON', client: 'Karim B.', address: 'La Marsa, Tunis', date: '02 juin 09:15', duration: '25 min', amount: 55, rating: 4, status: 'DONE' },
-  { id: 'SOS3', type: 'CARBURANT', client: 'Sara M.', address: 'Centre Urbain Nord', date: '01 juin 18:00', duration: '12 min', amount: 30, rating: 5, status: 'DONE' },
-  { id: 'SOS4', type: 'PANNE_MOTEUR', client: 'Ahmed R.', address: 'Route de Bizerte', date: '30 mai 11:20', duration: '45 min', amount: 120, rating: 3, status: 'DONE' },
-  { id: 'SOS5', type: 'ACCIDENT', client: 'Rim H.', address: 'Ariana Ville', date: '29 mai 16:44', duration: '35 min', amount: 90, rating: 4, status: 'DONE' },
-  { id: 'SOS6', type: 'AUTRE', client: 'Hatem K.', address: 'Ben Arous', date: '28 mai 08:00', duration: '20 min', amount: 40, rating: 5, status: 'DONE' },
-];
-
-function stars(n) {
-  return Array.from({ length: 5 }, (_, i) => i < n ? '★' : '☆').join('');
+function fmtDate(d) {
+  return new Date(d).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
 export default function DepanneurHistoryScreen({ navigation }) {
@@ -35,12 +26,27 @@ export default function DepanneurHistoryScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [expanded, setExpanded] = useState(null);
+  const [error, setError] = useState(false);
+  const [rating, setRating] = useState(null);
 
   const load = useCallback(() => {
     setLoading(true);
     api.get('/api/sos/depanneur/dashboard')
-      .then(r => setHistory(r.data.history || MOCK_HISTORY))
-      .catch(() => setHistory(MOCK_HISTORY))
+      .then(r => {
+        const list = (r.data?.history || []).map(o => ({
+          id: o.id,
+          type: o.metadata?.sosType?.toUpperCase?.() || 'AUTRE',
+          client: o.client?.name || 'Client',
+          address: o.destinationAddress || o.originAddress || '—',
+          date: fmtDate(o.completedAt || o.createdAt),
+          amount: o.finalPrice ?? Number(o.price || 0),
+          status: o.status,
+        }));
+        setHistory(list);
+        setRating(r.data?.stats?.rating ?? null);
+        setError(false);
+      })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -52,7 +58,7 @@ export default function DepanneurHistoryScreen({ navigation }) {
   });
 
   const totalAmount = history.reduce((s, h) => s + h.amount, 0);
-  const avgRating = history.length ? (history.reduce((s, h) => s + h.rating, 0) / history.length).toFixed(1) : '—';
+  const avgRating = rating != null ? rating.toFixed(1) : '—';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -96,6 +102,16 @@ export default function DepanneurHistoryScreen({ navigation }) {
 
       {loading ? (
         <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} />
+      ) : error ? (
+        <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 30 }}>
+          <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, fontSize: 14, textAlign: 'center', marginBottom: 16 }}>
+            Impossible de charger vos interventions. Vérifiez votre connexion.
+          </Text>
+          <TouchableOpacity onPress={load} style={{ backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
+            <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
         <FlatList
           data={filtered}
@@ -126,8 +142,7 @@ export default function DepanneurHistoryScreen({ navigation }) {
                     <Text style={styles.cardDate}>{item.date}</Text>
                   </View>
                   <View style={styles.cardRight}>
-                    <Text style={styles.cardAmount}>{item.amount} TND</Text>
-                    <Text style={styles.cardRating}>{stars(item.rating)}</Text>
+                    <Text style={styles.cardAmount}>{item.amount.toFixed(2)} TND</Text>
                   </View>
                 </View>
 
@@ -138,16 +153,8 @@ export default function DepanneurHistoryScreen({ navigation }) {
                       <Text style={styles.detailValue}>{item.address}</Text>
                     </View>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>⏱️ Durée</Text>
-                      <Text style={styles.detailValue}>{item.duration}</Text>
-                    </View>
-                    <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>💰 Gagné</Text>
-                      <Text style={[styles.detailValue, { color: COLORS.green }]}>{item.amount} TND</Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>⭐ Note</Text>
-                      <Text style={[styles.detailValue, { color: COLORS.accent }]}>{stars(item.rating)} ({item.rating}/5)</Text>
+                      <Text style={[styles.detailValue, { color: COLORS.green }]}>{item.amount.toFixed(2)} TND</Text>
                     </View>
                   </View>
                 )}

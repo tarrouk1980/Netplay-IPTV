@@ -786,7 +786,7 @@ router.get('/earnings', authenticate, async (req, res) => {
     startOfWeek.setHours(0, 0, 0, 0);
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const [todayRes, weekRes, monthRes, countRes] = await Promise.all([
+    const [todayRes, weekRes, monthRes, countRes, todayCountRes, ratingUser] = await Promise.all([
       prisma.order.aggregate({
         where: { providerId: req.user.id, serviceType: 'DELIVERY', status: 'COMPLETED', completedAt: { gte: startOfDay } },
         _sum: { price: true },
@@ -802,6 +802,10 @@ router.get('/earnings', authenticate, async (req, res) => {
       prisma.order.count({
         where: { providerId: req.user.id, serviceType: 'DELIVERY', status: 'COMPLETED', completedAt: { gte: startOfMonth } },
       }),
+      prisma.order.count({
+        where: { providerId: req.user.id, serviceType: 'DELIVERY', status: 'COMPLETED', completedAt: { gte: startOfDay } },
+      }),
+      prisma.user.findUnique({ where: { id: req.user.id }, select: { avgRating: true } }),
     ]);
 
     res.json({
@@ -809,6 +813,8 @@ router.get('/earnings', authenticate, async (req, res) => {
       week: weekRes._sum.price || 0,
       month: monthRes._sum.price || 0,
       deliveries: countRes,
+      todayDeliveries: todayCountRes,
+      rating: ratingUser?.avgRating || null,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

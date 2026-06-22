@@ -13,12 +13,6 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB', orange: '#E67E22',
 };
 
-const MOCK_DEPANNEURS = [
-  { id: 'D1', name: 'Karim Dépannage', distance: 1.2, eta: '8 min', rating: 4.9, available: true, specialties: ['Batterie', 'Crevaison'] },
-  { id: 'D2', name: 'SOS Auto Tunis', distance: 2.4, eta: '14 min', rating: 4.7, available: true, specialties: ['Remorquage', 'Déverrouillage'] },
-  { id: 'D3', name: 'Nabil Assistance', distance: 3.1, eta: '19 min', rating: 4.8, available: true, specialties: ['Batterie', 'Panne sèche', 'Remorquage'] },
-];
-
 const SOS_TYPES = [
   { key: 'batterie', icon: '🔋', label: 'Batterie' },
   { key: 'crevaison', icon: '🔧', label: 'Crevaison' },
@@ -35,6 +29,7 @@ export default function SOSMapScreen({ navigation, route }) {
   const [depanneurs, setDepanneurs] = useState([]);
   const [selected, setSelected] = useState(null);
   const [sending, setSending] = useState(false);
+  const [searchError, setSearchError] = useState(false);
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -45,11 +40,22 @@ export default function SOSMapScreen({ navigation, route }) {
           Animated.timing(pulseAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
         ])
       ).start();
-      setTimeout(() => {
-        setDepanneurs(MOCK_DEPANNEURS);
-        setStep('found');
-        pulseAnim.stopAnimation();
-      }, 2500);
+      api.get('/api/sos/nearby', { params: { lat: location?.lat, lng: location?.lng } })
+        .then(r => {
+          const list = (r.data?.depanneurs || []).map(d => ({
+            id: d.id,
+            name: d.name,
+            distance: d.distanceKm != null ? Math.round(d.distanceKm * 10) / 10 : null,
+            rating: d.avgRating,
+          }));
+          setDepanneurs(list);
+          setSearchError(false);
+        })
+        .catch(() => setSearchError(true))
+        .finally(() => {
+          setStep('found');
+          pulseAnim.stopAnimation();
+        });
     }
   }, [step]);
 
@@ -76,8 +82,8 @@ export default function SOSMapScreen({ navigation, route }) {
         vehicleInfo: {},
       });
       navigation.replace('SOSTracking', { depanneurId: depanneur.id, sosType });
-    } catch {
-      navigation.replace('SOSTracking', { depanneurId: depanneur.id, sosType });
+    } catch (err) {
+      Alert.alert('Erreur', err?.response?.data?.error || "Impossible d'envoyer votre demande SOS. Vérifiez votre connexion et réessayez.");
     } finally { setSending(false); }
   };
 
@@ -138,19 +144,20 @@ export default function SOSMapScreen({ navigation, route }) {
       {step === 'found' && (
         <View style={styles.stepContainer}>
           <Text style={styles.stepTitle}>Dépanneurs disponibles</Text>
-          <Text style={styles.stepSub}>{depanneurs.length} dépanneurs proches de vous</Text>
+          {searchError ? (
+            <Text style={styles.stepSub}>Impossible de récupérer les dépanneurs proches. Vous pouvez tout de même envoyer votre demande SOS, elle sera diffusée aux dépanneurs disponibles.</Text>
+          ) : (
+            <Text style={styles.stepSub}>{depanneurs.length} dépanneur{depanneurs.length > 1 ? 's' : ''} proche{depanneurs.length > 1 ? 's' : ''} de vous</Text>
+          )}
           {depanneurs.map(dep => (
             <View key={dep.id} style={styles.depCard}>
               <View style={styles.depTop}>
                 <View style={styles.depAvatar}><Text style={{ fontSize: 24 }}>🔧</Text></View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.depName}>{dep.name}</Text>
-                  <Text style={styles.depMeta}>📏 {dep.distance} km · ⏱️ {dep.eta} · ⭐ {dep.rating}</Text>
-                  <View style={styles.specialtiesRow}>
-                    {dep.specialties.map(s => (
-                      <View key={s} style={styles.specialtyTag}><Text style={styles.specialtyText}>{s}</Text></View>
-                    ))}
-                  </View>
+                  <Text style={styles.depMeta}>
+                    {dep.distance != null ? `📏 ${dep.distance} km` : ''}{dep.rating ? ` · ⭐ ${dep.rating.toFixed(1)}` : ''}
+                  </Text>
                 </View>
               </View>
               <TouchableOpacity
@@ -165,6 +172,15 @@ export default function SOSMapScreen({ navigation, route }) {
               </TouchableOpacity>
             </View>
           ))}
+          <TouchableOpacity
+            style={[styles.requestBtn, { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.accent }, sending && { opacity: 0.6 }]}
+            onPress={() => handleRequest({ id: null })}
+            disabled={sending}
+          >
+            <Text style={[styles.requestBtnText, { color: COLORS.accent }]}>
+              {depanneurs.length === 0 ? 'Envoyer ma demande SOS →' : 'Diffuser à tous les dépanneurs proches →'}
+            </Text>
+          </TouchableOpacity>
         </View>
       )}
     </SafeAreaView>

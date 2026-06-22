@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  StatusBar, ScrollView, ActivityIndicator,
+  StatusBar, ScrollView, ActivityIndicator, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapboxWebView from '../../components/MapboxWebView';
@@ -13,12 +13,6 @@ const COLORS = {
   accent: '#27AE60', white: '#FFFFFF', muted: '#8A8A9A', border: '#2A2A3A',
   orange: '#E67E22', red: '#E74C3C', blue: '#3498DB',
 };
-
-const MOCK_ORDERS = [
-  { id: 'CMD-8821', merchant: 'Pizza Express', client: 'Sana B.', distance: 0.8, address: '12 Rue de la Liberté, Tunis', status: 'WAITING_PICKUP', amount: 24.5, items: 3 },
-  { id: 'CMD-8819', merchant: 'Burger House', client: 'Karim L.', distance: 2.1, address: '45 Av. Habib Bourguiba', status: 'AVAILABLE', amount: 18.0, items: 2 },
-  { id: 'CMD-8815', merchant: 'Sushi Time', client: 'Ines M.', distance: 3.4, address: '8 Rue Ibn Khaldoun', status: 'AVAILABLE', amount: 42.0, items: 5 },
-];
 
 const STATUS_CONFIG = {
   WAITING_PICKUP: { label: 'À récupérer', color: '#E67E22', bg: '#E67E2222' },
@@ -50,23 +44,28 @@ export default function LivreurLiveMapScreen({ navigation }) {
       const res = await api.get('/api/delivery/livreur/nearby-orders', { params });
       setOrders(res.data?.orders || []);
     } catch {
-      setOrders(MOCK_ORDERS);
+      setOrders([]);
     } finally { setLoading(false); }
   };
 
   const acceptOrder = async (order) => {
     try {
-      await api.post(`/api/delivery/orders/${order.id}/accept`);
+      await api.post(`/api/delivery/livreur/orders/${order.id}/accept`);
       navigation.navigate('DeliveryTracking', { orderId: order.id });
-    } catch {
-      navigation.navigate('DeliveryTracking', { orderId: order.id });
+    } catch (err) {
+      Alert.alert('Erreur', err?.response?.data?.error || "Impossible d'accepter cette livraison.");
     }
   };
 
   const toggleOnline = async () => {
     const next = !online;
     setOnline(next);
-    try { await api.post('/api/delivery/livreur/status', { online: next }); } catch {}
+    try {
+      await api.patch('/api/delivery/livreur/status', { online: next });
+    } catch {
+      setOnline(!next);
+      Alert.alert('Erreur', 'Impossible de changer votre statut.');
+    }
   };
 
   const available = orders.filter(o => o.status === 'AVAILABLE').length;
