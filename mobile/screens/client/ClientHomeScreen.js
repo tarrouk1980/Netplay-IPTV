@@ -19,22 +19,16 @@ const SERVICES = [
   { key: 'sos', icon: '🔧', label: 'SOS Dépannage', sub: 'Intervention rapide', screen: 'SOSHome', color: COLORS.red },
 ];
 
-const MOCK_PROMOS = [
-  { id: 'P1', title: '🎉 -20% sur votre première course', sub: 'Code : BIENVENUE20', color: COLORS.accent },
-  { id: 'P2', title: '🛵 Livraison gratuite ce soir', sub: 'Entre 19h et 22h', color: COLORS.orange },
-];
-
-const MOCK_RECENT = [
-  { id: 'R1', icon: '🚕', label: 'Taxi vers Aéroport', time: 'Aujourd\'hui', screen: 'TaxiHome' },
-  { id: 'R2', icon: '🍕', label: 'Pizza Roma', time: 'Hier', screen: 'DeliveryHome' },
-  { id: 'R3', icon: '🛒', label: 'Carrefour Market', time: 'Il y a 3j', screen: 'GroceryHome' },
-];
+const SERVICE_TO_SCREEN = { TAXI: 'TaxiHome', DELIVERY: 'DeliveryHome', GROCERY: 'GroceryHome', SOS: 'SOSHome' };
+const SERVICE_ICON = { TAXI: '🚕', DELIVERY: '🛵', GROCERY: '🛒', SOS: '🔧' };
 
 export default function ClientHomeScreen({ navigation }) {
   const [greeting, setGreeting] = useState('');
   const [userName, setUserName] = useState('');
   const [activeOrder, setActiveOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [promos, setPromos] = useState([]);
+  const [recent, setRecent] = useState([]);
 
   useEffect(() => {
     const h = new Date().getHours();
@@ -47,6 +41,28 @@ export default function ClientHomeScreen({ navigation }) {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+
+    api.get('/api/promo/list').then(r => setPromos(r.data || [])).catch(() => {});
+
+    api.get('/api/users/me/orders').then(r => {
+      const seen = new Set();
+      const items = [];
+      for (const o of (r.data.orders || [])) {
+        if (seen.has(o.serviceType)) continue;
+        seen.add(o.serviceType);
+        const screen = SERVICE_TO_SCREEN[o.serviceType];
+        if (!screen) continue;
+        items.push({
+          id: o.id,
+          icon: SERVICE_ICON[o.serviceType] || '📦',
+          label: o.destinationAddress || o.originAddress || o.serviceType,
+          time: new Date(o.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
+          screen,
+        });
+        if (items.length >= 3) break;
+      }
+      setRecent(items);
+    }).catch(() => {});
   }, []);
 
   return (
@@ -103,31 +119,33 @@ export default function ClientHomeScreen({ navigation }) {
         </View>
 
         {/* Promos */}
-        {MOCK_PROMOS.length > 0 && (
+        {promos.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>OFFRES DU MOMENT</Text>
-            {MOCK_PROMOS.map(p => (
-              <View key={p.id} style={[styles.promoCard, { borderColor: p.color + '50', backgroundColor: p.color + '08' }]}>
-                <Text style={[styles.promoTitle, { color: p.color }]}>{p.title}</Text>
-                <Text style={styles.promoSub}>{p.sub}</Text>
+            {promos.map(p => (
+              <View key={p.code} style={[styles.promoCard, { borderColor: COLORS.accent + '50', backgroundColor: COLORS.accent + '08' }]}>
+                <Text style={[styles.promoTitle, { color: COLORS.accent }]}>🎉 {p.label}</Text>
+                <Text style={styles.promoSub}>Code : {p.code}</Text>
               </View>
             ))}
           </View>
         )}
 
         {/* Recent */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>RÉCEMMENT UTILISÉ</Text>
-          <View style={styles.recentRow}>
-            {MOCK_RECENT.map(r => (
-              <TouchableOpacity key={r.id} style={styles.recentCard} onPress={() => navigation.navigate(r.screen)}>
-                <Text style={{ fontSize: 26 }}>{r.icon}</Text>
-                <Text style={styles.recentLabel} numberOfLines={1}>{r.label}</Text>
-                <Text style={styles.recentTime}>{r.time}</Text>
-              </TouchableOpacity>
-            ))}
+        {recent.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>RÉCEMMENT UTILISÉ</Text>
+            <View style={styles.recentRow}>
+              {recent.map(r => (
+                <TouchableOpacity key={r.id} style={styles.recentCard} onPress={() => navigation.navigate(r.screen)}>
+                  <Text style={{ fontSize: 26 }}>{r.icon}</Text>
+                  <Text style={styles.recentLabel} numberOfLines={1}>{r.label}</Text>
+                  <Text style={styles.recentTime}>{r.time}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
-        </View>
+        )}
 
         {/* Quick links */}
         <View style={styles.section}>

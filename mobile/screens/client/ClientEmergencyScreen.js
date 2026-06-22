@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, StatusBar,
   ScrollView, TextInput, Alert, Linking, ActivityIndicator,
@@ -20,16 +20,17 @@ const EMERGENCY_NUMBERS = [
   { label: 'EasyWay SOS', number: '+21671000000', icon: '🔧', color: COLORS.accent },
 ];
 
-const MOCK_CONTACTS = [
-  { id: 'EC1', name: 'Mama', phone: '+21698000001', relation: 'Famille' },
-  { id: 'EC2', name: 'Sami', phone: '+21625000002', relation: 'Ami' },
-];
-
 export default function ClientEmergencyScreen({ navigation }) {
-  const [contacts, setContacts] = useState(MOCK_CONTACTS);
+  const [contacts, setContacts] = useState([]);
   const [sharing, setSharing] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [newContact, setNewContact] = useState({ name: '', phone: '', relation: '' });
+
+  useEffect(() => {
+    api.get('/api/emergency/contacts')
+      .then(r => setContacts((r.data.contacts || []).map((c, i) => ({ id: c.id || `EC${i}`, ...c }))))
+      .catch(() => {});
+  }, []);
 
   const handleCall = (number) => {
     Linking.openURL(`tel:${number}`).catch(() =>
@@ -43,14 +44,14 @@ export default function ClientEmergencyScreen({ navigation }) {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') { Alert.alert('Permission refusée', 'Activez la géolocalisation.'); setSharing(false); return; }
       const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      await api.post('/api/client/emergency/share', {
+      await api.post('/api/emergency/location', {
         lat: pos.coords.latitude,
         lng: pos.coords.longitude,
         contacts: contacts.map(c => c.phone),
       });
       Alert.alert('✅ Position partagée', 'Votre position GPS a été envoyée à vos contacts d\'urgence.');
     } catch {
-      Alert.alert('✅ Position partagée', 'Votre position GPS a été envoyée à vos contacts d\'urgence.');
+      Alert.alert('Erreur', "Impossible de partager votre position. Vérifiez votre connexion.");
     } finally { setSharing(false); }
   };
 
