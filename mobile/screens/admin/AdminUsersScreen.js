@@ -18,15 +18,6 @@ const ROLE_COLORS = {
 };
 const ROLE_ICONS = { CLIENT: '👤', CHAUFFEUR: '🚕', LIVREUR: '📦', DEPANNEUR: '🔧', MARCHAND: '🏪', ADMIN: '⚙️' };
 
-const MOCK_USERS = [
-  { id: 'U001', name: 'Nadia Khelil', phone: '+216 55 111 222', role: 'CLIENT', active: true, joined: '15/01/2026', orders: 34 },
-  { id: 'U002', name: 'Mohamed Ali Trabelsi', phone: '+216 22 333 444', role: 'CHAUFFEUR', active: true, joined: '10/12/2025', orders: 312 },
-  { id: 'U003', name: 'Sami Karoui', phone: '+216 98 555 666', role: 'LIVREUR', active: true, joined: '05/02/2026', orders: 187 },
-  { id: 'U004', name: 'Rim Sassi', phone: '+216 50 777 888', role: 'CLIENT', active: false, joined: '20/03/2026', orders: 8 },
-  { id: 'U005', name: 'Karim Mansouri', phone: '+216 71 999 000', role: 'DEPANNEUR', active: true, joined: '01/11/2025', orders: 94 },
-  { id: 'U006', name: 'Pizza Roma Lac 1', phone: '+216 71 234 567', role: 'MARCHAND', active: true, joined: '15/09/2025', orders: 1240 },
-];
-
 const ROLES = ['Tous', 'CLIENT', 'CHAUFFEUR', 'LIVREUR', 'DEPANNEUR', 'MARCHAND'];
 
 function UserRow({ item, onPress }) {
@@ -58,11 +49,12 @@ export default function AdminUsersScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('Tous');
+  const [error, setError] = useState(false);
 
   const load = useCallback(() => {
     api.get('/api/admin/users')
-      .then(r => setUsers(r.data.users || MOCK_USERS))
-      .catch(() => setUsers(MOCK_USERS))
+      .then(r => { setUsers(r.data.users || []); setError(false); })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -113,6 +105,14 @@ export default function AdminUsersScreen({ navigation }) {
 
       {loading ? (
         <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 60 }} />
+      ) : error ? (
+        <View style={styles.empty}>
+          <Text style={{ fontSize: 36 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, marginTop: 10 }}>Impossible de charger les utilisateurs. Réessayez.</Text>
+          <TouchableOpacity style={[styles.roleBtn, { marginTop: 14 }]} onPress={load}>
+            <Text style={styles.roleBtnText}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
         <FlatList
           data={filtered}

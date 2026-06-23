@@ -14,12 +14,6 @@ const COLORS = {
 
 const ICONS = ['🏠', '💼', '❤️', '⭐', '📍', '🏋️', '🏥', '🏫'];
 
-const MOCK_ADDRESSES = [
-  { id: '1', label: 'Maison', address: 'Rue du Lac Malaren, Berges du Lac 2, Tunis', icon: '🏠', isDefault: true },
-  { id: '2', label: 'Bureau', address: 'Avenue Mohamed V, Centre Urbain Nord, Tunis', icon: '💼', isDefault: false },
-  { id: '3', label: 'Salle de sport', address: 'Centre commercial Carrefour, La Marsa', icon: '🏋️', isDefault: false },
-];
-
 function AddressCard({ item, onDelete, onSetDefault, onEdit }) {
   return (
     <View style={[styles.card, item.isDefault && styles.cardDefault]}>
@@ -59,15 +53,21 @@ function AddressCard({ item, onDelete, onSetDefault, onEdit }) {
 export default function ClientSavedAddressesScreen({ navigation }) {
   const [addresses, setAddresses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ label: '', address: '', icon: '📍' });
 
-  useEffect(() => {
+  const loadAddresses = () => {
+    setLoading(true);
     api.get('/api/users/clients/addresses')
-      .then(r => setAddresses(r.data.addresses || MOCK_ADDRESSES))
-      .catch(() => setAddresses(MOCK_ADDRESSES))
+      .then(r => { setAddresses(r.data.addresses || []); setError(false); })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadAddresses();
   }, []);
 
   const openAdd = () => {
@@ -89,15 +89,17 @@ export default function ClientSavedAddressesScreen({ navigation }) {
     }
     try {
       if (editing) {
-        await api.put(`/api/users/clients/addresses/${editing.id}`, form).catch(() => {});
+        await api.put(`/api/users/clients/addresses/${editing.id}`, form);
         setAddresses(prev => prev.map(a => a.id === editing.id ? { ...a, ...form } : a));
       } else {
         const newAddr = { id: Date.now().toString(), ...form, isDefault: addresses.length === 0 };
-        await api.post('/api/users/clients/addresses', form).catch(() => {});
+        await api.post('/api/users/clients/addresses', form);
         setAddresses(prev => [...prev, newAddr]);
       }
       setModalVisible(false);
-    } catch {}
+    } catch {
+      Alert.alert('Erreur', 'Impossible d\'enregistrer l\'adresse. Réessayez.');
+    }
   };
 
   const handleDelete = (id) => {
@@ -105,16 +107,24 @@ export default function ClientSavedAddressesScreen({ navigation }) {
       { text: 'Annuler', style: 'cancel' },
       {
         text: 'Supprimer', style: 'destructive', onPress: async () => {
-          await api.delete(`/api/users/clients/addresses/${id}`).catch(() => {});
-          setAddresses(prev => prev.filter(a => a.id !== id));
+          try {
+            await api.delete(`/api/users/clients/addresses/${id}`);
+            setAddresses(prev => prev.filter(a => a.id !== id));
+          } catch {
+            Alert.alert('Erreur', 'Impossible de supprimer l\'adresse. Réessayez.');
+          }
         },
       },
     ]);
   };
 
   const handleSetDefault = async (id) => {
-    await api.patch(`/api/users/clients/addresses/${id}/default`).catch(() => {});
-    setAddresses(prev => prev.map(a => ({ ...a, isDefault: a.id === id })));
+    try {
+      await api.patch(`/api/users/clients/addresses/${id}/default`);
+      setAddresses(prev => prev.map(a => ({ ...a, isDefault: a.id === id })));
+    } catch {
+      Alert.alert('Erreur', 'Impossible de définir l\'adresse par défaut. Réessayez.');
+    }
   };
 
   return (
@@ -133,6 +143,16 @@ export default function ClientSavedAddressesScreen({ navigation }) {
 
       {loading ? (
         <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} />
+      ) : error ? (
+        <View style={{ alignItems: 'center', marginTop: 80 }}>
+          <Text style={{ fontSize: 48 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, marginTop: 12, fontSize: 15, textAlign: 'center', paddingHorizontal: 24 }}>
+            Impossible de charger vos adresses. Réessayez.
+          </Text>
+          <TouchableOpacity style={styles.emptyAddBtn} onPress={loadAddresses}>
+            <Text style={styles.emptyAddBtnText}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
         <FlatList
           data={addresses}

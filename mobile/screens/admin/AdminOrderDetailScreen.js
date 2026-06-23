@@ -38,31 +38,6 @@ const STATUS_LABELS = {
 
 const SERVICE_ICON = { TAXI: '🚕', SOS: '🛻', DELIVERY: '🛵', GROCERY: '🛒' };
 
-const MOCK_ORDER = {
-  id: 'ord_demo_001',
-  type: 'TAXI',
-  status: 'COMPLETED',
-  price: 8.500,
-  createdAt: new Date(Date.now() - 7200000).toISOString(),
-  completedAt: new Date(Date.now() - 3600000).toISOString(),
-  originAddress: 'Avenue Habib Bourguiba, Tunis',
-  destinationAddress: 'Aéroport Tunis-Carthage',
-  originLat: 36.8065, originLng: 10.1815,
-  destLat: 36.8510, destLng: 10.2275,
-  client: { id: 'c1', name: 'Sonia Trabelsi', phone: '+216 98 765 432', rating: 4.5 },
-  provider: { id: 'p1', name: 'Tarek Ben Ali', phone: '+216 55 123 456', rating: 4.8, vehicle: 'Peugeot 301 · TU-1234' },
-  timeline: [
-    { status: 'PENDING', at: new Date(Date.now() - 7200000).toISOString(), label: 'Commande créée' },
-    { status: 'ACCEPTED', at: new Date(Date.now() - 6900000).toISOString(), label: 'Acceptée par Tarek' },
-    { status: 'IN_PROGRESS', at: new Date(Date.now() - 6600000).toISOString(), label: 'Course démarrée' },
-    { status: 'COMPLETED', at: new Date(Date.now() - 3600000).toISOString(), label: 'Course terminée' },
-  ],
-  rating: 5,
-  ratingComment: 'Chauffeur très ponctuel et aimable.',
-  cancelledBy: null,
-  cancelReason: null,
-};
-
 function TimelineItem({ item, isLast }) {
   const color = STATUS_COLORS[item.status] || COLORS.muted;
   const time = new Date(item.at).toLocaleTimeString('fr-TN', { hour: '2-digit', minute: '2-digit' });
@@ -86,17 +61,23 @@ export default function AdminOrderDetailScreen({ navigation, route }) {
   const [loading, setLoading] = useState(true);
   const [mapError, setMapError] = useState(false);
   const [actioning, setActioning] = useState(false);
+  const [error, setError] = useState(false);
 
-  useEffect(() => {
-    if (!orderId) { setOrder(MOCK_ORDER); setLoading(false); return; }
+  const loadOrder = React.useCallback(() => {
+    if (!orderId) { setError(true); setLoading(false); return; }
+    setLoading(true);
     api.get(`/api/admin/orders/${orderId}`)
       .then(r => {
         const o = r.data?.order;
-        setOrder(o ? { ...o, type: o.serviceType, destLat: o.destinationLat, destLng: o.destinationLng } : MOCK_ORDER);
+        if (!o) { setError(true); return; }
+        setOrder({ ...o, type: o.serviceType, destLat: o.destinationLat, destLng: o.destinationLng });
+        setError(false);
       })
-      .catch(() => setOrder(MOCK_ORDER))
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [orderId]);
+
+  useEffect(() => { loadOrder(); }, [loadOrder]);
 
   const handleForceCancel = () => {
     Alert.alert('Annuler la commande', 'Forcer l\'annulation de cette commande ?', [
@@ -126,7 +107,21 @@ export default function AdminOrderDetailScreen({ navigation, route }) {
     );
   }
 
-  if (!order) return null;
+  if (error || !order) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
+        <View style={[styles.scroll, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}>
+          <Text style={{ fontSize: 48, marginBottom: 12 }}>⚠️</Text>
+          <Text style={{ color: COLORS.text, fontSize: 15, fontWeight: '700', marginBottom: 6 }}>Impossible de charger la commande</Text>
+          <Text style={{ color: COLORS.muted, fontSize: 13, marginBottom: 16 }}>Réessayez.</Text>
+          <TouchableOpacity style={styles.cancelBtn} onPress={loadOrder}>
+            <Text style={styles.cancelBtnText}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const statusColor = STATUS_COLORS[order.status] || COLORS.muted;
   const duration = order.completedAt && order.createdAt

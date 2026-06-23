@@ -15,24 +15,25 @@ const COLORS = {
 
 const ADDR_ICONS = ['🏠', '💼', '🏫', '🏥', '🛒', '📍'];
 
-const MOCK_ADDRESSES = [
-  { id: 'A1', label: 'Maison', icon: '🏠', address: 'Berges du Lac 2, Tunis', lat: 36.844, lng: 10.228, isDefault: true },
-  { id: 'A2', label: 'Bureau', icon: '💼', address: 'Centre Urbain Nord, Tunis', lat: 36.832, lng: 10.194, isDefault: false },
-];
-
 export default function ClientAddressMapScreen({ navigation }) {
   const [addresses, setAddresses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [adding, setAdding] = useState(false);
   const [detecting, setDetecting] = useState(false);
   const [form, setForm] = useState({ label: '', icon: '📍', address: '', lat: null, lng: null });
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
+  const loadAddresses = () => {
+    setLoading(true);
     api.get('/api/users/clients/addresses')
-      .then(r => setAddresses(r.data.addresses || MOCK_ADDRESSES))
-      .catch(() => setAddresses(MOCK_ADDRESSES))
+      .then(r => { setAddresses(r.data.addresses || []); setError(false); })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadAddresses();
   }, []);
 
   const detectLocation = async () => {
@@ -58,9 +59,7 @@ export default function ClientAddressMapScreen({ navigation }) {
       setAdding(false);
       setForm({ label: '', icon: '📍', address: '', lat: null, lng: null });
     } catch {
-      setAddresses(prev => [...prev, { ...form, id: `A${Date.now()}`, isDefault: prev.length === 0 }]);
-      setAdding(false);
-      setForm({ label: '', icon: '📍', address: '', lat: null, lng: null });
+      Alert.alert('Erreur', 'Impossible d\'enregistrer l\'adresse. Réessayez.');
     } finally { setSaving(false); }
   };
 
@@ -68,17 +67,25 @@ export default function ClientAddressMapScreen({ navigation }) {
     Alert.alert('Supprimer ?', `"${addr.label}" sera supprimée.`, [
       { text: 'Annuler', style: 'cancel' },
       {
-        text: 'Supprimer', style: 'destructive', onPress: () => {
-          setAddresses(prev => prev.filter(a => a.id !== addr.id));
-          api.delete(`/api/users/clients/addresses/${addr.id}`).catch(() => {});
+        text: 'Supprimer', style: 'destructive', onPress: async () => {
+          try {
+            await api.delete(`/api/users/clients/addresses/${addr.id}`);
+            setAddresses(prev => prev.filter(a => a.id !== addr.id));
+          } catch {
+            Alert.alert('Erreur', 'Impossible de supprimer l\'adresse. Réessayez.');
+          }
         },
       },
     ]);
   };
 
   const handleSetDefault = async (addr) => {
-    setAddresses(prev => prev.map(a => ({ ...a, isDefault: a.id === addr.id })));
-    api.patch(`/api/users/clients/addresses/${addr.id}/default`).catch(() => {});
+    try {
+      await api.patch(`/api/users/clients/addresses/${addr.id}/default`);
+      setAddresses(prev => prev.map(a => ({ ...a, isDefault: a.id === addr.id })));
+    } catch {
+      Alert.alert('Erreur', 'Impossible de définir l\'adresse par défaut. Réessayez.');
+    }
   };
 
   return (
@@ -97,6 +104,16 @@ export default function ClientAddressMapScreen({ navigation }) {
 
       {loading ? (
         <ActivityIndicator color={COLORS.accent} size="large" style={{ flex: 1 }} />
+      ) : error ? (
+        <View style={{ alignItems: 'center', paddingVertical: 60 }}>
+          <Text style={{ fontSize: 40 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, marginTop: 12, textAlign: 'center', paddingHorizontal: 24 }}>
+            Impossible de charger vos adresses. Réessayez.
+          </Text>
+          <TouchableOpacity style={styles.emptyAddBtn} onPress={loadAddresses}>
+            <Text style={styles.emptyAddBtnText}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
 

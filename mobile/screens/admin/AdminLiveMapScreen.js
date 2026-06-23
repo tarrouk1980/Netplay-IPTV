@@ -12,15 +12,6 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB', orange: '#E67E22',
 };
 
-const MOCK_PROVIDERS = [
-  { id: 'P1', name: 'Mohamed A.', type: 'TAXI', status: 'BUSY', lat: 36.8185, lng: 10.1658, trip: 'Lac 1 → Menzah' },
-  { id: 'P2', name: 'Sami K.', type: 'LIVREUR', status: 'ONLINE', lat: 36.8541, lng: 10.1942, trip: null },
-  { id: 'P3', name: 'Nour B.', type: 'TAXI', status: 'ONLINE', lat: 36.8320, lng: 10.2100, trip: null },
-  { id: 'P4', name: 'Karim M.', type: 'DEPANNEUR', status: 'BUSY', lat: 36.8600, lng: 10.1800, trip: 'Intervention A1' },
-  { id: 'P5', name: 'Ahmed T.', type: 'TAXI', status: 'ONLINE', lat: 36.7950, lng: 10.1750, trip: null },
-  { id: 'P6', name: 'Rim S.', type: 'LIVREUR', status: 'BUSY', lat: 36.8450, lng: 10.2050, trip: 'KFC → Lafayette' },
-];
-
 const TYPE_ICONS = { TAXI: '🚕', LIVREUR: '📦', DEPANNEUR: '🔧' };
 const TYPE_FILTERS = ['Tous', 'TAXI', 'LIVREUR', 'DEPANNEUR'];
 const STATUS_COLORS = { ONLINE: COLORS.green, BUSY: COLORS.orange, OFFLINE: COLORS.muted };
@@ -30,12 +21,13 @@ export default function AdminLiveMapScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('Tous');
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(false);
 
   const load = useCallback((silent = false) => {
     if (!silent) setLoading(true);
     api.get('/api/admin/providers/live')
-      .then(r => setProviders(r.data.providers || MOCK_PROVIDERS))
-      .catch(() => setProviders(MOCK_PROVIDERS))
+      .then(r => { setProviders(r.data.providers || []); setError(false); })
+      .catch(() => setError(true))
       .finally(() => { setLoading(false); setRefreshing(false); });
   }, []);
 
@@ -103,6 +95,14 @@ export default function AdminLiveMapScreen({ navigation }) {
 
       {loading ? (
         <ActivityIndicator color={COLORS.accent} style={{ marginTop: 20 }} />
+      ) : error ? (
+        <View style={{ alignItems: 'center', paddingTop: 40 }}>
+          <Text style={{ fontSize: 36 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, marginTop: 10, marginBottom: 14 }}>Impossible de charger la carte. Réessayez.</Text>
+          <TouchableOpacity style={styles.filterBtn} onPress={() => load()}>
+            <Text style={styles.filterText}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
         <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
           {filtered.map(p => (

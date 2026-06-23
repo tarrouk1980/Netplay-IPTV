@@ -12,15 +12,6 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB', orange: '#E67E22',
 };
 
-const MOCK_AGENTS = [
-  { id: 'D1', name: 'Karim B.', role: 'CHAUFFEUR', status: 'ONLINE', lat: 36.806, lng: 10.181, rides: 3 },
-  { id: 'D2', name: 'Sami T.', role: 'CHAUFFEUR', status: 'IN_RIDE', lat: 36.819, lng: 10.166, rides: 1 },
-  { id: 'D3', name: 'Nabil R.', role: 'LIVREUR', status: 'ONLINE', lat: 36.845, lng: 10.195, rides: 2 },
-  { id: 'D4', name: 'Rim H.', role: 'LIVREUR', status: 'IN_RIDE', lat: 36.832, lng: 10.209, rides: 1 },
-  { id: 'D5', name: 'Anis M.', role: 'DEPANNEUR', status: 'ONLINE', lat: 36.800, lng: 10.173, rides: 0 },
-  { id: 'D6', name: 'Hatem K.', role: 'CHAUFFEUR', status: 'OFFLINE', lat: 36.812, lng: 10.155, rides: 0 },
-];
-
 const ZONES = [
   { id: 'Z1', name: 'Tunis Centre', agents: 8, active: 6, demand: 'HIGH' },
   { id: 'Z2', name: 'Berges du Lac', agents: 5, active: 4, demand: 'MEDIUM' },
@@ -40,6 +31,7 @@ export default function AdminMapScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState('ALL');
   const [tab, setTab] = useState('AGENTS');
+  const [error, setError] = useState(false);
 
   const FILTERS = [
     { key: 'ALL', label: 'Tous' },
@@ -52,9 +44,10 @@ export default function AdminMapScreen({ navigation }) {
     if (!silent) setLoading(true);
     try {
       const r = await api.get('/api/admin/map/agents');
-      setAgents(r.data.agents || MOCK_AGENTS);
+      setAgents(r.data.agents || []);
+      setError(false);
     } catch {
-      setAgents(MOCK_AGENTS);
+      setError(true);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -68,6 +61,20 @@ export default function AdminMapScreen({ navigation }) {
   }, [load]);
 
   const onRefresh = () => { setRefreshing(true); load(); };
+
+  if (error) {
+    return (
+      <SafeAreaView style={[styles.container, { alignItems: 'center', justifyContent: 'center', padding: 30 }]}>
+        <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+        <Text style={{ color: COLORS.muted, textAlign: 'center', marginBottom: 16 }}>
+          Impossible de charger la carte en direct. Réessayez.
+        </Text>
+        <TouchableOpacity onPress={() => load(false)} style={{ backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 }}>
+          <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
 
   const filtered = filter === 'ALL' ? agents : agents.filter(a => a.role === filter);
   const online = agents.filter(a => a.status !== 'OFFLINE').length;

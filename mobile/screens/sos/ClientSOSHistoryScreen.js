@@ -41,47 +41,19 @@ const STATUS_CONFIG = {
   CANCELLED: { color: COLORS.muted, label: 'Annulé' },
 };
 
-const MOCK_ORDERS = [
-  {
-    id: 'sos-001',
-    problemType: 'FLAT_TIRE',
-    status: 'COMPLETED',
-    price: 45,
-    createdAt: new Date(Date.now() - 2 * 24 * 3600000).toISOString(),
-    provider: { name: 'Karim B.' },
-    address: 'Autoroute A1, Km 42, Tunis',
-  },
-  {
-    id: 'sos-002',
-    problemType: 'BATTERY',
-    status: 'COMPLETED',
-    price: 30,
-    createdAt: new Date(Date.now() - 7 * 24 * 3600000).toISOString(),
-    provider: { name: 'Mohamed S.' },
-    address: 'Route de la Marsa, Ariana',
-  },
-  {
-    id: 'sos-003',
-    problemType: 'ACCIDENT',
-    status: 'CANCELLED',
-    price: 0,
-    createdAt: new Date(Date.now() - 14 * 24 * 3600000).toISOString(),
-    provider: null,
-    address: 'Rue Ibn Khaldoun, Sfax',
-  },
-];
-
 export default function ClientSOSHistoryScreen({ navigation }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(false);
 
-  const load = useCallback(async (silent = false) => {
+  const load = useCallback(async () => {
     try {
       const res = await api.get('/api/sos/history');
       setOrders(res.data.orders || []);
+      setError(false);
     } catch {
-      if (!silent) setOrders(MOCK_ORDERS);
+      setError(true);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -97,6 +69,19 @@ export default function ClientSOSHistoryScreen({ navigation }) {
   const completedCount = orders.filter((o) => o.status === 'COMPLETED').length;
 
   if (loading) return <View style={s.centered}><ActivityIndicator color={COLORS.accent} size="large" /></View>;
+
+  if (error) {
+    return (
+      <View style={s.centered}>
+        <Text style={{ fontSize: 48, marginBottom: 12 }}>⚠️</Text>
+        <Text style={s.emptyTitle}>Impossible de charger l'historique</Text>
+        <Text style={s.emptySub}>Vérifiez votre connexion et réessayez.</Text>
+        <TouchableOpacity style={[s.countBadge, { marginTop: 16, paddingHorizontal: 16, paddingVertical: 8 }]} onPress={() => load()}>
+          <Text style={s.countBadgeTxt}>Réessayer</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={s.root}>
@@ -134,7 +119,7 @@ export default function ClientSOSHistoryScreen({ navigation }) {
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={() => { setRefreshing(true); load(true); }}
+            onRefresh={() => { setRefreshing(true); load(); }}
             tintColor={COLORS.accent}
           />
         }

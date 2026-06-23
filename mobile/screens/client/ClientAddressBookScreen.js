@@ -12,30 +12,34 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB',
 };
 
-const MOCK_ADDRESSES = [
-  { id: 'A1', label: 'Domicile', icon: '🏠', address: '12 Rue Ibn Khaldoun, Lac 1, Tunis', isDefault: true },
-  { id: 'A2', label: 'Travail', icon: '🏢', address: 'Immeuble Étoile, Avenue Jugurtha, Les Berges du Lac', isDefault: false },
-  { id: 'A3', label: 'Famille', icon: '👨‍👩‍👧', address: '8 Rue de la Liberté, La Marsa', isDefault: false },
-];
-
 export default function ClientAddressBookScreen({ navigation }) {
   const [addresses, setAddresses] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [adding, setAdding] = useState(false);
   const [newLabel, setNewLabel] = useState('');
   const [newAddress, setNewAddress] = useState('');
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
+  const loadAddresses = () => {
+    setLoading(true);
     api.get('/api/users/clients/addresses')
-      .then(r => setAddresses(r.data || MOCK_ADDRESSES))
-      .catch(() => setAddresses(MOCK_ADDRESSES))
+      .then(r => { setAddresses(r.data || []); setError(false); })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadAddresses();
   }, []);
 
-  const handleSetDefault = (id) => {
-    setAddresses(prev => prev.map(a => ({ ...a, isDefault: a.id === id })));
-    api.patch(`/api/users/clients/addresses/${id}/default`).catch(() => {});
+  const handleSetDefault = async (id) => {
+    try {
+      await api.patch(`/api/users/clients/addresses/${id}/default`);
+      setAddresses(prev => prev.map(a => ({ ...a, isDefault: a.id === id })));
+    } catch {
+      Alert.alert('Erreur', 'Impossible de définir l\'adresse par défaut. Réessayez.');
+    }
   };
 
   const handleDelete = (id) => {
@@ -43,9 +47,13 @@ export default function ClientAddressBookScreen({ navigation }) {
       { text: 'Annuler', style: 'cancel' },
       {
         text: 'Supprimer', style: 'destructive',
-        onPress: () => {
-          setAddresses(prev => prev.filter(a => a.id !== id));
-          api.delete(`/api/users/clients/addresses/${id}`).catch(() => {});
+        onPress: async () => {
+          try {
+            await api.delete(`/api/users/clients/addresses/${id}`);
+            setAddresses(prev => prev.filter(a => a.id !== id));
+          } catch {
+            Alert.alert('Erreur', 'Impossible de supprimer l\'adresse. Réessayez.');
+          }
         },
       },
     ]);
@@ -58,12 +66,17 @@ export default function ClientAddressBookScreen({ navigation }) {
     }
     setSaving(true);
     const newAddr = { id: `A${Date.now()}`, label: newLabel, icon: '📍', address: newAddress, isDefault: false };
-    try { await api.post('/api/users/clients/addresses', newAddr); } catch {}
-    setAddresses(prev => [...(prev || []), newAddr]);
-    setAdding(false);
-    setNewLabel('');
-    setNewAddress('');
-    setSaving(false);
+    try {
+      await api.post('/api/users/clients/addresses', newAddr);
+      setAddresses(prev => [...(prev || []), newAddr]);
+      setAdding(false);
+      setNewLabel('');
+      setNewAddress('');
+    } catch {
+      Alert.alert('Erreur', 'Impossible d\'enregistrer l\'adresse. Réessayez.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -109,7 +122,16 @@ export default function ClientAddressBookScreen({ navigation }) {
           </View>
         )}
 
-        {loading ? <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} /> : (
+        {loading ? <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} /> : error ? (
+          <View style={styles.empty}>
+            <Text style={{ fontSize: 40 }}>⚠️</Text>
+            <Text style={styles.emptyText}>Impossible de charger vos adresses</Text>
+            <Text style={styles.emptySub}>Réessayez.</Text>
+            <TouchableOpacity style={styles.saveBtn} onPress={loadAddresses}>
+              <Text style={styles.saveBtnText}>Réessayer</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
           <>
             {(addresses || []).map(addr => (
               <View key={addr.id} style={[styles.addressCard, addr.isDefault && { borderColor: COLORS.accent + '60' }]}>

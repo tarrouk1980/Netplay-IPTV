@@ -38,36 +38,6 @@ const ROLE_CONFIG = {
 
 const DOC_TYPES = ['CIN', 'PERMIS', 'CARTE_GRISE', 'ASSURANCE', 'VISITE_TECHNIQUE', 'CASIER_JUDICIAIRE'];
 
-const MOCK_PROVIDERS = [
-  {
-    id: 'prov-001',
-    name: 'Karim Bouzid',
-    phone: '+216 22 345 678',
-    role: 'CHAUFFEUR',
-    kycStatus: 'PENDING',
-    submittedAt: new Date(Date.now() - 2 * 3600000).toISOString(),
-    docs: { CIN: 'PENDING', PERMIS: 'PENDING', CARTE_GRISE: 'PENDING', ASSURANCE: 'MISSING' },
-  },
-  {
-    id: 'prov-002',
-    name: 'Sami Trabelsi',
-    phone: '+216 55 678 901',
-    role: 'LIVREUR',
-    kycStatus: 'PENDING',
-    submittedAt: new Date(Date.now() - 5 * 3600000).toISOString(),
-    docs: { CIN: 'PENDING', PERMIS: 'PENDING' },
-  },
-  {
-    id: 'prov-003',
-    name: 'Ahmed Mansour',
-    phone: '+216 98 234 567',
-    role: 'DEPANNEUR',
-    kycStatus: 'PENDING',
-    submittedAt: new Date(Date.now() - 1 * 24 * 3600000).toISOString(),
-    docs: { CIN: 'PENDING', PERMIS: 'PENDING', CARTE_GRISE: 'APPROVED', ASSURANCE: 'PENDING' },
-  },
-];
-
 function ReviewModal({ visible, provider, onClose, onAction }) {
   const [rejectNote, setRejectNote] = useState('');
   const [mode, setMode] = useState(null); // 'approve' | 'reject'
@@ -177,13 +147,15 @@ export default function AdminProviderVerificationScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const [selected, setSelected] = useState(null);
   const [roleFilter, setRoleFilter] = useState('ALL');
+  const [error, setError] = useState(false);
 
-  const load = useCallback(async (silent = false) => {
+  const load = useCallback(async () => {
     try {
       const res = await api.get('/api/admin/providers/pending');
       setProviders(res.data.providers || []);
+      setError(false);
     } catch {
-      if (!silent) setProviders(MOCK_PROVIDERS);
+      setError(true);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -196,7 +168,7 @@ export default function AdminProviderVerificationScreen({ navigation }) {
     try {
       await api.post(`/api/admin/providers/${providerId}/verify`, { action, note });
       setSelected(null);
-      load(true);
+      load();
     } catch {
       Alert.alert('Erreur', 'Action impossible pour le moment.');
     }
@@ -205,6 +177,22 @@ export default function AdminProviderVerificationScreen({ navigation }) {
   const filtered = roleFilter === 'ALL' ? providers : providers.filter((p) => p.role === roleFilter);
 
   if (loading) return <View style={s.centered}><ActivityIndicator color={COLORS.orange} size="large" /></View>;
+
+  if (error) {
+    return (
+      <SafeAreaView style={s.root}>
+        <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
+        <View style={s.centered}>
+          <Text style={{ fontSize: 48, marginBottom: 12 }}>⚠️</Text>
+          <Text style={s.emptyTitle}>Impossible de charger les prestataires</Text>
+          <Text style={s.emptySub}>Réessayez.</Text>
+          <TouchableOpacity style={s.reviewBtn} onPress={() => load()}>
+            <Text style={s.reviewBtnTxt}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={s.root}>

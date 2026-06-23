@@ -9,19 +9,6 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB', orange: '#E67E22',
 };
 
-const MOCK_USER = {
-  id: 'U001', name: 'Sami Ben Ali', phone: '+21623456789', role: 'CLIENT',
-  status: 'ACTIVE', createdAt: '12 jan. 2025', lastActive: 'Il y a 2h',
-  totalOrders: 47, totalSpent: 342.500, rating: 4.7,
-  email: 'sami.benali@email.com',
-  documents: [{ key: 'cin', label: 'CIN', status: 'VERIFIED' }],
-  recentOrders: [
-    { id: 'O1', type: '🚕 Taxi', date: '03 juin', amount: 8.500, status: 'Terminée' },
-    { id: 'O2', type: '🛵 Livraison', date: '01 juin', amount: 4.200, status: 'Terminée' },
-    { id: 'O3', type: '🚕 Taxi', date: '29 mai', amount: 11.000, status: 'Terminée' },
-  ],
-};
-
 const ROLE_COLORS = { CLIENT: COLORS.blue, CHAUFFEUR: COLORS.accent, LIVREUR: COLORS.green, DEPANNEUR: COLORS.orange, ADMIN: COLORS.red };
 
 export default function AdminUserDetailScreen({ route, navigation }) {
@@ -29,13 +16,22 @@ export default function AdminUserDetailScreen({ route, navigation }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
+  const [error, setError] = useState(false);
 
-  useEffect(() => {
+  const loadUser = React.useCallback(() => {
+    setLoading(true);
     api.get(`/api/admin/users/${userId}`)
-      .then(r => setUser(r.data?.user || MOCK_USER))
-      .catch(() => setUser(MOCK_USER))
+      .then(r => {
+        const u = r.data?.user;
+        if (!u) { setError(true); return; }
+        setUser(u);
+        setError(false);
+      })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [userId]);
+
+  useEffect(() => { loadUser(); }, [loadUser]);
 
   const handleBan = () => {
     Alert.alert(
@@ -53,9 +49,12 @@ export default function AdminUserDetailScreen({ route, navigation }) {
             const newStatus = user.status === 'BANNED' ? 'ACTIVE' : 'BANNED';
             try {
               await api.patch(`/api/admin/users/${userId}/status`, { status: newStatus });
-            } catch {}
-            setUser(u => ({ ...u, status: newStatus }));
-            setActing(false);
+              setUser(u => ({ ...u, status: newStatus }));
+            } catch {
+              Alert.alert('Erreur', 'Action impossible pour le moment.');
+            } finally {
+              setActing(false);
+            }
           },
         },
       ]
@@ -75,6 +74,21 @@ export default function AdminUserDetailScreen({ route, navigation }) {
       <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 60 }} />
     </SafeAreaView>
   );
+
+  if (error || !user) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={[styles.content, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}>
+          <Text style={{ fontSize: 48, marginBottom: 12 }}>⚠️</Text>
+          <Text style={{ color: COLORS.text, fontSize: 15, fontWeight: '700', marginBottom: 6 }}>Impossible de charger l'utilisateur</Text>
+          <Text style={{ color: COLORS.muted, fontSize: 13, marginBottom: 16 }}>Réessayez.</Text>
+          <TouchableOpacity style={styles.contactBtn} onPress={loadUser}>
+            <Text style={styles.contactBtnText}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const roleColor = ROLE_COLORS[user?.role] || COLORS.muted;
 

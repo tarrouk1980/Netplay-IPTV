@@ -46,12 +46,6 @@ const STATUS_CONFIG = {
   FAILED: { color: COLORS.accent, label: 'Échouée', icon: '❌' },
 };
 
-const MOCK_CAMPAIGNS = [
-  { id: 'camp-001', title: 'Offre Ramadan 🌙', body: 'Profitez de 20% de réduction sur toutes vos courses ce soir !', audience: 'ALL', status: 'SENT', sentAt: new Date(Date.now() - 2 * 24 * 3600000).toISOString(), reached: 4820, opened: 1930 },
-  { id: 'camp-002', title: 'Bienvenue sur EasyWay', body: 'Votre première course est offerte jusqu\'à 15 TND. Commandez maintenant !', audience: 'NEW', status: 'SCHEDULED', scheduledAt: new Date(Date.now() + 3600000).toISOString(), reached: 0, opened: 0 },
-  { id: 'camp-003', title: 'On vous manque 😊', body: 'Cela fait 30 jours que vous n\'avez pas commandé. Revenez avec un bon de 5 TND !', audience: 'INACTIVE', status: 'DRAFT', reached: 0, opened: 0 },
-];
-
 function CreateModal({ visible, onClose, onCreate }) {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
@@ -154,13 +148,15 @@ export default function AdminNotificationCampaignsScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
+  const [error, setError] = useState(false);
 
   const load = useCallback(async (silent = false) => {
     try {
       const res = await api.get('/api/admin/notifications/campaigns');
       setCampaigns(res.data.campaigns || []);
+      setError(false);
     } catch {
-      if (!silent) setCampaigns(MOCK_CAMPAIGNS);
+      if (!silent) setError(true);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -178,6 +174,20 @@ export default function AdminNotificationCampaignsScreen({ navigation }) {
   const sentCount = campaigns.filter((c) => c.status === 'SENT').length;
 
   if (loading) return <View style={s.centered}><ActivityIndicator color={COLORS.purple} size="large" /></View>;
+
+  if (error) {
+    return (
+      <SafeAreaView style={[s.root, { alignItems: 'center', justifyContent: 'center', padding: 30 }]}>
+        <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+        <Text style={{ color: COLORS.muted, textAlign: 'center', marginBottom: 16 }}>
+          Impossible de charger les campagnes de notifications. Réessayez.
+        </Text>
+        <TouchableOpacity onPress={() => load(false)} style={{ backgroundColor: COLORS.purple, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 }}>
+          <Text style={{ color: '#FFF', fontWeight: '700' }}>Réessayer</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={s.root}>

@@ -38,14 +38,6 @@ const STATUS_CONFIG = {
   CANCELLED: { color: COLORS.muted, label: 'Annulé' },
 };
 
-const MOCK_ORDERS = [
-  { id: 'ord-001', serviceType: 'TAXI', status: 'COMPLETED', price: 18, createdAt: new Date(Date.now() - 1 * 3600000).toISOString(), pickup: 'Aéroport Tunis-Carthage', destination: 'Centre Ville', rating: 5 },
-  { id: 'ord-002', serviceType: 'DELIVERY', status: 'IN_PROGRESS', price: 24.5, createdAt: new Date(Date.now() - 30 * 60000).toISOString(), pickup: 'Pizza Roma', destination: 'Les Berges du Lac', rating: null },
-  { id: 'ord-003', serviceType: 'GROCERY', status: 'COMPLETED', price: 52, createdAt: new Date(Date.now() - 2 * 24 * 3600000).toISOString(), pickup: 'Monoprix', destination: 'Menzah 9', rating: 4 },
-  { id: 'ord-004', serviceType: 'SOS', status: 'COMPLETED', price: 45, createdAt: new Date(Date.now() - 5 * 24 * 3600000).toISOString(), pickup: 'Route GP1, Km 42', destination: null, rating: 5 },
-  { id: 'ord-005', serviceType: 'TAXI', status: 'CANCELLED', price: 0, createdAt: new Date(Date.now() - 7 * 24 * 3600000).toISOString(), pickup: 'La Marsa', destination: 'Ennasr', rating: null },
-];
-
 const FILTERS = ['TOUS', 'TAXI', 'LIVRAISON', 'SOS', 'ÉPICERIE'];
 const FILTER_KEYS = { 'TOUS': null, 'TAXI': 'TAXI', 'LIVRAISON': 'DELIVERY', 'SOS': 'SOS', 'ÉPICERIE': 'GROCERY' };
 
@@ -65,13 +57,15 @@ export default function ClientOrdersAllScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState('TOUS');
+  const [error, setError] = useState(false);
 
-  const load = useCallback(async (silent = false) => {
+  const load = useCallback(async () => {
     try {
       const res = await api.get('/api/clients/orders');
       setOrders(res.data.orders || []);
+      setError(false);
     } catch {
-      if (!silent) setOrders(MOCK_ORDERS);
+      setError(true);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -97,6 +91,19 @@ export default function ClientOrdersAllScreen({ navigation }) {
   };
 
   if (loading) return <View style={s.centered}><ActivityIndicator color={COLORS.orange} size="large" /></View>;
+
+  if (error) {
+    return (
+      <View style={s.centered}>
+        <Text style={{ fontSize: 48, marginBottom: 12 }}>⚠️</Text>
+        <Text style={s.emptyTitle}>Impossible de charger vos commandes</Text>
+        <Text style={s.emptySub}>Vérifiez votre connexion et réessayez.</Text>
+        <TouchableOpacity style={[s.filterTab, s.filterTabActive, { marginTop: 16 }]} onPress={() => load()}>
+          <Text style={[s.filterTxt, s.filterTxtActive]}>Réessayer</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={s.root}>
@@ -128,7 +135,7 @@ export default function ClientOrdersAllScreen({ navigation }) {
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} tintColor={COLORS.orange} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={COLORS.orange} />}
         renderItem={({ item }) => {
           const st = STATUS_CONFIG[item.status] || STATUS_CONFIG.PENDING;
           const date = new Date(item.createdAt).toLocaleDateString('fr-TN', { day: '2-digit', month: 'short', year: 'numeric' });

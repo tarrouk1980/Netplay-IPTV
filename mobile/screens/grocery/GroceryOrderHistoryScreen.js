@@ -33,57 +33,20 @@ const STATUS_CONFIG = {
   CANCELLED: { color: COLORS.muted, label: 'Annulé' },
 };
 
-const MOCK_ORDERS = [
-  {
-    id: 'groc-001',
-    status: 'DELIVERED',
-    storeName: 'Monoprix Menzah',
-    storeIcon: '🛒',
-    totalAmount: 38.5,
-    itemCount: 7,
-    createdAt: new Date(Date.now() - 1 * 24 * 3600000).toISOString(),
-    deliveryAddress: 'Rue du Lac, Les Berges du Lac, Tunis',
-    items: [
-      { name: 'Lait Centrale 1L', qty: 2, price: 3.6 },
-      { name: 'Pain de mie Harry\'s', qty: 1, price: 4.2 },
-    ],
-  },
-  {
-    id: 'groc-002',
-    status: 'DELIVERED',
-    storeName: 'Carrefour Tunis City',
-    storeIcon: '🛒',
-    totalAmount: 62.0,
-    itemCount: 12,
-    createdAt: new Date(Date.now() - 5 * 24 * 3600000).toISOString(),
-    deliveryAddress: 'Avenue Habib Bourguiba, Tunis',
-    items: [],
-  },
-  {
-    id: 'groc-003',
-    status: 'CANCELLED',
-    storeName: 'BioMarché Bio',
-    storeIcon: '🌿',
-    totalAmount: 0,
-    itemCount: 4,
-    createdAt: new Date(Date.now() - 10 * 24 * 3600000).toISOString(),
-    deliveryAddress: 'La Marsa, Tunis',
-    items: [],
-  },
-];
-
 export default function GroceryOrderHistoryScreen({ navigation }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [expanded, setExpanded] = useState(null);
+  const [error, setError] = useState(false);
 
-  const load = useCallback(async (silent = false) => {
+  const load = useCallback(async () => {
     try {
       const res = await api.get('/api/grocery/history');
       setOrders(res.data.orders || []);
+      setError(false);
     } catch {
-      if (!silent) setOrders([]);
+      setError(true);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -99,6 +62,27 @@ export default function GroceryOrderHistoryScreen({ navigation }) {
   const toggleExpand = (id) => setExpanded((prev) => (prev === id ? null : id));
 
   if (loading) return <View style={s.centered}><ActivityIndicator color={COLORS.teal} size="large" /></View>;
+
+  if (error) return (
+    <SafeAreaView style={s.root}>
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
+      <View style={s.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text style={s.back}>‹</Text>
+        </TouchableOpacity>
+        <Text style={s.title}>🛒 Mes courses</Text>
+        <View style={{ width: 24 }} />
+      </View>
+      <View style={s.empty}>
+        <Text style={{ fontSize: 48, marginBottom: 12 }}>⚠️</Text>
+        <Text style={s.emptyTitle}>Erreur</Text>
+        <Text style={s.emptySub}>Impossible de charger vos commandes. Réessayez.</Text>
+        <TouchableOpacity style={s.reorderBtn} onPress={load}>
+          <Text style={s.reorderTxt}>Réessayer</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
 
   return (
     <SafeAreaView style={s.root}>
@@ -136,7 +120,7 @@ export default function GroceryOrderHistoryScreen({ navigation }) {
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={() => { setRefreshing(true); load(true); }}
+            onRefresh={() => { setRefreshing(true); load(); }}
             tintColor={COLORS.teal}
           />
         }

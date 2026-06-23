@@ -18,44 +18,29 @@ const TABS = [
   { key: 'DISHES', label: '🍽️ Plats' },
 ];
 
-const MOCK_SHOPS = [
-  { id: 'S1', name: 'Carrefour Market', category: 'Supermarché', rating: 4.8, deliveryTime: '25-35 min', icon: '🏪', open: true },
-  { id: 'S2', name: 'Boulangerie Tunisoise', category: 'Boulangerie', rating: 4.9, deliveryTime: '15-25 min', icon: '🥖', open: true },
-  { id: 'S3', name: 'Pizza Roma', category: 'Restaurant', rating: 4.6, deliveryTime: '30-45 min', icon: '🍕', open: false },
-];
-
-const MOCK_DRIVERS = [
-  { id: 'D1', name: 'Karim B.', type: 'Standard', rides: 234, rating: 4.9, icon: '🚕' },
-  { id: 'D2', name: 'Sami T.', type: 'Confort', rides: 187, rating: 4.8, icon: '🚙' },
-];
-
-const MOCK_DISHES = [
-  { id: 'F1', name: 'Couscous Royal', shop: 'Restaurant El Walima', price: 24.5, rating: 4.9, icon: '🍲' },
-  { id: 'F2', name: 'Pizza 4 fromages', shop: 'Pizza Roma', price: 18.0, rating: 4.7, icon: '🍕' },
-  { id: 'F3', name: 'Tacos poulet', shop: 'Fast Food Medina', price: 12.5, rating: 4.5, icon: '🌮' },
-];
-
 export default function ClientFavoritesScreen({ navigation }) {
   const [tab, setTab] = useState('SHOPS');
   const [shops, setShops] = useState([]);
   const [drivers, setDrivers] = useState([]);
   const [dishes, setDishes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  useEffect(() => {
+  const loadFavorites = () => {
     setLoading(true);
     api.get('/api/client/favorites')
       .then(r => {
-        setShops(r.data.shops || MOCK_SHOPS);
-        setDrivers(r.data.drivers || MOCK_DRIVERS);
-        setDishes(r.data.dishes || MOCK_DISHES);
+        setShops(r.data.shops || []);
+        setDrivers(r.data.drivers || []);
+        setDishes(r.data.dishes || []);
+        setError(false);
       })
-      .catch(() => {
-        setShops(MOCK_SHOPS);
-        setDrivers(MOCK_DRIVERS);
-        setDishes(MOCK_DISHES);
-      })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadFavorites();
   }, []);
 
   const removeFavorite = (type, id) => {
@@ -66,7 +51,9 @@ export default function ClientFavoritesScreen({ navigation }) {
           if (type === 'SHOPS') setShops(p => p.filter(s => s.id !== id));
           else if (type === 'DRIVERS') setDrivers(p => p.filter(d => d.id !== id));
           else setDishes(p => p.filter(f => f.id !== id));
-          api.delete(`/api/client/favorites/${type.toLowerCase()}/${id}`).catch(() => {});
+          api.delete(`/api/client/favorites/${type.toLowerCase()}/${id}`).catch(() => {
+            Alert.alert('Erreur', 'Impossible de retirer ce favori. Réessayez.');
+          });
         },
       },
     ]);
@@ -166,6 +153,19 @@ export default function ClientFavoritesScreen({ navigation }) {
 
       {loading ? (
         <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} />
+      ) : error ? (
+        <View style={{ alignItems: 'center', paddingVertical: 60 }}>
+          <Text style={{ fontSize: 40 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, marginTop: 12, textAlign: 'center', paddingHorizontal: 24 }}>
+            Impossible de charger vos favoris. Réessayez.
+          </Text>
+          <TouchableOpacity
+            style={{ marginTop: 16, backgroundColor: COLORS.accent, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12 }}
+            onPress={loadFavorites}
+          >
+            <Text style={{ color: '#000', fontSize: 14, fontWeight: '700' }}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
         <FlatList
           data={currentData}

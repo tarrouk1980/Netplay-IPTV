@@ -12,22 +12,7 @@ const COLORS = {
   green: '#27AE60', purple: '#7B1FA2', gold: '#FFD700',
 };
 
-const MOCK_STATS = {
-  total: 1842, thisMonth: 134, conversionRate: 68, revenue: 9210,
-  monthly: [42,65,88,110,95,120,140,115,130,160,134,0],
-  topReferrers: [
-    { id: 'r1', name: 'Sami Ben Ali', count: 48, earned: 240 },
-    { id: 'r2', name: 'Leila Mansour', count: 35, earned: 175 },
-    { id: 'r3', name: 'Karim Bouzid', count: 29, earned: 145 },
-    { id: 'r4', name: 'Ahmed Trabelsi', count: 22, earned: 110 },
-    { id: 'r5', name: 'Fatma Chaari', count: 18, earned: 90 },
-    { id: 'r6', name: 'Yassine Dhouib', count: 15, earned: 75 },
-    { id: 'r7', name: 'Rim Jebali', count: 12, earned: 60 },
-    { id: 'r8', name: 'Nour Hamdi', count: 10, earned: 50 },
-    { id: 'r9', name: 'Tarek Saidi', count: 8, earned: 40 },
-    { id: 'r10', name: 'Ines Mrabet', count: 6, earned: 30 },
-  ],
-};
+const EMPTY_STATS = { total: 0, thisMonth: 0, conversionRate: 0, revenue: 0, monthly: Array(12).fill(0), topReferrers: [] };
 
 const MONTHS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
 
@@ -35,13 +20,15 @@ export default function AdminReferralStatsScreen({ navigation }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(false);
 
   const load = useCallback(async (silent = false) => {
     try {
       const res = await api.get('/api/admin/referral/stats');
       setData(res.data);
+      setError(false);
     } catch {
-      if (!silent) setData(MOCK_STATS);
+      if (!silent) setError(true);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -50,10 +37,24 @@ export default function AdminReferralStatsScreen({ navigation }) {
 
   useEffect(() => { load(); }, [load]);
 
-  const d = data || MOCK_STATS;
+  const d = data || EMPTY_STATS;
   const maxBar = Math.max(...d.monthly, 1);
 
   if (loading) return <View style={s.centered}><ActivityIndicator color={COLORS.purple} size="large" /></View>;
+
+  if (error) {
+    return (
+      <SafeAreaView style={[s.root, { alignItems: 'center', justifyContent: 'center', padding: 30 }]}>
+        <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+        <Text style={{ color: COLORS.muted, textAlign: 'center', marginBottom: 16 }}>
+          Impossible de charger les statistiques de parrainage. Réessayez.
+        </Text>
+        <TouchableOpacity onPress={() => load(false)} style={{ backgroundColor: COLORS.purple, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 }}>
+          <Text style={{ color: '#FFF', fontWeight: '700' }}>Réessayer</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={s.root}>

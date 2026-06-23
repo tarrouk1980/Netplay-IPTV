@@ -12,33 +12,6 @@ const COLORS = {
   border: '#2A2A3A', green: '#27AE60', red: '#D32F2F',
 };
 
-const MOCK_PAST_ORDERS = [
-  {
-    id: 'ORD_GRC_001',
-    store: 'Carrefour Berges du Lac',
-    date: '14/01/2025',
-    total: 42.8,
-    items: [
-      { id: 'p1', name: 'Lait demi-écrémé 1L', qty: 2, price: 2.1, emoji: '🥛' },
-      { id: 'p2', name: 'Pain de mie complet', qty: 1, price: 3.5, emoji: '🍞' },
-      { id: 'p3', name: 'Yaourt nature x6', qty: 1, price: 5.2, emoji: '🥛' },
-      { id: 'p4', name: 'Pommes Golden 1kg', qty: 2, price: 4.0, emoji: '🍎' },
-    ],
-  },
-  {
-    id: 'ORD_GRC_002',
-    store: 'Monoprix Menzah',
-    date: '07/01/2025',
-    total: 28.5,
-    items: [
-      { id: 'p5', name: 'Eau minérale 6×1.5L', qty: 1, price: 4.8, emoji: '💧' },
-      { id: 'p6', name: 'Pâtes spaghetti 500g', qty: 3, price: 1.9, emoji: '🍝' },
-      { id: 'p7', name: 'Sauce tomate 400g', qty: 2, price: 3.2, emoji: '🍅' },
-      { id: 'p8', name: 'Huile d\'olive 750ml', qty: 1, price: 12.5, emoji: '🫒' },
-    ],
-  },
-];
-
 function OrderCard({ order, onReorder }) {
   const [expanded, setExpanded] = useState(false);
   const [selected, setSelected] = useState(() => Object.fromEntries(order.items.map((i) => [i.id, true])));
@@ -93,19 +66,25 @@ function OrderCard({ order, onReorder }) {
 }
 
 export default function GroceryReorderScreen({ navigation }) {
-  const [orders, setOrders] = useState(MOCK_PAST_ORDERS);
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+
+  const loadOrders = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/api/grocery/history');
+      setOrders(res.data?.orders || []);
+      setError(false);
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    (async () => {
-      setLoading(true);
-      try {
-        const res = await api.get('/api/grocery/history');
-        if (res.data?.orders?.length) setOrders(res.data.orders);
-      } catch {} finally {
-        setLoading(false);
-      }
-    })();
+    loadOrders();
   }, []);
 
   const handleReorder = (order, items) => {
@@ -144,10 +123,19 @@ export default function GroceryReorderScreen({ navigation }) {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         {loading && <ActivityIndicator color={COLORS.accent} style={{ marginTop: 30 }} />}
-        {orders.map((order) => (
+        {error && !loading && (
+          <View style={styles.errorBox}>
+            <Text style={{ fontSize: 40, marginBottom: 10 }}>⚠️</Text>
+            <Text style={styles.errorText}>Impossible de charger vos commandes. Réessayez.</Text>
+            <TouchableOpacity style={styles.retryBtn} onPress={loadOrders}>
+              <Text style={styles.retryBtnText}>Réessayer</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        {!error && orders.map((order) => (
           <OrderCard key={order.id} order={order} onReorder={handleReorder} />
         ))}
-        {orders.length === 0 && !loading && (
+        {orders.length === 0 && !loading && !error && (
           <View style={styles.empty}>
             <Text style={{ fontSize: 48, marginBottom: 12 }}>🛒</Text>
             <Text style={styles.emptyText}>Pas encore de commandes précédentes.</Text>
@@ -215,4 +203,8 @@ const styles = StyleSheet.create({
   emptyText: { color: COLORS.muted, fontSize: 14, marginBottom: 20 },
   shopBtn: { backgroundColor: COLORS.accent, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12 },
   shopBtnText: { color: '#000', fontWeight: '800', fontSize: 14 },
+  errorBox: { alignItems: 'center', paddingTop: 60 },
+  errorText: { color: COLORS.muted, fontSize: 14, marginBottom: 20, textAlign: 'center', paddingHorizontal: 20 },
+  retryBtn: { backgroundColor: COLORS.accent, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12 },
+  retryBtnText: { color: '#000', fontWeight: '800', fontSize: 14 },
 });

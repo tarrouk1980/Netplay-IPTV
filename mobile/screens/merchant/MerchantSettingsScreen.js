@@ -22,26 +22,14 @@ const SERVICES = [
   { id: 'sos', icon: '🔧', label: 'SOS' },
 ];
 
-const MOCK_STORE = {
-  name: 'Carrefour Market',
-  category: 'Épicerie',
-  address: 'Av. Mohamed V, Tunis',
-  phone: '+216 71 234 567',
-  description: 'Supermarché de proximité ouvert 7j/7.',
-  minOrder: 15,
-  deliveryFee: 1.50,
-  freeDeliveryThreshold: 30,
-  active: true,
-  acceptsPreorders: true,
-  schedule: {
-    Lun: { open: '08:00', close: '21:00', enabled: true },
-    Mar: { open: '08:00', close: '21:00', enabled: true },
-    Mer: { open: '08:00', close: '21:00', enabled: true },
-    Jeu: { open: '08:00', close: '21:00', enabled: true },
-    Ven: { open: '08:00', close: '21:00', enabled: true },
-    Sam: { open: '09:00', close: '20:00', enabled: true },
-    Dim: { open: '10:00', close: '18:00', enabled: false },
-  },
+const DEFAULT_SCHEDULE = {
+  Lun: { open: '08:00', close: '21:00', enabled: true },
+  Mar: { open: '08:00', close: '21:00', enabled: true },
+  Mer: { open: '08:00', close: '21:00', enabled: true },
+  Jeu: { open: '08:00', close: '21:00', enabled: true },
+  Ven: { open: '08:00', close: '21:00', enabled: true },
+  Sam: { open: '09:00', close: '20:00', enabled: true },
+  Dim: { open: '10:00', close: '18:00', enabled: false },
 };
 
 const fromApi = (m) => ({
@@ -55,19 +43,20 @@ const fromApi = (m) => ({
   freeDeliveryThreshold: m.metadata?.freeDeliveryThreshold ?? 0,
   active: m.isOpen,
   acceptsPreorders: m.metadata?.acceptsPreorders ?? false,
-  schedule: m.metadata?.schedule || MOCK_STORE.schedule,
+  schedule: m.metadata?.schedule || DEFAULT_SCHEDULE,
 });
 
 export default function MerchantSettingsScreen({ navigation }) {
   const [store, setStore] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
     api.get('/api/merchants/me')
-      .then(r => setStore(fromApi(r.data.merchant)))
-      .catch(() => setStore(MOCK_STORE))
+      .then(r => { setStore(fromApi(r.data.merchant)); setError(false); })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -104,10 +93,29 @@ export default function MerchantSettingsScreen({ navigation }) {
     }
   };
 
-  if (loading || !store) {
+  if (loading) {
     return (
       <SafeAreaView style={styles.root}>
         <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 80 }} />
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !store) {
+    return (
+      <SafeAreaView style={styles.root}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <Text style={{ fontSize: 48, marginBottom: 12 }}>⚠️</Text>
+          <Text style={{ color: COLORS.white, fontSize: 16, fontWeight: '700', marginBottom: 6, textAlign: 'center' }}>
+            Impossible de charger les paramètres
+          </Text>
+          <Text style={{ color: COLORS.muted, fontSize: 13, textAlign: 'center', marginBottom: 16 }}>
+            Vérifiez votre connexion et réessayez.
+          </Text>
+          <TouchableOpacity onPress={load}>
+            <Text style={styles.saveBtn}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
     );
   }

@@ -19,16 +19,10 @@ const STATUS_CONFIG = {
   OFFLINE: { label: 'Hors ligne', color: '#8A8A9A', dot: '⚫' },
 };
 
-const MOCK_DEPANNEURS = [
-  { id: 1, name: 'Karim SOS Express', distance: 1.2, eta: '4 min', rating: 4.9, status: 'AVAILABLE', speciality: 'Crevaison, Batterie', vehicle: 'Ford Transit' },
-  { id: 2, name: 'Mohamed Dépanne Pro', distance: 2.8, eta: '8 min', rating: 4.8, status: 'AVAILABLE', speciality: 'Remorquage, Panne', vehicle: 'Mercedes Sprinter' },
-  { id: 3, name: 'Amine Assistance', distance: 3.5, eta: '11 min', rating: 4.7, status: 'BUSY', speciality: 'Toutes pannes', vehicle: 'Peugeot Expert' },
-  { id: 4, name: 'Sami SOS Tunis', distance: 4.1, eta: '14 min', rating: 4.6, status: 'AVAILABLE', speciality: 'Batterie, Carburant', vehicle: 'VW Crafter' },
-];
-
 export default function SOSDepanneurMapScreen({ navigation }) {
-  const [depanneurs, setDepanneurs] = useState(MOCK_DEPANNEURS);
+  const [depanneurs, setDepanneurs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [selected, setSelected] = useState(null);
   const [filter, setFilter] = useState('ALL');
   const intervalRef = useRef(null);
@@ -43,9 +37,10 @@ export default function SOSDepanneurMapScreen({ navigation }) {
     try {
       const loc = await getCurrentLocationWithAddress();
       const res = await api.get('/api/sos/nearby', { params: { lat: loc?.coords?.lat, lng: loc?.coords?.lng } });
-      if (res.data?.depanneurs?.length > 0) setDepanneurs(res.data.depanneurs);
+      setDepanneurs(res.data?.depanneurs || []);
+      setError(false);
     } catch {
-      // garder mock
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -68,6 +63,21 @@ export default function SOSDepanneurMapScreen({ navigation }) {
         </View>
       </View>
 
+      {error ? (
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <Text style={{ fontSize: 48, marginBottom: 12 }}>⚠️</Text>
+          <Text style={{ color: COLORS.white, fontSize: 16, fontWeight: '700', marginBottom: 6, textAlign: 'center' }}>
+            Impossible de charger les dépanneurs
+          </Text>
+          <Text style={{ color: COLORS.muted, fontSize: 13, textAlign: 'center', marginBottom: 16 }}>
+            Vérifiez votre connexion et réessayez.
+          </Text>
+          <TouchableOpacity style={styles.callBtn} onPress={fetchDepanneurs}>
+            <Text style={styles.callBtnText}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+      <>
       <View style={styles.statsBar}>
         <View style={styles.statItem}>
           <Text style={[styles.statNum, { color: COLORS.green }]}>{available}</Text>
@@ -148,6 +158,8 @@ export default function SOSDepanneurMapScreen({ navigation }) {
             );
           })}
         </ScrollView>
+      )}
+      </>
       )}
     </SafeAreaView>
   );

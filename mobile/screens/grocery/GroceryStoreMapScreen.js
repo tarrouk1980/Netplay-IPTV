@@ -14,23 +14,16 @@ const COLORS = {
   border: '#2A2A3A', green: '#27AE60', purple: '#8E44AD',
 };
 
-const MOCK_STORES = [
-  { id: '1', name: 'Monoprix Lac', type: 'Supermarché', lat: 36.832, lng: 10.238, open: true, distance: '1.2 km', deliveryTime: '25 min', minOrder: 20 },
-  { id: '2', name: 'MG Ariana', type: 'Supermarché', lat: 36.861, lng: 10.193, open: true, distance: '2.8 km', deliveryTime: '35 min', minOrder: 15 },
-  { id: '3', name: 'Épicerie Sidi Bou', type: 'Épicerie', lat: 36.869, lng: 10.225, open: false, distance: '4.1 km', deliveryTime: '45 min', minOrder: 10 },
-  { id: '4', name: 'Carrefour Market', type: 'Supermarché', lat: 36.820, lng: 10.175, open: true, distance: '3.5 km', deliveryTime: '40 min', minOrder: 25 },
-  { id: '5', name: 'Aziza Menzah', type: 'Supermarché', lat: 36.843, lng: 10.187, open: true, distance: '2.0 km', deliveryTime: '30 min', minOrder: 20 },
-];
-
 const TYPES = ['Tous', 'Supermarché', 'Épicerie', 'Bio', 'Pharmacie'];
 
 export default function GroceryStoreMapScreen({ navigation }) {
   const [userPos, setUserPos] = useState({ lat: 36.8065, lng: 10.1815 });
-  const [stores, setStores] = useState(MOCK_STORES);
+  const [stores, setStores] = useState([]);
   const [filter, setFilter] = useState('Tous');
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState('map'); // 'map' | 'list'
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     loadStores();
@@ -49,8 +42,9 @@ export default function GroceryStoreMapScreen({ navigation }) {
       }
       const res = await api.get(`/api/merchants?lat=${lat}&lng=${lng}&radius=15`);
       if (res.data?.merchants?.length) setStores(res.data.merchants);
+      setError(false);
     } catch {
-      // keep mock data
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -121,6 +115,14 @@ export default function GroceryStoreMapScreen({ navigation }) {
       <View style={[styles.listPanel, view === 'map' ? styles.listPanelOverlay : styles.listPanelFull]}>
         {loading ? (
           <ActivityIndicator color={COLORS.accent} style={{ padding: 20 }} />
+        ) : error ? (
+          <View style={styles.errorBox}>
+            <Text style={{ fontSize: 32, marginBottom: 8 }}>⚠️</Text>
+            <Text style={styles.errorText}>Impossible de charger les magasins. Réessayez.</Text>
+            <TouchableOpacity style={styles.retryBtn} onPress={loadStores}>
+              <Text style={styles.retryBtnText}>Réessayer</Text>
+            </TouchableOpacity>
+          </View>
         ) : (
           <ScrollView showsVerticalScrollIndicator={false}>
             {filtered.map((store) => (
@@ -233,4 +235,8 @@ const styles = StyleSheet.create({
     paddingVertical: 15, alignItems: 'center',
   },
   goBtnText: { color: COLORS.white, fontSize: 15, fontWeight: '700' },
+  errorBox: { alignItems: 'center', padding: 24 },
+  errorText: { color: COLORS.muted, fontSize: 13, textAlign: 'center', marginBottom: 14 },
+  retryBtn: { backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 20, paddingVertical: 10 },
+  retryBtnText: { color: '#000', fontWeight: '800', fontSize: 13 },
 });

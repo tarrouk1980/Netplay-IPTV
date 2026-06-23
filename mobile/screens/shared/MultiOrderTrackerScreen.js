@@ -46,21 +46,6 @@ const STATUS_STEPS = {
   ],
 };
 
-const MOCK_ORDERS = [
-  {
-    id: 'ord_taxi_1', type: 'TAXI', status: 'IN_PROGRESS',
-    provider: { name: 'Mohamed B.', phone: '+216 55 123 456', vehicle: 'Volkswagen Polo · 180TU2024' },
-    pickupAddress: 'Av. Habib Bourguiba, Tunis', destAddress: 'La Marsa Plage',
-    eta: 8, fare: 18.5, createdAt: new Date(Date.now() - 300000).toISOString(),
-  },
-  {
-    id: 'ord_delivery_1', type: 'DELIVERY', status: 'ACCEPTED',
-    provider: { name: 'Slim M.', phone: '+216 52 987 654' },
-    pickupAddress: 'Pizza Hut La Marsa', destAddress: 'Rue des Jasmins, La Marsa',
-    eta: 25, fare: 32, createdAt: new Date(Date.now() - 600000).toISOString(),
-  },
-];
-
 function PulsingDot({ color }) {
   const scale = useRef(new Animated.Value(1)).current;
   useEffect(() => {
@@ -199,14 +184,16 @@ function OrderCard({ order, onViewMap, onCancel }) {
 export default function MultiOrderTrackerScreen({ navigation }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const intervalRef = useRef(null);
 
   const load = useCallback(async () => {
     try {
       const res = await api.get('/api/orders/active');
-      setOrders(res.data?.orders?.length ? res.data.orders : MOCK_ORDERS);
+      setOrders(res.data?.orders || []);
+      setError(false);
     } catch {
-      setOrders(MOCK_ORDERS);
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -255,7 +242,16 @@ export default function MultiOrderTrackerScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {orders.length === 0 ? (
+      {error ? (
+        <View style={styles.centered}>
+          <Text style={styles.emptyEmoji}>⚠️</Text>
+          <Text style={styles.emptyTitle}>Impossible de charger vos commandes</Text>
+          <Text style={styles.emptyText}>Vérifiez votre connexion et réessayez.</Text>
+          <TouchableOpacity style={styles.homeBtn} onPress={load}>
+            <Text style={styles.homeBtnText}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
+      ) : orders.length === 0 ? (
         <View style={styles.centered}>
           <Text style={styles.emptyEmoji}>📡</Text>
           <Text style={styles.emptyTitle}>Aucune commande active</Text>

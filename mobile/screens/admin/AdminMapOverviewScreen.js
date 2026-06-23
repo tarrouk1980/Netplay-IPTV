@@ -33,20 +33,6 @@ const ROLE_ICONS = {
   DEPANNEUR: { icon: '🛻', color: COLORS.accent },
 };
 
-const MOCK_PROVIDERS = [
-  { id: 'p1', name: 'Karim B.', role: 'CHAUFFEUR', lat: 36.8190, lng: 10.1658, status: 'BUSY' },
-  { id: 'p2', name: 'Sami T.', role: 'CHAUFFEUR', lat: 36.8340, lng: 10.2100, status: 'ONLINE' },
-  { id: 'p3', name: 'Ahmed M.', role: 'LIVREUR', lat: 36.8050, lng: 10.1800, status: 'ONLINE' },
-  { id: 'p4', name: 'Mohamed S.', role: 'DEPANNEUR', lat: 36.8500, lng: 10.1500, status: 'ONLINE' },
-  { id: 'p5', name: 'Leila K.', role: 'CHAUFFEUR', lat: 36.8250, lng: 10.2300, status: 'OFFLINE' },
-];
-
-const MOCK_ORDERS = [
-  { id: 'o1', serviceType: 'TAXI', lat: 36.8200, lng: 10.1700, status: 'IN_PROGRESS' },
-  { id: 'o2', serviceType: 'DELIVERY', lat: 36.8100, lng: 10.2000, status: 'PENDING' },
-  { id: 'o3', serviceType: 'SOS', lat: 36.8400, lng: 10.1600, status: 'ACCEPTED' },
-];
-
 function PulseDot({ color, size = 10 }) {
   const scale = useRef(new Animated.Value(1)).current;
   useEffect(() => {
@@ -66,6 +52,7 @@ export default function AdminMapOverviewScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('ALL');
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [error, setError] = useState(false);
 
   const load = useCallback(async (silent = false) => {
     try {
@@ -73,11 +60,12 @@ export default function AdminMapOverviewScreen({ navigation }) {
         api.get('/api/admin/providers/online'),
         api.get('/api/admin/orders/live'),
       ]);
-      setProviders(pRes.data.providers || MOCK_PROVIDERS);
-      setOrders(oRes.data.orders || MOCK_ORDERS);
+      setProviders(pRes.data.providers || []);
+      setOrders(oRes.data.orders || []);
       setLastUpdated(new Date());
+      setError(false);
     } catch {
-      if (!silent) { setProviders(MOCK_PROVIDERS); setOrders(MOCK_ORDERS); }
+      if (!silent) setError(true);
     } finally {
       setLoading(false);
     }
@@ -107,6 +95,20 @@ export default function AdminMapOverviewScreen({ navigation }) {
   const mapUrl = `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/${pinParts}/${centerLng},${centerLat},10/700x320@2x?access_token=${MAPBOX_TOKEN}`;
 
   if (loading) return <View style={s.centered}><ActivityIndicator color={COLORS.green} size="large" /></View>;
+
+  if (error) {
+    return (
+      <SafeAreaView style={[s.root, { alignItems: 'center', justifyContent: 'center', padding: 30 }]}>
+        <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+        <Text style={{ color: COLORS.muted, textAlign: 'center', marginBottom: 16 }}>
+          Impossible de charger la carte globale. Réessayez.
+        </Text>
+        <TouchableOpacity onPress={() => load(false)} style={{ backgroundColor: COLORS.orange, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 }}>
+          <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={s.root}>

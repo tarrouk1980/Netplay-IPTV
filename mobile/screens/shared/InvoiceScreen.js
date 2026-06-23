@@ -27,23 +27,6 @@ const SERVICE_CONFIG = {
   GROCERY:  { label: 'Courses à domicile', icon: '🛒', color: '#3498DB' },
 };
 
-const MOCK_ORDER = {
-  id: 'ord_inv01',
-  serviceType: 'TAXI',
-  status: 'COMPLETED',
-  totalAmount: 7.35,
-  price: 7.35,
-  createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-  completedAt: new Date(Date.now() - 2 * 86400000 + 25 * 60000).toISOString(),
-  originAddress: '12 Avenue Habib Bourguiba, Tunis',
-  destinationAddress: 'Aéroport Tunis-Carthage, Ariana',
-  provider: { name: 'Tarek Ben Salah', phone: '+21699001122' },
-  client: { name: 'Salim Baccar', phone: '+21622334455' },
-  distance: 9.2,
-  duration: 24,
-  tip: 1.0,
-};
-
 function InvoiceRow({ label, value, bold, color }) {
   return (
     <View style={[inv.row, bold && { borderTopWidth: 1, borderTopColor: COLORS.border, marginTop: 6, paddingTop: 10 }]}>
@@ -146,13 +129,16 @@ export default function InvoiceScreen({ route, navigation }) {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [error, setError] = useState(false);
 
   const load = useCallback(async () => {
+    setLoading(true);
     try {
       const res = await api.get(`/api/orders/${orderId}`);
       setOrder(res.data?.order || res.data);
+      setError(false);
     } catch {
-      setOrder(MOCK_ORDER);
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -182,7 +168,27 @@ export default function InvoiceScreen({ route, navigation }) {
   if (loading) return (
     <View style={styles.loading}><ActivityIndicator size="large" color={COLORS.accent} /></View>
   );
-  if (!order) return null;
+  if (error || !order) return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Text style={styles.backArrow}>‹</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Facture</Text>
+        <View style={{ width: 40 }} />
+      </View>
+      <View style={styles.loading}>
+        <Text style={{ fontSize: 48, marginBottom: 12 }}>⚠️</Text>
+        <Text style={{ color: COLORS.muted, fontSize: 14, marginBottom: 20, textAlign: 'center', paddingHorizontal: 30 }}>
+          Impossible de charger la facture. Réessayez.
+        </Text>
+        <TouchableOpacity style={styles.pdfBtn} onPress={load}>
+          <Text style={styles.pdfBtnText}>Réessayer</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
 
   const svcCfg = SERVICE_CONFIG[order.serviceType] || SERVICE_CONFIG.TAXI;
   const invNum = `INV-${String(order.id).slice(-8).toUpperCase()}`;

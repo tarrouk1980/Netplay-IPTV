@@ -13,14 +13,6 @@ const COLORS = {
   border: '#2A2A3A', green: '#27AE60', red: '#D32F2F',
 };
 
-const MOCK_REVIEWS = [
-  { id: 'R001', author: 'Sonia M.', avatar: '👩', date: '15/01/2025', rating: 5, comment: 'Chauffeur très ponctuel et véhicule propre. Je recommande vivement !', service: 'Taxi', verified: true },
-  { id: 'R002', author: 'Yassine A.', avatar: '🧑', date: '14/01/2025', rating: 4, comment: 'Bon service dans l\'ensemble. Légère attente mais rien de grave.', service: 'Taxi', verified: true },
-  { id: 'R003', author: 'Fatma K.', avatar: '👩‍🦱', date: '12/01/2025', rating: 5, comment: 'EasyWay change la vie ! Livraison rapide et pas chère.', service: 'Livraison', verified: false },
-  { id: 'R004', author: 'Mohamed T.', avatar: '🧔', date: '10/01/2025', rating: 3, comment: 'Correct mais prix un peu élevé par rapport à la concurrence.', service: 'SOS', verified: true },
-  { id: 'R005', author: 'Ines H.', avatar: '👩‍💼', date: '08/01/2025', rating: 5, comment: 'Easy For Lady est parfait. Je me sens en sécurité à chaque trajet.', service: 'Easy For Lady', verified: true },
-];
-
 function Stars({ value, size = 16, onSelect }) {
   return (
     <View style={{ flexDirection: 'row', gap: 4 }}>
@@ -38,12 +30,13 @@ export default function ReviewsScreen({ navigation, route }) {
   const targetId = route?.params?.targetId;
   const targetName = route?.params?.targetName || 'Ce prestataire';
 
-  const [reviews, setReviews] = useState(targetId ? [] : MOCK_REVIEWS);
+  const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(false);
   const [myRating, setMyRating] = useState(0);
   const [myComment, setMyComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [tab, setTab] = useState('avis');
+  const [error, setError] = useState(false);
 
   const avgRating = reviews.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : '0.0';
   const dist = [5, 4, 3, 2, 1].map((s) => ({
@@ -52,17 +45,22 @@ export default function ReviewsScreen({ navigation, route }) {
     pct: reviews.length ? (reviews.filter((r) => r.rating === s).length / reviews.length) * 100 : 0,
   }));
 
-  useEffect(() => {
+  const loadReviews = async () => {
     if (!targetId) return;
-    (async () => {
-      setLoading(true);
-      try {
-        const res = await api.get(`/api/reviews/${targetId}`);
-        setReviews(res.data?.reviews || []);
-      } catch {} finally {
-        setLoading(false);
-      }
-    })();
+    setLoading(true);
+    try {
+      const res = await api.get(`/api/reviews/${targetId}`);
+      setReviews(res.data?.reviews || []);
+      setError(false);
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadReviews();
   }, [targetId]);
 
   const handleSubmit = async () => {
@@ -71,17 +69,20 @@ export default function ReviewsScreen({ navigation, route }) {
     setSubmitting(true);
     try {
       await api.post('/api/reviews', { targetId, rating: myRating, comment: myComment });
-    } catch {}
-    const newReview = {
-      id: `R${Date.now()}`, author: user?.name || 'Moi', avatar: '😊',
-      date: new Date().toLocaleDateString('fr-TN'),
-      rating: myRating, comment: myComment, service: 'Taxi', verified: false,
-    };
-    setReviews((r) => [newReview, ...r]);
-    setMyRating(0);
-    setMyComment('');
-    setSubmitting(false);
-    Alert.alert('Merci !', 'Votre avis a été publié.');
+      const newReview = {
+        id: `R${Date.now()}`, author: user?.name || 'Moi', avatar: '😊',
+        date: new Date().toLocaleDateString('fr-TN'),
+        rating: myRating, comment: myComment, service: 'Taxi', verified: false,
+      };
+      setReviews((r) => [newReview, ...r]);
+      setMyRating(0);
+      setMyComment('');
+      Alert.alert('Merci !', 'Votre avis a été publié.');
+    } catch {
+      Alert.alert('Erreur', "Impossible de publier votre avis. Réessayez.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -132,7 +133,18 @@ export default function ReviewsScreen({ navigation, route }) {
       {tab === 'avis' && (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list}>
           {loading && <ActivityIndicator color={COLORS.accent} style={{ marginTop: 20 }} />}
-          {reviews.map((r) => (
+          {error && !loading && (
+            <View style={{ alignItems: 'center', paddingTop: 40 }}>
+              <Text style={{ fontSize: 40, marginBottom: 10 }}>⚠️</Text>
+              <Text style={{ color: COLORS.muted, fontSize: 13, textAlign: 'center', marginBottom: 16, paddingHorizontal: 20 }}>
+                Impossible de charger les avis. Réessayez.
+              </Text>
+              <TouchableOpacity style={styles.submitBtn} onPress={loadReviews}>
+                <Text style={styles.submitBtnText}>Réessayer</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          {!error && reviews.map((r) => (
             <View key={r.id} style={styles.reviewCard}>
               <View style={styles.reviewTop}>
                 <Text style={{ fontSize: 28 }}>{r.avatar}</Text>

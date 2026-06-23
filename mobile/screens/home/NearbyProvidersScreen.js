@@ -29,22 +29,6 @@ const SERVICE_CONFIG = {
   DELIVERY: { icon: '🛵', color: '#27AE60', label: 'Livreurs disponibles', pinColor: '27AE60', navigate: 'DeliveryHome' },
 };
 
-const MOCK_PROVIDERS = {
-  TAXI: [
-    { id: 't1', name: 'Tarek B.', lat: 36.808, lng: 10.183, rating: 4.8, distance: 0.3 },
-    { id: 't2', name: 'Salim K.', lat: 36.804, lng: 10.179, rating: 4.6, distance: 0.7 },
-    { id: 't3', name: 'Rania M.', lat: 36.810, lng: 10.190, rating: 4.9, distance: 1.1 },
-  ],
-  SOS: [
-    { id: 's1', name: 'Nizar R.', lat: 36.800, lng: 10.175, rating: 4.7, distance: 1.4 },
-    { id: 's2', name: 'Ines H.', lat: 36.815, lng: 10.186, rating: 4.5, distance: 2.0 },
-  ],
-  DELIVERY: [
-    { id: 'd1', name: 'Sofiene T.', lat: 36.806, lng: 10.188, rating: 4.4, distance: 0.5 },
-    { id: 'd2', name: 'Amira B.', lat: 36.813, lng: 10.178, rating: 4.7, distance: 0.9 },
-  ],
-};
-
 function buildMapUrl(providers, userLat, userLng, pinColor) {
   const center = userLat ? `${userLng},${userLat}` : '10.1815,36.8065';
   const userPin = userLat ? `pin-s+4A9EFF(${userLng},${userLat}),` : '';
@@ -59,6 +43,7 @@ export default function NearbyProvidersScreen({ navigation }) {
   const [providers, setProviders] = useState({});
   const [loading, setLoading] = useState(true);
   const [mapError, setMapError] = useState(false);
+  const [error, setError] = useState(false);
   const intervalRef = useRef(null);
 
   const userLat = location?.latitude || 36.8065;
@@ -67,9 +52,10 @@ export default function NearbyProvidersScreen({ navigation }) {
   const load = useCallback(async () => {
     try {
       const res = await api.get(`/api/users/nearby-providers?lat=${userLat}&lng=${userLng}`);
-      setProviders(res.data?.providers || MOCK_PROVIDERS);
+      setProviders(res.data?.providers || {});
+      setError(false);
     } catch {
-      setProviders(MOCK_PROVIDERS);
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -165,6 +151,15 @@ export default function NearbyProvidersScreen({ navigation }) {
         {/* Provider list */}
         {loading ? (
           <ActivityIndicator color={config.color} style={{ marginTop: 20 }} />
+        ) : error ? (
+          <View style={styles.emptyBox}>
+            <Text style={styles.emptyIcon}>⚠️</Text>
+            <Text style={styles.emptyTitle}>Impossible de charger les prestataires</Text>
+            <Text style={styles.emptySub}>Réessayez.</Text>
+            <TouchableOpacity style={[styles.orderBtn, { backgroundColor: config.color, marginTop: 14, paddingHorizontal: 24 }]} onPress={load}>
+              <Text style={styles.orderBtnText}>Réessayer</Text>
+            </TouchableOpacity>
+          </View>
         ) : list.length === 0 ? (
           <View style={styles.emptyBox}>
             <Text style={styles.emptyIcon}>{config.icon}</Text>

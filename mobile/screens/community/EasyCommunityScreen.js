@@ -22,39 +22,6 @@ const CATEGORIES = [
   { key: 'tips', label: '💡 Astuces' },
 ];
 
-const MOCK_POSTS = [
-  {
-    id: '1', category: 'taxi', author: 'Ahmed B.', avatar: '🧔', time: 'il y a 12 min',
-    title: 'Chauffeur très professionnel sur Lac Tunis !',
-    body: 'J\'ai pris EasyTaxy ce matin, le chauffeur Karim était ponctuel et le véhicule impeccable. Je recommande 100% 👍',
-    likes: 24, comments: 5, verified: true,
-  },
-  {
-    id: '2', category: 'sos', author: 'Fatma K.', avatar: '👩', time: 'il y a 1h',
-    title: 'SOS dépannage rapide à Ariana',
-    body: 'Pneu crevé sur l\'autoroute, le dépanneur est arrivé en moins de 20 minutes. Merci EasyWay !',
-    likes: 41, comments: 8, verified: false,
-  },
-  {
-    id: '3', category: 'tips', author: 'Mohamed T.', avatar: '🧑', time: 'il y a 3h',
-    title: 'Astuce : code promo FLASH30 sur EasyTaxy',
-    body: 'Le code FLASH30 donne 30% de réduction sur votre prochaine course. Valable jusqu\'à ce soir !',
-    likes: 88, comments: 14, verified: true,
-  },
-  {
-    id: '4', category: 'grocery', author: 'Sonia M.', avatar: '👩‍🦱', time: 'hier',
-    title: 'Livraison courses Carrefour en 45 min',
-    body: 'Commande passée à 10h, livrée à 10h45 avec tous les articles. Emballage soigné. Super service !',
-    likes: 19, comments: 3, verified: false,
-  },
-  {
-    id: '5', category: 'delivery', author: 'Yassine A.', avatar: '🧑‍💼', time: 'hier',
-    title: 'EasyPackage fiable pour envoi inter-villes',
-    body: 'Envoyé un colis de Tunis à Sfax, arrivé le lendemain matin. Tracking en temps réel, parfait.',
-    likes: 32, comments: 6, verified: true,
-  },
-];
-
 function PostCard({ post, onLike }) {
   const [liked, setLiked] = useState(false);
   const [localLikes, setLocalLikes] = useState(post.likes);
@@ -106,22 +73,28 @@ function PostCard({ post, onLike }) {
 
 export default function EasyCommunityScreen({ navigation }) {
   const { user } = useAuthStore();
-  const [posts, setPosts] = useState(MOCK_POSTS);
+  const [posts, setPosts] = useState([]);
   const [category, setCategory] = useState('all');
   const [newPost, setNewPost] = useState('');
   const [posting, setPosting] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+
+  const loadPosts = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/api/community/posts');
+      setPosts(res.data?.posts || []);
+      setError(false);
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    (async () => {
-      setLoading(true);
-      try {
-        const res = await api.get('/api/community/posts');
-        if (res.data?.posts?.length) setPosts(res.data.posts);
-      } catch {} finally {
-        setLoading(false);
-      }
-    })();
+    loadPosts();
   }, []);
 
   const filtered = category === 'all' ? posts : posts.filter((p) => p.category === category);
@@ -131,15 +104,18 @@ export default function EasyCommunityScreen({ navigation }) {
     setPosting(true);
     try {
       await api.post('/api/community/posts', { body: newPost, category: 'tips' });
-    } catch {}
-    const optimistic = {
-      id: Date.now().toString(), category: 'tips',
-      author: user?.name || 'Moi', avatar: '😊', time: 'À l\'instant',
-      title: newPost.slice(0, 60), body: newPost, likes: 0, comments: 0, verified: false,
-    };
-    setPosts((p) => [optimistic, ...p]);
-    setNewPost('');
-    setPosting(false);
+      const optimistic = {
+        id: Date.now().toString(), category: 'tips',
+        author: user?.name || 'Moi', avatar: '😊', time: 'À l\'instant',
+        title: newPost.slice(0, 60), body: newPost, likes: 0, comments: 0, verified: false,
+      };
+      setPosts((p) => [optimistic, ...p]);
+      setNewPost('');
+    } catch {
+      Alert.alert('Erreur', "Impossible de publier votre post. Réessayez.");
+    } finally {
+      setPosting(false);
+    }
   };
 
   return (
@@ -196,10 +172,21 @@ export default function EasyCommunityScreen({ navigation }) {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list}>
         {loading && <ActivityIndicator color={COLORS.accent} style={{ marginTop: 30 }} />}
-        {filtered.map((p) => (
+        {error && !loading && (
+          <View style={{ alignItems: 'center', marginTop: 40 }}>
+            <Text style={{ fontSize: 40, marginBottom: 10 }}>⚠️</Text>
+            <Text style={{ color: COLORS.muted, fontSize: 13, textAlign: 'center', marginBottom: 16, paddingHorizontal: 20 }}>
+              Impossible de charger les posts. Réessayez.
+            </Text>
+            <TouchableOpacity style={styles.postBtn} onPress={loadPosts}>
+              <Text style={styles.postBtnText}>Réessayer</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        {!error && filtered.map((p) => (
           <PostCard key={p.id} post={p} />
         ))}
-        {filtered.length === 0 && !loading && (
+        {!error && filtered.length === 0 && !loading && (
           <Text style={{ color: COLORS.muted, textAlign: 'center', marginTop: 40 }}>
             Aucun post dans cette catégorie.
           </Text>

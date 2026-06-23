@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   StatusBar, ActivityIndicator, TextInput,
@@ -12,15 +12,6 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB', orange: '#E67E22',
 };
 
-const MOCK_DRIVERS = [
-  { id: 'D1', name: 'Karim Belhaj', type: 'taxi', status: 'on_trip', zone: 'Centre-ville', rating: 4.9, tripsToday: 8, phone: '+216 20 111 222' },
-  { id: 'D2', name: 'Sami Trabelsi', type: 'taxi', status: 'online', zone: 'Lac 1', rating: 4.7, tripsToday: 5, phone: '+216 20 333 444' },
-  { id: 'D3', name: 'Rania Bouzid', type: 'livreur', status: 'on_trip', zone: 'La Marsa', rating: 4.8, tripsToday: 12, phone: '+216 20 555 666' },
-  { id: 'D4', name: 'Youssef Slim', type: 'livreur', status: 'online', zone: 'Ariana', rating: 4.6, tripsToday: 9, phone: '+216 20 777 888' },
-  { id: 'D5', name: 'Nabil Gharbi', type: 'depanneur', status: 'on_trip', zone: 'Tunis Nord', rating: 4.9, tripsToday: 3, phone: '+216 20 999 000' },
-  { id: 'D6', name: 'Ines Mrad', type: 'taxi', status: 'offline', zone: '—', rating: 4.5, tripsToday: 0, phone: '+216 20 123 456' },
-];
-
 const STATUS_LABELS = { online: { label: 'En ligne', color: COLORS.green }, on_trip: { label: 'En course', color: COLORS.accent }, offline: { label: 'Hors ligne', color: COLORS.muted } };
 const TYPE_ICONS = { taxi: '🚕', livreur: '📦', depanneur: '🔧' };
 
@@ -29,13 +20,17 @@ export default function AdminLiveDriversScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const [error, setError] = useState(false);
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setLoading(true);
     api.get('/api/admin/drivers/live')
-      .then(r => setDrivers(r.data || MOCK_DRIVERS))
-      .catch(() => setDrivers(MOCK_DRIVERS))
+      .then(r => { setDrivers(r.data || []); setError(false); })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   const filtered = (drivers || []).filter(d => {
     const matchFilter = filter === 'all' || d.type === filter || d.status === filter;
@@ -48,6 +43,20 @@ export default function AdminLiveDriversScreen({ navigation }) {
     on_trip: (drivers || []).filter(d => d.status === 'on_trip').length,
     offline: (drivers || []).filter(d => d.status === 'offline').length,
   };
+
+  if (error) {
+    return (
+      <SafeAreaView style={[styles.container, { alignItems: 'center', justifyContent: 'center', padding: 30 }]}>
+        <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+        <Text style={{ color: COLORS.muted, textAlign: 'center', marginBottom: 16 }}>
+          Impossible de charger les chauffeurs en direct. Réessayez.
+        </Text>
+        <TouchableOpacity onPress={load} style={{ backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 }}>
+          <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
