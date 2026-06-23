@@ -1,17 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  Animated,
   Alert,
   ScrollView,
-  Dimensions,
+  ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const { width } = Dimensions.get('window');
+import api from '../../services/api';
 
 const COULEURS = {
   bg: '#0A0A0F',
@@ -22,84 +21,36 @@ const COULEURS = {
   border: '#2C2C3A',
 };
 
-const CHAUFFEUR = {
-  prenom: 'Karim',
-  nom: 'Benali',
-  plaque: '75-ABC-123',
-  modele: 'Renault Clio 5',
-  note: 4.8,
-  couleur: 'Gris Métal',
-};
+export default function TaxiActiveRideScreen({ navigation, route }) {
+  const orderId = route.params?.orderId;
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-const COURSE = {
-  depart: '12 Rue de la Paix, Paris',
-  arrivee: '45 Avenue Montaigne, Paris',
-  distance: 7.4,
-  prixEstime: '14,50 €',
-};
-
-export default function TaxiActiveRideScreen({ navigation }) {
-  const [etaMinutes, setEtaMinutes] = useState(8);
-  const [progression, setProgression] = useState(0.22);
-  const progressAnim = useRef(new Animated.Value(0.22)).current;
-  const routeAnim = useRef(new Animated.Value(0)).current;
+  const load = useCallback(() => {
+    if (!orderId) { setLoading(false); return; }
+    setLoading(true);
+    api.get(`/api/taxi/${orderId}`)
+      .then((r) => { setOrder(r.data.order); setError(false); })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, [orderId]);
 
   useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(routeAnim, {
-          toValue: 1,
-          duration: 2500,
-          useNativeDriver: false,
-        }),
-        Animated.timing(routeAnim, {
-          toValue: 0,
-          duration: 0,
-          useNativeDriver: false,
-        }),
-      ])
-    ).start();
-  }, []);
-
-  useEffect(() => {
-    const intervalle = setInterval(() => {
-      setEtaMinutes((prev) => {
-        if (prev <= 1) {
-          clearInterval(intervalle);
-          return 0;
-        }
-        return prev - 1;
-      });
-      setProgression((prev) => {
-        const nouveau = Math.min(prev + 0.12, 1);
-        Animated.timing(progressAnim, {
-          toValue: nouveau,
-          duration: 800,
-          useNativeDriver: false,
-        }).start();
-        return nouveau;
-      });
-    }, 60000);
-    return () => clearInterval(intervalle);
-  }, []);
-
-  const largeurProgression = progressAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0%', '100%'],
-  });
-
-  const positionRoute = routeAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0%', '80%'],
-  });
+    load();
+    const t = setInterval(load, 15000);
+    return () => clearInterval(t);
+  }, [load]);
 
   const appelChauffeur = () => {
+    const phone = order?.provider?.phone;
+    if (!phone) return;
     Alert.alert(
       'Appeler le chauffeur',
-      `Voulez-vous appeler ${CHAUFFEUR.prenom} ${CHAUFFEUR.nom} ?`,
+      `Voulez-vous appeler ${order.provider.name} ?`,
       [
         { text: 'Annuler', style: 'cancel' },
-        { text: 'Appeler', onPress: () => {} },
+        { text: 'Appeler', onPress: () => Linking.openURL(`tel:${phone}`) },
       ]
     );
   };
@@ -113,48 +64,55 @@ export default function TaxiActiveRideScreen({ navigation }) {
         {
           text: 'Envoyer SOS',
           style: 'destructive',
-          onPress: () => Alert.alert('SOS envoyé', 'Les secours ont été alertés.'),
+          onPress: () => navigation.navigate('SOSHome'),
         },
       ]
     );
   };
 
-  const kmRestants = (COURSE.distance * (1 - progression)).toFixed(1);
-  const pourcentage = Math.round(progression * 100);
+  if (!orderId) {
+    return (
+      <SafeAreaView style={[styles.conteneur, { alignItems: 'center', justifyContent: 'center', padding: 30 }]}>
+        <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+        <Text style={{ color: COULEURS.muted, textAlign: 'center' }}>Aucune course active.</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.conteneur, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator color={COULEURS.primary} size="large" />
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !order) {
+    return (
+      <SafeAreaView style={[styles.conteneur, { alignItems: 'center', justifyContent: 'center', padding: 30 }]}>
+        <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+        <Text style={{ color: COULEURS.muted, textAlign: 'center', marginBottom: 16 }}>
+          Impossible de charger la course.
+        </Text>
+        <TouchableOpacity onPress={load} style={{ backgroundColor: COULEURS.primary, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 }}>
+          <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
+  const vehicle = Array.isArray(order.provider?.vehicle) ? order.provider.vehicle[0] : order.provider?.vehicle;
+  const initiales = order.provider?.name
+    ? order.provider.name.split(' ').map((p) => p[0]).slice(0, 2).join('')
+    : '?';
 
   return (
     <SafeAreaView style={styles.conteneur}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.carteSimulee}>
           <View style={styles.carteInterieur}>
-            <View style={styles.carteRoute}>
-              <View style={styles.routeBase} />
-              <Animated.View style={[styles.routeAnimee, { left: positionRoute }]} />
-              <View style={styles.pointDepart}>
-                <Text style={styles.pointTexte}>A</Text>
-              </View>
-              <View style={styles.pointArrivee}>
-                <Text style={styles.pointTexte}>B</Text>
-              </View>
-            </View>
             <Text style={styles.carteEta}>
-              {etaMinutes > 0 ? `Arrivée dans ${etaMinutes} min` : 'Arrivée imminente'}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.sectionProgression}>
-          <View style={styles.progressionEntete}>
-            <Text style={styles.progressionLabel}>Progression du trajet</Text>
-            <Text style={styles.progressionPourcentage}>{pourcentage}%</Text>
-          </View>
-          <View style={styles.barreConteneur}>
-            <Animated.View style={[styles.barreRemplie, { width: largeurProgression }]} />
-          </View>
-          <View style={styles.progressionDetails}>
-            <Text style={styles.progressionInfo}>{kmRestants} km restants</Text>
-            <Text style={styles.progressionInfo}>
-              {(COURSE.distance * progression).toFixed(1)} / {COURSE.distance} km
+              {order.status === 'IN_PROGRESS' ? 'Course en cours' : order.status === 'ACCEPTED' ? 'Chauffeur en route' : 'En attente'}
             </Text>
           </View>
         </View>
@@ -162,53 +120,54 @@ export default function TaxiActiveRideScreen({ navigation }) {
         <View style={styles.carteInfo}>
           <View style={styles.chauffeurEntete}>
             <View style={styles.avatarConteneur}>
-              <Text style={styles.avatarInitiales}>
-                {CHAUFFEUR.prenom[0]}{CHAUFFEUR.nom[0]}
-              </Text>
+              <Text style={styles.avatarInitiales}>{initiales}</Text>
             </View>
             <View style={styles.chauffeurTexte}>
-              <Text style={styles.chauffeurNom}>
-                {CHAUFFEUR.prenom} {CHAUFFEUR.nom}
-              </Text>
+              <Text style={styles.chauffeurNom}>{order.provider?.name || 'Chauffeur'}</Text>
               <View style={styles.noteConteneur}>
                 <Text style={styles.etoile}>★</Text>
-                <Text style={styles.noteTexte}>{CHAUFFEUR.note}</Text>
+                <Text style={styles.noteTexte}>{Number(order.provider?.rating || 0).toFixed(1)}</Text>
               </View>
             </View>
             <View style={styles.prixBadge}>
               <Text style={styles.prixLabel}>Estimé</Text>
-              <Text style={styles.prixValeur}>{COURSE.prixEstime}</Text>
+              <Text style={styles.prixValeur}>{Number(order.finalPrice ?? order.price ?? 0).toFixed(2)} TND</Text>
             </View>
           </View>
 
-          <View style={styles.separateur} />
-
-          <View style={styles.vehiculeInfo}>
-            <View style={styles.vehiculeLigne}>
-              <Text style={styles.vehiculeLabel}>Véhicule</Text>
-              <Text style={styles.vehiculeValeur}>{CHAUFFEUR.modele}</Text>
-            </View>
-            <View style={styles.vehiculeLigne}>
-              <Text style={styles.vehiculeLabel}>Plaque</Text>
-              <Text style={styles.vehiculeValeur}>{CHAUFFEUR.plaque}</Text>
-            </View>
-            <View style={styles.vehiculeLigne}>
-              <Text style={styles.vehiculeLabel}>Couleur</Text>
-              <Text style={styles.vehiculeValeur}>{CHAUFFEUR.couleur}</Text>
-            </View>
-          </View>
+          {vehicle && (
+            <>
+              <View style={styles.separateur} />
+              <View style={styles.vehiculeInfo}>
+                <View style={styles.vehiculeLigne}>
+                  <Text style={styles.vehiculeLabel}>Véhicule</Text>
+                  <Text style={styles.vehiculeValeur}>{vehicle.make} {vehicle.model}</Text>
+                </View>
+                <View style={styles.vehiculeLigne}>
+                  <Text style={styles.vehiculeLabel}>Plaque</Text>
+                  <Text style={styles.vehiculeValeur}>{vehicle.plate}</Text>
+                </View>
+                {vehicle.color && (
+                  <View style={styles.vehiculeLigne}>
+                    <Text style={styles.vehiculeLabel}>Couleur</Text>
+                    <Text style={styles.vehiculeValeur}>{vehicle.color}</Text>
+                  </View>
+                )}
+              </View>
+            </>
+          )}
 
           <View style={styles.separateur} />
 
           <View style={styles.trajetInfo}>
             <View style={styles.trajetLigne}>
               <View style={styles.pointVert} />
-              <Text style={styles.trajetTexte} numberOfLines={1}>{COURSE.depart}</Text>
+              <Text style={styles.trajetTexte} numberOfLines={1}>{order.originAddress || '—'}</Text>
             </View>
             <View style={styles.traitVertical} />
             <View style={styles.trajetLigne}>
               <View style={styles.pointPrimary} />
-              <Text style={styles.trajetTexte} numberOfLines={1}>{COURSE.arrivee}</Text>
+              <Text style={styles.trajetTexte} numberOfLines={1}>{order.destinationAddress || '—'}</Text>
             </View>
           </View>
         </View>
@@ -221,7 +180,7 @@ export default function TaxiActiveRideScreen({ navigation }) {
 
           <TouchableOpacity
             style={styles.boutonAction}
-            onPress={() => navigation.navigate('Chat', { chauffeurNom: `${CHAUFFEUR.prenom} ${CHAUFFEUR.nom}` })}
+            onPress={() => navigation.navigate('Chat', { chauffeurNom: order.provider?.name })}
           >
             <Text style={styles.boutonActionIcone}>💬</Text>
             <Text style={styles.boutonActionTexte}>Chat</Text>
@@ -247,107 +206,17 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: '#12121E',
-    height: 200,
+    height: 140,
   },
   carteInterieur: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  carteRoute: {
-    width: '80%',
-    height: 4,
-    position: 'relative',
-    justifyContent: 'center',
-  },
-  routeBase: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: 4,
-    backgroundColor: COULEURS.border,
-    borderRadius: 2,
-  },
-  routeAnimee: {
-    position: 'absolute',
-    width: 40,
-    height: 4,
-    backgroundColor: COULEURS.primary,
-    borderRadius: 2,
-  },
-  pointDepart: {
-    position: 'absolute',
-    left: -16,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#4CAF50',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  pointArrivee: {
-    position: 'absolute',
-    right: -16,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: COULEURS.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  pointTexte: {
-    color: COULEURS.text,
-    fontSize: 10,
-    fontWeight: '700',
-  },
   carteEta: {
-    marginTop: 32,
     color: COULEURS.text,
     fontSize: 18,
     fontWeight: '700',
-  },
-  sectionProgression: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-    backgroundColor: COULEURS.surface,
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: COULEURS.border,
-  },
-  progressionEntete: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  progressionLabel: {
-    color: COULEURS.muted,
-    fontSize: 14,
-  },
-  progressionPourcentage: {
-    color: COULEURS.primary,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  barreConteneur: {
-    height: 8,
-    backgroundColor: COULEURS.border,
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  barreRemplie: {
-    height: '100%',
-    backgroundColor: COULEURS.primary,
-    borderRadius: 4,
-  },
-  progressionDetails: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
-  },
-  progressionInfo: {
-    color: COULEURS.muted,
-    fontSize: 12,
   },
   carteInfo: {
     marginHorizontal: 16,

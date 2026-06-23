@@ -170,7 +170,12 @@ router.get(
       where: { id: orderId },
       include: {
         client: { select: { id: true, name: true, phone: true, fcmToken: true } },
-        provider: { select: { id: true, name: true, phone: true, fcmToken: true } },
+        provider: {
+          select: {
+            id: true, name: true, phone: true, fcmToken: true, rating: true,
+            vehicle: { select: { make: true, model: true, plate: true, color: true }, take: 1 },
+          },
+        },
         events: { orderBy: { createdAt: 'asc' } },
         reviews: true,
       },
