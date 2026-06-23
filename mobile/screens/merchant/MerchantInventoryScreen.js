@@ -14,15 +14,6 @@ const COLORS = {
 
 const CATEGORIES = ['Tout', 'Fruits', 'Légumes', 'Boulangerie', 'Laitiers', 'Boissons', 'Autre'];
 
-const MOCK_PRODUCTS = [
-  { id: 'P1', name: 'Pommes Golden', category: 'Fruits', price: 3.5, stock: 50, unit: 'kg', available: true, image: '🍎' },
-  { id: 'P2', name: 'Tomates cerises', category: 'Légumes', price: 4.2, stock: 30, unit: 'kg', available: true, image: '🍅' },
-  { id: 'P3', name: 'Pain complet', category: 'Boulangerie', price: 1.8, stock: 20, unit: 'pièce', available: true, image: '🍞' },
-  { id: 'P4', name: 'Lait entier 1L', category: 'Laitiers', price: 2.1, stock: 0, unit: 'L', available: false, image: '🥛' },
-  { id: 'P5', name: 'Jus d\'orange', category: 'Boissons', price: 3.9, stock: 15, unit: 'L', available: true, image: '🍊' },
-  { id: 'P6', name: 'Bananes', category: 'Fruits', price: 2.5, stock: 40, unit: 'kg', available: true, image: '🍌' },
-];
-
 function ProductCard({ item, onEdit, onToggle }) {
   return (
     <View style={[styles.card, !item.available && styles.cardDim]}>
