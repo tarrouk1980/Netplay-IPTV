@@ -1,19 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', border: '#2C2C3E',
   text: '#FFFFFF', muted: '#8E8E9A', accent: '#F5A623',
   green: '#27AE60', red: '#E74C3C',
 };
-
-const REVIEWS = [
-  { id: 'R1', author: 'Sami B.', rating: 5, date: '01 juin 2025', text: 'Produits frais, livraison rapide. Je recommande vivement !', likes: 12 },
-  { id: 'R2', author: 'Leila M.', rating: 4, date: '28 mai 2025', text: 'Bonne qualité mais emballage un peu abîmé à la livraison.', likes: 5 },
-  { id: 'R3', author: 'Karim T.', rating: 5, date: '25 mai 2025', text: 'Épicerie excellente, prix compétitifs et service au top.', likes: 8 },
-  { id: 'R4', author: 'Nadia H.', rating: 3, date: '20 mai 2025', text: 'Délai de livraison un peu long ce jour-là. Produits OK.', likes: 2 },
-];
 
 function Stars({ rating, size = 16 }) {
   return (
@@ -26,28 +20,49 @@ function Stars({ rating, size = 16 }) {
 }
 
 export default function GroceryReviewsScreen({ route, navigation }) {
-  const { storeName = 'Épicerie' } = route.params || {};
-  const [reviews, setReviews] = useState(REVIEWS);
+  const { storeName = 'Épicerie', storeId } = route.params || {};
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [myRating, setMyRating] = useState(0);
   const [myText, setMyText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
 
-  const avgRating = (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1);
+  const load = useCallback(() => {
+    if (!storeId) { setLoading(false); setError(true); return; }
+    setLoading(true);
+    api.get(`/api/reviews/${storeId}`)
+      .then((res) => { setReviews(res.data?.reviews || []); setError(false); })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, [storeId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const avgRating = reviews.length
+    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+    : '0.0';
 
   const handleSubmit = async () => {
     if (myRating === 0) { Alert.alert('Note requise'); return; }
+    if (!storeId) { Alert.alert('Erreur', 'Magasin introuvable.'); return; }
     setSubmitting(true);
-    await new Promise(r => setTimeout(r, 800));
-    const newReview = {
-      id: `R${Date.now()}`, author: 'Moi',
-      rating: myRating, date: 'Aujourd\'hui',
-      text: myText, likes: 0,
-    };
-    setReviews(prev => [newReview, ...prev]);
-    setMyRating(0); setMyText(''); setShowForm(false);
-    setSubmitting(false);
-    Alert.alert('✅ Avis publié', 'Merci pour votre retour !');
+    try {
+      const res = await api.post('/api/reviews', { targetId: storeId, rating: myRating, comment: myText || undefined });
+      const r = res.data?.review;
+      setReviews(prev => [{
+        id: r.id, author: 'Moi', rating: r.rating,
+        date: new Date(r.createdAt).toLocaleDateString('fr-TN'),
+        comment: r.comment,
+      }, ...prev]);
+      setMyRating(0); setMyText(''); setShowForm(false);
+      Alert.alert('✅ Avis publié', 'Merci pour votre retour !');
+    } catch (e) {
+      Alert.alert('Erreur', e?.response?.data?.error || "Impossible de publier votre avis. Réessayez.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -61,62 +76,74 @@ export default function GroceryReviewsScreen({ route, navigation }) {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Summary */}
-        <View style={styles.summaryCard}>
-          <Text style={styles.avgScore}>{avgRating}</Text>
-          <Stars rating={Math.round(parseFloat(avgRating))} size={22} />
-          <Text style={styles.reviewCount}>{reviews.length} avis</Text>
-        </View>
-
-        {/* Add review */}
-        <TouchableOpacity style={styles.addBtn} onPress={() => setShowForm(!showForm)}>
-          <Text style={styles.addBtnText}>{showForm ? '✕ Annuler' : '✏️ Laisser un avis'}</Text>
-        </TouchableOpacity>
-
-        {showForm && (
-          <View style={styles.formCard}>
-            <Text style={styles.fieldLabel}>VOTRE NOTE</Text>
-            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
-              {[1,2,3,4,5].map(s => (
-                <TouchableOpacity key={s} onPress={() => setMyRating(s)}>
-                  <Text style={{ fontSize: 32, color: s <= myRating ? COLORS.accent : COLORS.border }}>★</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-            <Text style={styles.fieldLabel}>COMMENTAIRE</Text>
-            <TextInput
-              style={styles.textarea}
-              placeholder="Partagez votre expérience..."
-              placeholderTextColor={COLORS.muted}
-              value={myText}
-              onChangeText={setMyText}
-              multiline numberOfLines={4}
-              textAlignVertical="top"
-            />
-            <TouchableOpacity
-              style={[styles.submitBtn, (myRating === 0 || submitting) && { opacity: 0.5 }]}
-              onPress={handleSubmit} disabled={myRating === 0 || submitting}
-            >
-              {submitting ? <ActivityIndicator color="#000" /> : <Text style={styles.submitBtnText}>Publier →</Text>}
+        {loading ? (
+          <ActivityIndicator color={COLORS.accent} style={{ marginTop: 30 }} />
+        ) : error ? (
+          <View style={{ alignItems: 'center', marginTop: 30 }}>
+            <Text style={{ color: COLORS.muted, fontSize: 14, marginBottom: 12 }}>⚠️ Impossible de charger les avis.</Text>
+            <TouchableOpacity style={styles.addBtn} onPress={load}>
+              <Text style={styles.addBtnText}>Réessayer</Text>
             </TouchableOpacity>
           </View>
-        )}
-
-        <Text style={styles.sectionTitle}>{reviews.length} AVIS CLIENTS</Text>
-        {reviews.map(r => (
-          <View key={r.id} style={styles.reviewCard}>
-            <View style={styles.reviewTop}>
-              <View style={styles.avatar}><Text style={styles.avatarText}>{r.author.charAt(0)}</Text></View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.reviewAuthor}>{r.author}</Text>
-                <Text style={styles.reviewDate}>{r.date}</Text>
-              </View>
-              <Stars rating={r.rating} size={14} />
+        ) : (
+          <>
+            {/* Summary */}
+            <View style={styles.summaryCard}>
+              <Text style={styles.avgScore}>{avgRating}</Text>
+              <Stars rating={Math.round(parseFloat(avgRating))} size={22} />
+              <Text style={styles.reviewCount}>{reviews.length} avis</Text>
             </View>
-            {r.text ? <Text style={styles.reviewText}>{r.text}</Text> : null}
-            <Text style={styles.likesText}>👍 {r.likes}</Text>
-          </View>
-        ))}
+
+            {/* Add review */}
+            <TouchableOpacity style={styles.addBtn} onPress={() => setShowForm(!showForm)}>
+              <Text style={styles.addBtnText}>{showForm ? '✕ Annuler' : '✏️ Laisser un avis'}</Text>
+            </TouchableOpacity>
+
+            {showForm && (
+              <View style={styles.formCard}>
+                <Text style={styles.fieldLabel}>VOTRE NOTE</Text>
+                <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+                  {[1,2,3,4,5].map(s => (
+                    <TouchableOpacity key={s} onPress={() => setMyRating(s)}>
+                      <Text style={{ fontSize: 32, color: s <= myRating ? COLORS.accent : COLORS.border }}>★</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <Text style={styles.fieldLabel}>COMMENTAIRE</Text>
+                <TextInput
+                  style={styles.textarea}
+                  placeholder="Partagez votre expérience..."
+                  placeholderTextColor={COLORS.muted}
+                  value={myText}
+                  onChangeText={setMyText}
+                  multiline numberOfLines={4}
+                  textAlignVertical="top"
+                />
+                <TouchableOpacity
+                  style={[styles.submitBtn, (myRating === 0 || submitting) && { opacity: 0.5 }]}
+                  onPress={handleSubmit} disabled={myRating === 0 || submitting}
+                >
+                  {submitting ? <ActivityIndicator color="#000" /> : <Text style={styles.submitBtnText}>Publier →</Text>}
+                </TouchableOpacity>
+              </View>
+            )}
+
+            <Text style={styles.sectionTitle}>{reviews.length} AVIS CLIENTS</Text>
+            {reviews.map(r => (
+              <View key={r.id} style={styles.reviewCard}>
+                <View style={styles.reviewTop}>
+                  <View style={styles.avatar}><Text style={styles.avatarText}>{r.author.charAt(0)}</Text></View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.reviewAuthor}>{r.author}</Text>
+                    <Text style={styles.reviewDate}>{r.date}</Text>
+                  </View>
+                  <Stars rating={r.rating} size={14} />
+                </View>
+                {r.comment ? <Text style={styles.reviewText}>{r.comment}</Text> : null}
+              </View>
+            ))}
+          </>
+        )}
 
         <View style={{ height: 40 }} />
       </ScrollView>
@@ -149,5 +176,4 @@ const styles = StyleSheet.create({
   reviewAuthor: { color: COLORS.text, fontSize: 13, fontWeight: '700' },
   reviewDate: { color: COLORS.muted, fontSize: 11 },
   reviewText: { color: COLORS.muted, fontSize: 13, lineHeight: 19, marginBottom: 8 },
-  likesText: { color: COLORS.muted, fontSize: 11 },
 });
