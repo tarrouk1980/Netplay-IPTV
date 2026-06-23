@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,8 +6,10 @@ import {
   TouchableOpacity,
   Switch,
   StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COLORS = {
   background: '#0A0A0F',
@@ -21,50 +23,65 @@ const COLORS = {
   orange: '#F59E0B',
 };
 
-const DAYS = [
-  { key: 'lun', label: 'Lun' },
-  { key: 'mar', label: 'Mar' },
-  { key: 'mer', label: 'Mer' },
-  { key: 'jeu', label: 'Jeu' },
-  { key: 'ven', label: 'Ven' },
-  { key: 'sam', label: 'Sam' },
-  { key: 'dim', label: 'Dim' },
-];
-
-const EQUIPMENT = [
-  { label: 'Câble démarrage', status: 'ok', icon: '✅' },
-  { label: 'Cric', status: 'ok', icon: '✅' },
-  { label: 'Triangle', status: 'ok', icon: '✅' },
-  { label: 'Extincteur', status: 'warn', icon: '⚠️' },
-];
-
-const ZONES = [
-  'Tunis Centre',
-  'La Marsa',
-  'Ariana',
-  'Ben Arous',
-];
-
 export default function DepanneurStatusScreen({ navigation }) {
-  const [isAvailable, setIsAvailable] = useState(true);
-  const [sessionStarted, setSessionStarted] = useState(true);
-  const [dayToggles, setDayToggles] = useState({
-    lun: true,
-    mar: true,
-    mer: true,
-    jeu: true,
-    ven: true,
-    sam: true,
-    dim: false,
-  });
+  const [isAvailable, setIsAvailable] = useState(false);
+  const [stats, setStats] = useState({ interventions: 0, revenue: 0, rating: 5 });
+  const [hasActive, setHasActive] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [toggling, setToggling] = useState(false);
 
-  const toggleDay = (key) => {
-    setDayToggles((prev) => ({ ...prev, [key]: !prev[key] }));
+  const load = useCallback(() => {
+    setLoading(true);
+    api.get('/api/sos/depanneur/dashboard')
+      .then((r) => {
+        setIsAvailable(!!r.data.isOnline);
+        setHasActive(!!r.data.activeIntervention);
+        setStats(r.data.stats || { interventions: 0, revenue: 0, rating: 5 });
+        setError(false);
+      })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const toggleAvailable = async (value) => {
+    setToggling(true);
+    try {
+      const r = await api.patch('/api/sos/depanneur/toggle', { online: value });
+      setIsAvailable(!!r.data.isOnline);
+    } catch {
+      // keep previous value on failure
+    } finally {
+      setToggling(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.safe, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator color={COLORS.primary} size="large" />
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={[styles.safe, { alignItems: 'center', justifyContent: 'center', padding: 30 }]}>
+        <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+        <Text style={{ color: COLORS.muted, textAlign: 'center', marginBottom: 16 }}>
+          Impossible de charger votre statut.
+        </Text>
+        <TouchableOpacity onPress={load} style={{ backgroundColor: COLORS.primary, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 }}>
+          <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Text style={styles.backArrow}>{'←'}</Text>
@@ -74,7 +91,6 @@ export default function DepanneurStatusScreen({ navigation }) {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Available/Unavailable Toggle Card */}
         <View style={[styles.card, isAvailable && styles.cardGlowGreen]}>
           <View style={styles.toggleRow}>
             <View>
@@ -89,20 +105,20 @@ export default function DepanneurStatusScreen({ navigation }) {
             </View>
             <Switch
               value={isAvailable}
-              onValueChange={setIsAvailable}
+              onValueChange={toggleAvailable}
+              disabled={toggling}
               trackColor={{ false: COLORS.border, true: COLORS.green }}
               thumbColor={COLORS.text}
             />
           </View>
         </View>
 
-        {/* Stats Today */}
         <Text style={styles.sectionTitle}>Interventions du jour</Text>
         <View style={styles.statsRow}>
           {[
-            { label: "Aujourd'hui", value: 5 },
-            { label: 'En cours', value: 1 },
-            { label: 'Terminées', value: 4 },
+            { label: 'En cours', value: hasActive ? 1 : 0 },
+            { label: 'Terminées', value: stats.interventions },
+            { label: 'Note', value: Number(stats.rating).toFixed(1) },
           ].map((stat) => (
             <View key={stat.label} style={styles.statCard}>
               <Text style={styles.statValue}>{stat.value}</Text>
@@ -111,70 +127,11 @@ export default function DepanneurStatusScreen({ navigation }) {
           ))}
         </View>
 
-        {/* Current Location */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>📍 Votre position actuelle</Text>
-          <Text style={styles.cardValue}>Rue Ibn Khaldoun, Tunis 1002</Text>
-          <Text style={styles.cardSub}>Mise à jour il y a 1 min</Text>
-        </View>
-
-        {/* Equipment Checklist */}
-        <Text style={styles.sectionTitle}>Vérification équipements</Text>
-        <View style={styles.card}>
-          {EQUIPMENT.map((item) => (
-            <View key={item.label} style={styles.equipRow}>
-              <Text style={styles.equipLabel}>{item.label}</Text>
-              <Text style={styles.equipIcon}>{item.icon}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* Coverage Zones */}
-        <Text style={styles.sectionTitle}>Zones de couverture actives</Text>
-        <View style={styles.card}>
-          {ZONES.map((zone) => (
-            <View key={zone} style={styles.zoneRow}>
-              <View style={styles.zoneDot} />
-              <Text style={styles.zoneText}>{zone}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* Availability Schedule */}
-        <Text style={styles.sectionTitle}>Planning de disponibilité</Text>
-        <View style={styles.card}>
-          <View style={styles.daysGrid}>
-            {DAYS.map((day) => (
-              <View key={day.key} style={styles.dayItem}>
-                <Text style={styles.dayLabel}>{day.label}</Text>
-                <Switch
-                  value={dayToggles[day.key]}
-                  onValueChange={() => toggleDay(day.key)}
-                  trackColor={{ false: COLORS.border, true: COLORS.primary }}
-                  thumbColor={COLORS.text}
-                  style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}
-                />
-              </View>
-            ))}
-          </View>
-        </View>
-
-        {/* Earnings Today */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Gains du jour</Text>
-          <Text style={[styles.cardValue, { color: COLORS.primary, fontSize: 28 }]}>124,000 TND</Text>
-          <Text style={styles.cardSub}>5 interventions effectuées</Text>
+          <Text style={[styles.cardValue, { color: COLORS.primary, fontSize: 28 }]}>{Number(stats.revenue).toFixed(2)} TND</Text>
+          <Text style={styles.cardSub}>{stats.interventions} intervention{stats.interventions === 1 ? '' : 's'} terminée{stats.interventions === 1 ? '' : 's'}</Text>
         </View>
-
-        {/* Session Button */}
-        <TouchableOpacity
-          style={[styles.sessionBtn, { backgroundColor: sessionStarted ? COLORS.red : COLORS.primary }]}
-          onPress={() => setSessionStarted(!sessionStarted)}
-        >
-          <Text style={styles.sessionBtnText}>
-            {sessionStarted ? 'Terminer ma garde' : 'Démarrer ma garde'}
-          </Text>
-        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -289,64 +246,5 @@ const styles = StyleSheet.create({
   cardSub: {
     color: COLORS.muted,
     fontSize: 12,
-  },
-  equipRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  equipLabel: {
-    color: COLORS.text,
-    fontSize: 15,
-  },
-  equipIcon: {
-    fontSize: 18,
-  },
-  zoneRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 7,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  zoneDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: COLORS.green,
-    marginRight: 10,
-  },
-  zoneText: {
-    color: COLORS.text,
-    fontSize: 15,
-  },
-  daysGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    justifyContent: 'space-between',
-  },
-  dayItem: {
-    alignItems: 'center',
-    width: '13%',
-  },
-  dayLabel: {
-    color: COLORS.muted,
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  sessionBtn: {
-    borderRadius: 14,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  sessionBtnText: {
-    color: COLORS.text,
-    fontSize: 16,
-    fontWeight: '700',
   },
 });
