@@ -60,6 +60,7 @@ export default function LiveOrderMapScreen({ route, navigation }) {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [mapError, setMapError] = useState(false);
+  const [trackingError, setTrackingError] = useState(false);
   const intervalRef = useRef(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
@@ -78,9 +79,9 @@ export default function LiveOrderMapScreen({ route, navigation }) {
       const data = res.data;
       setProvider(data?.provider || null);
       setOrder(data?.order || null);
+      setTrackingError(false);
     } catch {
-      // Use mock position if API unavailable
-      setProvider({ name: 'Chauffeur', lat: 36.810 + Math.random() * 0.005, lng: 10.183 + Math.random() * 0.005, rating: 4.8 });
+      setTrackingError(true);
     } finally {
       setLoading(false);
     }
@@ -133,6 +134,14 @@ export default function LiveOrderMapScreen({ route, navigation }) {
             onError={() => setMapError(true)}
             resizeMode="cover"
           />
+        ) : trackingError ? (
+          <View style={styles.mapPlaceholder}>
+            <Text style={{ fontSize: 40 }}>⚠️</Text>
+            <Text style={styles.mapPlaceholderText}>Impossible de récupérer la position</Text>
+            <TouchableOpacity onPress={fetchData} style={{ backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 20, paddingVertical: 10, marginTop: 8 }}>
+              <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+            </TouchableOpacity>
+          </View>
         ) : (
           <View style={styles.mapPlaceholder}>
             <Text style={{ fontSize: 48 }}>{svcIcon}</Text>

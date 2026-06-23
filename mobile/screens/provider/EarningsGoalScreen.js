@@ -94,6 +94,7 @@ export default function EarningsGoalScreen({ navigation }) {
   const [streakData, setStreakData] = useState({});
   const [streak, setStreak] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -103,18 +104,9 @@ export default function EarningsGoalScreen({ navigation }) {
       setEarnings(res.data.earnings || { daily: 0, weekly: 0, monthly: 0 });
       setStreakData(res.data.streakData || {});
       setStreak(res.data.streak || 0);
+      setError(false);
     } catch {
-      // Mock
-      const today = new Date().toISOString().slice(0, 10);
-      const mock = {};
-      for (let i = 0; i < 7; i++) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        if (Math.random() > 0.3) mock[d.toISOString().slice(0, 10)] = true;
-      }
-      setEarnings({ daily: 67, weekly: 312, monthly: 1180 });
-      setStreakData(mock);
-      setStreak(4);
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -152,6 +144,17 @@ export default function EarningsGoalScreen({ navigation }) {
         <View style={{ width: 36 }} />
       </View>
 
+      {error ? (
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 30 }}>
+          <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, textAlign: 'center', marginBottom: 16 }}>
+            Impossible de charger vos objectifs de revenus.
+          </Text>
+          <TouchableOpacity onPress={load} style={{ backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 }}>
+            <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
         {/* Period selector */}
         <View style={styles.periodRow}>
@@ -277,6 +280,7 @@ export default function EarningsGoalScreen({ navigation }) {
           <StreakCalendar streakData={streakData} />
         </View>
       </ScrollView>
+      )}
     </SafeAreaView>
   );
 }

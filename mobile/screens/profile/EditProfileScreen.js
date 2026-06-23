@@ -9,8 +9,10 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
 
 const COLORS = {
@@ -23,19 +25,31 @@ const COLORS = {
 };
 
 export default function EditProfileScreen({ navigation }) {
-  const { user } = useAuthStore();
+  const { user, setUser } = useAuthStore();
 
-  const [prenom, setPrenom] = useState((user && user.prenom) || 'Amine');
-  const [nom, setNom] = useState((user && user.nom) || 'Trabelsi');
-  const [email, setEmail] = useState((user && user.email) || 'amine.trabelsi@email.com');
-  const [telephone] = useState((user && user.phone) || '+216 98 765 432');
-  const [dateNaissance, setDateNaissance] = useState((user && user.dateNaissance) || '15/04/1990');
-  const [ville, setVille] = useState((user && user.ville) || 'Tunis');
+  const [name, setName] = useState(user?.name || '');
+  const [email, setEmail] = useState(user?.email || '');
+  const [telephone] = useState(user?.phone || '');
+  const [saving, setSaving] = useState(false);
 
-  const initials = ((prenom ? prenom[0] : 'A') + (nom ? nom[0] : 'T')).toUpperCase();
+  const initials = (name.trim().split(/\s+/).map((p) => p[0]).join('').slice(0, 2) || '?').toUpperCase();
 
-  const handleSave = () => {
-    Alert.alert('Succès', 'Profil mis à jour avec succès !');
+  const handleSave = async () => {
+    if (!name.trim()) {
+      Alert.alert('Erreur', 'Le nom ne peut pas être vide.');
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await api.patch('/api/users/me', { name: name.trim(), email: email.trim() || undefined });
+      setUser({ ...user, ...res.data });
+      Alert.alert('Succès', 'Profil mis à jour avec succès !');
+      navigation.goBack();
+    } catch {
+      Alert.alert('Erreur', 'Impossible de mettre à jour le profil. Réessayez.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -46,8 +60,8 @@ export default function EditProfileScreen({ navigation }) {
           <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Modifier le profil</Text>
-        <TouchableOpacity onPress={handleSave}>
-          <Text style={styles.saveText}>Enregistrer</Text>
+        <TouchableOpacity onPress={handleSave} disabled={saving}>
+          {saving ? <ActivityIndicator color={COLORS.primary} size="small" /> : <Text style={styles.saveText}>Enregistrer</Text>}
         </TouchableOpacity>
       </View>
 
@@ -65,32 +79,18 @@ export default function EditProfileScreen({ navigation }) {
             <View style={styles.avatarCircle}>
               <Text style={styles.avatarInitials}>{initials}</Text>
             </View>
-            <TouchableOpacity>
-              <Text style={styles.changePhotoText}>Changer la photo</Text>
-            </TouchableOpacity>
           </View>
 
           {/* Form */}
           <View style={styles.form}>
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Prénom</Text>
+              <Text style={styles.label}>Nom complet</Text>
               <TextInput
                 style={styles.input}
-                value={prenom}
-                onChangeText={setPrenom}
+                value={name}
+                onChangeText={setName}
                 placeholderTextColor={COLORS.muted}
-                placeholder="Votre prénom"
-              />
-            </View>
-
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Nom</Text>
-              <TextInput
-                style={styles.input}
-                value={nom}
-                onChangeText={setNom}
-                placeholderTextColor={COLORS.muted}
-                placeholder="Votre nom"
+                placeholder="Votre nom complet"
               />
             </View>
 
@@ -118,32 +118,10 @@ export default function EditProfileScreen({ navigation }) {
                 editable={false}
               />
             </View>
-
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Date de naissance</Text>
-              <TextInput
-                style={styles.input}
-                value={dateNaissance}
-                onChangeText={setDateNaissance}
-                placeholderTextColor={COLORS.muted}
-                placeholder="JJ/MM/AAAA"
-              />
-            </View>
-
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Ville</Text>
-              <TextInput
-                style={styles.input}
-                value={ville}
-                onChangeText={setVille}
-                placeholderTextColor={COLORS.muted}
-                placeholder="Votre ville"
-              />
-            </View>
           </View>
 
-          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-            <Text style={styles.saveButtonText}>Enregistrer</Text>
+          <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={saving}>
+            {saving ? <ActivityIndicator color="#0A0A0F" /> : <Text style={styles.saveButtonText}>Enregistrer</Text>}
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
