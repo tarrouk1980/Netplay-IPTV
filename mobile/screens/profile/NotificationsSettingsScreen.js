@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  StatusBar, Switch,
+  StatusBar, Switch, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
@@ -71,9 +71,11 @@ export default function NotificationsSettingsScreen({ navigation }) {
   const handleSave = async () => {
     try {
       await api.put('/api/users/me/notification-prefs', prefs);
-    } catch {}
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      Alert.alert('Erreur', "Impossible d'enregistrer vos préférences. Réessayez.");
+    }
   };
 
   const enableAll = () => {

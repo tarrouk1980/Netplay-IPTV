@@ -117,12 +117,16 @@ export default function EarningsGoalScreen({ navigation }) {
   const saveGoal = async (p, val) => {
     const v = parseFloat(val);
     if (!v || v <= 0) { Alert.alert('Valeur invalide'); return; }
+    const previous = goals;
     const updated = { ...goals, [p]: v };
     setGoals(updated);
     setEditing(null);
     try {
       await api.post('/api/provider/earnings-goal', { goals: updated });
-    } catch {}
+    } catch {
+      setGoals(previous);
+      Alert.alert('Erreur', "Impossible d'enregistrer l'objectif. Réessayez.");
+    }
   };
 
   const cur = earnings[period] || 0;
