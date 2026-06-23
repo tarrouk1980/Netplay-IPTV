@@ -1,9 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity,
-  ScrollView, StatusBar, KeyboardAvoidingView, Platform,
+  ScrollView, StatusBar, KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COLORS = {
   bg: '#0A0A0F',
@@ -16,26 +17,16 @@ const COLORS = {
   accentLight: '#4DD0E1',
 };
 
-const MOCK_PRODUCTS = [
-  { id: '1', emoji: '🥛', nom: 'Lait entier', categorie: 'Produits laitiers', prix: '1,500 TND' },
-  { id: '2', emoji: '🧀', nom: 'Fromage Kiri', categorie: 'Produits laitiers', prix: '3,200 TND' },
-  { id: '3', emoji: '🍞', nom: 'Pain de mie', categorie: 'Boulangerie', prix: '0,950 TND' },
-  { id: '4', emoji: '🍳', nom: 'Oeufs (x12)', categorie: 'Oeufs', prix: '5,800 TND' },
-  { id: '5', emoji: '🍅', nom: 'Tomates fraîches (1kg)', categorie: 'Légumes', prix: '2,100 TND' },
-  { id: '6', emoji: '🍌', nom: 'Bananes (1kg)', categorie: 'Fruits', prix: '2,400 TND' },
-  { id: '7', emoji: '🫒', nom: 'Huile d\'olive (1L)', categorie: 'Épicerie', prix: '12,000 TND' },
-  { id: '8', emoji: '🍗', nom: 'Poulet entier', categorie: 'Viandes', prix: '14,500 TND' },
-  { id: '9', emoji: '🧹', nom: 'Éponge vaisselle (x3)', categorie: 'Entretien', prix: '1,800 TND' },
-  { id: '10', emoji: '🧃', nom: 'Jus d\'orange (1L)', categorie: 'Boissons', prix: '3,500 TND' },
-];
+const CATEGORIES = ['Épicerie', 'Boulangerie', 'Boissons', 'Produits laitiers', 'Fruits', 'Légumes', 'Viandes', 'Entretien'];
 
-const CATEGORIES = ['Produits laitiers', 'Boulangerie', 'Légumes', 'Fruits', 'Viandes', 'Boissons', 'Épicerie', 'Entretien'];
-
-const HISTORIQUE_INITIAL = ['Lait', 'Tomates', 'Pain', 'Poulet', 'Jus'];
+const HISTORIQUE_INITIAL = [];
 
 export default function GrocerySearchScreen({ navigation }) {
   const [query, setQuery] = useState('');
   const [historique, setHistorique] = useState(HISTORIQUE_INITIAL);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -43,8 +34,31 @@ export default function GrocerySearchScreen({ navigation }) {
     return () => clearTimeout(timer);
   }, []);
 
+  const load = useCallback(() => {
+    api.get('/api/merchants', { params: { category: 'SUPERMARKET' } })
+      .then((r) => {
+        const all = (r.data.merchants || []).flatMap((m) =>
+          (m.products || []).map((p) => ({
+            id: p.id,
+            nom: p.name,
+            categorie: p.category,
+            prix: `${parseFloat(p.price).toFixed(3)} TND`,
+            emoji: p.metadata?.icon ?? '🛒',
+            storeId: m.id,
+            storeName: m.name,
+          }))
+        );
+        setProducts(all);
+        setError(false);
+      })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
   const resultats = query.trim().length > 0
-    ? MOCK_PRODUCTS.filter((p) =>
+    ? products.filter((p) =>
         p.nom.toLowerCase().includes(query.toLowerCase()) ||
         p.categorie.toLowerCase().includes(query.toLowerCase())
       )
@@ -66,7 +80,7 @@ export default function GrocerySearchScreen({ navigation }) {
   }
 
   function ajouterAuPanier(produit) {
-    // Intégration panier à implémenter
+    navigation.navigate('GroceryStore', { storeId: produit.storeId, storeName: produit.storeName });
   }
 
   function renderProduit({ item }) {
@@ -157,6 +171,19 @@ export default function GrocerySearchScreen({ navigation }) {
 
         {showResults && (
           <>
+            {loading ? (
+              <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 60 }} />
+            ) : error ? (
+              <View style={s.emptyBox}>
+                <Text style={s.emptyEmoji}>⚠️</Text>
+                <Text style={s.emptyTitle}>Recherche indisponible</Text>
+                <Text style={s.emptySubtitle}>Impossible de charger les produits. Réessayez.</Text>
+                <TouchableOpacity onPress={load} style={{ marginTop: 14 }}>
+                  <Text style={{ color: COLORS.accentLight, fontWeight: '700' }}>Réessayer</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+            <>
             <Text style={s.sectionTitle}>
               {resultats.length} résultat{resultats.length !== 1 ? 's' : ''}
             </Text>
@@ -175,6 +202,8 @@ export default function GrocerySearchScreen({ navigation }) {
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
               />
+            )}
+            </>
             )}
           </>
         )}
