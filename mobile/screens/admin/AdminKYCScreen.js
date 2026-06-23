@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  ActivityIndicator, StatusBar, Alert, TextInput,
+  ActivityIndicator, StatusBar, Alert, TextInput, Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
@@ -83,6 +83,8 @@ export default function AdminKYCScreen({ navigation }) {
   const [error, setError] = useState(false);
   const [tab, setTab] = useState(0);
   const [search, setSearch] = useState('');
+  const [rejectTarget, setRejectTarget] = useState(null);
+  const [rejectReason, setRejectReason] = useState('');
 
   const load = useCallback(() => {
     setLoading(true);
@@ -121,17 +123,18 @@ export default function AdminKYCScreen({ navigation }) {
   };
 
   const handleReject = (kyc) => {
-    Alert.prompt('Motif de rejet', 'Expliquez brièvement la raison du rejet :', [
-      { text: 'Annuler', style: 'cancel' },
-      {
-        text: 'Rejeter', style: 'destructive', onPress: async (reason) => {
-          try {
-            await api.post(`/api/admin/kyc/${kyc.id}/reject`, { reason });
-            setItems(prev => prev.map(k => k.id === kyc.id ? { ...k, status: 'REJECTED', note: reason || '' } : k));
-          } catch { Alert.alert('Erreur', 'Impossible de rejeter.'); }
-        },
-      },
-    ]);
+    setRejectReason('');
+    setRejectTarget(kyc);
+  };
+
+  const confirmReject = async () => {
+    const kyc = rejectTarget;
+    if (!kyc) return;
+    setRejectTarget(null);
+    try {
+      await api.post(`/api/admin/kyc/${kyc.id}/reject`, { reason: rejectReason });
+      setItems(prev => prev.map(k => k.id === kyc.id ? { ...k, status: 'REJECTED', note: rejectReason || '' } : k));
+    } catch { Alert.alert('Erreur', 'Impossible de rejeter.'); }
   };
 
   const filtered = items.filter(k => {
@@ -206,6 +209,31 @@ export default function AdminKYCScreen({ navigation }) {
           }
         />
       )}
+
+      <Modal visible={!!rejectTarget} transparent animationType="fade" onRequestClose={() => setRejectTarget(null)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Motif de rejet</Text>
+            <Text style={styles.modalSub}>Expliquez brièvement la raison du rejet :</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Raison..."
+              placeholderTextColor={COLORS.muted}
+              value={rejectReason}
+              onChangeText={setRejectReason}
+              multiline
+            />
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setRejectTarget(null)}>
+                <Text style={styles.modalCancelText}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalRejectBtn} onPress={confirmReject}>
+                <Text style={styles.modalRejectText}>Rejeter</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -278,4 +306,17 @@ const styles = StyleSheet.create({
     alignItems: 'center', borderWidth: 1, borderColor: COLORS.red + '50',
   },
   rejectedBannerText: { color: COLORS.red, fontSize: 13, fontWeight: '700' },
+  modalOverlay: { flex: 1, backgroundColor: '#000000AA', alignItems: 'center', justifyContent: 'center', padding: 24 },
+  modalBox: { backgroundColor: COLORS.surface, borderRadius: 14, padding: 18, width: '100%', borderWidth: 1, borderColor: COLORS.border },
+  modalTitle: { color: COLORS.text, fontSize: 16, fontWeight: '700', marginBottom: 6 },
+  modalSub: { color: COLORS.muted, fontSize: 13, marginBottom: 12 },
+  modalInput: {
+    backgroundColor: COLORS.bg, borderRadius: 8, borderWidth: 1, borderColor: COLORS.border,
+    color: COLORS.text, paddingHorizontal: 12, paddingVertical: 10, minHeight: 60, textAlignVertical: 'top',
+  },
+  modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, marginTop: 16 },
+  modalCancelBtn: { paddingVertical: 10, paddingHorizontal: 16 },
+  modalCancelText: { color: COLORS.muted, fontSize: 14, fontWeight: '600' },
+  modalRejectBtn: { backgroundColor: COLORS.red, borderRadius: 8, paddingVertical: 10, paddingHorizontal: 16 },
+  modalRejectText: { color: '#FFF', fontSize: 14, fontWeight: '700' },
 });
