@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, StatusBar, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapboxWebView from '../../components/MapboxWebView';
 import * as Location from 'expo-location';
+import api from '../../services/api';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', surfaceAlt: '#16161F',
@@ -12,65 +13,62 @@ const COLORS = {
   border: '#2A2A3A', green: '#27AE60', red: '#D32F2F', blue: '#1565C0',
 };
 
-const MOCK_STEPS = [
-  { dist: '0 m', instr: 'Démarrer sur Avenue Habib Bourguiba', dir: '↑' },
-  { dist: '350 m', instr: 'Tourner à droite sur Rue de Rome', dir: '→' },
-  { dist: '1.2 km', instr: 'Continuer tout droit', dir: '↑' },
-  { dist: '200 m', instr: 'Tourner à gauche sur Avenue de Paris', dir: '←' },
-  { dist: '80 m', instr: 'Arrivée à destination à droite', dir: '🏁' },
-];
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a = Math.sin(dLat / 2) ** 2
+    + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
 export default function DriverNavigationScreen({ route, navigation }) {
   const { orderId, clientName, destinationAddress, destinationLat, destinationLng } = route?.params || {};
-  const [currentStep, setCurrentStep] = useState(0);
-  const [eta, setEta] = useState(14);
-  const [distance, setDistance] = useState(3.2);
-  const [driverPos, setDriverPos] = useState({ lat: 36.8065, lng: 10.1815 });
-  const [arrived, setArrived] = useState(false);
-  const etaTimer = useRef(null);
-
-  useEffect(() => {
-    // Simulate ETA countdown
-    etaTimer.current = setInterval(() => {
-      setEta((e) => Math.max(0, e - 1));
-      setDistance((d) => Math.max(0, +(d - 0.05).toFixed(2)));
-    }, 15000);
-    return () => clearInterval(etaTimer.current);
-  }, []);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const { status } = await Location.getForegroundPermissionsAsync();
-        if (status === 'granted') {
-          const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-          setDriverPos({ lat: loc.coords.latitude, lng: loc.coords.longitude });
-        }
-      } catch {}
-    })();
-  }, []);
-
-  const nextStep = () => {
-    if (currentStep >= MOCK_STEPS.length - 1) {
-      setArrived(true);
-      return;
-    }
-    setCurrentStep((s) => s + 1);
-  };
-
-  const handleArrival = () => {
-    clearInterval(etaTimer.current);
-    Alert.alert(
-      "Arrivée confirmée ✅",
-      `Vous êtes arrivé chez ${clientName || 'le client'}.`,
-      [{ text: 'OK', onPress: () => navigation.goBack() }]
-    );
-  };
+  const [driverPos, setDriverPos] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const watchRef = useRef(null);
 
   const destLat = destinationLat || 36.82;
   const destLng = destinationLng || 10.19;
 
-  const step = MOCK_STEPS[currentStep];
+  useEffect(() => {
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') return;
+        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        setDriverPos({ lat: loc.coords.latitude, lng: loc.coords.longitude });
+        watchRef.current = await Location.watchPositionAsync(
+          { accuracy: Location.Accuracy.Balanced, timeInterval: 5000, distanceInterval: 20 },
+          (l) => setDriverPos({ lat: l.coords.latitude, lng: l.coords.longitude })
+        );
+      } catch {}
+    })();
+    return () => { watchRef.current?.remove?.(); };
+  }, []);
+
+  const handleArrival = useCallback(async () => {
+    if (!orderId) {
+      navigation.goBack();
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await api.post(`/api/taxi/${orderId}/start`);
+      Alert.alert(
+        'Arrivée confirmée ✅',
+        `Course démarrée avec ${clientName || 'le client'}.`,
+        [{ text: 'OK', onPress: () => navigation.goBack() }]
+      );
+    } catch (e) {
+      Alert.alert('Erreur', e?.response?.data?.error || "Impossible de confirmer l'arrivée. Réessayez.");
+    } finally {
+      setSubmitting(false);
+    }
+  }, [orderId, clientName, navigation]);
+
+  const distanceKm = driverPos ? haversineKm(driverPos.lat, driverPos.lng, destLat, destLng) : null;
+  const etaMin = distanceKm != null ? Math.max(1, Math.round((distanceKm / 30) * 60)) : null;
 
   return (
     <View style={styles.root}>
@@ -79,16 +77,11 @@ export default function DriverNavigationScreen({ route, navigation }) {
       {/* Map — full screen */}
       <MapboxWebView
         style={styles.map}
-        centerCoordinate={[driverPos.lng, driverPos.lat]}
+        centerCoordinate={[driverPos?.lng || destLng, driverPos?.lat || destLat]}
         zoom={14}
         markers={[
-          { coordinates: [driverPos.lng, driverPos.lat], color: COLORS.accent, label: '🚕' },
+          ...(driverPos ? [{ coordinates: [driverPos.lng, driverPos.lat], color: COLORS.accent, label: '🚕' }] : []),
           { coordinates: [destLng, destLat], color: COLORS.green, label: '🏁' },
-        ]}
-        route={[
-          [driverPos.lng, driverPos.lat],
-          [(driverPos.lng + destLng) / 2, (driverPos.lat + destLat) / 2 + 0.01],
-          [destLng, destLat],
         ]}
       />
 
@@ -98,8 +91,8 @@ export default function DriverNavigationScreen({ route, navigation }) {
           <Text style={{ color: COLORS.white, fontSize: 22 }}>‹</Text>
         </TouchableOpacity>
         <View style={styles.etaBox}>
-          <Text style={styles.etaNum}>{eta} min</Text>
-          <Text style={styles.etaDist}>{distance} km</Text>
+          <Text style={styles.etaNum}>{etaMin != null ? `${etaMin} min` : '—'}</Text>
+          <Text style={styles.etaDist}>{distanceKm != null ? `${distanceKm.toFixed(1)} km` : 'Localisation…'}</Text>
         </View>
         <TouchableOpacity
           style={styles.sosBtn}
@@ -112,18 +105,8 @@ export default function DriverNavigationScreen({ route, navigation }) {
         </TouchableOpacity>
       </SafeAreaView>
 
-      {/* Direction card */}
+      {/* Destination card */}
       <View style={styles.dirCard}>
-        <View style={styles.dirRow}>
-          <View style={styles.dirIcon}>
-            <Text style={styles.dirArrow}>{step.dir}</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.dirInstr}>{step.instr}</Text>
-            <Text style={styles.dirDist}>{step.dist} · Étape {currentStep + 1}/{MOCK_STEPS.length}</Text>
-          </View>
-        </View>
-
         {/* Destination */}
         <View style={styles.destRow}>
           <Text style={styles.destLabel}>🏁 Destination</Text>
@@ -142,23 +125,13 @@ export default function DriverNavigationScreen({ route, navigation }) {
 
         {/* Action buttons */}
         <View style={styles.actions}>
-          {arrived ? (
-            <TouchableOpacity style={styles.arriveBtn} onPress={handleArrival}>
-              <Text style={styles.arriveBtnText}>✅ Confirmer l'arrivée</Text>
-            </TouchableOpacity>
-          ) : (
-            <>
-              <TouchableOpacity style={styles.nextBtn} onPress={nextStep}>
-                <Text style={styles.nextBtnText}>Étape suivante →</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.arrivedBtn}
-                onPress={() => { setArrived(true); clearInterval(etaTimer.current); }}
-              >
-                <Text style={styles.arrivedBtnText}>🏁 Arrivé</Text>
-              </TouchableOpacity>
-            </>
-          )}
+          <TouchableOpacity
+            style={[styles.arriveBtn, submitting && { opacity: 0.6 }]}
+            onPress={handleArrival}
+            disabled={submitting}
+          >
+            <Text style={styles.arriveBtnText}>{submitting ? 'Confirmation…' : "✅ Confirmer l'arrivée"}</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -194,14 +167,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20,
     padding: 20, borderTopWidth: 1, borderTopColor: COLORS.border,
   },
-  dirRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 14 },
-  dirIcon: {
-    width: 52, height: 52, borderRadius: 14,
-    backgroundColor: COLORS.accent, alignItems: 'center', justifyContent: 'center',
-  },
-  dirArrow: { fontSize: 26 },
-  dirInstr: { color: COLORS.white, fontSize: 16, fontWeight: '700' },
-  dirDist: { color: COLORS.muted, fontSize: 13, marginTop: 3 },
   destRow: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     backgroundColor: COLORS.surfaceAlt, borderRadius: 10,
@@ -217,16 +182,6 @@ const styles = StyleSheet.create({
   clientLabel: { color: COLORS.muted, fontSize: 12, minWidth: 80 },
   clientName: { color: COLORS.white, fontSize: 13, fontWeight: '600' },
   actions: { flexDirection: 'row', gap: 10 },
-  nextBtn: {
-    flex: 1, backgroundColor: COLORS.blue, borderRadius: 12,
-    paddingVertical: 14, alignItems: 'center',
-  },
-  nextBtnText: { color: COLORS.white, fontSize: 14, fontWeight: '700' },
-  arrivedBtn: {
-    backgroundColor: COLORS.surfaceAlt, borderRadius: 12, borderWidth: 1, borderColor: COLORS.green,
-    paddingVertical: 14, paddingHorizontal: 18, alignItems: 'center',
-  },
-  arrivedBtnText: { color: COLORS.green, fontSize: 14, fontWeight: '700' },
   arriveBtn: {
     flex: 1, backgroundColor: COLORS.green, borderRadius: 12,
     paddingVertical: 16, alignItems: 'center',

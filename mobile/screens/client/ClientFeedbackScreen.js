@@ -4,6 +4,7 @@ import {
   TextInput, Alert, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', border: '#2C2C3E',
@@ -45,11 +46,24 @@ export default function ClientFeedbackScreen({ navigation }) {
       return;
     }
     setSubmitting(true);
-    await new Promise(r => setTimeout(r, 1000));
-    setSubmitting(false);
-    Alert.alert('Merci !', 'Votre avis a été envoyé avec succès.', [
-      { text: 'OK', onPress: () => navigation.goBack() },
-    ]);
+    const ratingLabel = ['', 'Très mauvais', 'Mauvais', 'Correct', 'Bon', 'Excellent'][rating];
+    const messageParts = [`Note : ${rating}/5 (${ratingLabel})`];
+    if (selectedTags.length) messageParts.push(`Points : ${selectedTags.join(', ')}`);
+    if (comment.trim()) messageParts.push(comment.trim());
+    try {
+      await api.post('/api/support/tickets', {
+        category: category.toUpperCase(),
+        subject: `Avis client — ${CATEGORIES.find(c => c.key === category)?.label || category}`,
+        message: messageParts.join('\n'),
+      });
+      Alert.alert('Merci !', 'Votre avis a été envoyé avec succès.', [
+        { text: 'OK', onPress: () => navigation.goBack() },
+      ]);
+    } catch {
+      Alert.alert('Erreur', "Votre avis n'a pas pu être envoyé. Réessayez.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
