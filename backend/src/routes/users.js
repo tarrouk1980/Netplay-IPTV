@@ -16,6 +16,7 @@ router.get('/me', authenticate, async (req, res) => {
       select: {
         id: true, name: true, phone: true, email: true,
         role: true, kycStatus: true, fcmToken: true, isOnline: true,
+        walletBalance: true,
         createdAt: true, updatedAt: true,
       },
     });

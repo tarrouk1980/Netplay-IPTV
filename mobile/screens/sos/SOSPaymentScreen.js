@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,48 +6,104 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
-const INTERVENTION = {
-  typePanne: 'Crevaison',
-  depanneur: 'Hassan Merbah',
-  duree: '45 min',
-  distance: '3,2 km',
-};
-
-const PRIX = {
-  mainOeuvre: 1500,
-  pieces: 800,
-  deplacement: 400,
-};
-
-const MODES_PAIEMENT = [
-  { id: 'wallet', label: 'Wallet', description: 'Solde disponible : 4 200 DA', icone: '👛' },
-  { id: 'especes', label: 'Espèces', description: 'Payer en main propre', icone: '💵' },
-  { id: 'carte', label: 'Carte bancaire', description: 'Visa / CIB / Edahabia', icone: '💳' },
-];
-
-export default function SOSPaymentScreen({ navigation }) {
+export default function SOSPaymentScreen({ navigation, route }) {
+  const orderId = route.params?.orderId;
+  const [order, setOrder] = useState(null);
+  const [wallet, setWallet] = useState(0);
   const [modePaiement, setModePaiement] = useState('wallet');
   const [note, setNote] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const total = PRIX.mainOeuvre + PRIX.pieces + PRIX.deplacement;
+  const load = useCallback(() => {
+    if (!orderId) { setLoading(false); return; }
+    setLoading(true);
+    Promise.all([api.get(`/api/sos/${orderId}`), api.get('/api/users/me')])
+      .then(([o, u]) => {
+        setOrder(o.data.order);
+        setWallet(Number(u.data.walletBalance || 0));
+        setError(false);
+      })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, [orderId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const total = Number(order?.finalPrice ?? order?.price ?? 0);
+
+  const MODES_PAIEMENT = [
+    { id: 'wallet', label: 'Wallet', description: `Solde disponible : ${wallet.toFixed(2)} TND`, icone: '👛' },
+    { id: 'especes', label: 'Espèces', description: 'Payer en main propre', icone: '💵' },
+  ];
 
   const confirmerPaiement = () => {
     const modeLabel = MODES_PAIEMENT.find(m => m.id === modePaiement)?.label || modePaiement;
     Alert.alert(
       'Confirmer le paiement',
-      `Vous allez payer ${total.toLocaleString('fr-DZ')} DA via ${modeLabel}.\n\nConfirmer ?`,
+      `Vous allez payer ${total.toFixed(2)} TND via ${modeLabel}.\n\nConfirmer ?`,
       [
         { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Confirmer',
-          onPress: () => navigation.navigate('SOSRating'),
-        },
+        { text: 'Confirmer', onPress: doConfirm },
       ]
     );
   };
+
+  const doConfirm = async () => {
+    setSubmitting(true);
+    try {
+      await api.post(`/api/sos/${orderId}/complete`);
+      if (note > 0 && order?.provider?.id) {
+        await api.post('/api/reviews', { targetId: order.provider.id, rating: note, orderId });
+      }
+      navigation.navigate('SOSHome');
+    } catch {
+      Alert.alert('Erreur', 'Impossible de confirmer le paiement.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (!orderId) {
+    return (
+      <SafeAreaView style={[styles.container, { alignItems: 'center', justifyContent: 'center', padding: 30 }]}>
+        <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+        <Text style={{ color: '#8E8E9A', textAlign: 'center' }}>Aucune intervention à payer.</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator color="#F5A623" size="large" />
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !order) {
+    return (
+      <SafeAreaView style={[styles.container, { alignItems: 'center', justifyContent: 'center', padding: 30 }]}>
+        <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+        <Text style={{ color: '#8E8E9A', textAlign: 'center', marginBottom: 16 }}>
+          Impossible de charger l'intervention.
+        </Text>
+        <TouchableOpacity onPress={load} style={{ backgroundColor: '#F5A623', borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 }}>
+          <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
+  const duree = order.completedAt
+    ? `${Math.max(1, Math.round((new Date(order.completedAt) - new Date(order.createdAt)) / 60000))} min`
+    : '—';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -61,7 +117,7 @@ export default function SOSPaymentScreen({ navigation }) {
           <View style={styles.recapRow}>
             <Text style={styles.recapIcon}>🛻</Text>
             <View style={styles.recapInfo}>
-              <Text style={styles.recapNom}>{INTERVENTION.depanneur}</Text>
+              <Text style={styles.recapNom}>{order.provider?.name || 'Dépanneur'}</Text>
               <Text style={styles.recapMuted}>Dépanneur</Text>
             </View>
           </View>
@@ -69,39 +125,20 @@ export default function SOSPaymentScreen({ navigation }) {
           <View style={styles.recapDetails}>
             <View style={styles.recapDetailItem}>
               <Text style={styles.recapDetailLabel}>Type de panne</Text>
-              <Text style={styles.recapDetailValeur}>{INTERVENTION.typePanne}</Text>
+              <Text style={styles.recapDetailValeur}>{order.metadata?.panneType || order.description || '—'}</Text>
             </View>
             <View style={styles.recapDetailItem}>
               <Text style={styles.recapDetailLabel}>Durée</Text>
-              <Text style={styles.recapDetailValeur}>{INTERVENTION.duree}</Text>
-            </View>
-            <View style={styles.recapDetailItem}>
-              <Text style={styles.recapDetailLabel}>Distance</Text>
-              <Text style={styles.recapDetailValeur}>{INTERVENTION.distance}</Text>
+              <Text style={styles.recapDetailValeur}>{duree}</Text>
             </View>
           </View>
         </View>
 
         <View style={styles.prixCard}>
-          <Text style={styles.sectionTitre}>Décomposition du prix</Text>
-          <View style={styles.lignesPrix}>
-            <View style={styles.lignePrix}>
-              <Text style={styles.lignePrixLabel}>Main d'œuvre</Text>
-              <Text style={styles.lignePrixValeur}>{PRIX.mainOeuvre.toLocaleString('fr-DZ')} DA</Text>
-            </View>
-            <View style={styles.lignePrix}>
-              <Text style={styles.lignePrixLabel}>Pièces</Text>
-              <Text style={styles.lignePrixValeur}>{PRIX.pieces.toLocaleString('fr-DZ')} DA</Text>
-            </View>
-            <View style={styles.lignePrix}>
-              <Text style={styles.lignePrixLabel}>Déplacement</Text>
-              <Text style={styles.lignePrixValeur}>{PRIX.deplacement.toLocaleString('fr-DZ')} DA</Text>
-            </View>
-          </View>
-          <View style={styles.separateur} />
+          <Text style={styles.sectionTitre}>Montant</Text>
           <View style={styles.ligneTotal}>
             <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValeur}>{total.toLocaleString('fr-DZ')} DA</Text>
+            <Text style={styles.totalValeur}>{total.toFixed(2)} TND</Text>
           </View>
         </View>
 
@@ -143,8 +180,10 @@ export default function SOSPaymentScreen({ navigation }) {
           )}
         </View>
 
-        <TouchableOpacity style={styles.btnConfirmer} onPress={confirmerPaiement}>
-          <Text style={styles.btnConfirmerText}>Confirmer le paiement — {total.toLocaleString('fr-DZ')} DA</Text>
+        <TouchableOpacity style={styles.btnConfirmer} onPress={confirmerPaiement} disabled={submitting}>
+          {submitting
+            ? <ActivityIndicator color="#0A0A0F" />
+            : <Text style={styles.btnConfirmerText}>Confirmer le paiement — {total.toFixed(2)} TND</Text>}
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -185,10 +224,6 @@ const styles = StyleSheet.create({
     borderColor: '#2C2C3A',
   },
   sectionTitre: { fontSize: 16, fontWeight: '700', color: '#FFFFFF', marginBottom: 14 },
-  lignesPrix: { gap: 10 },
-  lignePrix: { flexDirection: 'row', justifyContent: 'space-between' },
-  lignePrixLabel: { fontSize: 14, color: '#8E8E9A' },
-  lignePrixValeur: { fontSize: 14, color: '#FFFFFF' },
   ligneTotal: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   totalLabel: { fontSize: 18, fontWeight: '700', color: '#FFFFFF' },
   totalValeur: { fontSize: 22, fontWeight: '800', color: '#F5A623' },
