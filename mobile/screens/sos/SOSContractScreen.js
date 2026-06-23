@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -6,9 +6,11 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
-  TextInput,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import api from "../../services/api";
+import useAuthStore from "../../store/authStore";
 
 const COLORS = {
   background: "#0A0A0F",
@@ -21,71 +23,110 @@ const COLORS = {
   error: "#F44336",
 };
 
-const mockContract = {
-  numero: "CNT-2024-00847",
-  date: "03/06/2026",
-  heure: "14h35",
-  client: {
-    nom: "A*** B***",
-    telephone: "+216 9* *** **74",
-    email: "a***@gmail.com",
-  },
-  depanneur: {
-    nom: "Khalil Mansouri",
-    telephone: "+216 98 456 789",
-    societe: "Mansouri Dépannage 🛻",
-    matricule: "DEP-2891",
-  },
-  service: {
-    typePanne: "Panne moteur / Démarrage impossible",
-    adresse: "Av. Habib Bourguiba, Tunis 1000",
-    vehicule: "Peugeot 308 - 156 TUN 8834",
-    dateIntervention: "03/06/2026",
-    heureIntervention: "15h00",
-  },
-  prix: {
-    mainOeuvre: 80.0,
-    deplacement: 25.0,
-    pieces: 35.0,
-    tva: 14.4,
-    total: 154.4,
-  },
-  conditions: [
-    "Le dépanneur s'engage à intervenir dans un délai maximum de 45 minutes à compter de la signature du présent contrat.",
-    "Les pièces fournies bénéficient d'une garantie de 30 jours. La main-d'œuvre est garantie pour la durée de la prestation définie.",
-    "En cas de litige, EasyWay SOS agit en tant que médiateur. Le client peut déposer une réclamation dans les 48h suivant la prestation.",
-  ],
-};
+export default function SOSContractScreen({ navigation, route }) {
+  const orderId = route.params?.orderId;
+  const currentUser = useAuthStore((s) => s.user);
 
-export default function SOSContractScreen({ navigation }) {
-  const [clientSigne, setClientSigne] = useState(false);
-  const [depanneurSigne, setDepanneurSigne] = useState(false);
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [signing, setSigning] = useState(false);
 
+  const load = useCallback(() => {
+    if (!orderId) { setLoading(false); return; }
+    setLoading(true);
+    api.get(`/api/sos/${orderId}`)
+      .then((r) => { setOrder(r.data.order); setError(false); })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, [orderId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  if (!orderId) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Text style={styles.backArrow}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Contrat d'intervention</Text>
+          <View style={{ width: 40 }} />
+        </View>
+        <View style={styles.center}>
+          <Text style={{ color: COLORS.muted }}>Aucune commande sélectionnée.</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.center}>
+          <ActivityIndicator color={COLORS.primary} size="large" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !order) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.center}>
+          <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, textAlign: "center", marginBottom: 16 }}>
+            Impossible de charger le contrat.
+          </Text>
+          <TouchableOpacity onPress={load} style={styles.confirmButton}>
+            <Text style={styles.confirmButtonText}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const meta = order.metadata || {};
+  const confirmations = meta.confirmations || {};
+  const vehicleInfo = meta.vehicleInfo || {};
+  const sosType = meta.sosType;
+  const total = Number(order.finalPrice ?? order.price ?? 0);
+  const createdDate = new Date(order.createdAt);
+
+  const isClient = currentUser?.id === order.client?.id;
+  const isProvider = currentUser?.id === order.provider?.id;
+  const clientSigne = !!confirmations.client;
+  const depanneurSigne = !!confirmations.provider;
   const canConfirm = clientSigne && depanneurSigne;
+  const myRoleSigned = isClient ? clientSigne : isProvider ? depanneurSigne : false;
 
-  const handleSign = (role) => {
+  const handleSign = () => {
+    if (!isClient && !isProvider) return;
     Alert.alert(
       "Confirmer la signature",
-      role === "client"
-        ? "Vous allez signer ce contrat en tant que client."
-        : "Vous allez signer ce contrat en tant que dépanneur.",
+      isClient
+        ? "Vous allez confirmer cette intervention en tant que client."
+        : "Vous allez confirmer cette intervention en tant que dépanneur.",
       [
         { text: "Annuler", style: "cancel" },
         {
           text: "Signer",
-          onPress: () => {
-            if (role === "client") setClientSigne(true);
-            else setDepanneurSigne(true);
+          onPress: async () => {
+            setSigning(true);
+            try {
+              const res = await api.post(`/api/sos/${orderId}/complete`);
+              setOrder(res.data.order);
+              if (res.data.bothConfirmed) {
+                Alert.alert("Contrat confirmé", "Les deux parties ont confirmé l'intervention.");
+              }
+            } catch {
+              Alert.alert("Erreur", "Impossible d'enregistrer la signature. Réessayez.");
+            } finally {
+              setSigning(false);
+            }
           },
         },
       ]
-    );
-  };
-
-  const handleConfirm = () => {
-    Alert.alert(
-      "Contrat confirmé",
-      "Le contrat d'intervention a été confirmé avec succès. Une copie a été envoyée par email."
     );
   };
 
@@ -100,110 +141,75 @@ export default function SOSContractScreen({ navigation }) {
       </View>
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Contract Header */}
         <View style={styles.contractHeader}>
           <View style={styles.logoArea}>
             <Text style={styles.logoText}>🛻 EasyWay SOS</Text>
           </View>
           <Text style={styles.contractTitle}>Contrat de dépannage</Text>
           <View style={styles.contractMeta}>
-            <Text style={styles.contractMetaText}>N° {mockContract.numero}</Text>
+            <Text style={styles.contractMetaText}>N° {order.id}</Text>
             <Text style={styles.contractMetaText}>
-              Le {mockContract.date} à {mockContract.heure}
+              Le {createdDate.toLocaleDateString("fr-FR")} à {createdDate.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
             </Text>
           </View>
         </View>
 
-        {/* Parties */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Parties contractantes</Text>
           <View style={styles.partiesRow}>
             <View style={[styles.partyCard, { flex: 1, marginRight: 8 }]}>
               <Text style={styles.partyRole}>👤 Client</Text>
-              <Text style={styles.partyName}>{mockContract.client.nom}</Text>
-              <Text style={styles.partyDetail}>{mockContract.client.telephone}</Text>
-              <Text style={styles.partyDetail}>{mockContract.client.email}</Text>
+              <Text style={styles.partyName}>{order.client?.name || '—'}</Text>
+              <Text style={styles.partyDetail}>{order.client?.phone || '—'}</Text>
             </View>
             <View style={[styles.partyCard, { flex: 1, marginLeft: 8 }]}>
               <Text style={styles.partyRole}>🛻 Dépanneur</Text>
-              <Text style={styles.partyName}>{mockContract.depanneur.nom}</Text>
-              <Text style={styles.partyDetail}>{mockContract.depanneur.societe}</Text>
-              <Text style={styles.partyDetail}>{mockContract.depanneur.telephone}</Text>
+              <Text style={styles.partyName}>{order.provider?.name || 'Non assigné'}</Text>
+              <Text style={styles.partyDetail}>{order.provider?.phone || '—'}</Text>
             </View>
           </View>
         </View>
 
-        {/* Service Details */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Détails de l'intervention</Text>
           <View style={styles.detailsBox}>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Type de panne</Text>
-              <Text style={styles.detailValue}>{mockContract.service.typePanne}</Text>
-            </View>
-            <View style={styles.divider} />
+            {!!sosType && (
+              <>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Type de panne</Text>
+                  <Text style={styles.detailValue}>{sosType}</Text>
+                </View>
+                <View style={styles.divider} />
+              </>
+            )}
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Adresse</Text>
-              <Text style={styles.detailValue}>{mockContract.service.adresse}</Text>
+              <Text style={styles.detailValue}>{order.originAddress || '—'}</Text>
             </View>
-            <View style={styles.divider} />
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Véhicule</Text>
-              <Text style={styles.detailValue}>{mockContract.service.vehicule}</Text>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Date / Heure</Text>
-              <Text style={styles.detailValue}>
-                {mockContract.service.dateIntervention} à{" "}
-                {mockContract.service.heureIntervention}
-              </Text>
-            </View>
+            {!!(vehicleInfo.brand || vehicleInfo.model || vehicleInfo.plate) && (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Véhicule</Text>
+                  <Text style={styles.detailValue}>
+                    {[vehicleInfo.brand, vehicleInfo.model, vehicleInfo.plate].filter(Boolean).join(' - ')}
+                  </Text>
+                </View>
+              </>
+            )}
           </View>
         </View>
 
-        {/* Price Breakdown */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Devis financier</Text>
           <View style={styles.priceBox}>
             <View style={styles.priceRow}>
-              <Text style={styles.priceLabel}>Main d'œuvre</Text>
-              <Text style={styles.priceValue}>{mockContract.prix.mainOeuvre.toFixed(2)} TND</Text>
-            </View>
-            <View style={styles.priceRow}>
-              <Text style={styles.priceLabel}>Déplacement</Text>
-              <Text style={styles.priceValue}>{mockContract.prix.deplacement.toFixed(2)} TND</Text>
-            </View>
-            <View style={styles.priceRow}>
-              <Text style={styles.priceLabel}>Pièces détachées</Text>
-              <Text style={styles.priceValue}>{mockContract.prix.pieces.toFixed(2)} TND</Text>
-            </View>
-            <View style={styles.priceRow}>
-              <Text style={styles.priceLabel}>TVA (10%)</Text>
-              <Text style={styles.priceValue}>{mockContract.prix.tva.toFixed(2)} TND</Text>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.priceRow}>
               <Text style={styles.totalLabel}>TOTAL</Text>
-              <Text style={styles.totalValue}>{mockContract.prix.total.toFixed(2)} TND</Text>
+              <Text style={styles.totalValue}>{total.toFixed(2)} TND</Text>
             </View>
           </View>
         </View>
 
-        {/* Terms */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Conditions générales</Text>
-          <View style={styles.termsBox}>
-            {mockContract.conditions.map((cond, index) => (
-              <View key={index} style={styles.termItem}>
-                <Text style={styles.termBullet}>{index + 1}.</Text>
-                <Text style={styles.termText}>{cond}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        {/* Signature Area */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Signatures</Text>
           <View style={styles.signaturesRow}>
@@ -212,15 +218,14 @@ export default function SOSContractScreen({ navigation }) {
               {clientSigne ? (
                 <View style={styles.signedArea}>
                   <Text style={styles.signedText}>✅ Signé</Text>
-                  <Text style={styles.signedDate}>{mockContract.date}</Text>
+                  <Text style={styles.signedDate}>{new Date(confirmations.client).toLocaleDateString("fr-FR")}</Text>
                 </View>
-              ) : (
-                <TouchableOpacity
-                  style={styles.signButton}
-                  onPress={() => handleSign("client")}
-                >
-                  <Text style={styles.signButtonText}>Signer</Text>
+              ) : isClient ? (
+                <TouchableOpacity style={styles.signButton} onPress={handleSign} disabled={signing}>
+                  {signing ? <ActivityIndicator color={COLORS.primary} size="small" /> : <Text style={styles.signButtonText}>Signer</Text>}
                 </TouchableOpacity>
+              ) : (
+                <Text style={styles.signedDate}>En attente</Text>
               )}
             </View>
             <View style={styles.signatureBox}>
@@ -228,15 +233,14 @@ export default function SOSContractScreen({ navigation }) {
               {depanneurSigne ? (
                 <View style={styles.signedArea}>
                   <Text style={styles.signedText}>✅ Signé</Text>
-                  <Text style={styles.signedDate}>{mockContract.date}</Text>
+                  <Text style={styles.signedDate}>{new Date(confirmations.provider).toLocaleDateString("fr-FR")}</Text>
                 </View>
-              ) : (
-                <TouchableOpacity
-                  style={styles.signButton}
-                  onPress={() => handleSign("depanneur")}
-                >
-                  <Text style={styles.signButtonText}>Signer</Text>
+              ) : isProvider ? (
+                <TouchableOpacity style={styles.signButton} onPress={handleSign} disabled={signing}>
+                  {signing ? <ActivityIndicator color={COLORS.primary} size="small" /> : <Text style={styles.signButtonText}>Signer</Text>}
                 </TouchableOpacity>
+              ) : (
+                <Text style={styles.signedDate}>En attente</Text>
               )}
             </View>
           </View>
@@ -245,21 +249,15 @@ export default function SOSContractScreen({ navigation }) {
         <View style={{ height: 24 }} />
       </ScrollView>
 
-      {/* Confirm Button */}
       <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.confirmButton, !canConfirm && styles.confirmButtonDisabled]}
-          onPress={handleConfirm}
-          disabled={!canConfirm}
-        >
-          <Text style={[styles.confirmButtonText, !canConfirm && styles.confirmButtonTextDisabled]}>
-            Confirmer le contrat
+        {canConfirm ? (
+          <Text style={[styles.signHint, { color: COLORS.success }]}>
+            Contrat confirmé par les deux parties
           </Text>
-        </TouchableOpacity>
-        {!canConfirm && (
-          <Text style={styles.signHint}>
-            Les deux parties doivent signer pour confirmer
-          </Text>
+        ) : myRoleSigned ? (
+          <Text style={styles.signHint}>En attente de la signature de l'autre partie</Text>
+        ) : (
+          <Text style={styles.signHint}>Les deux parties doivent signer pour confirmer</Text>
         )}
       </View>
     </SafeAreaView>
@@ -270,6 +268,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
+  },
+  center: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
   },
   header: {
     flexDirection: "row",
@@ -412,14 +416,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: 8,
   },
-  priceLabel: {
-    color: COLORS.muted,
-    fontSize: 14,
-  },
-  priceValue: {
-    color: COLORS.text,
-    fontSize: 14,
-  },
   totalLabel: {
     color: COLORS.text,
     fontSize: 16,
@@ -429,30 +425,6 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontSize: 18,
     fontWeight: "800",
-  },
-  termsBox: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 10,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    gap: 12,
-  },
-  termItem: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  termBullet: {
-    color: COLORS.primary,
-    fontSize: 13,
-    fontWeight: "700",
-    minWidth: 18,
-  },
-  termText: {
-    color: COLORS.muted,
-    fontSize: 13,
-    lineHeight: 20,
-    flex: 1,
   },
   signaturesRow: {
     flexDirection: "row",
@@ -511,24 +483,18 @@ const styles = StyleSheet.create({
   confirmButton: {
     backgroundColor: COLORS.primary,
     paddingVertical: 16,
+    paddingHorizontal: 24,
     borderRadius: 12,
     alignItems: "center",
-  },
-  confirmButtonDisabled: {
-    backgroundColor: COLORS.border,
   },
   confirmButtonText: {
     color: COLORS.background,
     fontSize: 16,
     fontWeight: "700",
   },
-  confirmButtonTextDisabled: {
-    color: COLORS.muted,
-  },
   signHint: {
     color: COLORS.muted,
     fontSize: 12,
     textAlign: "center",
-    marginTop: 8,
   },
 });
