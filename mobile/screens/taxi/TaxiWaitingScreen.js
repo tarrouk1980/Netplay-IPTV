@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import useTaxiStore from '../../store/taxiStore';
 
 const COLORS = {
   bg: '#0A0A0F',
@@ -18,14 +19,10 @@ const COLORS = {
   border: '#2C2C3A',
 };
 
-const COURSE = {
-  depart: '12 Rue de la Paix, Alger Centre',
-  destination: '47 Boulevard Mohamed V, Hydra',
-  prixEstime: '850 DA',
-  typeVehicule: 'Berline Standard',
-};
-
-export default function TaxiWaitingScreen({ navigation }) {
+export default function TaxiWaitingScreen({ navigation, route }) {
+  const { orderId } = route?.params || {};
+  const { currentOrder, fetchOrder, cancelOrder } = useTaxiStore();
+  const [order, setOrder] = useState(currentOrder);
   const [points, setPoints] = useState('');
   const [secondes, setSecondes] = useState(0);
   const [pulse, setPulse] = useState(0);
@@ -56,6 +53,23 @@ export default function TaxiWaitingScreen({ navigation }) {
     };
   }, []);
 
+  useEffect(() => {
+    const id = orderId || currentOrder?.id;
+    if (!id) return;
+    const poll = async () => {
+      try {
+        const updated = await fetchOrder(id);
+        setOrder(updated);
+        if (updated?.status === 'ACCEPTED' || updated?.status === 'IN_PROGRESS') {
+          navigation.replace('TaxiTracking', { orderId: id });
+        }
+      } catch {}
+    };
+    poll();
+    const interval = setInterval(poll, 5000);
+    return () => clearInterval(interval);
+  }, [orderId, currentOrder?.id]);
+
   const formatTemps = (s) => {
     const m = Math.floor(s / 60);
     const sec = s % 60;
@@ -71,7 +85,16 @@ export default function TaxiWaitingScreen({ navigation }) {
         {
           text: 'Oui, annuler',
           style: 'destructive',
-          onPress: () => navigation.goBack(),
+          onPress: async () => {
+            const id = order?.id || orderId;
+            if (!id) { navigation.goBack(); return; }
+            try {
+              await cancelOrder(id, 'Annulé par le client');
+              navigation.goBack();
+            } catch {
+              Alert.alert('Erreur', "Impossible d'annuler la demande. Réessayez.");
+            }
+          },
         },
       ]
     );
@@ -122,7 +145,7 @@ export default function TaxiWaitingScreen({ navigation }) {
             <View style={[styles.dot, { backgroundColor: '#4CAF50' }]} />
             <View style={styles.infoTexte}>
               <Text style={styles.infoLabel}>Départ</Text>
-              <Text style={styles.infoValeur}>{COURSE.depart}</Text>
+              <Text style={styles.infoValeur}>{order?.originAddress || 'Position actuelle'}</Text>
             </View>
           </View>
 
@@ -132,7 +155,7 @@ export default function TaxiWaitingScreen({ navigation }) {
             <View style={[styles.dot, { backgroundColor: COLORS.primary }]} />
             <View style={styles.infoTexte}>
               <Text style={styles.infoLabel}>Destination</Text>
-              <Text style={styles.infoValeur}>{COURSE.destination}</Text>
+              <Text style={styles.infoValeur}>{order?.destinationAddress || '—'}</Text>
             </View>
           </View>
 
@@ -141,11 +164,13 @@ export default function TaxiWaitingScreen({ navigation }) {
           <View style={styles.lignePrix}>
             <View style={styles.prixItem}>
               <Text style={styles.prixLabel}>Prix estimé</Text>
-              <Text style={styles.prixValeur}>{COURSE.prixEstime}</Text>
+              <Text style={styles.prixValeur}>
+                {order?.price != null ? `${Number(order.price).toFixed(3)} TND` : '—'}
+              </Text>
             </View>
             <View style={styles.prixItem}>
               <Text style={styles.prixLabel}>Véhicule</Text>
-              <Text style={styles.prixValeur}>{COURSE.typeVehicule}</Text>
+              <Text style={styles.prixValeur}>{order?.metadata?.taxiType || order?.taxiType || '—'}</Text>
             </View>
           </View>
         </View>
