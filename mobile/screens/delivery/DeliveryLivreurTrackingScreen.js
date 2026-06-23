@@ -1,70 +1,93 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  Animated,
   Alert,
   ScrollView,
   Dimensions,
+  ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const { width } = Dimensions.get('window');
 
-const LIVREUR = {
-  nom: 'Karim Benzali',
-  note: 4.8,
-  vehicule: 'Moto Honda CB500',
-  avatar: 'KB',
-  telephone: '+213 555 123 456',
+const STATUS_STEPS = ['PENDING', 'ACCEPTED', 'PICKING_UP', 'IN_PROGRESS', 'COMPLETED'];
+const STEP_LABELS = {
+  PENDING: 'Commande confirmée',
+  ACCEPTED: 'Livreur assigné',
+  PICKING_UP: 'Préparation en cours',
+  IN_PROGRESS: 'Livreur en route',
+  COMPLETED: 'Livré',
 };
 
-const TIMELINE = [
-  { label: 'Commande confirmée', statut: 'done' },
-  { label: 'Préparation en cours', statut: 'done' },
-  { label: 'Livreur en route', statut: 'active' },
-  { label: 'Livré', statut: 'pending' },
-];
+export default function DeliveryLivreurTrackingScreen({ navigation, route }) {
+  const orderId = route?.params?.orderId;
+  const [order, setOrder] = useState(null);
+  const [provider, setProvider] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-export default function DeliveryLivreurTrackingScreen({ navigation }) {
-  const livreurX = useRef(new Animated.Value(40)).current;
-  const livreurY = useRef(new Animated.Value(80)).current;
-  const [secondsLeft, setSecondsLeft] = useState(18 * 60);
+  const load = useCallback(() => {
+    if (!orderId) { setLoading(false); return; }
+    api.get(`/api/orders/${orderId}`)
+      .then((r) => { setOrder(r.data.order); setProvider(r.data.order?.provider || null); setError(false); })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, [orderId]);
 
+  useEffect(() => { load(); }, [load]);
   useEffect(() => {
-    const deplacer = () => {
-      Animated.parallel([
-        Animated.timing(livreurX, {
-          toValue: Math.random() * (width - 100) + 20,
-          duration: 1800,
-          useNativeDriver: false,
-        }),
-        Animated.timing(livreurY, {
-          toValue: Math.random() * 100 + 30,
-          duration: 1800,
-          useNativeDriver: false,
-        }),
-      ]).start();
-    };
-    deplacer();
-    const interval = setInterval(deplacer, 2000);
-    return () => clearInterval(interval);
-  }, []);
+    if (!orderId) return;
+    const t = setInterval(load, 8000);
+    return () => clearInterval(t);
+  }, [orderId, load]);
 
-  useEffect(() => {
-    if (secondsLeft <= 0) return;
-    const timer = setInterval(() => {
-      setSecondsLeft(prev => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+  if (!orderId) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 30 }}>
+          <Text style={{ color: '#8E8E9A', textAlign: 'center' }}>Aucune commande sélectionnée.</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
-  const formatETA = (secs) => {
-    const m = Math.floor(secs / 60);
-    const s = secs % 60;
-    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <ActivityIndicator color="#F5A623" size="large" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !order) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 30 }}>
+          <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+          <Text style={{ color: '#8E8E9A', textAlign: 'center', marginBottom: 16 }}>
+            Impossible de charger le suivi de livraison.
+          </Text>
+          <TouchableOpacity onPress={load} style={styles.btnAppeler}>
+            <Text style={styles.btnAppelerText}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const currentIdx = STATUS_STEPS.indexOf(order.status);
+  const initials = (provider?.name || '?').split(/\s+/).map((p) => p[0]).join('').slice(0, 2).toUpperCase();
+
+  const handleCall = () => {
+    if (!provider?.phone) { Alert.alert('Indisponible', 'Numéro du livreur non disponible.'); return; }
+    Linking.openURL(`tel:${provider.phone}`);
   };
 
   return (
@@ -73,104 +96,88 @@ export default function DeliveryLivreurTrackingScreen({ navigation }) {
         <View style={styles.header}>
           <Text style={styles.titre}>Suivi de livraison</Text>
           <View style={styles.etaBadge}>
-            <Text style={styles.etaLabel}>Arrivée dans</Text>
-            <Text style={styles.etaValeur}>{formatETA(secondsLeft)}</Text>
+            <Text style={styles.etaLabel}>Statut</Text>
+            <Text style={styles.etaValeur}>{STEP_LABELS[order.status] || order.status}</Text>
           </View>
         </View>
 
-        <View style={styles.carte}>
-          <View style={styles.carteInner}>
-            <View style={styles.routeH1} />
-            <View style={styles.routeH2} />
-            <View style={styles.routeV1} />
-            <View style={styles.destination}>
-              <Text style={styles.destinationIcon}>📍</Text>
+        {provider ? (
+          <View style={styles.livreurCard}>
+            <View style={styles.livreurAvatar}>
+              <Text style={styles.livreurAvatarText}>{initials}</Text>
             </View>
-            <Animated.View style={[styles.livreurPoint, { left: livreurX, top: livreurY }]}>
-              <Text style={styles.livreurEmoji}>🏍️</Text>
-            </Animated.View>
-          </View>
-          <Text style={styles.carteLegende}>Position en temps réel</Text>
-        </View>
-
-        <View style={styles.livreurCard}>
-          <View style={styles.livreurAvatar}>
-            <Text style={styles.livreurAvatarText}>{LIVREUR.avatar}</Text>
-          </View>
-          <View style={styles.livreurInfo}>
-            <Text style={styles.livreurNom}>{LIVREUR.nom}</Text>
-            <Text style={styles.livreurVehicule}>{LIVREUR.vehicule}</Text>
-            <View style={styles.noteRow}>
-              <Text style={styles.etoile}>★</Text>
-              <Text style={styles.noteText}>{LIVREUR.note}</Text>
+            <View style={styles.livreurInfo}>
+              <Text style={styles.livreurNom}>{provider.name}</Text>
+              {provider.avgRating != null && (
+                <View style={styles.noteRow}>
+                  <Text style={styles.etoile}>★</Text>
+                  <Text style={styles.noteText}>{Number(provider.avgRating).toFixed(1)}</Text>
+                </View>
+              )}
+            </View>
+            <View style={styles.livreurActions}>
+              <TouchableOpacity style={styles.actionBtn} onPress={handleCall}>
+                <Text style={styles.actionIcon}>📞</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.actionBtn}
+                onPress={() => navigation.navigate('Chat', { orderId, otherName: provider.name, otherRole: 'Livreur' })}
+              >
+                <Text style={styles.actionIcon}>💬</Text>
+              </TouchableOpacity>
             </View>
           </View>
-          <View style={styles.livreurActions}>
-            <TouchableOpacity
-              style={styles.actionBtn}
-              onPress={() => Alert.alert('Appel', `Appel vers ${LIVREUR.telephone}`)}
-            >
-              <Text style={styles.actionIcon}>📞</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.actionBtn}
-              onPress={() => navigation.navigate('Chat')}
-            >
-              <Text style={styles.actionIcon}>💬</Text>
-            </TouchableOpacity>
+        ) : (
+          <View style={styles.livreurCard}>
+            <Text style={{ color: '#8E8E9A' }}>En attente d'assignation d'un livreur…</Text>
           </View>
-        </View>
+        )}
 
         <View style={styles.timelineCard}>
           <Text style={styles.sectionTitre}>Suivi de commande</Text>
-          {TIMELINE.map((etape, index) => (
-            <View key={index} style={styles.timelineItem}>
-              <View style={styles.timelineGauche}>
-                <View
-                  style={[
-                    styles.timelineDot,
-                    etape.statut === 'done' && styles.dotDone,
-                    etape.statut === 'active' && styles.dotActive,
-                  ]}
-                >
-                  {etape.statut === 'done' && <Text style={styles.dotCheck}>✓</Text>}
-                  {etape.statut === 'active' && <Text style={styles.dotActiveInner}>●</Text>}
-                </View>
-                {index < TIMELINE.length - 1 && (
+          {STATUS_STEPS.map((statut, index) => {
+            const etapeStatut = index < currentIdx ? 'done' : index === currentIdx ? 'active' : 'pending';
+            return (
+              <View key={statut} style={styles.timelineItem}>
+                <View style={styles.timelineGauche}>
                   <View
                     style={[
-                      styles.timelineLine,
-                      etape.statut === 'done' && styles.lineDone,
+                      styles.timelineDot,
+                      etapeStatut === 'done' && styles.dotDone,
+                      etapeStatut === 'active' && styles.dotActive,
                     ]}
-                  />
-                )}
+                  >
+                    {etapeStatut === 'done' && <Text style={styles.dotCheck}>✓</Text>}
+                    {etapeStatut === 'active' && <Text style={styles.dotActiveInner}>●</Text>}
+                  </View>
+                  {index < STATUS_STEPS.length - 1 && (
+                    <View style={[styles.timelineLine, etapeStatut === 'done' && styles.lineDone]} />
+                  )}
+                </View>
+                <View style={styles.timelineDroite}>
+                  <Text
+                    style={[
+                      styles.timelineLabel,
+                      etapeStatut === 'pending' && styles.labelPending,
+                      etapeStatut === 'active' && styles.labelActive,
+                    ]}
+                  >
+                    {STEP_LABELS[statut]}
+                    {etapeStatut === 'done' ? ' ✅' : etapeStatut === 'active' ? ' 🔄' : ''}
+                  </Text>
+                </View>
               </View>
-              <View style={styles.timelineDroite}>
-                <Text
-                  style={[
-                    styles.timelineLabel,
-                    etape.statut === 'pending' && styles.labelPending,
-                    etape.statut === 'active' && styles.labelActive,
-                  ]}
-                >
-                  {etape.label}
-                  {etape.statut === 'done' ? ' ✅' : etape.statut === 'active' ? ' 🔄' : ''}
-                </Text>
-              </View>
-            </View>
-          ))}
+            );
+          })}
         </View>
 
         <View style={styles.boutonsRow}>
-          <TouchableOpacity
-            style={styles.btnAppeler}
-            onPress={() => Alert.alert('Appel', `Appel vers ${LIVREUR.telephone}`)}
-          >
+          <TouchableOpacity style={styles.btnAppeler} onPress={handleCall}>
             <Text style={styles.btnAppelerText}>📞 Appeler le livreur</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.btnChat}
-            onPress={() => navigation.navigate('Chat')}
+            onPress={() => navigation.navigate('Chat', { orderId, otherName: provider?.name || 'Livreur', otherRole: 'Livreur' })}
           >
             <Text style={styles.btnChatText}>💬 Chat</Text>
           </TouchableOpacity>
@@ -198,57 +205,7 @@ const styles = StyleSheet.create({
     borderColor: '#F5A623',
   },
   etaLabel: { fontSize: 10, color: '#8E8E9A' },
-  etaValeur: { fontSize: 20, fontWeight: '800', color: '#F5A623' },
-  carte: { marginHorizontal: 16, marginBottom: 16 },
-  carteInner: {
-    height: 180,
-    backgroundColor: '#1C1C28',
-    borderRadius: 16,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#2C2C3A',
-    position: 'relative',
-  },
-  routeH1: {
-    position: 'absolute',
-    top: 90,
-    left: 0,
-    right: 0,
-    height: 3,
-    backgroundColor: '#2C2C3A',
-  },
-  routeH2: {
-    position: 'absolute',
-    top: 45,
-    left: 0,
-    right: 0,
-    height: 2,
-    backgroundColor: '#2C2C3A',
-  },
-  routeV1: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: width / 2 - 26,
-    width: 2,
-    backgroundColor: '#2C2C3A',
-  },
-  destination: {
-    position: 'absolute',
-    right: 30,
-    top: 60,
-  },
-  destinationIcon: { fontSize: 28 },
-  livreurPoint: {
-    position: 'absolute',
-  },
-  livreurEmoji: { fontSize: 24 },
-  carteLegende: {
-    textAlign: 'center',
-    color: '#8E8E9A',
-    fontSize: 12,
-    marginTop: 6,
-  },
+  etaValeur: { fontSize: 14, fontWeight: '800', color: '#F5A623' },
   livreurCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -272,7 +229,6 @@ const styles = StyleSheet.create({
   livreurAvatarText: { fontSize: 18, fontWeight: '700', color: '#0A0A0F' },
   livreurInfo: { flex: 1 },
   livreurNom: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
-  livreurVehicule: { fontSize: 13, color: '#8E8E9A', marginTop: 2 },
   noteRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
   etoile: { color: '#F5A623', fontSize: 14 },
   noteText: { color: '#FFFFFF', fontSize: 13, marginLeft: 4, fontWeight: '600' },
