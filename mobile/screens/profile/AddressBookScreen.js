@@ -18,11 +18,6 @@ const ADDRESS_TYPES = [
   { key: 'other', label: 'Autre',    emoji: '📍' },
 ];
 
-const MOCK_ADDRESSES = [
-  { id: 'A1', type: 'home', label: 'Domicile', address: 'Rue Ibn Khaldoun, Menzah 6, Tunis', default: true },
-  { id: 'A2', type: 'work', label: 'Travail',  address: 'Av. de la Liberté, Centre Ville, Tunis', default: false },
-];
-
 function AddressForm({ onSave, onCancel, initial }) {
   const [type, setType] = useState(initial?.type || 'home');
   const [label, setLabel] = useState(initial?.label || '');
@@ -79,22 +74,21 @@ function AddressForm({ onSave, onCancel, initial }) {
 }
 
 export default function AddressBookScreen({ navigation }) {
-  const [addresses, setAddresses] = useState(MOCK_ADDRESSES);
-  const [loading, setLoading] = useState(false);
+  const [addresses, setAddresses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
 
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      try {
-        const res = await api.get('/api/users/clients/addresses');
-        if (res.data?.addresses?.length) setAddresses(res.data.addresses);
-      } catch {} finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
+  const load = () => {
+    setLoading(true);
+    api.get('/api/users/clients/addresses')
+      .then((res) => { setAddresses(res.data?.addresses || []); setError(false); })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { load(); }, []);
 
   const handleSave = async ({ type, label, address }) => {
     try {
@@ -102,12 +96,14 @@ export default function AddressBookScreen({ navigation }) {
         await api.put(`/api/users/clients/addresses/${editTarget.id}`, { type, label, address });
         setAddresses(prev => prev.map(a => a.id === editTarget.id ? { ...a, type, label, address } : a));
       } else {
-        const res = await api.post('/api/users/clients/addresses', { type, label, address }).catch(() => ({ data: { address: { id: `A${Date.now()}` } } }));
-        setAddresses(prev => [...prev, { id: res.data.address?.id, type, label, address, default: false }]);
+        const res = await api.post('/api/users/clients/addresses', { type, label, address });
+        setAddresses(prev => [...prev, res.data.address]);
       }
-    } catch {}
-    setShowForm(false);
-    setEditTarget(null);
+      setShowForm(false);
+      setEditTarget(null);
+    } catch {
+      Alert.alert('Erreur', "L'adresse n'a pas pu être enregistrée. Réessayez.");
+    }
   };
 
   const handleDelete = (id) => {
@@ -116,16 +112,24 @@ export default function AddressBookScreen({ navigation }) {
       {
         text: 'Supprimer', style: 'destructive',
         onPress: async () => {
-          try { await api.delete(`/api/users/clients/addresses/${id}`); } catch {}
-          setAddresses(prev => prev.filter(a => a.id !== id));
+          try {
+            await api.delete(`/api/users/clients/addresses/${id}`);
+            setAddresses(prev => prev.filter(a => a.id !== id));
+          } catch {
+            Alert.alert('Erreur', "Impossible de supprimer cette adresse. Réessayez.");
+          }
         },
       },
     ]);
   };
 
   const handleSetDefault = async (id) => {
-    try { await api.patch(`/api/users/clients/addresses/${id}/default`); } catch {}
-    setAddresses(prev => prev.map(a => ({ ...a, default: a.id === id })));
+    try {
+      await api.patch(`/api/users/clients/addresses/${id}/default`);
+      setAddresses(prev => prev.map(a => ({ ...a, isDefault: a.id === id })));
+    } catch {
+      Alert.alert('Erreur', "Impossible de définir cette adresse par défaut. Réessayez.");
+    }
   };
 
   const typeEmoji = (type) => ADDRESS_TYPES.find(t => t.key === type)?.emoji || '📍';
@@ -147,7 +151,17 @@ export default function AddressBookScreen({ navigation }) {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         {loading && <ActivityIndicator color={COLORS.accent} style={{ marginTop: 20 }} />}
 
-        {showForm && (
+        {!loading && error && (
+          <View style={styles.empty}>
+            <Text style={{ fontSize: 48, marginBottom: 12 }}>⚠️</Text>
+            <Text style={styles.emptyText}>Impossible de charger vos adresses.</Text>
+            <TouchableOpacity style={styles.addBtn} onPress={load}>
+              <Text style={styles.addBtnText}>Réessayer</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {!error && showForm && (
           <AddressForm
             initial={editTarget}
             onSave={handleSave}
@@ -155,14 +169,14 @@ export default function AddressBookScreen({ navigation }) {
           />
         )}
 
-        {addresses.map(addr => (
-          <View key={addr.id} style={[styles.addrCard, addr.default && { borderColor: COLORS.accent }]}>
+        {!error && addresses.map(addr => (
+          <View key={addr.id} style={[styles.addrCard, addr.isDefault && { borderColor: COLORS.accent }]}>
             <View style={styles.addrLeft}>
               <Text style={{ fontSize: 28 }}>{typeEmoji(addr.type)}</Text>
               <View style={{ flex: 1, marginLeft: 12 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Text style={styles.addrLabel}>{addr.label}</Text>
-                  {addr.default && (
+                  {addr.isDefault && (
                     <View style={styles.defaultBadge}>
                       <Text style={styles.defaultBadgeText}>Par défaut</Text>
                     </View>
@@ -172,7 +186,7 @@ export default function AddressBookScreen({ navigation }) {
               </View>
             </View>
             <View style={styles.addrActions}>
-              {!addr.default && (
+              {!addr.isDefault && (
                 <TouchableOpacity onPress={() => handleSetDefault(addr.id)} style={styles.actionIcon}>
                   <Text style={{ fontSize: 16 }}>⭐</Text>
                 </TouchableOpacity>
@@ -187,7 +201,7 @@ export default function AddressBookScreen({ navigation }) {
           </View>
         ))}
 
-        {addresses.length === 0 && !loading && !showForm && (
+        {!error && addresses.length === 0 && !loading && !showForm && (
           <View style={styles.empty}>
             <Text style={{ fontSize: 48, marginBottom: 12 }}>📭</Text>
             <Text style={styles.emptyText}>Aucune adresse enregistrée.</Text>
