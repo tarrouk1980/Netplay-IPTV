@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  StatusBar, Animated, Alert,
+  StatusBar, Animated, Alert, Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
@@ -21,8 +21,6 @@ const STEPS = [
   { key: 'done',       label: 'Intervention terminée',      icon: '🎉' },
 ];
 
-const MOCK_DRIVER = { name: 'Slim Dridi', phone: '+216 55 321 654', eta: 12, rating: 4.9 };
-
 export default function SOSTrackingScreen({ navigation, route }) {
   const { requestId, sosType, address } = route?.params || {};
   const [stepIdx, setStepIdx] = useState(0);
@@ -38,17 +36,10 @@ export default function SOSTrackingScreen({ navigation, route }) {
       ])
     ).start();
 
-    // Simulate progression
-    const timers = [
-      setTimeout(() => { setStepIdx(1); setDriver(MOCK_DRIVER); }, 4000),
-      setTimeout(() => setStepIdx(2), 8000),
-      setTimeout(() => setStepIdx(3), 15000),
-    ];
-
     const tick = setInterval(() => setElapsed(e => e + 1), 1000);
 
-    // Poll real status
-    const poll = setInterval(async () => {
+    const fetchStatus = async () => {
+      if (!requestId) return;
       try {
         const res = await api.get(`/api/sos/${requestId}`);
         const order = res.data?.order;
@@ -57,13 +48,26 @@ export default function SOSTrackingScreen({ navigation, route }) {
           if (STATUS_TO_STEP[order.status] !== undefined) setStepIdx(STATUS_TO_STEP[order.status]);
           if (order.provider) {
             setDriver({ name: order.provider.name, phone: order.provider.phone });
+          } else {
+            setDriver(null);
           }
         }
       } catch {}
-    }, 10000);
+    };
 
-    return () => { timers.forEach(clearTimeout); clearInterval(tick); clearInterval(poll); };
-  }, []);
+    fetchStatus();
+    const poll = setInterval(fetchStatus, 10000);
+
+    return () => { clearInterval(tick); clearInterval(poll); };
+  }, [requestId]);
+
+  const handleCall = () => {
+    if (!driver?.phone) {
+      Alert.alert('Indisponible', 'Numéro du dépanneur non disponible.');
+      return;
+    }
+    Linking.openURL(`tel:${driver.phone}`);
+  };
 
   const currentStep = STEPS[stepIdx];
   const isDone = stepIdx === STEPS.length - 1;
@@ -115,12 +119,9 @@ export default function SOSTrackingScreen({ navigation, route }) {
           <View style={styles.driverAvatar}><Text style={{ fontSize: 32 }}>🧔</Text></View>
           <View style={{ flex: 1, marginLeft: 12 }}>
             <Text style={styles.driverName}>{driver.name}</Text>
-            <Text style={styles.driverRating}>⭐ {driver.rating} · Dépanneur certifié</Text>
-            {driver.eta && stepIdx === 2 && (
-              <Text style={styles.driverEta}>🕐 Arrive dans ≈ {driver.eta} min</Text>
-            )}
+            <Text style={styles.driverRating}>Dépanneur assigné</Text>
           </View>
-          <TouchableOpacity style={styles.callBtn}>
+          <TouchableOpacity style={styles.callBtn} onPress={handleCall}>
             <Text style={{ fontSize: 24 }}>📞</Text>
           </TouchableOpacity>
         </View>
