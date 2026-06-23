@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  StatusBar, TextInput, Alert, ActivityIndicator, Switch,
+  StatusBar, TextInput, Alert, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
-import useAuthStore from '../../store/authStore';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', surfaceAlt: '#16161F',
@@ -14,21 +13,12 @@ const COLORS = {
 };
 
 export default function SecuritySettingsScreen({ navigation }) {
-  const { logout } = useAuthStore();
   const [currentPwd, setCurrentPwd] = useState('');
   const [newPwd, setNewPwd] = useState('');
   const [confirmPwd, setConfirmPwd] = useState('');
   const [savingPwd, setSavingPwd] = useState(false);
-  const [twoFactor, setTwoFactor] = useState(false);
-  const [loginAlerts, setLoginAlerts] = useState(true);
   const [showCurrentPwd, setShowCurrentPwd] = useState(false);
   const [showNewPwd, setShowNewPwd] = useState(false);
-
-  const sessions = [
-    { id: 1, device: 'Samsung Galaxy S23', location: 'Tunis, TN', time: 'Actuel', current: true },
-    { id: 2, device: 'Chrome / Windows', location: 'Tunis, TN', time: 'Il y a 2 jours', current: false },
-    { id: 3, device: 'iPhone 14', location: 'Sfax, TN', time: 'Il y a 5 jours', current: false },
-  ];
 
   const handleChangePassword = async () => {
     if (!currentPwd || !newPwd || !confirmPwd) { Alert.alert('Champs requis', 'Remplissez tous les champs.'); return; }
@@ -44,26 +34,6 @@ export default function SecuritySettingsScreen({ navigation }) {
     } finally {
       setSavingPwd(false);
     }
-  };
-
-  const revokeSession = (session) => {
-    if (session.current) return;
-    Alert.alert('Révoquer', `Déconnecter "${session.device}" ?`, [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Révoquer', style: 'destructive', onPress: async () => {
-        try { await api.delete(`/api/auth/sessions/${session.id}`); } catch {}
-      }},
-    ]);
-  };
-
-  const handleLogoutAll = () => {
-    Alert.alert('Déconnecter partout', 'Vous serez déconnecté de tous vos appareils.', [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Déconnecter tout', style: 'destructive', onPress: async () => {
-        try { await api.post('/api/auth/logout-all'); } catch {}
-        logout();
-      }},
-    ]);
   };
 
   const pwdStrength = () => {
@@ -116,50 +86,6 @@ export default function SecuritySettingsScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        {/* Security options */}
-        <Text style={[styles.sectionTitle, { marginTop: 20 }]}>🛡️ Options de sécurité</Text>
-        <View style={styles.card}>
-          <View style={styles.toggleRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.toggleLabel}>Double authentification (2FA)</Text>
-              <Text style={styles.toggleSub}>Vérification par SMS à chaque connexion</Text>
-            </View>
-            <Switch value={twoFactor} onValueChange={setTwoFactor} thumbColor={twoFactor ? COLORS.green : COLORS.muted} trackColor={{ false: COLORS.border, true: COLORS.green + '66' }} />
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.toggleRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.toggleLabel}>Alertes de connexion</Text>
-              <Text style={styles.toggleSub}>Notification à chaque nouvelle connexion</Text>
-            </View>
-            <Switch value={loginAlerts} onValueChange={setLoginAlerts} thumbColor={loginAlerts ? COLORS.accent : COLORS.muted} trackColor={{ false: COLORS.border, true: COLORS.accent + '66' }} />
-          </View>
-        </View>
-
-        {/* Sessions */}
-        <Text style={[styles.sectionTitle, { marginTop: 20 }]}>📱 Sessions actives</Text>
-        <View style={styles.card}>
-          {sessions.map((s, i) => (
-            <View key={s.id}>
-              <View style={styles.sessionRow}>
-                <Text style={{ fontSize: 22 }}>{s.device.includes('iPhone') ? '📱' : s.device.includes('Chrome') ? '💻' : '📱'}</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.sessionDevice}>{s.device}</Text>
-                  <Text style={styles.sessionMeta}>{s.location} · {s.time}</Text>
-                </View>
-                {s.current
-                  ? <View style={styles.currentBadge}><Text style={styles.currentText}>Actuel</Text></View>
-                  : <TouchableOpacity onPress={() => revokeSession(s)}><Text style={{ color: COLORS.red, fontSize: 12, fontWeight: '700' }}>Révoquer</Text></TouchableOpacity>
-                }
-              </View>
-              {i < sessions.length - 1 && <View style={styles.divider} />}
-            </View>
-          ))}
-        </View>
-
-        <TouchableOpacity style={styles.dangerBtn} onPress={handleLogoutAll}>
-          <Text style={styles.dangerBtnText}>🚪 Déconnecter tous les appareils</Text>
-        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -178,15 +104,4 @@ const styles = StyleSheet.create({
   strengthLabel: { fontSize: 11, fontWeight: '700' },
   saveBtn: { backgroundColor: COLORS.accent, borderRadius: 10, paddingVertical: 13, alignItems: 'center' },
   saveBtnText: { color: '#000', fontSize: 14, fontWeight: '800' },
-  toggleRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 4 },
-  toggleLabel: { color: COLORS.white, fontSize: 13, fontWeight: '600' },
-  toggleSub: { color: COLORS.muted, fontSize: 11, marginTop: 2 },
-  divider: { height: 1, backgroundColor: COLORS.border, marginVertical: 12 },
-  sessionRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  sessionDevice: { color: COLORS.white, fontSize: 13, fontWeight: '600' },
-  sessionMeta: { color: COLORS.muted, fontSize: 11, marginTop: 2 },
-  currentBadge: { backgroundColor: COLORS.green + '22', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
-  currentText: { color: COLORS.green, fontSize: 10, fontWeight: '700' },
-  dangerBtn: { backgroundColor: COLORS.red + '11', borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: COLORS.red + '44', marginTop: 8 },
-  dangerBtnText: { color: COLORS.red, fontSize: 14, fontWeight: '700' },
 });

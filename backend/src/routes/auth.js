@@ -269,6 +269,37 @@ router.post('/otp/verify', async (req, res) => {
   }
 });
 
+// POST /api/auth/change-password
+router.post('/change-password', authenticate, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: 'currentPassword et newPassword sont requis', code: 'MISSING_FIELDS' });
+  }
+  if (newPassword.length < 6) {
+    return res.status(400).json({ error: 'Le nouveau mot de passe doit contenir au moins 6 caractères', code: 'PASSWORD_TOO_SHORT' });
+  }
+
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user || !user.password) {
+      return res.status(400).json({ error: 'Mot de passe actuel incorrect', code: 'INVALID_PASSWORD' });
+    }
+
+    const valid = await bcrypt.compare(currentPassword, user.password);
+    if (!valid) {
+      return res.status(400).json({ error: 'Mot de passe actuel incorrect', code: 'INVALID_PASSWORD' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({ where: { id: req.user.id }, data: { password: hashedPassword } });
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('[Auth/ChangePassword]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
 // POST /api/auth/forgot-password
 router.post('/forgot-password', async (req, res) => {
   const { phone } = req.body;

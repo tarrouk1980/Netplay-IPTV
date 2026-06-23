@@ -45,20 +45,30 @@ export default function EmergencyContactScreen({ navigation }) {
       return;
     }
     try {
+      const res = await api.post('/api/emergency/contacts', { ...form, id: editId || undefined });
+      const saved = res.data?.contact;
       if (editId) {
-        setContacts(prev => prev.map(c => c.id === editId ? { ...c, ...form } : c));
+        setContacts(prev => prev.map(c => c.id === editId ? saved : c));
       } else {
-        setContacts(prev => [...prev, { id: Date.now(), ...form }]);
+        setContacts(prev => [...prev, saved]);
       }
-      // await api.post('/profile/emergency-contacts', { ...form, id: editId });
-    } catch {}
-    setShowForm(false);
+      setShowForm(false);
+    } catch {
+      Alert.alert('Erreur', "Impossible d'enregistrer ce contact. Réessayez.");
+    }
   };
 
   const deleteContact = (id) => {
     Alert.alert('Supprimer', 'Supprimer ce contact d\'urgence ?', [
       { text: 'Annuler', style: 'cancel' },
-      { text: 'Supprimer', style: 'destructive', onPress: () => setContacts(prev => prev.filter(c => c.id !== id)) },
+      { text: 'Supprimer', style: 'destructive', onPress: async () => {
+        try {
+          await api.delete(`/api/emergency/contacts/${id}`);
+          setContacts(prev => prev.filter(c => c.id !== id));
+        } catch {
+          Alert.alert('Erreur', 'Impossible de supprimer ce contact. Réessayez.');
+        }
+      }},
     ]);
   };
 
