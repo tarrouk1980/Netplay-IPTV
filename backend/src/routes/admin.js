@@ -22,7 +22,7 @@ const promotionStore = new Map(); // id -> promotion
 let promotionSeq = 1;
 const appSettingsStore = {
   taxiBaseFare: 2, taxiPerKm: 0.8, sosCalloutFee: 10, deliveryBaseFee: 3, deliveryPerKm: 0.5,
-  commissionRate: 0, sosEnabled: true, deliveryEnabled: true, groceryEnabled: true,
+  commissionRate: 0, taxiEnabled: true, sosEnabled: true, deliveryEnabled: true, groceryEnabled: true,
   newRegistrations: true, maxOrderRadius: 15, driverIdleTimeout: 10, maintenanceMode: false,
   appVersion: '1.0.0', minAppVersion: '1.0.0',
 };

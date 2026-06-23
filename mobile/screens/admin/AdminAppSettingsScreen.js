@@ -23,6 +23,7 @@ const DEFAULT_SETTINGS = {
   driverIdleTimeout: '5',
   maintenanceMode: false,
   newRegistrations: true,
+  taxiEnabled: true,
   sosEnabled: true,
   deliveryEnabled: true,
   groceryEnabled: true,
@@ -142,7 +143,7 @@ export default function AdminAppSettingsScreen({ navigation }) {
 
           {activeSection === 'SERVICES' && (
             <View style={styles.card}>
-              <ToggleField label="🚕 Service Taxi" settingKey="sosEnabled" subtitle="Activer/désactiver EasyTaxy" />
+              <ToggleField label="🚕 Service Taxi" settingKey="taxiEnabled" subtitle="Activer/désactiver EasyTaxy" />
               <View style={styles.divider} />
               <ToggleField label="🔧 Service SOS" settingKey="sosEnabled" subtitle="Activer/désactiver SOS Dépannage" />
               <View style={styles.divider} />
@@ -168,7 +169,7 @@ export default function AdminAppSettingsScreen({ navigation }) {
               <NumberField label="Version actuelle" settingKey="appVersion" suffix="" />
               <NumberField label="Version minimale requise" settingKey="minAppVersion" suffix="" />
               <View style={styles.divider} />
-              <TouchableOpacity style={styles.dangerBtn} onPress={() => Alert.alert('Confirmation requise', 'Cette action effacera le cache Redis. Continuer ?', [{ text: 'Annuler', style: 'cancel' }, { text: 'Vider le cache', style: 'destructive', onPress: async () => { try { await api.post('/api/admin/cache/flush'); Alert.alert('Cache vidé'); } catch {} } }])}>
+              <TouchableOpacity style={styles.dangerBtn} onPress={() => Alert.alert('Confirmation requise', 'Cette action effacera le cache Redis. Continuer ?', [{ text: 'Annuler', style: 'cancel' }, { text: 'Vider le cache', style: 'destructive', onPress: async () => { try { await api.post('/api/admin/cache/flush'); Alert.alert('Cache vidé'); } catch { Alert.alert('Erreur', 'Impossible de vider le cache.'); } } }])}>
                 <Text style={styles.dangerBtnText}>🗑 Vider le cache Redis</Text>
               </TouchableOpacity>
             </View>
