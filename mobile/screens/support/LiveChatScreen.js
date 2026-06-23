@@ -119,6 +119,8 @@ export default function LiveChatScreen({ route, navigation }) {
     try {
       await api.post(`/api/support/tickets/${ticketId || 'new'}/messages`, { text, image });
     } catch {
+      setMessages(m => m.filter(x => x.id !== msg.id));
+      setInput(text?.trim() || '');
       Alert.alert('Erreur', "Le message n'a pas pu être envoyé. Réessayez.");
     }
     setSending(false);

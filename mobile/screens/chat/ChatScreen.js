@@ -190,7 +190,11 @@ export default function ChatScreen({ route, navigation }) {
     setTimeout(() => flatRef.current?.scrollToEnd({ animated: true }), 100);
     try {
       await api.post(`/api/chat/${orderId}/messages`, { text: trimmed });
-    } catch {}
+    } catch {
+      setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
+      setText(trimmed);
+      Alert.alert('Erreur', "Le message n'a pas pu être envoyé.");
+    }
     finally { setSending(false); }
   }, [text, sending, orderId, user]);
 
@@ -232,14 +236,16 @@ export default function ChatScreen({ route, navigation }) {
         };
         setMessages((prev) => [...prev, msg]);
         setTimeout(() => flatRef.current?.scrollToEnd({ animated: true }), 100);
-        // Send to backend (best effort)
         try {
           const form = new FormData();
           form.append('audio', { uri, name: 'voice.m4a', type: 'audio/m4a' });
           await api.post(`/api/chat/${orderId}/voice`, form, {
             headers: { 'Content-Type': 'multipart/form-data' },
           });
-        } catch {}
+        } catch {
+          setMessages((prev) => prev.filter((m) => m.id !== msg.id));
+          Alert.alert('Erreur', "Le message vocal n'a pas pu être envoyé.");
+        }
       }
     } catch {}
     setRecording(null);
@@ -274,7 +280,10 @@ export default function ChatScreen({ route, navigation }) {
       await api.post(`/api/chat/${orderId}/image`, form, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-    } catch {}
+    } catch {
+      setMessages((prev) => prev.filter((m) => m.id !== msg.id));
+      Alert.alert('Erreur', "L'image n'a pas pu être envoyée.");
+    }
   };
 
   const renderItem = useCallback(({ item }) => {

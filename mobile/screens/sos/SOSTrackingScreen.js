@@ -79,7 +79,18 @@ export default function SOSTrackingScreen({ navigation, route }) {
     }
     Alert.alert('Annuler la demande SOS ?', '', [
       { text: 'Non', style: 'cancel' },
-      { text: 'Oui, annuler', style: 'destructive', onPress: () => navigation.navigate('Home') },
+      {
+        text: 'Oui, annuler',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await api.patch(`/api/sos/orders/${requestId}/status`, { status: 'CANCELLED' });
+            navigation.navigate('Home');
+          } catch {
+            Alert.alert('Erreur', "Impossible d'annuler la demande pour le moment.");
+          }
+        },
+      },
     ]);
   };
 
