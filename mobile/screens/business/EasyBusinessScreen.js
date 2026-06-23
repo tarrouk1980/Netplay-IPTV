@@ -193,7 +193,9 @@ export default function EasyBusinessScreen({ navigation }) {
             try {
               await api.delete(`/api/business/drivers/${driverId}`);
               fetchBusinessData();
-            } catch {}
+            } catch {
+              Alert.alert('Erreur', 'Impossible de retirer ce conducteur. Réessayez.');
+            }
           },
         },
       ]
