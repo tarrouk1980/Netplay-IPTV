@@ -32,12 +32,6 @@ const ADDRESS_TYPES = [
   { key: 'OTHER', label: 'Autre', icon: '📍' },
 ];
 
-const MOCK_ADDRESSES = [
-  { id: 'addr-1', label: 'Domicile', type: 'HOME', address: '12 Rue du Lac, Les Berges du Lac 2, Tunis 1053', isDefault: true },
-  { id: 'addr-2', label: 'Bureau', type: 'WORK', address: 'Avenue Habib Bourguiba, Immeuble Colisée, Tunis Centre', isDefault: false },
-  { id: 'addr-3', label: 'Parents', type: 'OTHER', address: '5 Rue Ibn Rachiq, La Marsa, Tunis', isDefault: false },
-];
-
 function AddressModal({ visible, address, onClose, onSave }) {
   const [label, setLabel] = useState('');
   const [type, setType] = useState('HOME');
@@ -142,15 +136,17 @@ const m = StyleSheet.create({
 export default function ClientAddressManagerScreen({ navigation }) {
   const [addresses, setAddresses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [editing, setEditing] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
   const load = useCallback(async () => {
+    setError(false);
     try {
       const res = await api.get('/api/clients/addresses');
       setAddresses(res.data.addresses || []);
     } catch {
-      setAddresses(MOCK_ADDRESSES);
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -187,7 +183,7 @@ export default function ClientAddressManagerScreen({ navigation }) {
               await api.delete(`/api/clients/addresses/${addr.id}`);
               load();
             } catch {
-              setAddresses((prev) => prev.filter((a) => a.id !== addr.id));
+              Alert.alert('Erreur', "Impossible de supprimer l'adresse.");
             }
           },
         },
@@ -200,11 +196,22 @@ export default function ClientAddressManagerScreen({ navigation }) {
       await api.patch(`/api/clients/addresses/${addrId}/default`);
       load();
     } catch {
-      setAddresses((prev) => prev.map((a) => ({ ...a, isDefault: a.id === addrId })));
+      Alert.alert('Erreur', "Impossible de définir l'adresse par défaut.");
     }
   };
 
   if (loading) return <View style={s.centered}><ActivityIndicator color={COLORS.orange} size="large" /></View>;
+
+  if (error) {
+    return (
+      <View style={s.centered}>
+        <Text style={{ color: COLORS.muted, marginBottom: 14 }}>⚠️ Impossible de charger vos adresses.</Text>
+        <TouchableOpacity style={s.addBtnLarge} onPress={load}>
+          <Text style={s.addBtnLargeTxt}>Réessayer</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={s.root}>

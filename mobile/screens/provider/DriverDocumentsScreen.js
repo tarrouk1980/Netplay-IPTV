@@ -33,13 +33,6 @@ const STATUS_CONFIG = {
   MISSING:  { label: 'Non fourni', color: COLORS.muted, emoji: '📋' },
 };
 
-const MOCK_DOCS = {
-  CIN:      { status: 'APPROVED', uploadedAt: '2024-01-15', expiresAt: null, note: '' },
-  PERMIS:   { status: 'APPROVED', uploadedAt: '2023-06-20', expiresAt: '2033-06-20', note: '' },
-  ASSURANCE:{ status: 'EXPIRED',  uploadedAt: '2024-01-01', expiresAt: '2025-01-01', note: 'Veuillez renouveler votre assurance.' },
-  PHOTO:    { status: 'PENDING',  uploadedAt: '2025-05-01', expiresAt: null, note: 'Vérification en cours…' },
-};
-
 function daysUntil(dateStr) {
   if (!dateStr) return null;
   return Math.ceil((new Date(dateStr) - new Date()) / 86400000);
@@ -141,18 +134,21 @@ function ViewModal({ visible, docKey, doc, onClose }) {
 }
 
 export default function DriverDocumentsScreen({ navigation }) {
-  const [docs, setDocs] = useState(MOCK_DOCS);
-  const [loading, setLoading] = useState(false);
+  const [docs, setDocs] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [uploading, setUploading] = useState(null);
   const [viewing, setViewing] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError(false);
     try {
       const res = await api.get('/api/provider/documents');
-      if (res.data?.documents) setDocs(res.data.documents);
-    } catch {}
-    finally { setLoading(false); }
+      setDocs(res.data?.documents || {});
+    } catch {
+      setError(true);
+    } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -220,6 +216,13 @@ export default function DriverDocumentsScreen({ navigation }) {
 
       {loading ? (
         <View style={styles.centered}><ActivityIndicator color={COLORS.accent} size="large" /></View>
+      ) : error ? (
+        <View style={styles.centered}>
+          <Text style={{ color: COLORS.muted, marginBottom: 14 }}>⚠️ Impossible de charger vos documents.</Text>
+          <TouchableOpacity style={[styles.docBtn, styles.uploadBtn, { paddingHorizontal: 20 }]} onPress={load}>
+            <Text style={[styles.uploadBtnText, { fontSize: 14, color: COLORS.accent }]}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
           {/* Compliance bar */}

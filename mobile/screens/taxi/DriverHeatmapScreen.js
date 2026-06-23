@@ -20,26 +20,14 @@ const COLORS = {
 };
 
 const DAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-const HOURS_LABELS = ['6h', '8h', '10h', '12h', '14h', '16h', '18h', '20h', '22h'];
+const HOUR_BUCKETS = [6, 8, 10, 12, 14, 16, 18, 20, 22];
+const HOURS_LABELS = HOUR_BUCKETS.map(h => `${h}h`);
 
-// Simulated demand data: [day][hour_slot] = demand 0-10
-const MOCK_DEMAND = [
-  [2, 5, 4, 3, 3, 5, 8, 7, 4], // Lun
-  [2, 5, 4, 3, 3, 5, 8, 7, 4], // Mar
-  [2, 5, 4, 3, 3, 5, 8, 7, 4], // Mer
-  [2, 5, 4, 3, 3, 6, 9, 8, 5], // Jeu
-  [2, 5, 4, 3, 3, 6, 9, 8, 5], // Ven
-  [1, 3, 5, 7, 8, 8, 7, 9, 8], // Sam
-  [1, 2, 4, 6, 7, 6, 5, 7, 6], // Dim
-];
-
-const MOCK_HOT_ZONES = [
-  { name: 'Lac 1 & 2', demand: 'Très élevée', icon: '🔴', lat: 36.833, lng: 10.237, tip: 'Bureaux / Hôtels — peak 8h-9h & 18h-19h' },
-  { name: 'Aéroport Tunis', demand: 'Élevée', icon: '🟡', lat: 36.851, lng: 10.227, tip: 'Vols fréquents — peak 6h-8h & 20h-23h' },
-  { name: 'Ennasr', demand: 'Élevée', icon: '🟡', lat: 36.877, lng: 10.216, tip: 'Résidentiel dense — peak 7h-9h & 17h-19h' },
-  { name: 'Centre Tunis', demand: 'Moyenne', icon: '🟢', lat: 36.807, lng: 10.181, tip: 'Toute la journée — surtout midi' },
-  { name: 'La Marsa', demand: 'Saisonnière', icon: '🟢', lat: 36.878, lng: 10.326, tip: 'Été +200% — plage et restaurants' },
-];
+function bucketDemand(demand24) {
+  return demand24.map(row =>
+    HOUR_BUCKETS.map(h => (row[h] || 0) + (row[h + 1] || 0))
+  );
+}
 
 function heatColor(val) {
   if (val >= 8) return '#E74C3C';
@@ -72,15 +60,17 @@ const DEMAND_COLORS = {
 export default function DriverHeatmapScreen({ navigation }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [selectedZone, setSelectedZone] = useState(null);
   const [tab, setTab] = useState('heatmap'); // heatmap | zones | tips
 
   const load = useCallback(async () => {
+    setError(false);
     try {
       const res = await api.get('/api/provider/demand-heatmap');
       setData(res.data);
     } catch {
-      setData({ demand: MOCK_DEMAND, hotZones: MOCK_HOT_ZONES });
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -88,16 +78,17 @@ export default function DriverHeatmapScreen({ navigation }) {
 
   useEffect(() => { load(); }, [load]);
 
-  const demand = data?.demand || MOCK_DEMAND;
-  const hotZones = data?.hotZones || MOCK_HOT_ZONES;
+  const demand = data ? bucketDemand(data.demand) : [];
+  const hotZones = data?.hotZones || [];
 
   // Best hour = highest average across all days
   const hourlyAvg = HOURS_LABELS.map((_, hi) => ({
     label: HOURS_LABELS[hi],
-    avg: demand.reduce((s, day) => s + (day[hi] || 0), 0) / demand.length,
+    avg: demand.length ? demand.reduce((s, day) => s + (day[hi] || 0), 0) / demand.length : 0,
   }));
   const bestHour = hourlyAvg.reduce((best, h) => h.avg > best.avg ? h : best, hourlyAvg[0]);
-  const bestDay = DAYS[demand.map(row => row.reduce((s, v) => s + v, 0)).indexOf(Math.max(...demand.map(row => row.reduce((s, v) => s + v, 0))))];
+  const dayTotals = demand.map(row => row.reduce((s, v) => s + v, 0));
+  const bestDay = demand.length ? DAYS[dayTotals.indexOf(Math.max(...dayTotals))] : '—';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -120,6 +111,16 @@ export default function DriverHeatmapScreen({ navigation }) {
         ))}
       </View>
 
+      {loading && !data ? (
+        <View style={styles.centered}><ActivityIndicator color={COLORS.accent} size="large" /></View>
+      ) : error && !data ? (
+        <View style={styles.centered}>
+          <Text style={{ color: COLORS.muted, marginBottom: 14 }}>⚠️ Impossible de charger les zones de demande.</Text>
+          <TouchableOpacity style={styles.zoneCard} onPress={load}>
+            <Text style={[styles.zoneName, { color: COLORS.accent }]}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
@@ -255,12 +256,14 @@ export default function DriverHeatmapScreen({ navigation }) {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+      )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: COLORS.border },
   backBtn: { width: 40 },
   backArrow: { color: COLORS.text, fontSize: 30, fontWeight: '300' },

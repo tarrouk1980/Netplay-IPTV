@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, Alert, ActivityIndicator, Switch,
@@ -75,22 +75,17 @@ function SentCard({ n }) {
       <View style={styles.sentHeader}>
         <View style={styles.sentDot} />
         <Text style={styles.sentTitle}>{n.title}</Text>
-        <Text style={styles.sentDate}>{new Date(n.sentAt).toLocaleString('fr-TN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</Text>
+        <Text style={styles.sentDate}>{n.sentAt ? new Date(n.sentAt).toLocaleString('fr-TN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}</Text>
       </View>
       <Text style={styles.sentBody} numberOfLines={2}>{n.body}</Text>
       <View style={styles.sentMeta}>
         <Text style={styles.sentMetaText}>👥 {n.audience}</Text>
-        <Text style={styles.sentMetaText}>📨 {n.sent?.toLocaleString() || '—'} envois</Text>
+        <Text style={styles.sentMetaText}>📨 {n.reached?.toLocaleString() || '—'} envois</Text>
         <Text style={styles.sentMetaText}>👁️ {n.opened?.toLocaleString() || '—'} ouvertures</Text>
       </View>
     </View>
   );
 }
-
-const MOCK_SENT = [
-  { id: '1', title: '🎉 Offre Eid El Adha !', body: 'Profitez de -20% sur tous les trajets. Code: EID20', audience: 'ALL', sentAt: new Date(Date.now() - 86400000 * 2).toISOString(), sent: 4820, opened: 2100 },
-  { id: '2', title: '💰 Bonus chauffeurs week-end', body: 'Roulez ce week-end et gagnez ×1.5 sur chaque course.', audience: 'CHAUFFEUR', sentAt: new Date(Date.now() - 86400000 * 5).toISOString(), sent: 312, opened: 245 },
-];
 
 export default function AdminPushNotificationScreen({ navigation }) {
   const [audience, setAudience] = useState('ALL');
@@ -101,6 +96,26 @@ export default function AdminPushNotificationScreen({ navigation }) {
   const [silent, setSilent] = useState(false);
   const [sending, setSending] = useState(false);
   const [tab, setTab] = useState('compose'); // compose | history
+  const [history, setHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState(false);
+
+  const loadHistory = useCallback(async () => {
+    setHistoryLoading(true);
+    setHistoryError(false);
+    try {
+      const { data } = await api.get('/api/admin/notifications/campaigns');
+      setHistory(data.campaigns || []);
+    } catch {
+      setHistoryError(true);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (tab === 'history') loadHistory();
+  }, [tab, loadHistory]);
 
   const pickTemplate = (t) => {
     setTemplate(t);
@@ -133,6 +148,12 @@ export default function AdminPushNotificationScreen({ navigation }) {
                 silent,
                 schedule,
               });
+              await api.post('/api/admin/notifications/campaigns', {
+                title: title.trim(),
+                body: body.trim(),
+                audience,
+                sendNow: true,
+              }).catch(() => {});
               Alert.alert('✅ Envoyé', 'La notification a été envoyée avec succès.');
               setTitle('');
               setBody('');
@@ -171,10 +192,27 @@ export default function AdminPushNotificationScreen({ navigation }) {
       </View>
 
       {tab === 'history' ? (
-        <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-          <Text style={styles.sectionTitle}>Notifications récentes</Text>
-          {MOCK_SENT.map(n => <SentCard key={n.id} n={n} />)}
-        </ScrollView>
+        historyLoading ? (
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+            <ActivityIndicator color={COLORS.accent} />
+          </View>
+        ) : historyError ? (
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+            <Text style={{ color: COLORS.muted, marginBottom: 12 }}>⚠️ Impossible de charger l'historique.</Text>
+            <TouchableOpacity style={styles.sendBtn} onPress={loadHistory}>
+              <Text style={styles.sendBtnText}>Réessayer</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+            <Text style={styles.sectionTitle}>Notifications récentes</Text>
+            {history.length === 0 ? (
+              <Text style={{ color: COLORS.muted }}>Aucune notification envoyée.</Text>
+            ) : (
+              history.map(n => <SentCard key={n.id} n={n} />)
+            )}
+          </ScrollView>
+        )
       ) : (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
           {/* Audience */}

@@ -50,6 +50,8 @@ function MenuItem({ item, onEdit, onToggle }) {
   );
 }
 
+const MOCK_CATEGORIES = ['Plats', 'Entrées', 'Desserts', 'Boissons', 'Snacks'];
+
 const EMPTY_FORM = { name: '', category: 'Plats', price: '', description: '', icon: '🍽️', available: true };
 
 export default function MerchantMenuScreen({ navigation }) {
