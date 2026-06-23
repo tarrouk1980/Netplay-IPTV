@@ -23,32 +23,6 @@ const QUICK_REPLIES = [
   'Remboursement demandé',
 ];
 
-const MOCK_MESSAGES = [
-  {
-    id: '1', role: 'AGENT', text: 'Bonjour ! Je suis Nour, votre conseillère EASYWAY. Comment puis-je vous aider aujourd\'hui ? 😊',
-    time: new Date(Date.now() - 300000).toISOString(),
-  },
-];
-
-function TypingIndicator() {
-  const dots = [0, 1, 2];
-  const [frame, setFrame] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setFrame(f => (f + 1) % 3), 500);
-    return () => clearInterval(t);
-  }, []);
-  return (
-    <View style={styles.typingRow}>
-      <View style={styles.agentAvatar}><Text style={styles.agentAvatarText}>N</Text></View>
-      <View style={styles.typingBubble}>
-        {dots.map((_, i) => (
-          <View key={i} style={[styles.typingDot, { opacity: frame === i ? 1 : 0.3 }]} />
-        ))}
-      </View>
-    </View>
-  );
-}
-
 function MessageBubble({ msg, isOwn }) {
   const time = new Date(msg.time).toLocaleTimeString('fr-TN', { hour: '2-digit', minute: '2-digit' });
 
@@ -99,11 +73,10 @@ function StatusBanner({ status, ticketId }) {
 
 export default function LiveChatScreen({ route, navigation }) {
   const { ticketId, subject } = route.params || {};
-  const [messages, setMessages] = useState(MOCK_MESSAGES);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
-  const [typing, setTyping] = useState(false);
-  const [status, setStatus] = useState('OPEN');
+  const [status, setStatus] = useState('WAITING');
   const [showQuick, setShowQuick] = useState(true);
   const listRef = useRef(null);
   const pollRef = useRef(null);
@@ -143,30 +116,11 @@ export default function LiveChatScreen({ route, navigation }) {
     setInput('');
     scrollToEnd();
 
-    // Simulate agent typing then reply
-    setTimeout(() => setTyping(true), 600);
-    setTimeout(() => {
-      setTyping(false);
-      const auto = [
-        'Je comprends votre problème. Laissez-moi vérifier cela pour vous…',
-        'Un instant, je consulte votre dossier.',
-        'Je vais escalader votre demande à notre équipe spécialisée.',
-        'Votre remboursement sera traité sous 24-48h ouvrables.',
-        'Pouvez-vous me donner plus de détails sur le problème ?',
-      ];
-      const reply = {
-        id: (Date.now() + 1).toString(),
-        role: 'AGENT',
-        text: auto[Math.floor(Math.random() * auto.length)],
-        time: new Date().toISOString(),
-      };
-      setMessages(m => [...m, reply]);
-      scrollToEnd();
-    }, 2500);
-
     try {
       await api.post(`/api/support/tickets/${ticketId || 'new'}/messages`, { text, image });
-    } catch {}
+    } catch {
+      Alert.alert('Erreur', "Le message n'a pas pu être envoyé. Réessayez.");
+    }
     setSending(false);
   };
 
@@ -184,10 +138,12 @@ export default function LiveChatScreen({ route, navigation }) {
       { text: 'Annuler', style: 'cancel' },
       {
         text: 'Résoudre', onPress: async () => {
-          setStatus('RESOLVED');
-          const msg = { id: Date.now().toString(), role: 'AGENT', text: '✅ Ticket marqué comme résolu. Merci d\'avoir contacté EASYWAY !', time: new Date().toISOString() };
-          setMessages(m => [...m, msg]);
-          try { await api.post(`/api/support/tickets/${ticketId}/resolve`); } catch {}
+          try {
+            await api.post(`/api/support/tickets/${ticketId}/resolve`);
+            setStatus('RESOLVED');
+          } catch {
+            Alert.alert('Erreur', 'Impossible de résoudre le ticket. Réessayez.');
+          }
         },
       },
     ]);
@@ -221,7 +177,6 @@ export default function LiveChatScreen({ route, navigation }) {
         keyExtractor={item => item.id}
         contentContainerStyle={styles.messageList}
         onContentSizeChange={scrollToEnd}
-        ListFooterComponent={typing ? <TypingIndicator /> : null}
         showsVerticalScrollIndicator={false}
       />
 
