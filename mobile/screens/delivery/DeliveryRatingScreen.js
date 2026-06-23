@@ -26,7 +26,6 @@ const COLORS = {
 };
 
 const QUICK_TAGS_DELIVERY = ['Rapide', 'Soigneux', 'Poli', 'Emballage parfait', 'Ponctuel', 'Professionnel'];
-const QUICK_TAGS_MERCHANT = ['Délicieux', 'Bien emballé', 'Portions généreuses', 'Conforme à la commande', 'Prix correct'];
 
 function StarRating({ value, onChange, size = 36 }) {
   return (
@@ -43,14 +42,10 @@ function StarRating({ value, onChange, size = 36 }) {
 export default function DeliveryRatingScreen({ navigation, route }) {
   const orderId = route?.params?.orderId;
   const livreurName = route?.params?.livreurName || 'Votre livreur';
-  const merchantName = route?.params?.merchantName || 'Le restaurant';
 
   const [livreurRating, setLivreurRating] = useState(5);
-  const [merchantRating, setMerchantRating] = useState(5);
   const [livreurTags, setLivreurTags] = useState([]);
-  const [merchantTags, setMerchantTags] = useState([]);
   const [livreurComment, setLivreurComment] = useState('');
-  const [merchantComment, setMerchantComment] = useState('');
   const [tip, setTip] = useState(0);
   const [saving, setSaving] = useState(false);
 
@@ -59,18 +54,23 @@ export default function DeliveryRatingScreen({ navigation, route }) {
   };
 
   const handleSubmit = async () => {
+    if (!orderId) {
+      Alert.alert('Erreur', 'Commande introuvable.');
+      return;
+    }
     setSaving(true);
     try {
-      await api.post(`/api/delivery/orders/${orderId}/rate`, {
-        livreurRating, livreurTags, livreurComment,
-        merchantRating, merchantTags, merchantComment,
+      const comment = [livreurTags.join(', '), livreurComment].filter(Boolean).join(' — ');
+      await api.post(`/api/orders/${orderId}/rate`, {
+        rating: livreurRating,
+        comment: comment || undefined,
         tip,
       });
       Alert.alert('Merci pour votre avis ! ⭐', 'Votre évaluation aide à améliorer le service.', [
         { text: 'OK', onPress: () => navigation.reset({ index: 0, routes: [{ name: 'Home' }] }) },
       ]);
-    } catch {
-      Alert.alert('Erreur', 'Impossible d\'envoyer votre évaluation.');
+    } catch (e) {
+      Alert.alert('Erreur', e?.response?.data?.error || 'Impossible d\'envoyer votre évaluation. Réessayez.');
     } finally {
       setSaving(false);
     }
@@ -115,40 +115,6 @@ export default function DeliveryRatingScreen({ navigation, route }) {
             style={s.commentInput}
             value={livreurComment}
             onChangeText={setLivreurComment}
-            placeholder="Ajouter un commentaire (optionnel)..."
-            placeholderTextColor={COLORS.muted}
-            multiline
-            numberOfLines={2}
-            maxLength={200}
-          />
-        </View>
-
-        {/* Merchant rating */}
-        <View style={s.ratingCard}>
-          <Text style={{ fontSize: 32, textAlign: 'center', marginBottom: 4 }}>🏪</Text>
-          <Text style={s.ratingName}>{merchantName}</Text>
-          <Text style={s.ratingRole}>Restaurant / Marchand</Text>
-          <StarRating value={merchantRating} onChange={setMerchantRating} />
-          <Text style={[s.ratingLabel, { color: merchantRating >= 4 ? COLORS.green : merchantRating >= 3 ? COLORS.orange : COLORS.accent }]}>
-            {['', 'Très mauvais', 'Mauvais', 'Correct', 'Bien', 'Excellent'][merchantRating]}
-          </Text>
-
-          <View style={s.tagsRow}>
-            {QUICK_TAGS_MERCHANT.map((tag) => (
-              <TouchableOpacity
-                key={tag}
-                style={[s.tag, merchantTags.includes(tag) && s.tagActive]}
-                onPress={() => toggleTag(tag, merchantTags, setMerchantTags)}
-              >
-                <Text style={[s.tagTxt, merchantTags.includes(tag) && { color: COLORS.teal }]}>{tag}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <TextInput
-            style={s.commentInput}
-            value={merchantComment}
-            onChangeText={setMerchantComment}
             placeholder="Ajouter un commentaire (optionnel)..."
             placeholderTextColor={COLORS.muted}
             multiline

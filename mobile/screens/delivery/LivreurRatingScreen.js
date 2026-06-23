@@ -1,11 +1,15 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
+import useAuthStore from '../../store/authStore';
 
 const COLORS = {
   bg: '#0A0A0F',
@@ -15,44 +19,6 @@ const COLORS = {
   muted: '#8E8E9A',
   border: '#2C2C3A',
 };
-
-const LIVREUR = {
-  nom: 'Karim B.',
-  vehicule: '🛻 Pickup — Alger',
-  noteMoyenne: 4.6,
-  totalAvis: 248,
-  pourcentage5etoiles: 72,
-};
-
-const DIMENSIONS_RADAR = [
-  { label: 'Rapidité', valeur: 0.88 },
-  { label: 'Ponctualité', valeur: 0.92 },
-  { label: 'Amabilité', valeur: 0.95 },
-  { label: 'Présentation', valeur: 0.78 },
-  { label: 'Communication', valeur: 0.85 },
-];
-
-const AVIS = [
-  { id: '1', client: 'C****i', note: 5, commentaire: 'Livraison rapide et soignée, livreur très poli.', date: '01/06/2026' },
-  { id: '2', client: 'N****r', note: 4, commentaire: 'Correct dans l\'ensemble, quelques minutes de retard.', date: '31/05/2026' },
-  { id: '3', client: 'A****a', note: 5, commentaire: 'Parfait ! Emballage intact et souriant.', date: '30/05/2026' },
-  { id: '4', client: 'M****d', note: 3, commentaire: 'Livraison OK mais difficile à joindre par téléphone.', date: '29/05/2026' },
-  { id: '5', client: 'S****h', note: 5, commentaire: 'Excellent livreur, je recommande.', date: '28/05/2026' },
-  { id: '6', client: 'Y****s', note: 4, commentaire: 'Bonne prestation, véhicule propre.', date: '27/05/2026' },
-];
-
-const RAYON = 80;
-const CENTRE = RAYON + 10;
-const TAILLE_SVG = (RAYON + 10) * 2;
-const N = DIMENSIONS_RADAR.length;
-
-function getPoint(index, fraction, rayon) {
-  const angle = (Math.PI * 2 * index) / N - Math.PI / 2;
-  return {
-    x: CENTRE + rayon * fraction * Math.cos(angle),
-    y: CENTRE + rayon * fraction * Math.sin(angle),
-  };
-}
 
 function Etoiles({ note, taille = 14 }) {
   return (
@@ -66,126 +32,38 @@ function Etoiles({ note, taille = 14 }) {
   );
 }
 
-function RadarChart() {
-  const niveaux = [0.25, 0.5, 0.75, 1.0];
-
-  const pointsValeurs = DIMENSIONS_RADAR.map((d, i) => getPoint(i, d.valeur, RAYON));
-
-  return (
-    <View style={styles.radarWrapper}>
-      <View style={[styles.radarSvg, { width: TAILLE_SVG, height: TAILLE_SVG }]}>
-        {niveaux.map((niveau, ni) => (
-          <View key={ni} style={StyleSheet.absoluteFill}>
-            {DIMENSIONS_RADAR.map((_, i) => {
-              const p1 = getPoint(i, niveau, RAYON);
-              const p2 = getPoint((i + 1) % N, niveau, RAYON);
-              const dx = p2.x - p1.x;
-              const dy = p2.y - p1.y;
-              const longueur = Math.sqrt(dx * dx + dy * dy);
-              const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-              return (
-                <View
-                  key={i}
-                  style={{
-                    position: 'absolute',
-                    left: p1.x,
-                    top: p1.y,
-                    width: longueur,
-                    height: 1,
-                    backgroundColor: COLORS.border,
-                    transformOrigin: 'left center',
-                    transform: [{ rotate: `${angle}deg` }],
-                  }}
-                />
-              );
-            })}
-          </View>
-        ))}
-
-        {DIMENSIONS_RADAR.map((_, i) => {
-          const p = getPoint(i, 1, RAYON);
-          return (
-            <View
-              key={i}
-              style={{
-                position: 'absolute',
-                left: CENTRE,
-                top: CENTRE,
-                width: p.x - CENTRE,
-                height: 1,
-                backgroundColor: COLORS.border,
-                transformOrigin: 'left center',
-                transform: [
-                  { rotate: `${Math.atan2(p.y - CENTRE, p.x - CENTRE) * (180 / Math.PI)}deg` },
-                ],
-              }}
-            />
-          );
-        })}
-
-        {pointsValeurs.map((p, i) => {
-          const p2 = pointsValeurs[(i + 1) % N];
-          const dx = p2.x - p.x;
-          const dy = p2.y - p.y;
-          const longueur = Math.sqrt(dx * dx + dy * dy);
-          const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-          return (
-            <View
-              key={i}
-              style={{
-                position: 'absolute',
-                left: p.x,
-                top: p.y,
-                width: longueur,
-                height: 2,
-                backgroundColor: COLORS.primary,
-                opacity: 0.9,
-                transformOrigin: 'left center',
-                transform: [{ rotate: `${angle}deg` }],
-              }}
-            />
-          );
-        })}
-
-        {pointsValeurs.map((p, i) => (
-          <View
-            key={i}
-            style={{
-              position: 'absolute',
-              left: p.x - 4,
-              top: p.y - 4,
-              width: 8,
-              height: 8,
-              borderRadius: 4,
-              backgroundColor: COLORS.primary,
-            }}
-          />
-        ))}
-
-        {DIMENSIONS_RADAR.map((d, i) => {
-          const p = getPoint(i, 1.3, RAYON);
-          return (
-            <View
-              key={i}
-              style={{
-                position: 'absolute',
-                left: p.x - 36,
-                top: p.y - 8,
-                width: 72,
-                alignItems: 'center',
-              }}
-            >
-              <Text style={styles.radarLabel}>{d.label}</Text>
-              <Text style={styles.radarPourcent}>{Math.round(d.valeur * 100)}%</Text>
-            </View>
-          );
-        })}
-      </View>
-    </View>
-  );
-}
-
 export default function LivreurRatingScreen() {
+  const user = useAuthStore((s) => s.user);
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const load = useCallback(() => {
+    if (!user?.id) {
+      setLoading(false);
+      setError(true);
+      return;
+    }
+    setLoading(true);
+    api.get(`/api/reviews/${user.id}`)
+      .then((res) => {
+        setReviews(res.data?.reviews || []);
+        setError(false);
+      })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, [user?.id]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const totalAvis = reviews.length;
+  const noteMoyenne = totalAvis > 0
+    ? reviews.reduce((sum, r) => sum + r.rating, 0) / totalAvis
+    : 0;
+  const pourcentage5etoiles = totalAvis > 0
+    ? Math.round((reviews.filter((r) => r.rating === 5).length / totalAvis) * 100)
+    : 0;
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -194,49 +72,58 @@ export default function LivreurRatingScreen() {
             <Text style={styles.avatarTexte}>🛻</Text>
           </View>
           <View>
-            <Text style={styles.nomLivreur}>{LIVREUR.nom}</Text>
-            <Text style={styles.vehicule}>{LIVREUR.vehicule}</Text>
+            <Text style={styles.nomLivreur}>{user?.name || 'Mes évaluations'}</Text>
           </View>
         </View>
 
-        <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <Text style={styles.statValeur}>{LIVREUR.noteMoyenne}</Text>
-            <Text style={styles.statLabel}>Note moyenne</Text>
-            <Etoiles note={Math.round(LIVREUR.noteMoyenne)} taille={12} />
+        {loading ? (
+          <ActivityIndicator color={COLORS.primary} style={{ marginTop: 30 }} />
+        ) : error ? (
+          <View style={styles.errorBox}>
+            <Text style={styles.errorTexte}>⚠️ Impossible de charger vos avis.</Text>
+            <TouchableOpacity style={styles.retryBtn} onPress={load}>
+              <Text style={styles.retryTexte}>Réessayer</Text>
+            </TouchableOpacity>
           </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValeur}>{LIVREUR.totalAvis}</Text>
-            <Text style={styles.statLabel}>Total avis</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={[styles.statValeur, { color: '#4CAF50' }]}>{LIVREUR.pourcentage5etoiles}%</Text>
-            <Text style={styles.statLabel}>Avis 5 ★</Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitre}>Performance détaillée</Text>
-          <View style={styles.radarCard}>
-            <RadarChart />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitre}>Avis récents</Text>
-          {AVIS.map(avis => (
-            <View key={avis.id} style={styles.avisCard}>
-              <View style={styles.avisHeader}>
-                <View style={styles.clientBadge}>
-                  <Text style={styles.clientTexte}>{avis.client}</Text>
-                </View>
-                <Etoiles note={avis.note} taille={14} />
-                <Text style={styles.avisDate}>{avis.date}</Text>
+        ) : (
+          <>
+            <View style={styles.statsRow}>
+              <View style={styles.statCard}>
+                <Text style={styles.statValeur}>{noteMoyenne.toFixed(1)}</Text>
+                <Text style={styles.statLabel}>Note moyenne</Text>
+                <Etoiles note={Math.round(noteMoyenne)} taille={12} />
               </View>
-              <Text style={styles.avisCommentaire}>{avis.commentaire}</Text>
+              <View style={styles.statCard}>
+                <Text style={styles.statValeur}>{totalAvis}</Text>
+                <Text style={styles.statLabel}>Total avis</Text>
+              </View>
+              <View style={styles.statCard}>
+                <Text style={[styles.statValeur, { color: '#4CAF50' }]}>{pourcentage5etoiles}%</Text>
+                <Text style={styles.statLabel}>Avis 5 ★</Text>
+              </View>
             </View>
-          ))}
-        </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitre}>Avis récents</Text>
+              {totalAvis === 0 ? (
+                <Text style={styles.videTexte}>Aucun avis pour le moment.</Text>
+              ) : (
+                reviews.map(avis => (
+                  <View key={avis.id} style={styles.avisCard}>
+                    <View style={styles.avisHeader}>
+                      <View style={styles.clientBadge}>
+                        <Text style={styles.clientTexte}>{avis.author}</Text>
+                      </View>
+                      <Etoiles note={avis.rating} taille={14} />
+                      <Text style={styles.avisDate}>{avis.date}</Text>
+                    </View>
+                    {avis.comment && <Text style={styles.avisCommentaire}>{avis.comment}</Text>}
+                  </View>
+                ))
+              )}
+            </View>
+          </>
+        )}
         <View style={{ height: 30 }} />
       </ScrollView>
     </SafeAreaView>
@@ -275,11 +162,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: COLORS.text,
   },
-  vehicule: {
-    fontSize: 13,
-    color: COLORS.muted,
-    marginTop: 2,
-  },
   statsRow: {
     flexDirection: 'row',
     gap: 10,
@@ -314,33 +196,11 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     marginBottom: 12,
   },
-  radarCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 16,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    alignItems: 'center',
-  },
-  radarWrapper: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 20,
-  },
-  radarSvg: {
-    position: 'relative',
-  },
-  radarLabel: {
-    fontSize: 11,
+  videTexte: {
     color: COLORS.muted,
-    fontWeight: '600',
+    fontSize: 13,
     textAlign: 'center',
-  },
-  radarPourcent: {
-    fontSize: 10,
-    color: COLORS.primary,
-    fontWeight: '700',
-    textAlign: 'center',
+    marginTop: 10,
   },
   avisCard: {
     backgroundColor: COLORS.surface,
@@ -376,5 +236,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.text,
     lineHeight: 20,
+  },
+  errorBox: {
+    alignItems: 'center',
+    marginTop: 30,
+  },
+  errorTexte: {
+    color: COLORS.muted,
+    fontSize: 14,
+    marginBottom: 12,
+  },
+  retryBtn: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    borderRadius: 10,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+  },
+  retryTexte: {
+    color: COLORS.primary,
+    fontWeight: '700',
   },
 });

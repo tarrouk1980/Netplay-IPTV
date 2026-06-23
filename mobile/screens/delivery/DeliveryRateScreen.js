@@ -7,8 +7,10 @@ import {
   TextInput,
   StyleSheet,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COULEURS = {
   fond: '#0A0A0F',
@@ -19,20 +21,16 @@ const COULEURS = {
   bordure: '#2C2C3A',
 };
 
-const LIVREUR = {
-  nom: 'Bilal Mansouri',
-  initiales: 'BM',
-  couleurAvatar: '#3A2E6E',
-  commande: '#CMD-20481',
-};
-
 const CHIPS_FEEDBACK = ['Rapide', 'Soigneux', 'Ponctuel', 'Agréable', 'Professionnel'];
 
-export default function DeliveryRateScreen({ navigation }) {
+export default function DeliveryRateScreen({ navigation, route }) {
+  const { orderId, livreurName, orderRef } = route?.params || {};
+
   const [noteSelectionnee, setNoteSelectionnee] = useState(0);
   const [noteHover, setNoteHover] = useState(0);
   const [chipsActives, setChipsActives] = useState([]);
   const [commentaire, setCommentaire] = useState('');
+  const [envoi, setEnvoi] = useState(false);
 
   function toggleChip(chip) {
     setChipsActives((prev) =>
@@ -51,16 +49,32 @@ export default function DeliveryRateScreen({ navigation }) {
     }
   }
 
-  function soumettre() {
+  async function soumettre() {
     if (noteSelectionnee === 0) {
       Alert.alert('Notation requise', 'Veuillez sélectionner une note avant de soumettre.');
       return;
     }
-    Alert.alert(
-      'Merci pour votre avis !',
-      `Votre note de ${noteSelectionnee}/5 a été enregistrée pour ${LIVREUR.nom}.`,
-      [{ text: 'OK', onPress: () => navigation.goBack() }]
-    );
+    if (!orderId) {
+      Alert.alert('Erreur', 'Commande introuvable.');
+      return;
+    }
+    setEnvoi(true);
+    try {
+      const comment = [chipsActives.join(', '), commentaire].filter(Boolean).join(' — ');
+      await api.post(`/api/orders/${orderId}/rate`, {
+        rating: noteSelectionnee,
+        comment: comment || undefined,
+      });
+      Alert.alert(
+        'Merci pour votre avis !',
+        `Votre note de ${noteSelectionnee}/5 a été enregistrée pour ${livreurName || 'votre livreur'}.`,
+        [{ text: 'OK', onPress: () => navigation.goBack() }]
+      );
+    } catch (e) {
+      Alert.alert('Erreur', e?.response?.data?.error || "Impossible d'envoyer votre évaluation. Réessayez.");
+    } finally {
+      setEnvoi(false);
+    }
   }
 
   const noteAffichee = noteHover > 0 ? noteHover : noteSelectionnee;
@@ -76,16 +90,18 @@ export default function DeliveryRateScreen({ navigation }) {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        <View style={styles.carteCommande}>
-          <Text style={styles.commandeLabel}>Commande</Text>
-          <Text style={styles.commandeId}>{LIVREUR.commande}</Text>
-        </View>
+        {orderRef && (
+          <View style={styles.carteCommande}>
+            <Text style={styles.commandeLabel}>Commande</Text>
+            <Text style={styles.commandeId}>{orderRef}</Text>
+          </View>
+        )}
 
         <View style={styles.carteHero}>
-          <View style={[styles.avatar, { backgroundColor: LIVREUR.couleurAvatar }]}>
-            <Text style={styles.avatarInitiales}>{LIVREUR.initiales}</Text>
+          <View style={[styles.avatar, { backgroundColor: COULEURS.primaire }]}>
+            <Text style={styles.avatarInitiales}>🛵</Text>
           </View>
-          <Text style={styles.nomLivreur}>{LIVREUR.nom}</Text>
+          <Text style={styles.nomLivreur}>{livreurName || 'Votre livreur'}</Text>
           <Text style={styles.roleLivreur}>Livreur EasyWay</Text>
         </View>
 
@@ -152,10 +168,15 @@ export default function DeliveryRateScreen({ navigation }) {
           style={[styles.boutonSoumettre, noteSelectionnee === 0 && styles.boutonSoumettreInactif]}
           onPress={soumettre}
           activeOpacity={0.8}
+          disabled={envoi}
         >
-          <Text style={[styles.boutonSoumettreTexte, noteSelectionnee === 0 && { color: COULEURS.muet }]}>
-            Soumettre ma note
-          </Text>
+          {envoi ? (
+            <ActivityIndicator color={COULEURS.fond} size="small" />
+          ) : (
+            <Text style={[styles.boutonSoumettreTexte, noteSelectionnee === 0 && { color: COULEURS.muet }]}>
+              Soumettre ma note
+            </Text>
+          )}
         </TouchableOpacity>
       </View>
     </SafeAreaView>
