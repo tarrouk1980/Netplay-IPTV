@@ -6,20 +6,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
 import { getCurrentLocationWithAddress } from '../../utils/locationUtils';
+import useCartStore from '../../store/cartStore';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', border: '#2C2C3E',
   text: '#FFFFFF', muted: '#8E8E9A', accent: '#F5A623',
   green: '#27AE60', red: '#E74C3C',
 };
-
-const MOCK_ITEMS = [
-  { id: '1', name: 'Tomates (1 kg)', price: 1.800, qty: 2, image: '🍅' },
-  { id: '2', name: 'Pain de mie', price: 2.500, qty: 1, image: '🍞' },
-  { id: '3', name: 'Lait demi-écrémé (1L)', price: 1.200, qty: 3, image: '🥛' },
-  { id: '4', name: 'Œufs (×12)', price: 4.800, qty: 1, image: '🥚' },
-  { id: '5', name: 'Huile végétale (1L)', price: 3.400, qty: 1, image: '🫙' },
-];
 
 const DELIVERY_FEE = 2.500;
 
@@ -49,7 +42,12 @@ function CartItem({ item, onIncrement, onDecrement, onRemove }) {
 
 export default function GroceryCartScreen({ navigation, route }) {
   const { shopId } = route?.params || {};
-  const [items, setItems] = useState(MOCK_ITEMS);
+  const cartItems = useCartStore((s) => s.items);
+  const merchantId = useCartStore((s) => s.merchantId);
+  const updateQty = useCartStore((s) => s.updateQty);
+  const removeItem = useCartStore((s) => s.removeItem);
+  const clearCart = useCartStore((s) => s.clearCart);
+  const items = cartItems.map((i) => ({ id: i.id, name: i.name, price: Number(i.price), qty: i.qty, image: i.image || '🛒' }));
   const [promoCode, setPromoCode] = useState('');
   const [discount, setDiscount] = useState(0);
   const [promoLoading, setPromoLoading] = useState(false);
@@ -59,9 +57,9 @@ export default function GroceryCartScreen({ navigation, route }) {
   const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
   const total = subtotal + DELIVERY_FEE - discount;
 
-  const increment = (id) => setItems(prev => prev.map(i => i.id === id ? { ...i, qty: i.qty + 1 } : i));
-  const decrement = (id) => setItems(prev => prev.map(i => i.id === id ? { ...i, qty: Math.max(0, i.qty - 1) } : i));
-  const remove = (id) => setItems(prev => prev.filter(i => i.id !== id));
+  const increment = (id) => updateQty(id, (cartItems.find((i) => i.id === id)?.qty || 0) + 1);
+  const decrement = (id) => updateQty(id, (cartItems.find((i) => i.id === id)?.qty || 0) - 1);
+  const remove = (id) => removeItem(id);
 
   const applyPromo = async () => {
     if (!promoCode.trim()) return;
@@ -93,13 +91,14 @@ export default function GroceryCartScreen({ navigation, route }) {
 
       const body = {
         items: items.map(i => ({ productId: i.id, price: i.price, quantity: i.qty })),
-        merchantIds: shopId ? [shopId] : undefined,
+        merchantIds: (shopId || merchantId) ? [shopId || merchantId] : undefined,
         deliveryLat: loc.coords.lat,
         deliveryLng: loc.coords.lng,
         deliveryAddress: loc.address,
       };
       const res = await api.post('/api/grocery/request', body);
       const orderId = res.data?.order?.id;
+      clearCart();
       navigation.replace('GroceryOrderTracking', { orderId });
     } catch {
       Alert.alert('Erreur', 'Impossible de passer la commande. Réessayez.');
@@ -119,7 +118,7 @@ export default function GroceryCartScreen({ navigation, route }) {
         <Text style={styles.headerTitle}>Mon panier ({items.length})</Text>
         <TouchableOpacity onPress={() => Alert.alert('Vider', 'Vider le panier ?', [
           { text: 'Annuler', style: 'cancel' },
-          { text: 'Vider', style: 'destructive', onPress: () => setItems([]) },
+          { text: 'Vider', style: 'destructive', onPress: () => clearCart() },
         ])}>
           <Text style={{ color: COLORS.red, fontSize: 13 }}>Vider</Text>
         </TouchableOpacity>

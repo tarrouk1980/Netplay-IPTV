@@ -6,8 +6,13 @@ import {
   TouchableOpacity,
   TextInput,
   StyleSheet,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
+import useCartStore from '../../store/cartStore';
+import { getCurrentLocationWithAddress } from '../../utils/locationUtils';
 
 const COLORS = {
   bg: '#0A0A0F',
@@ -18,47 +23,64 @@ const COLORS = {
   border: '#2C2C3A',
 };
 
-const ARTICLES = [
-  { id: 1, nom: 'Lait entier Vitalait 1L', quantite: 2, prix: 3.2, couleur: '#4A90D9' },
-  { id: 2, nom: 'Pain de mie complet', quantite: 1, prix: 2.8, couleur: '#C8A96E' },
-  { id: 3, nom: 'Yaourt Délice nature x4', quantite: 1, prix: 4.5, couleur: '#E8E8E8' },
-  { id: 4, nom: 'Jus d\'orange Ruspina 1L', quantite: 3, prix: 2.6, couleur: '#F5A623' },
-];
-
-const CRENEAUX = [
-  { id: 'rapide', label: 'Dans 30 min', detail: 'Livraison express', surcharge: 2.5 },
-  { id: 'soir', label: 'Ce soir 18h–20h', detail: 'Créneau standard', surcharge: 0 },
-  { id: 'demain', label: 'Demain matin', detail: '8h–10h', surcharge: 0 },
-];
-
-const PROMO_VALIDE = 'EASY10';
-const PROMO_REDUCTION = 3.0;
-
-const ADRESSE = {
-  nom: 'Domicile',
-  ligne: '12, Rue Ibn Khaldoun',
-  ville: 'Tunis 1002',
-};
+const DELIVERY_FEE = 1.5;
 
 export default function GroceryCheckoutReviewScreen({ navigation }) {
-  const [creneauChoisi, setCreneauChoisi] = useState('soir');
+  const cartItems = useCartStore((s) => s.items);
+  const merchantId = useCartStore((s) => s.merchantId);
+  const clearCart = useCartStore((s) => s.clearCart);
   const [codePromo, setCodePromo] = useState('');
+  const [discount, setDiscount] = useState(0);
   const [promoAppliquee, setPromoAppliquee] = useState(false);
   const [erreurPromo, setErreurPromo] = useState('');
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const sousTotal = ARTICLES.reduce((acc, a) => acc + a.prix * a.quantite, 0);
-  const creneau = CRENEAUX.find(c => c.id === creneauChoisi);
-  const fraisLivraison = 1.5 + (creneau ? creneau.surcharge : 0);
-  const reduction = promoAppliquee ? PROMO_REDUCTION : 0;
-  const total = sousTotal + fraisLivraison - reduction;
+  const articles = cartItems.map((i) => ({ id: i.id, nom: i.name, quantite: i.qty, prix: Number(i.price) }));
+  const sousTotal = articles.reduce((acc, a) => acc + a.prix * a.quantite, 0);
+  const total = sousTotal + DELIVERY_FEE - discount;
 
-  function appliquerPromo() {
-    if (codePromo.trim().toUpperCase() === PROMO_VALIDE) {
+  async function appliquerPromo() {
+    if (!codePromo.trim()) return;
+    setPromoLoading(true);
+    try {
+      const res = await api.post('/api/promo/apply', { code: codePromo.trim(), serviceType: 'GROCERY', amount: sousTotal + DELIVERY_FEE });
+      setDiscount(res.data.discount || 0);
       setPromoAppliquee(true);
       setErreurPromo('');
-    } else {
+    } catch {
+      setDiscount(0);
       setPromoAppliquee(false);
       setErreurPromo('Code promo invalide ou expiré');
+    } finally {
+      setPromoLoading(false);
+    }
+  }
+
+  async function passerCommande() {
+    if (articles.length === 0) { Alert.alert('Panier vide', 'Ajoutez des articles avant de commander.'); return; }
+    setSubmitting(true);
+    try {
+      const loc = await getCurrentLocationWithAddress();
+      if (!loc) {
+        Alert.alert('Localisation requise', 'Activez la localisation pour passer la commande.');
+        setSubmitting(false);
+        return;
+      }
+      const res = await api.post('/api/grocery/request', {
+        items: articles.map((a) => ({ productId: a.id, price: a.prix, quantity: a.quantite })),
+        merchantIds: merchantId ? [merchantId] : undefined,
+        deliveryLat: loc.coords.lat,
+        deliveryLng: loc.coords.lng,
+        deliveryAddress: loc.address,
+        promoCode: promoAppliquee ? codePromo.trim() : undefined,
+      });
+      clearCart();
+      navigation.replace('GroceryOrderTracking', { orderId: res.data?.order?.id });
+    } catch {
+      Alert.alert('Erreur', 'Impossible de passer la commande. Réessayez.');
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -73,56 +95,19 @@ export default function GroceryCheckoutReviewScreen({ navigation }) {
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Articles ({ARTICLES.length})</Text>
-          {ARTICLES.map(a => (
+          <Text style={styles.sectionTitle}>Articles ({articles.length})</Text>
+          {articles.length === 0 ? (
+            <Text style={{ color: COLORS.muted, fontSize: 13 }}>Votre panier est vide</Text>
+          ) : articles.map(a => (
             <View key={a.id} style={styles.articleRow}>
-              <View style={[styles.articleImage, { backgroundColor: a.couleur }]} />
               <View style={styles.articleInfo}>
                 <Text style={styles.articleNom}>{a.nom}</Text>
                 <Text style={styles.articleQte}>Qté : {a.quantite}</Text>
               </View>
               <Text style={styles.articlePrix}>
-                {(a.prix * a.quantite).toFixed(2)} DT
+                {(a.prix * a.quantite).toFixed(2)} TND
               </Text>
             </View>
-          ))}
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.sectionTitleRow}>
-            <Text style={styles.sectionTitle}>Adresse de livraison</Text>
-            <TouchableOpacity>
-              <Text style={styles.modifierBtn}>Modifier</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.adresseCard}>
-            <Text style={styles.adresseNom}>{ADRESSE.nom}</Text>
-            <Text style={styles.adresseLigne}>{ADRESSE.ligne}</Text>
-            <Text style={styles.adresseLigne}>{ADRESSE.ville}</Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Créneau de livraison</Text>
-          {CRENEAUX.map(c => (
-            <TouchableOpacity
-              key={c.id}
-              style={[styles.creneauRow, creneauChoisi === c.id && styles.creneauRowActif]}
-              onPress={() => setCreneauChoisi(c.id)}
-            >
-              <View style={[styles.radio, creneauChoisi === c.id && styles.radioActif]}>
-                {creneauChoisi === c.id && <View style={styles.radioDot} />}
-              </View>
-              <View style={styles.creneauInfo}>
-                <Text style={[styles.creneauLabel, creneauChoisi === c.id && styles.creneauLabelActif]}>
-                  {c.label}
-                </Text>
-                <Text style={styles.creneauDetail}>{c.detail}</Text>
-              </View>
-              {c.surcharge > 0 && (
-                <Text style={styles.creneauSurcharge}>+{c.surcharge.toFixed(2)} DT</Text>
-              )}
-            </TouchableOpacity>
           ))}
         </View>
 
@@ -136,14 +121,17 @@ export default function GroceryCheckoutReviewScreen({ navigation }) {
               value={codePromo}
               onChangeText={v => { setCodePromo(v); setErreurPromo(''); }}
               autoCapitalize="characters"
+              editable={!promoAppliquee}
             />
-            <TouchableOpacity style={styles.promoBtn} onPress={appliquerPromo}>
-              <Text style={styles.promoBtnText}>Appliquer</Text>
+            <TouchableOpacity style={styles.promoBtn} onPress={appliquerPromo} disabled={promoLoading || promoAppliquee}>
+              {promoLoading
+                ? <ActivityIndicator color="#000" size="small" />
+                : <Text style={styles.promoBtnText}>Appliquer</Text>}
             </TouchableOpacity>
           </View>
           {erreurPromo !== '' && <Text style={styles.promoErreur}>{erreurPromo}</Text>}
           {promoAppliquee && (
-            <Text style={styles.promoSucces}>Code EASY10 appliqué — –{PROMO_REDUCTION.toFixed(2)} DT</Text>
+            <Text style={styles.promoSucces}>Code appliqué — –{discount.toFixed(2)} TND</Text>
           )}
         </View>
 
@@ -151,33 +139,36 @@ export default function GroceryCheckoutReviewScreen({ navigation }) {
           <Text style={styles.sectionTitle}>Récapitulatif</Text>
           <View style={styles.ligneFinanciere}>
             <Text style={styles.ligneLabel}>Sous-total</Text>
-            <Text style={styles.ligneValeur}>{sousTotal.toFixed(2)} DT</Text>
+            <Text style={styles.ligneValeur}>{sousTotal.toFixed(2)} TND</Text>
           </View>
           <View style={styles.ligneFinanciere}>
             <Text style={styles.ligneLabel}>Frais de livraison</Text>
-            <Text style={styles.ligneValeur}>{fraisLivraison.toFixed(2)} DT</Text>
+            <Text style={styles.ligneValeur}>{DELIVERY_FEE.toFixed(2)} TND</Text>
           </View>
           {promoAppliquee && (
             <View style={styles.ligneFinanciere}>
               <Text style={styles.ligneLabel}>Réduction promo</Text>
               <Text style={[styles.ligneValeur, { color: '#4CAF50' }]}>
-                -{reduction.toFixed(2)} DT
+                -{discount.toFixed(2)} TND
               </Text>
             </View>
           )}
           <View style={[styles.ligneFinanciere, styles.ligneTotalSep]}>
             <Text style={styles.ligneTotalLabel}>Total</Text>
-            <Text style={styles.ligneTotalValeur}>{total.toFixed(2)} DT</Text>
+            <Text style={styles.ligneTotalValeur}>{total.toFixed(2)} TND</Text>
           </View>
         </View>
       </ScrollView>
 
       <View style={styles.footer}>
         <TouchableOpacity
-          style={styles.payerBtn}
-          onPress={() => navigation.navigate('KonnectPayment')}
+          style={[styles.payerBtn, submitting && { opacity: 0.6 }]}
+          onPress={passerCommande}
+          disabled={submitting || articles.length === 0}
         >
-          <Text style={styles.payerBtnText}>Payer maintenant — {total.toFixed(2)} DT</Text>
+          {submitting
+            ? <ActivityIndicator color="#000" />
+            : <Text style={styles.payerBtnText}>Commander — {total.toFixed(2)} TND</Text>}
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -229,27 +220,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 14,
   },
-  sectionTitleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  modifierBtn: {
-    color: COLORS.primary,
-    fontSize: 13,
-    fontWeight: '600',
-  },
   articleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
     gap: 12,
-  },
-  articleImage: {
-    width: 48,
-    height: 48,
-    borderRadius: 8,
   },
   articleInfo: {
     flex: 1,
@@ -268,78 +243,6 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontSize: 14,
     fontWeight: '700',
-  },
-  adresseCard: {
-    backgroundColor: COLORS.bg,
-    borderRadius: 8,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  adresseNom: {
-    color: COLORS.primary,
-    fontSize: 13,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  adresseLigne: {
-    color: COLORS.muted,
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  creneauRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    marginBottom: 8,
-    gap: 12,
-  },
-  creneauRowActif: {
-    borderColor: COLORS.primary,
-    backgroundColor: '#F5A62310',
-  },
-  radio: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: COLORS.muted,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radioActif: {
-    borderColor: COLORS.primary,
-  },
-  radioDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: COLORS.primary,
-  },
-  creneauInfo: {
-    flex: 1,
-  },
-  creneauLabel: {
-    color: COLORS.text,
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  creneauLabelActif: {
-    color: COLORS.primary,
-    fontWeight: '700',
-  },
-  creneauDetail: {
-    color: COLORS.muted,
-    fontSize: 12,
-    marginTop: 2,
-  },
-  creneauSurcharge: {
-    color: '#E53935',
-    fontSize: 13,
-    fontWeight: '600',
   },
   promoRow: {
     flexDirection: 'row',
