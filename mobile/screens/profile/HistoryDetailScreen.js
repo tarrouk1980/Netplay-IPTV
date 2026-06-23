@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  ActivityIndicator, Share, Alert,
+  ActivityIndicator, Share, Alert, Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
@@ -87,6 +87,9 @@ export default function HistoryDetailScreen({ route, navigation }) {
   const { orderId, orderData } = route.params || {};
   const [order, setOrder] = useState(orderData || null);
   const [loading, setLoading] = useState(!orderData);
+  const [rateModalVisible, setRateModalVisible] = useState(false);
+  const [pickedRating, setPickedRating] = useState(0);
+  const [savingRating, setSavingRating] = useState(false);
 
   useEffect(() => {
     if (!orderData && orderId) {
@@ -116,26 +119,23 @@ export default function HistoryDetailScreen({ route, navigation }) {
 
   const handleRate = () => {
     if (!order?.id) return;
-    Alert.prompt(
-      'Noter ce trajet',
-      'Donnez une note de 1 à 5',
-      async (val) => {
-        const rating = parseInt(val, 10);
-        if (!rating || rating < 1 || rating > 5) {
-          Alert.alert('Erreur', 'Note invalide (1-5)');
-          return;
-        }
-        try {
-          await api.post(`/api/orders/${order.id}/rate`, { rating });
-          Alert.alert('Merci !', 'Votre avis a été pris en compte.');
-        } catch {
-          Alert.alert('Erreur', 'Impossible d\'enregistrer la note.');
-        }
-      },
-      'plain-text',
-      '',
-      'numeric'
-    );
+    setPickedRating(0);
+    setRateModalVisible(true);
+  };
+
+  const submitRating = async () => {
+    if (pickedRating < 1 || pickedRating > 5) return;
+    setSavingRating(true);
+    try {
+      await api.post(`/api/orders/${order.id}/rate`, { rating: pickedRating });
+      setOrder((prev) => ({ ...prev, driverRating: pickedRating }));
+      setRateModalVisible(false);
+      Alert.alert('Merci !', 'Votre avis a été pris en compte.');
+    } catch {
+      Alert.alert('Erreur', "Impossible d'enregistrer la note. Réessayez.");
+    } finally {
+      setSavingRating(false);
+    }
   };
 
   if (loading) {
@@ -284,6 +284,35 @@ export default function HistoryDetailScreen({ route, navigation }) {
 
         <View style={{ height: 32 }} />
       </ScrollView>
+
+      <Modal visible={rateModalVisible} transparent animationType="fade" onRequestClose={() => setRateModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Noter ce trajet</Text>
+            <View style={styles.starsRow}>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <TouchableOpacity key={i} onPress={() => setPickedRating(i)}>
+                  <Text style={{ fontSize: 36, color: i <= pickedRating ? COLORS.accent : COLORS.border }}>★</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setRateModalVisible(false)} disabled={savingRating}>
+                <Text style={styles.modalCancelText}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalSubmitBtn, pickedRating === 0 && { opacity: 0.5 }]}
+                onPress={submitRating}
+                disabled={pickedRating === 0 || savingRating}
+              >
+                {savingRating
+                  ? <ActivityIndicator color="#000" size="small" />
+                  : <Text style={styles.modalSubmitText}>Envoyer</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -343,4 +372,13 @@ const styles = StyleSheet.create({
   },
   shareBtnText: { color: COLORS.text, fontWeight: '700', fontSize: 15 },
   emptyText: { color: COLORS.textMuted, fontSize: 14 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' },
+  modalBox: { backgroundColor: COLORS.surface, borderRadius: 18, padding: 24, width: '85%', borderWidth: 1, borderColor: COLORS.border, alignItems: 'center' },
+  modalTitle: { color: COLORS.text, fontSize: 17, fontWeight: '700', marginBottom: 18 },
+  starsRow: { flexDirection: 'row', gap: 8, marginBottom: 22 },
+  modalActions: { flexDirection: 'row', gap: 10, width: '100%' },
+  modalCancelBtn: { flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
+  modalCancelText: { color: COLORS.textMuted, fontWeight: '700' },
+  modalSubmitBtn: { flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: 'center', backgroundColor: COLORS.accent },
+  modalSubmitText: { color: '#000', fontWeight: '800' },
 });
