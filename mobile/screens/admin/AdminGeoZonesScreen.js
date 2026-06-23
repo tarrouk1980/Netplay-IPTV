@@ -34,17 +34,29 @@ export default function AdminGeoZonesScreen({ navigation }) {
   const filtered = zones.filter(z => z.name.toLowerCase().includes(search.toLowerCase()));
 
   const toggleZone = async (zone) => {
+    const previous = zones;
     const updated = zones.map(z => z.name === zone.name ? { ...z, enabled: !z.enabled } : z);
     setZones(updated);
-    try { await api.patch(`/api/admin/zones/${encodeURIComponent(zone.name)}/toggle`, { enabled: !zone.enabled }); } catch {}
+    try {
+      await api.patch(`/api/admin/zones/${encodeURIComponent(zone.name)}/toggle`, { enabled: !zone.enabled });
+    } catch {
+      setZones(previous);
+      Alert.alert('Erreur', 'Impossible de mettre à jour la zone. Réessayer.');
+    }
   };
 
   const saveSurcharge = async (zone) => {
     const val = parseFloat(editSurcharge);
     if (isNaN(val) || val < 0) { Alert.alert('Valeur invalide'); return; }
+    const previous = zones;
     setZones(zones.map(z => z.name === zone.name ? { ...z, multiplier: val } : z));
     setSelected(null);
-    try { await api.patch(`/api/admin/zones/${encodeURIComponent(zone.name)}`, { multiplier: val }); } catch {}
+    try {
+      await api.patch(`/api/admin/zones/${encodeURIComponent(zone.name)}`, { multiplier: val });
+    } catch {
+      setZones(previous);
+      Alert.alert('Erreur', 'Impossible de sauvegarder le multiplicateur. Réessayer.');
+    }
   };
 
   const stats = {

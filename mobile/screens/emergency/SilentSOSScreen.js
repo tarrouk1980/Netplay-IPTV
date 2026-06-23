@@ -50,7 +50,6 @@ export default function SilentSOSScreen({ navigation }) {
     setTimeout(() => { cooldownRef.current = false; }, COOLDOWN_MS);
 
     Vibration.vibrate([0, 200, 100, 200, 100, 500]);
-    setLastSOS(new Date());
     setShakeCount(0);
 
     try {
@@ -66,7 +65,10 @@ export default function SilentSOSScreen({ navigation }) {
         lng: coords?.longitude,
         trigger: 'shake',
       });
-    } catch {}
+      setLastSOS(new Date());
+    } catch {
+      Alert.alert('Erreur', "Impossible d'envoyer le SOS. Réessayez.");
+    }
   }, []);
 
   const handleAccelerometer = useCallback(({ x, y, z }) => {

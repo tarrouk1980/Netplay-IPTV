@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   StatusBar, Share, Clipboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', surfaceAlt: '#16161F',
@@ -36,7 +37,36 @@ const STATUS_MAP = {
 
 export default function ReferralDashboardScreen({ navigation }) {
   const [copied, setCopied] = useState(false);
-  const data = MOCK;
+  const [data, setData] = useState(MOCK);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [codeRes, statsRes, historyRes] = await Promise.all([
+          api.get('/api/referral/my-code'),
+          api.get('/api/referral/my-stats'),
+          api.get('/api/referral/history'),
+        ]);
+        const referees = (historyRes.data || []).map((u) => ({
+          name: u.name,
+          date: new Date(u.createdAt).toLocaleDateString('fr-TN'),
+          status: 'confirmed',
+          reward: 6.0,
+        }));
+        const confirmedReferrals = statsRes.data.referrals || 0;
+        setData({
+          code: codeRes.data.code,
+          totalReferrals: confirmedReferrals,
+          pendingReferrals: 0,
+          confirmedReferrals,
+          totalEarned: statsRes.data.totalRewardsEarned || 0,
+          pendingEarned: 0,
+          rewardPerRef: 6.0,
+          referees,
+        });
+      } catch {}
+    })();
+  }, []);
 
   const copyCode = () => {
     Clipboard.setString(data.code);
