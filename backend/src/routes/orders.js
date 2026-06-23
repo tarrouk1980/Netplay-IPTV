@@ -105,6 +105,40 @@ router.get('/:id', authenticate, async (req, res) => {
   }
 });
 
+// GET /api/orders/:id/invoice — derive an invoice view from a real order
+router.get('/:id/invoice', authenticate, async (req, res) => {
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: req.params.id },
+      include: {
+        client: { select: { id: true, name: true, phone: true } },
+        provider: { select: { id: true, name: true, phone: true } },
+      },
+    });
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    if (order.clientId !== req.user.id && order.providerId !== req.user.id) {
+      return res.status(403).json({ error: 'Not your order' });
+    }
+
+    const total = Number(order.finalPrice ?? order.price ?? 0);
+    res.json({
+      invoiceId: `INV-${order.id.slice(-8).toUpperCase()}`,
+      date: order.completedAt || order.createdAt,
+      status: order.status === 'COMPLETED' ? 'paid' : order.status.toLowerCase(),
+      client: { name: order.client?.name, phone: order.client?.phone },
+      service: order.serviceType,
+      items: [{ label: order.serviceType, amount: total }],
+      subtotal: total,
+      discount: 0,
+      total,
+      paymentMethod: order.paymentMethod || 'N/A',
+      driver: order.provider ? { name: order.provider.name, vehicle: order.metadata?.vehicle || '' } : null,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/active', authenticate, async (req, res) => {
   try {
     const orders = await prisma.order.findMany({

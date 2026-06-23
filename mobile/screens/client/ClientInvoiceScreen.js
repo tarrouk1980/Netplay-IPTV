@@ -12,35 +12,26 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB',
 };
 
-const MOCK = {
-  invoiceId: 'INV-2026-0042',
-  date: '04/06/2026 à 19:45',
-  status: 'paid',
-  client: { name: 'Tarek Arrouk', phone: '+216 71 000 000' },
-  service: 'Course taxi',
-  items: [
-    { label: 'Course Lac 1 → Aéroport', amount: 12.500 },
-    { label: 'Frais de nuit (+15%)', amount: 1.875 },
-    { label: 'Pourboire', amount: 1.000 },
-  ],
-  subtotal: 15.375,
-  discount: 0,
-  total: 15.375,
-  paymentMethod: 'Portefeuille EasyWay',
-  driver: { name: 'Karim Belhaj', vehicle: 'Peugeot 308 • TUN-4892' },
-};
-
 export default function ClientInvoiceScreen({ navigation, route }) {
   const orderId = route?.params?.orderId;
   const [invoice, setInvoice] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  useEffect(() => {
-    api.get(`/api/client/invoice/${orderId || 'latest'}`)
-      .then(r => setInvoice(r.data || MOCK))
-      .catch(() => setInvoice(MOCK))
+  const load = () => {
+    if (!orderId) { setLoading(false); setError(true); return; }
+    setLoading(true);
+    api.get(`/api/orders/${orderId}/invoice`)
+      .then(r => {
+        const data = r.data;
+        setInvoice({ ...data, date: data.date ? new Date(data.date).toLocaleString('fr-TN') : '' });
+        setError(false);
+      })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, []);
+  };
+
+  useEffect(() => { load(); }, []);
 
   const handleShare = async () => {
     try {
@@ -52,11 +43,25 @@ export default function ClientInvoiceScreen({ navigation, route }) {
   };
 
   const handleDownload = () =>
-    Alert.alert('📥 Facture', 'La facture PDF a été enregistrée dans vos fichiers.', [{ text: 'OK' }]);
+    Alert.alert('🚧 Bientôt disponible', "L'export PDF n'est pas encore disponible. Utilisez le partage en attendant.");
 
   if (loading) return (
     <SafeAreaView style={styles.container}>
       <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 80 }} />
+    </SafeAreaView>
+  );
+
+  if (error || !invoice) return (
+    <SafeAreaView style={styles.container}>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <Text style={{ fontSize: 40 }}>⚠️</Text>
+        <Text style={{ color: COLORS.muted, marginTop: 12, textAlign: 'center' }}>
+          Impossible de récupérer la facture.
+        </Text>
+        <TouchableOpacity onPress={load} style={{ marginTop: 16, backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
+          <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 
