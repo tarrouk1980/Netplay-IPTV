@@ -39,13 +39,12 @@ function timeAgo(dateStr) {
   return new Date(dateStr).toLocaleDateString('fr-TN', { day: '2-digit', month: 'short' });
 }
 
-function NotifCard({ notif, onPress, onDismiss }) {
+function NotifCard({ notif, onPress }) {
   const meta = NOTIF_TYPES[notif.type] || NOTIF_TYPES.SYSTEM;
   return (
     <TouchableOpacity
       style={[styles.card, !notif.read && styles.cardUnread]}
       onPress={() => onPress(notif)}
-      onLongPress={() => onDismiss(notif.id)}
       activeOpacity={0.75}
     >
       {!notif.read && <View style={[styles.unreadDot, { backgroundColor: meta.color }]} />}
@@ -105,23 +104,13 @@ export default function NotificationCenterScreen({ navigation }) {
     try { api.post(`/api/notifications/${notif.id}/read`); } catch {}
   };
 
-  const handleDismiss = (id) => {
-    Alert.alert('Supprimer', 'Supprimer cette notification ?', [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Supprimer', style: 'destructive', onPress: () => setNotifs(ns => ns.filter(n => n.id !== id)) },
-    ]);
-  };
-
-  const markAllRead = () => {
-    setNotifs(ns => ns.map(n => ({ ...n, read: true })));
-    try { api.post('/api/notifications/read-all'); } catch {}
-  };
-
-  const clearAll = () => {
-    Alert.alert('Effacer tout', 'Supprimer toutes les notifications ?', [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Effacer', style: 'destructive', onPress: () => setNotifs([]) },
-    ]);
+  const markAllRead = async () => {
+    try {
+      await api.post('/api/notifications/read-all');
+      setNotifs(ns => ns.map(n => ({ ...n, read: true })));
+    } catch {
+      Alert.alert('Erreur', "Impossible de marquer les notifications comme lues. Réessayez.");
+    }
   };
 
   return (
@@ -179,17 +168,10 @@ export default function NotificationCenterScreen({ navigation }) {
           data={filtered}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
-            <NotifCard notif={item} onPress={handlePress} onDismiss={handleDismiss} />
+            <NotifCard notif={item} onPress={handlePress} />
           )}
           contentContainerStyle={{ paddingBottom: 40 }}
           showsVerticalScrollIndicator={false}
-          ListFooterComponent={
-            notifs.length > 0 ? (
-              <TouchableOpacity style={styles.clearBtn} onPress={clearAll}>
-                <Text style={styles.clearBtnText}>🗑️ Effacer tout</Text>
-              </TouchableOpacity>
-            ) : null
-          }
         />
       )}
     </SafeAreaView>
@@ -233,8 +215,6 @@ const styles = StyleSheet.create({
   cardBody: { color: COLORS.muted, fontSize: 13, lineHeight: 18, marginBottom: 6 },
   typeBadge: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
   typeLabel: { fontSize: 10, fontWeight: '700' },
-  clearBtn: { margin: 16, alignItems: 'center', paddingVertical: 12 },
-  clearBtnText: { color: COLORS.muted, fontSize: 14 },
   emptyEmoji: { fontSize: 52, marginBottom: 12 },
   emptyTitle: { color: COLORS.white, fontSize: 18, fontWeight: '700', marginBottom: 6 },
   emptyText: { color: COLORS.muted, fontSize: 14 },
