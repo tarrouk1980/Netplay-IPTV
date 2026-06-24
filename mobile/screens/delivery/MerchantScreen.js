@@ -29,7 +29,7 @@ export default function MerchantScreen({ route, navigation }) {
   const { merchantId } = route.params;
   const { fetchMerchant, currentMerchant, addToCart, getCartItems, getCartTotal, requestDelivery, isLoading } =
     useDeliveryStore();
-  const { location } = useLocationStore();
+  const { myLocation: location } = useLocationStore();
 
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [note, setNote] = useState('');

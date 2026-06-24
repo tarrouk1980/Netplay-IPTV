@@ -13,16 +13,14 @@ const COLORS = {
 };
 
 const STEPS = [
-  { key: 'CONFIRMED', label: 'Confirmée', icon: '✅' },
-  { key: 'PREPARING', label: 'Préparation', icon: '👨‍🍳' },
-  { key: 'READY', label: 'Prête', icon: '📦' },
-  { key: 'PICKED_UP', label: 'Récupérée', icon: '🛵' },
-  { key: 'DELIVERED', label: 'Livrée', icon: '🏠' },
+  { key: 'PENDING', label: 'Commande reçue', icon: '📋' },
+  { key: 'ACCEPTED', label: 'Acceptée', icon: '✅' },
+  { key: 'IN_PROGRESS', label: 'En livraison', icon: '🛵' },
+  { key: 'COMPLETED', label: 'Livrée', icon: '🏠' },
 ];
 
 const STATUS_IDX = {
-  CONFIRMED: 0, ACCEPTED: 0, PREPARING: 1, READY: 2,
-  PICKED_UP: 3, DELIVERING: 3, DELIVERED: 4,
+  PENDING: 0, ACCEPTED: 1, IN_PROGRESS: 2, COMPLETED: 3,
 };
 
 function ProgressSteps({ status }) {
@@ -52,6 +50,7 @@ export default function DeliveryTrackingScreen({ navigation, route }) {
   const { orderId } = route?.params || {};
   const [order, setOrder] = useState(null);
   const [eta, setEta] = useState(null);
+  const [error, setError] = useState(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   const animatePulse = useCallback(() => {
@@ -65,26 +64,29 @@ export default function DeliveryTrackingScreen({ navigation, route }) {
 
   useEffect(() => {
     if (!orderId) return;
-    const poll = setInterval(async () => {
+    const fetchOrder = async () => {
       try {
-        const res = await api.get(`/api/delivery/orders/${orderId}`);
-        setOrder(res.data.order || res.data);
-        if (res.data.order?.eta) setEta(res.data.order.eta);
-        if (res.data.order?.status === 'DELIVERED') {
+        const res = await api.get(`/api/delivery/${orderId}`);
+        const fetched = res.data.order || res.data;
+        setOrder(fetched);
+        setError(null);
+        if (fetched?.metadata?.eta) setEta(fetched.metadata.eta);
+        if (fetched?.status === 'COMPLETED') {
           clearInterval(poll);
           setTimeout(() => navigation.replace('Home'), 3000);
         }
-      } catch {}
-    }, 8000);
-    api.get(`/api/delivery/orders/${orderId}`)
-      .then(r => { setOrder(r.data.order || r.data); if (r.data.order?.eta) setEta(r.data.order.eta); })
-      .catch(() => {});
+      } catch (e) {
+        setError(e?.response?.data?.error || 'Impossible de charger le suivi.');
+      }
+    };
+    const poll = setInterval(fetchOrder, 8000);
+    fetchOrder();
     return () => clearInterval(poll);
   }, [orderId]);
 
-  const status = order?.status || 'CONFIRMED';
-  const livreur = order?.livreur;
-  const isDelivered = status === 'DELIVERED';
+  const status = order?.status || 'PENDING';
+  const livreur = order?.provider;
+  const isDelivered = status === 'COMPLETED';
 
   const handleCallLivreur = () => {
     const phone = livreur?.phone;
@@ -92,8 +94,8 @@ export default function DeliveryTrackingScreen({ navigation, route }) {
   };
 
   const handleCancel = () => {
-    if (['PICKED_UP', 'DELIVERING', 'DELIVERED'].includes(status)) {
-      Alert.alert('Annulation impossible', 'La livraison est déjà en route.');
+    if (status !== 'PENDING') {
+      Alert.alert('Annulation impossible', 'La livraison est déjà en cours.');
       return;
     }
     Alert.alert('Annuler la commande ?', '', [
@@ -101,7 +103,7 @@ export default function DeliveryTrackingScreen({ navigation, route }) {
       {
         text: 'Annuler', style: 'destructive', onPress: async () => {
           try {
-            await api.post(`/api/delivery/orders/${orderId}/cancel`);
+            await api.post(`/api/delivery/${orderId}/cancel`);
             navigation.replace('Home');
           } catch { Alert.alert('Erreur', "Impossible d'annuler."); }
         },
@@ -125,16 +127,22 @@ export default function DeliveryTrackingScreen({ navigation, route }) {
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
+        {error && (
+          <View style={styles.statusHero}>
+            <Text style={styles.statusText}>{error}</Text>
+          </View>
+        )}
+
         {/* Status hero */}
         <View style={styles.statusHero}>
           <Animated.Text style={[styles.statusEmoji, { transform: [{ scale: isDelivered ? 1 : pulseAnim }] }]}>
-            {isDelivered ? '🎉' : STATUS_IDX[status] >= 3 ? '🛵' : STATUS_IDX[status] >= 2 ? '📦' : '👨‍🍳'}
+            {isDelivered ? '🎉' : STATUS_IDX[status] >= 2 ? '🛵' : STATUS_IDX[status] >= 1 ? '📦' : '👨‍🍳'}
           </Animated.Text>
           <Text style={styles.statusText}>
             {isDelivered ? 'Livraison effectuée !' :
-              STATUS_IDX[status] >= 3 ? 'Livreur en route vers vous' :
-              STATUS_IDX[status] >= 2 ? 'Commande prête, récupération en cours' :
-              'Votre commande est en préparation'}
+              STATUS_IDX[status] >= 2 ? 'Livreur en route vers vous' :
+              STATUS_IDX[status] >= 1 ? 'Commande acceptée, préparation en cours' :
+              'Votre commande est en attente'}
           </Text>
           {eta && !isDelivered && (
             <Text style={styles.etaText}>⏱ Arrivée estimée dans {eta} min</Text>
@@ -142,7 +150,7 @@ export default function DeliveryTrackingScreen({ navigation, route }) {
         </View>
 
         {/* Livreur card */}
-        {livreur && STATUS_IDX[status] >= 3 && (
+        {livreur && STATUS_IDX[status] >= 2 && (
           <View style={styles.livreurCard}>
             <View style={[styles.livreurAvatar, { backgroundColor: COLORS.blue + '25' }]}>
               <Text style={{ fontSize: 22 }}>🛵</Text>
@@ -158,25 +166,25 @@ export default function DeliveryTrackingScreen({ navigation, route }) {
         )}
 
         {/* Order summary */}
-        {order?.items && (
+        {order?.metadata?.items?.length > 0 && (
           <View style={styles.orderCard}>
             <Text style={styles.orderCardTitle}>VOTRE COMMANDE</Text>
-            {order.items.map((item, i) => (
+            {order.metadata.items.map((item, i) => (
               <View key={i} style={styles.orderItem}>
-                <Text style={styles.orderItemQty}>{item.qty}×</Text>
+                <Text style={styles.orderItemQty}>{item.quantity}×</Text>
                 <Text style={styles.orderItemName}>{item.name}</Text>
-                <Text style={styles.orderItemPrice}>{(item.qty * item.price).toFixed(3)} TND</Text>
+                <Text style={styles.orderItemPrice}>{(item.lineTotal || 0).toFixed(3)} TND</Text>
               </View>
             ))}
             <View style={styles.orderTotal}>
               <Text style={styles.orderTotalLabel}>Total payé</Text>
-              <Text style={styles.orderTotalValue}>{order.total?.toFixed(3) || '—'} TND</Text>
+              <Text style={styles.orderTotalValue}>{parseFloat(order.price || order.metadata?.total || 0).toFixed(3)} TND</Text>
             </View>
           </View>
         )}
 
         {/* Actions */}
-        {!isDelivered && !['PICKED_UP', 'DELIVERING'].includes(status) && (
+        {status === 'PENDING' && (
           <TouchableOpacity style={styles.cancelBtn} onPress={handleCancel}>
             <Text style={styles.cancelBtnText}>✕ Annuler la commande</Text>
           </TouchableOpacity>

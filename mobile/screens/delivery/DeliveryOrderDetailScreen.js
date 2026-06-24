@@ -104,7 +104,7 @@ export default function DeliveryOrderDetailScreen({ route, navigation }) {
 
   const load = useCallback(async () => {
     try {
-      const res = await api.get(`/api/orders/${orderId}`);
+      const res = await api.get(`/api/delivery/${orderId}`);
       setOrder(res.data.order || res.data);
     } catch {
       Alert.alert('Erreur', 'Commande introuvable.');
@@ -125,7 +125,7 @@ export default function DeliveryOrderDetailScreen({ route, navigation }) {
         onPress: async () => {
           setCancelling(true);
           try {
-            await api.post(`/api/orders/${orderId}/cancel`, { reason: 'Annulé par le client' });
+            await api.post(`/api/delivery/${orderId}/cancel`);
             Alert.alert('Commande annulée');
             load();
           } catch (e) {

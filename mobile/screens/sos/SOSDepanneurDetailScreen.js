@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,8 +6,11 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  Linking,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COULEURS = {
   fond: '#0A0A0F',
@@ -17,27 +20,6 @@ const COULEURS = {
   muet: '#8E8E9A',
   bordure: '#2C2C3A',
 };
-
-const DEPANNEUR = {
-  id: '1',
-  nom: 'Karim Bouaziz',
-  initiales: 'KB',
-  couleurAvatar: '#2E4A7A',
-  note: 4.8,
-  coursesTotales: 342,
-  anneesExperience: 7,
-  specialites: ['Crevaison', 'Batterie', 'Remorquage', 'Panne moteur'],
-  latitude: 36.737,
-  longitude: 3.086,
-};
-
-const AVIS = [
-  { id: '1', nom: 'Mehdi R.', note: 5, commentaire: 'Très rapide et professionnel, réparé en moins de 20 minutes.', date: '12 mai 2025' },
-  { id: '2', nom: 'Amira K.', note: 5, commentaire: 'Parfait ! Il est arrivé en 10 minutes seulement. Je recommande vivement.', date: '3 mai 2025' },
-  { id: '3', nom: 'Yacine B.', note: 4, commentaire: 'Bon service, prix raisonnable. Juste un peu de retard au départ.', date: '28 avr. 2025' },
-  { id: '4', nom: 'Soumia L.', note: 5, commentaire: 'Excellent travail. Ma batterie remplacée rapidement. Merci !', date: '15 avr. 2025' },
-  { id: '5', nom: 'Omar T.', note: 4, commentaire: 'Compétent et sympa. Le remorquage s\'est bien passé sans aucun problème.', date: '2 avr. 2025' },
-];
 
 function Etoiles({ note, taille = 16 }) {
   return (
@@ -51,8 +33,48 @@ function Etoiles({ note, taille = 16 }) {
   );
 }
 
-export default function SOSDepanneurDetailScreen({ navigation }) {
-  const [suiviActif] = useState(true);
+export default function SOSDepanneurDetailScreen({ navigation, route }) {
+  // The backend has no dedicated "depanneur profile by id" endpoint — the only
+  // real source for depanneur info is the object returned from /api/sos/nearby
+  // (id, name, phone, avgRating, lat, lng, distanceKm), passed in via navigation params.
+  const depanneur = route?.params?.depanneur || {};
+  const depanneurId = depanneur.id || route?.params?.depanneurId;
+
+  const [reviews, setReviews] = useState([]);
+  const [loadingReviews, setLoadingReviews] = useState(true);
+  const [reviewsError, setReviewsError] = useState(false);
+
+  const loadReviews = useCallback(() => {
+    if (!depanneurId) { setLoadingReviews(false); return; }
+    setLoadingReviews(true);
+    api.get(`/api/reviews/${depanneurId}`)
+      .then((r) => {
+        setReviews(r.data.reviews || []);
+        setReviewsError(false);
+      })
+      .catch(() => setReviewsError(true))
+      .finally(() => setLoadingReviews(false));
+  }, [depanneurId]);
+
+  useEffect(() => { loadReviews(); }, [loadReviews]);
+
+  const nom = depanneur.name || 'Dépanneur';
+  const initiales = nom
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase())
+    .join('') || '?';
+  const note = Number(depanneur.avgRating || 0);
+  const distanceKm = depanneur.distanceKm != null ? Number(depanneur.distanceKm) : null;
+
+  const handleCall = () => {
+    if (!depanneur.phone) {
+      Alert.alert('Indisponible', 'Numéro du dépanneur non disponible.');
+      return;
+    }
+    Linking.openURL(`tel:${depanneur.phone}`);
+  };
 
   return (
     <SafeAreaView style={styles.conteneur}>
@@ -66,85 +88,53 @@ export default function SOSDepanneurDetailScreen({ navigation }) {
 
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.carteHero}>
-          <View style={[styles.avatar, { backgroundColor: DEPANNEUR.couleurAvatar }]}>
-            <Text style={styles.avatarInitiales}>{DEPANNEUR.initiales}</Text>
+          <View style={[styles.avatar, { backgroundColor: '#2E4A7A' }]}>
+            <Text style={styles.avatarInitiales}>{initiales}</Text>
           </View>
           <Text style={styles.emoji}>🛻</Text>
-          <Text style={styles.nomDepanneur}>{DEPANNEUR.nom}</Text>
+          <Text style={styles.nomDepanneur}>{nom}</Text>
           <View style={styles.noteLigne}>
-            <Etoiles note={DEPANNEUR.note} taille={18} />
-            <Text style={styles.noteTexte}>{DEPANNEUR.note}/5</Text>
+            <Etoiles note={note} taille={18} />
+            <Text style={styles.noteTexte}>{note.toFixed(1)}/5</Text>
           </View>
-          <View style={styles.badgeDisponible}>
-            <View style={styles.pointVert} />
-            <Text style={styles.texteDisponible}>Disponible maintenant</Text>
-          </View>
+          {distanceKm != null && (
+            <View style={styles.badgeDisponible}>
+              <View style={styles.pointVert} />
+              <Text style={styles.texteDisponible}>À ~{distanceKm.toFixed(1)} km de vous</Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.titreSec}>Statistiques</Text>
-          <View style={styles.statsGrille}>
-            <View style={styles.statItem}>
-              <Text style={styles.statValeur}>{DEPANNEUR.coursesTotales}</Text>
-              <Text style={styles.statLabel}>Courses{'\n'}totales</Text>
+          <Text style={styles.titreSec}>Avis clients ({reviews.length})</Text>
+          {loadingReviews ? (
+            <ActivityIndicator color={COULEURS.primaire} style={{ marginTop: 12 }} />
+          ) : reviewsError ? (
+            <View style={{ alignItems: 'center', paddingVertical: 16 }}>
+              <Text style={{ color: COULEURS.muet, marginBottom: 10 }}>Impossible de charger les avis.</Text>
+              <TouchableOpacity onPress={loadReviews} style={styles.btnRetry}>
+                <Text style={styles.btnRetryText}>Réessayer</Text>
+              </TouchableOpacity>
             </View>
-            <View style={[styles.statItem, styles.statItemMilieu]}>
-              <Text style={styles.statValeur}>{DEPANNEUR.note}</Text>
-              <Text style={styles.statLabel}>Note{'\n'}moyenne</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statValeur}>{DEPANNEUR.anneesExperience}</Text>
-              <Text style={styles.statLabel}>Années{'\n'}d'expérience</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.titreSec}>Spécialités</Text>
-          <View style={styles.chipsLigne}>
-            {DEPANNEUR.specialites.map((s) => (
-              <View key={s} style={styles.chip}>
-                <Text style={styles.chipTexte}>{s}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.titreSec}>Localisation approximative</Text>
-          <View style={styles.carteSim}>
-            <View style={styles.grilleCarte}>
-              {Array.from({ length: 20 }).map((_, i) => (
-                <View key={i} style={styles.celuleCarte} />
-              ))}
-            </View>
-            <View style={styles.pinCentre}>
-              <View style={styles.pinCercle}>
-                <Text style={styles.pinTexte}>🛻</Text>
-              </View>
-              <View style={styles.pinQueue} />
-            </View>
-            <Text style={styles.distanceLabel}>À ~2,3 km de vous</Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.titreSec}>Avis clients ({AVIS.length})</Text>
-          {AVIS.map((avis) => (
-            <View key={avis.id} style={styles.carteAvis}>
-              <View style={styles.avisEntete}>
-                <View style={styles.avisAvatar}>
-                  <Text style={styles.avisAvatarTexte}>{avis.nom[0]}</Text>
+          ) : reviews.length === 0 ? (
+            <Text style={{ color: COULEURS.muet }}>Aucun avis pour le moment.</Text>
+          ) : (
+            reviews.map((avis) => (
+              <View key={avis.id} style={styles.carteAvis}>
+                <View style={styles.avisEntete}>
+                  <View style={styles.avisAvatar}>
+                    <Text style={styles.avisAvatarTexte}>{avis.author?.[0] || '?'}</Text>
+                  </View>
+                  <View style={styles.avisInfo}>
+                    <Text style={styles.avisNom}>{avis.author}</Text>
+                    <Etoiles note={avis.rating} taille={13} />
+                  </View>
+                  <Text style={styles.avisDate}>{avis.date}</Text>
                 </View>
-                <View style={styles.avisInfo}>
-                  <Text style={styles.avisNom}>{avis.nom}</Text>
-                  <Etoiles note={avis.note} taille={13} />
-                </View>
-                <Text style={styles.avisDate}>{avis.date}</Text>
+                {!!avis.comment && <Text style={styles.avisCommentaire}>{avis.comment}</Text>}
               </View>
-              <Text style={styles.avisCommentaire}>{avis.commentaire}</Text>
-            </View>
-          ))}
+            ))
+          )}
         </View>
 
         <View style={styles.espaceFin} />
@@ -153,13 +143,13 @@ export default function SOSDepanneurDetailScreen({ navigation }) {
       <View style={styles.barreActions}>
         <TouchableOpacity
           style={[styles.boutonAction, styles.boutonAppel]}
-          onPress={() => Alert.alert('Appel', `Appel en cours vers ${DEPANNEUR.nom}…`)}
+          onPress={handleCall}
         >
           <Text style={styles.boutonActionTexte}>📞 Appeler</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.boutonAction, styles.boutonContact]}
-          onPress={() => navigation.navigate('Chat', { depanneurId: DEPANNEUR.id, nom: DEPANNEUR.nom })}
+          onPress={() => navigation.navigate('Chat', { depanneurId, nom })}
         >
           <Text style={[styles.boutonActionTexte, { color: COULEURS.fond }]}>💬 Contacter</Text>
         </TouchableOpacity>
@@ -219,81 +209,8 @@ const styles = StyleSheet.create({
   texteDisponible: { color: '#27AE60', fontSize: 13, fontWeight: '600' },
   section: { marginHorizontal: 16, marginTop: 20 },
   titreSec: { color: COULEURS.texte, fontSize: 16, fontWeight: '700', marginBottom: 12 },
-  statsGrille: {
-    flexDirection: 'row',
-    backgroundColor: COULEURS.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COULEURS.bordure,
-    overflow: 'hidden',
-  },
-  statItem: { flex: 1, alignItems: 'center', paddingVertical: 16 },
-  statItemMilieu: {
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    borderColor: COULEURS.bordure,
-  },
-  statValeur: { color: COULEURS.primaire, fontSize: 24, fontWeight: '800' },
-  statLabel: { color: COULEURS.muet, fontSize: 11, textAlign: 'center', marginTop: 4 },
-  chipsLigne: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: {
-    backgroundColor: 'rgba(245,166,35,0.15)',
-    borderWidth: 1,
-    borderColor: COULEURS.primaire,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-  },
-  chipTexte: { color: COULEURS.primaire, fontSize: 13, fontWeight: '600' },
-  carteSim: {
-    height: 160,
-    backgroundColor: '#12172A',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COULEURS.bordure,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  grilleCarte: {
-    position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  celuleCarte: {
-    width: '20%',
-    height: '25%',
-    borderWidth: 0.5,
-    borderColor: 'rgba(44,44,58,0.6)',
-  },
-  pinCentre: { alignItems: 'center' },
-  pinCercle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: COULEURS.primaire,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: COULEURS.primaire,
-    shadowOpacity: 0.5,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  pinTexte: { fontSize: 20 },
-  pinQueue: {
-    width: 3,
-    height: 14,
-    backgroundColor: COULEURS.primaire,
-    borderBottomLeftRadius: 2,
-    borderBottomRightRadius: 2,
-  },
-  distanceLabel: {
-    position: 'absolute',
-    bottom: 10,
-    color: COULEURS.muet,
-    fontSize: 12,
-  },
+  btnRetry: { backgroundColor: COULEURS.primaire, borderRadius: 10, paddingHorizontal: 20, paddingVertical: 10 },
+  btnRetryText: { color: COULEURS.fond, fontWeight: '700' },
   carteAvis: {
     backgroundColor: COULEURS.surface,
     borderRadius: 12,

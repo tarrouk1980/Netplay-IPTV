@@ -46,7 +46,7 @@ function estimateDeliveryTime(distanceKm) {
 
 export default function DeliveryHomeScreen({ navigation }) {
   const { merchants, fetchMerchants, isLoading } = useDeliveryStore();
-  const { location } = useLocationStore();
+  const { myLocation: location } = useLocationStore();
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [pendingMerchant, setPendingMerchant] = useState(null);

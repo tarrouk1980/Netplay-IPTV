@@ -4,7 +4,7 @@ import {
   StatusBar, Switch, Alert, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import api from '../../services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', border: '#2C2C3E',
@@ -28,14 +28,16 @@ const DEFAULT_SCHEDULE = Object.fromEntries(
   DAYS.map(d => [d.key, { enabled: ['mon','tue','wed','thu','fri'].includes(d.key), slots: ['12:00–16:00', '16:00–20:00'] }])
 );
 
+const SCHEDULE_STORAGE_KEY = 'livreur_schedule';
+
 export default function LivreurScheduleScreen({ navigation }) {
   const [schedule, setSchedule] = useState(DEFAULT_SCHEDULE);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    api.get('/api/delivery/livreur/schedule')
-      .then(r => setSchedule(r.data || DEFAULT_SCHEDULE))
+    AsyncStorage.getItem(SCHEDULE_STORAGE_KEY)
+      .then(raw => setSchedule(raw ? JSON.parse(raw) : DEFAULT_SCHEDULE))
       .catch(() => setSchedule(DEFAULT_SCHEDULE))
       .finally(() => setLoading(false));
   }, []);
@@ -54,12 +56,12 @@ export default function LivreurScheduleScreen({ navigation }) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await api.put('/api/delivery/livreur/schedule', schedule);
+      await AsyncStorage.setItem(SCHEDULE_STORAGE_KEY, JSON.stringify(schedule));
       setSaving(false);
       Alert.alert('✅ Planning enregistré', 'Vos disponibilités ont été mises à jour.');
     } catch {
       setSaving(false);
-      Alert.alert('Erreur', "Impossible d'enregistrer votre planning. Vérifiez votre connexion.");
+      Alert.alert('Erreur', "Impossible d'enregistrer votre planning sur cet appareil.");
     }
   };
 

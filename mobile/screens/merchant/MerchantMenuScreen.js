@@ -93,6 +93,7 @@ export default function MerchantMenuScreen({ navigation }) {
     setItems(prev => prev.map(i => i.id === item.id ? { ...i, available: !i.available } : i));
     api.patch(`/api/merchants/me/products/${item.id}`, { active: !item.available }).catch(() => {
       setItems(prev => prev.map(i => i.id === item.id ? { ...i, available: item.available } : i));
+      Alert.alert('Erreur', 'Impossible de modifier la disponibilité.');
     });
   };
 

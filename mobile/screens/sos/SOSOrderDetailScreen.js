@@ -113,7 +113,7 @@ export default function SOSOrderDetailScreen({ route, navigation }) {
 
   const load = useCallback(async () => {
     try {
-      const res = await api.get(`/api/orders/${orderId}`);
+      const res = await api.get(`/api/sos/${orderId}`);
       setOrder(res.data.order || res.data);
     } catch {
       Alert.alert('Erreur', 'Intervention introuvable.');

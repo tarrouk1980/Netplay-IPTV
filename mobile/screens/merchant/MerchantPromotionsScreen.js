@@ -49,7 +49,10 @@ export default function MerchantPromotionsScreen({ navigation }) {
   const togglePromo = (id) => {
     const promo = promos.find(p => p.id === id);
     setPromos(prev => prev.map(p => p.id === id ? { ...p, active: !p.active } : p));
-    api.patch(`/api/merchants/me/products/${id}`, { active: !promo.active }).catch(() => {});
+    api.patch(`/api/merchants/me/products/${id}`, { active: !promo.active }).catch(() => {
+      setPromos(prev => prev.map(p => p.id === id ? { ...p, active: promo.active } : p));
+      Alert.alert('Erreur', 'Impossible de modifier la promotion.');
+    });
   };
 
   const handleDelete = (id) => {
@@ -58,8 +61,12 @@ export default function MerchantPromotionsScreen({ navigation }) {
       {
         text: 'Supprimer', style: 'destructive',
         onPress: () => {
+          const promo = promos.find(p => p.id === id);
           setPromos(prev => prev.filter(p => p.id !== id));
-          api.patch(`/api/merchants/me/products/${id}`, { active: false }).catch(() => {});
+          api.patch(`/api/merchants/me/products/${id}`, { active: false }).catch(() => {
+            setPromos(prev => promo ? [...prev, promo] : prev);
+            Alert.alert('Erreur', 'Impossible de supprimer la promotion.');
+          });
         },
       },
     ]);

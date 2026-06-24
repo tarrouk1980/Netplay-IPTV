@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,8 +6,11 @@ import {
   TouchableOpacity,
   Alert,
   Animated,
+  ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COULEURS = {
   fond: '#0A0A0F',
@@ -16,14 +19,6 @@ const COULEURS = {
   texte: '#FFFFFF',
   discret: '#8E8E9A',
   bordure: '#2C2C3A',
-};
-
-const DEPANNEUR = {
-  nom: 'Rachid Benmansour',
-  note: 4.8,
-  specialite: 'Panne moteur & électricité',
-  plaque: '16-1234-A',
-  avatar: 'RB',
 };
 
 const POSITIONS_DEPANNEUR = [
@@ -44,11 +39,41 @@ const ETAPES = [
 
 const DUREE_INITIALE = 12 * 60;
 
-export default function SOSLiveTrackingScreen() {
+export default function SOSLiveTrackingScreen({ route, navigation }) {
+  const { orderId } = route?.params || {};
   const [secondesRestantes, setSecondesRestantes] = useState(DUREE_INITIALE);
   const [indexPosition, setIndexPosition] = useState(0);
-  const [etapeActive, setEtapeActive] = useState(1);
+  const [etapeActive, setEtapeActive] = useState(0);
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState(null);
   const posAnim = useRef(new Animated.ValueXY({ x: POSITIONS_DEPANNEUR[0].x, y: POSITIONS_DEPANNEUR[0].y })).current;
+
+  const loadOrder = useCallback(async () => {
+    if (!orderId) {
+      setLoading(false);
+      setErrorMsg('Identifiant de la demande manquant.');
+      return;
+    }
+    try {
+      const res = await api.get(`/api/sos/${orderId}`);
+      const o = res.data?.order || res.data;
+      setOrder(o);
+      setErrorMsg(null);
+      const STATUS_TO_ETAPE = { PENDING: 0, ACCEPTED: 1, IN_PROGRESS: 2, COMPLETED: 2 };
+      if (STATUS_TO_ETAPE[o?.status] !== undefined) setEtapeActive(STATUS_TO_ETAPE[o.status]);
+    } catch (e) {
+      setErrorMsg(e?.response?.data?.error || "Impossible de récupérer le suivi de l'intervention.");
+    } finally {
+      setLoading(false);
+    }
+  }, [orderId]);
+
+  useEffect(() => {
+    loadOrder();
+    const poll = setInterval(loadOrder, 10000);
+    return () => clearInterval(poll);
+  }, [loadOrder]);
 
   useEffect(() => {
     const timerCompte = setInterval(() => {
@@ -73,10 +98,6 @@ export default function SOSLiveTrackingScreen() {
           duration: 1800,
           useNativeDriver: false,
         }).start();
-        if (prochainIndex >= POSITIONS_DEPANNEUR.length - 1) {
-          setEtapeActive(2);
-          clearInterval(timerPos);
-        }
         return prochainIndex;
       });
     }, 2000);
@@ -89,13 +110,37 @@ export default function SOSLiveTrackingScreen() {
     return `${m}:${s}`;
   };
 
+  const provider = order?.provider;
+
   const appelerDepanneur = () => {
-    Alert.alert(
-      'Appel en cours',
-      `Appel vers ${DEPANNEUR.nom} — Plaque : ${DEPANNEUR.plaque}`,
-      [{ text: 'Raccrocher', style: 'destructive' }, { text: 'OK' }]
+    if (!provider?.phone) {
+      Alert.alert('Indisponible', "Le numéro du dépanneur n'est pas encore disponible.");
+      return;
+    }
+    Linking.openURL(`tel:${provider.phone}`).catch(() =>
+      Alert.alert('Erreur', "Impossible de lancer l'appel.")
     );
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.conteneur, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator color={COULEURS.primaire} size="large" />
+      </SafeAreaView>
+    );
+  }
+
+  if (errorMsg && !order) {
+    return (
+      <SafeAreaView style={[styles.conteneur, { alignItems: 'center', justifyContent: 'center', padding: 30 }]}>
+        <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+        <Text style={{ color: COULEURS.discret, textAlign: 'center', marginBottom: 16 }}>{errorMsg}</Text>
+        <TouchableOpacity onPress={() => { setLoading(true); loadOrder(); }} style={{ backgroundColor: COULEURS.primaire, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 }}>
+          <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.conteneur}>
@@ -177,14 +222,15 @@ export default function SOSLiveTrackingScreen() {
 
       <View style={styles.depanneurCarte}>
         <View style={styles.depanneurAvatar}>
-          <Text style={styles.avatarTexte}>{DEPANNEUR.avatar}</Text>
+          <Text style={styles.avatarTexte}>
+            {provider?.name ? provider.name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase() : '??'}
+          </Text>
         </View>
         <View style={styles.depanneurInfo}>
-          <Text style={styles.depanneurNom}>{DEPANNEUR.nom}</Text>
-          <Text style={styles.depanneurSpecialite}>{DEPANNEUR.specialite}</Text>
+          <Text style={styles.depanneurNom}>{provider?.name || 'Dépanneur en attente d\'attribution'}</Text>
           <View style={styles.depanneurMeta}>
-            <Text style={styles.depanneurNote}>⭐ {DEPANNEUR.note}</Text>
-            <Text style={styles.depanneurPlaque}>🚗 {DEPANNEUR.plaque}</Text>
+            {provider?.avgRating != null && <Text style={styles.depanneurNote}>⭐ {Number(provider.avgRating).toFixed(1)}</Text>}
+            {provider?.phone && <Text style={styles.depanneurPlaque}>📞 {provider.phone}</Text>}
           </View>
         </View>
       </View>

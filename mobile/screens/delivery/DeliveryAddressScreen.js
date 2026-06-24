@@ -9,27 +9,16 @@ import {
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import useLocationStore from '../../store/locationStore';
 
 const { width } = Dimensions.get('window');
-
-const ADRESSES_RECENTES = [
-  { id: 1, label: '45 Rue de la Paix, Paris 2e', distance: '1.2 km' },
-  { id: 2, label: '12 Avenue des Champs-Élysées, Paris 8e', distance: '3.5 km' },
-  { id: 3, label: '8 Boulevard Haussmann, Paris 9e', distance: '2.1 km' },
-];
-
-const FAVORIS = [
-  { id: 1, icone: '🏠', label: 'Maison', adresse: '14 Rue des Lilas, Paris 11e' },
-  { id: 2, icone: '🏢', label: 'Bureau', adresse: '32 Rue du Faubourg Saint-Antoine, Paris 12e' },
-  { id: 3, icone: '👩', label: 'Chez maman', adresse: '7 Impasse des Roses, Vincennes' },
-  { id: 4, icone: '💪', label: 'Salle de sport', adresse: '19 Rue de la Roquette, Paris 11e' },
-];
 
 const GRILLE_COLS = 10;
 const GRILLE_LIGNES = 6;
 
 export default function DeliveryAddressScreen({ navigation }) {
-  const [adresseDepart, setAdresseDepart] = useState('');
+  const { myAddress, myLocation } = useLocationStore();
+  const [adresseDepart, setAdresseDepart] = useState(myAddress || '');
   const [adresseDestination, setAdresseDestination] = useState('');
 
   return (
@@ -77,46 +66,34 @@ export default function DeliveryAddressScreen({ navigation }) {
           </View>
         </View>
 
-        <Text style={styles.sousTitre}>Adresses récentes</Text>
-        <View style={styles.section}>
-          {ADRESSES_RECENTES.map((item, index) => (
-            <TouchableOpacity
-              key={item.id}
-              style={[styles.listeItem, index < ADRESSES_RECENTES.length - 1 && styles.listeItemBorder]}
-              onPress={() => setAdresseDestination(item.label)}
-            >
-              <Text style={styles.horlogeIcone}>🕐</Text>
-              <View style={styles.listeItemTextes}>
-                <Text style={styles.listeItemLabel}>{item.label}</Text>
-                <Text style={styles.listeItemSub}>{item.distance}</Text>
-              </View>
-              <Text style={styles.fleche}>›</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <Text style={styles.sousTitre}>Favoris</Text>
-        <View style={styles.favorisGrille}>
-          {FAVORIS.map((fav) => (
-            <TouchableOpacity
-              key={fav.id}
-              style={styles.favoriItem}
-              onPress={() => setAdresseDestination(fav.adresse)}
-            >
-              <View style={styles.favoriIconeContainer}>
-                <Text style={styles.favoriIcone}>{fav.icone}</Text>
-              </View>
-              <Text style={styles.favoriLabel}>{fav.label}</Text>
-              <Text style={styles.favoriAdresse} numberOfLines={1}>{fav.adresse}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        {myAddress ? (
+          <>
+            <Text style={styles.sousTitre}>Position actuelle</Text>
+            <View style={styles.section}>
+              <TouchableOpacity
+                style={styles.listeItem}
+                onPress={() => setAdresseDepart(myAddress)}
+              >
+                <Text style={styles.horlogeIcone}>📍</Text>
+                <View style={styles.listeItemTextes}>
+                  <Text style={styles.listeItemLabel}>{myAddress}</Text>
+                </View>
+                <Text style={styles.fleche}>›</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        ) : null}
       </ScrollView>
 
       <View style={styles.boutonContainer}>
         <TouchableOpacity
           style={[styles.bouton, (!adresseDepart || !adresseDestination) && styles.boutonDisabled]}
-          onPress={() => navigation.navigate('Merchant')}
+          onPress={() => navigation.navigate('DeliveryHome', {
+            pickupAddress: adresseDepart,
+            pickupLat: myLocation?.latitude,
+            pickupLng: myLocation?.longitude,
+            deliveryAddress: adresseDestination,
+          })}
           disabled={!adresseDepart || !adresseDestination}
         >
           <Text style={styles.boutonTexte}>Confirmer</Text>

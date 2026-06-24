@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,8 +6,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import useDeliveryStore from '../../store/deliveryStore';
 
 const COULEURS = {
   bg: '#0A0A0F',
@@ -18,166 +20,69 @@ const COULEURS = {
   border: '#2C2C3A',
 };
 
-const CATEGORIES = ['Populaires', 'Entrées', 'Plats', 'Desserts', 'Boissons'];
+export default function MerchantMenuScreen({ route, navigation }) {
+  const { merchantId } = route.params || {};
+  const { fetchMerchant, currentMerchant, addToCart, getCartItems, getCartTotal, isLoading } =
+    useDeliveryStore();
 
-const PRODUITS = [
-  {
-    id: '1',
-    nom: 'Burger Classic',
-    description: 'Pain brioché, steak haché, cheddar',
-    prix: 850,
-    categorie: 'Populaires',
-    vegetarien: false,
-    emoji: '🍔',
-  },
-  {
-    id: '2',
-    nom: 'Salade César',
-    description: "Laitue, parmesan, croûtons, sauce César",
-    prix: 650,
-    categorie: 'Entrées',
-    vegetarien: true,
-    emoji: '🥗',
-  },
-  {
-    id: '3',
-    nom: 'Pizza Margherita',
-    description: 'Tomate, mozzarella, basilic frais',
-    prix: 1100,
-    categorie: 'Populaires',
-    vegetarien: true,
-    emoji: '🍕',
-  },
-  {
-    id: '4',
-    nom: 'Soupe de légumes',
-    description: 'Carottes, courgettes, poireaux maison',
-    prix: 400,
-    categorie: 'Entrées',
-    vegetarien: true,
-    emoji: '🍲',
-  },
-  {
-    id: '5',
-    nom: 'Poulet rôti',
-    description: "Poulet entier, herbes de Provence, citron",
-    prix: 1400,
-    categorie: 'Plats',
-    vegetarien: false,
-    emoji: '🍗',
-  },
-  {
-    id: '6',
-    nom: 'Pâtes carbonara',
-    description: 'Spaghetti, lardons, crème, parmesan',
-    prix: 900,
-    categorie: 'Plats',
-    vegetarien: false,
-    emoji: '🍝',
-  },
-  {
-    id: '7',
-    nom: 'Couscous royal',
-    description: 'Semoule, légumes, merguez, agneau',
-    prix: 1600,
-    categorie: 'Populaires',
-    vegetarien: false,
-    emoji: '🫕',
-  },
-  {
-    id: '8',
-    nom: 'Tiramisu',
-    description: 'Mascarpone, café, biscuits amaretti',
-    prix: 450,
-    categorie: 'Desserts',
-    vegetarien: true,
-    emoji: '🍮',
-  },
-  {
-    id: '9',
-    nom: 'Fondant chocolat',
-    description: 'Cœur coulant, glace vanille maison',
-    prix: 500,
-    categorie: 'Desserts',
-    vegetarien: true,
-    emoji: '🍫',
-  },
-  {
-    id: '10',
-    nom: 'Jus orange frais',
-    description: "Oranges pressées à la commande",
-    prix: 300,
-    categorie: 'Boissons',
-    vegetarien: true,
-    emoji: '🍊',
-  },
-  {
-    id: '11',
-    nom: 'Smoothie fruits',
-    description: 'Mangue, fraise, banane, lait',
-    prix: 380,
-    categorie: 'Boissons',
-    vegetarien: true,
-    emoji: '🥤',
-  },
-  {
-    id: '12',
-    nom: 'Tajine agneau',
-    description: "Agneau, pruneaux, amandes, épices",
-    prix: 1800,
-    categorie: 'Plats',
-    vegetarien: false,
-    emoji: '🫕',
-  },
-];
+  const [categorieActive, setCategorieActive] = useState(null);
+  const [error, setError] = useState(false);
 
-export default function MerchantMenuScreen({ navigation }) {
-  const [categorieActive, setCategorieActive] = useState('Populaires');
-  const [vegetarienActif, setVegetarienActif] = useState(false);
-  const [panier, setPanier] = useState({});
+  useEffect(() => {
+    if (!merchantId) return;
+    setError(false);
+    fetchMerchant(merchantId).catch(() => setError(true));
+  }, [merchantId]);
 
-  const ajouterAuPanier = (produitId) => {
-    setPanier((prev) => ({
-      ...prev,
-      [produitId]: (prev[produitId] || 0) + 1,
-    }));
+  const categories = useMemo(() => {
+    if (!currentMerchant?.products) return [];
+    return [...new Set(currentMerchant.products.map((p) => p.category))];
+  }, [currentMerchant]);
+
+  useEffect(() => {
+    if (categories.length > 0 && !categorieActive) {
+      setCategorieActive(categories[0]);
+    }
+  }, [categories, categorieActive]);
+
+  const cartItems = currentMerchant ? getCartItems(currentMerchant.id) : [];
+  const cartTotal = currentMerchant ? getCartTotal(currentMerchant.id) : 0;
+  const nbArticles = cartItems.reduce((sum, i) => sum + i.quantity, 0);
+
+  const getQuantity = (productId) => {
+    if (!currentMerchant) return 0;
+    const item = cartItems.find((i) => i.productId === productId);
+    return item?.quantity || 0;
   };
 
-  const produitsFiltres = PRODUITS.filter((p) => {
-    const matchCategorie = p.categorie === categorieActive;
-    const matchVegetarien = vegetarienActif ? p.vegetarien : true;
-    return matchCategorie && matchVegetarien;
-  });
+  const ajouterAuPanier = (produit) => {
+    if (!currentMerchant) return;
+    const current = getQuantity(produit.id);
+    addToCart(currentMerchant.id, produit, current + 1);
+  };
 
-  const totalPanier = Object.entries(panier).reduce((acc, [id, qte]) => {
-    const produit = PRODUITS.find((p) => p.id === id);
-    return acc + (produit ? produit.prix * qte : 0);
-  }, 0);
-
-  const nbArticles = Object.values(panier).reduce((a, b) => a + b, 0);
+  const produitsFiltres = (currentMerchant?.products || []).filter(
+    (p) => !categorieActive || p.category === categorieActive
+  );
 
   const renderProduit = ({ item }) => {
-    const qte = panier[item.id] || 0;
+    const qte = getQuantity(item.id);
     return (
       <View style={styles.produitCarte}>
-        <Text style={styles.produitEmoji}>{item.emoji}</Text>
         <View style={styles.produitInfo}>
           <View style={styles.produitEntete}>
-            <Text style={styles.produitNom}>{item.nom}</Text>
-            {item.vegetarien && (
-              <View style={styles.vegBadge}>
-                <Text style={styles.vegTexte}>🌿</Text>
-              </View>
-            )}
+            <Text style={styles.produitNom}>{item.name}</Text>
           </View>
-          <Text style={styles.produitDesc} numberOfLines={2}>
-            {item.description}
-          </Text>
+          {item.description ? (
+            <Text style={styles.produitDesc} numberOfLines={2}>
+              {item.description}
+            </Text>
+          ) : null}
           <View style={styles.produitPied}>
-            <Text style={styles.produitPrix}>{item.prix} DA</Text>
+            <Text style={styles.produitPrix}>{parseFloat(item.price).toFixed(3)} TND</Text>
             <TouchableOpacity
               style={[styles.btnAjouter, qte > 0 && styles.btnAjouterActif]}
-              onPress={() => ajouterAuPanier(item.id)}
+              onPress={() => ajouterAuPanier(item)}
             >
               <Text
                 style={[
@@ -194,30 +99,39 @@ export default function MerchantMenuScreen({ navigation }) {
     );
   };
 
+  if (isLoading || (!currentMerchant && !error)) {
+    return (
+      <SafeAreaView style={[styles.conteneur, { justifyContent: 'center' }]}>
+        <ActivityIndicator color={COULEURS.primary} size="large" />
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !currentMerchant) {
+    return (
+      <SafeAreaView style={[styles.conteneur, { justifyContent: 'center', alignItems: 'center', padding: 30 }]}>
+        <Text style={{ color: COULEURS.muted, marginBottom: 16 }}>Impossible de charger ce commerce.</Text>
+        <TouchableOpacity
+          style={{ backgroundColor: COULEURS.primary, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}
+          onPress={() => { setError(false); fetchMerchant(merchantId).catch(() => setError(true)); }}
+        >
+          <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.conteneur}>
       <View style={styles.header}>
         <View style={styles.headerInfo}>
-          <Text style={styles.restaurantNom}>Le Gourmet Algérois</Text>
+          <Text style={styles.restaurantNom}>{currentMerchant.name}</Text>
           <View style={styles.headerMeta}>
-            <Text style={styles.headerMetaTexte}>⭐ 4.7</Text>
+            <Text style={styles.headerMetaTexte}>{currentMerchant.category}</Text>
             <Text style={styles.headerSep}>·</Text>
-            <Text style={styles.headerMetaTexte}>🕐 25-35 min</Text>
-            <Text style={styles.headerSep}>·</Text>
-            <Text style={styles.headerMetaTexte}>Livraison 120 DA</Text>
+            <Text style={styles.headerMetaTexte}>{currentMerchant.isOpen ? 'Ouvert' : 'Fermé'}</Text>
           </View>
         </View>
-        <TouchableOpacity
-          style={[
-            styles.toggleVeg,
-            vegetarienActif && styles.toggleVegActif,
-          ]}
-          onPress={() => setVegetarienActif((v) => !v)}
-        >
-          <Text style={styles.toggleVegTexte}>
-            {vegetarienActif ? '🌿 Vég' : '🌿'}
-          </Text>
-        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -226,7 +140,7 @@ export default function MerchantMenuScreen({ navigation }) {
         style={styles.categoriesScroll}
         contentContainerStyle={styles.categoriesContainer}
       >
-        {CATEGORIES.map((cat) => (
+        {categories.map((cat) => (
           <TouchableOpacity
             key={cat}
             style={[
@@ -273,9 +187,9 @@ export default function MerchantMenuScreen({ navigation }) {
           </View>
           <TouchableOpacity
             style={styles.panierBtn}
-            onPress={() => navigation.navigate('GroceryCart')}
+            onPress={() => navigation.navigate('Merchant', { merchantId: currentMerchant.id })}
           >
-            <Text style={styles.panierBtnTexte}>{totalPanier} DA →</Text>
+            <Text style={styles.panierBtnTexte}>{cartTotal.toFixed(3)} TND →</Text>
           </TouchableOpacity>
         </View>
       )}

@@ -18,33 +18,29 @@ const COLORS = {
 const EMPTY_STATS = { todayEarnings: 0, todayDeliveries: 0, rating: null };
 
 function OrderCard({ item, onAccept }) {
-  const typeColor = item.type === 'FOOD' ? COLORS.accent : COLORS.blue;
   return (
     <View style={styles.orderCard}>
       <View style={styles.orderHeader}>
-        <View style={[styles.typeBadge, { backgroundColor: typeColor + '20', borderColor: typeColor + '50' }]}>
-          <Text style={[styles.typeText, { color: typeColor }]}>
-            {item.type === 'FOOD' ? '🍕 Resto' : '🛒 Épicerie'}
-          </Text>
+        <View style={[styles.typeBadge, { backgroundColor: COLORS.accent + '20', borderColor: COLORS.accent + '50' }]}>
+          <Text style={[styles.typeText, { color: COLORS.accent }]}>🛵 Livraison</Text>
         </View>
-        <Text style={styles.orderTime}>{item.createdAt}</Text>
       </View>
 
       <View style={styles.routeSection}>
         <View style={styles.routeRow}>
           <View style={[styles.dot, { backgroundColor: COLORS.green }]} />
-          <Text style={styles.routeText} numberOfLines={1}>{item.pickup}</Text>
+          <Text style={styles.routeText} numberOfLines={1}>{item.merchant}</Text>
         </View>
         <View style={styles.routeLine} />
         <View style={styles.routeRow}>
           <View style={[styles.dot, { backgroundColor: COLORS.accent }]} />
-          <Text style={styles.routeText} numberOfLines={1}>{item.dropoff}</Text>
+          <Text style={styles.routeText} numberOfLines={1}>{item.address}</Text>
         </View>
       </View>
 
       <View style={styles.orderFooter}>
         <Text style={styles.orderDistance}>📍 {item.distance} km</Text>
-        <Text style={styles.orderClient}>{item.clientName}</Text>
+        <Text style={styles.orderClient}>{item.client}</Text>
         <View style={{ flex: 1 }} />
         <Text style={styles.orderAmount}>{item.amount.toFixed(3)} TND</Text>
       </View>

@@ -37,7 +37,18 @@ export default function SOSDepanneurMapScreen({ navigation }) {
     try {
       const loc = await getCurrentLocationWithAddress();
       const res = await api.get('/api/sos/nearby', { params: { lat: loc?.coords?.lat, lng: loc?.coords?.lng } });
-      setDepanneurs(res.data?.depanneurs || []);
+      // Backend (/api/sos/nearby) returns {id,name,phone,avgRating,lat,lng,distanceKm} only —
+      // there is no live status/eta/speciality field, so every provider returned by the
+      // endpoint is treated as AVAILABLE (the endpoint only lists active SOS providers).
+      const mapped = (res.data?.depanneurs || []).map((d) => ({
+        ...d,
+        status: 'AVAILABLE',
+        distance: typeof d.distanceKm === 'number' ? d.distanceKm.toFixed(1) : d.distanceKm,
+        rating: typeof d.avgRating === 'number' ? d.avgRating.toFixed(1) : (d.avgRating ?? '—'),
+        eta: null,
+        speciality: 'Dépanneur SOS',
+      }));
+      setDepanneurs(mapped);
       setError(false);
     } catch {
       setError(true);

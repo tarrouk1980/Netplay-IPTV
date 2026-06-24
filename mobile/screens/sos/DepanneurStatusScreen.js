@@ -7,6 +7,7 @@ import {
   Switch,
   StyleSheet,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
@@ -51,8 +52,8 @@ export default function DepanneurStatusScreen({ navigation }) {
     try {
       const r = await api.patch('/api/sos/depanneur/toggle', { online: value });
       setIsAvailable(!!r.data.isOnline);
-    } catch {
-      // keep previous value on failure
+    } catch (e) {
+      Alert.alert('Erreur', e?.response?.data?.error || 'Impossible de changer votre statut. Réessayez.');
     } finally {
       setToggling(false);
     }

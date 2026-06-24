@@ -26,15 +26,19 @@ export default function LivreurLiveMapScreen({ navigation }) {
   const [online, setOnline] = useState(true);
   const [selected, setSelected] = useState(null);
   const [myPosition, setMyPosition] = useState(null);
+  const positionRef = useRef(null);
   const intervalRef = useRef(null);
 
   useEffect(() => {
     (async () => {
       const loc = await getCurrentLocationWithAddress();
-      if (loc) setMyPosition(loc.coords);
+      if (loc) {
+        setMyPosition(loc.coords);
+        positionRef.current = loc.coords;
+      }
       fetchOrders(loc?.coords);
     })();
-    intervalRef.current = setInterval(() => fetchOrders(myPosition), 20000);
+    intervalRef.current = setInterval(() => fetchOrders(positionRef.current), 20000);
     return () => clearInterval(intervalRef.current);
   }, []);
 

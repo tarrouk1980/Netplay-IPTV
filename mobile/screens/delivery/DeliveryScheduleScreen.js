@@ -43,7 +43,15 @@ export default function DeliveryScheduleScreen({ navigation }) {
   const handleSchedule = async () => {
     setSubmitting(true);
     try {
-      await api.post('/api/delivery/schedule', { date: day, slot, size, from, to, notes });
+      await api.post('/api/delivery/package', {
+        pickup: from,
+        delivery: to,
+        size,
+        service: 'SCHEDULED',
+        scheduledDate: day,
+        slot,
+        notes,
+      });
       Alert.alert(
         '✅ Livraison programmée',
         `Votre livraison est prévue le ${DAYS.find(d => d.date === day)?.label} entre ${slot}. Un livreur vous contactera 30 min avant.`,

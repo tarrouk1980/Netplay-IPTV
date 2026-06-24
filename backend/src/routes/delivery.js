@@ -169,6 +169,9 @@ router.post(
     body('senderName').optional().trim(),
     body('receiverPhone').optional().trim(),
     body('description').optional().trim(),
+    body('scheduledDate').optional().trim(),
+    body('slot').optional().trim(),
+    body('notes').optional().trim(),
   ],
   async (req, res) => {
     if (!validate(req, res)) return;
@@ -176,6 +179,7 @@ router.post(
     const {
       pickup, delivery, pickupLat, pickupLng, deliveryLat, deliveryLng,
       size, service, senderName, receiverPhone, description,
+      scheduledDate, slot, notes,
     } = req.body;
 
     const order = await prisma.order.create({
@@ -196,6 +200,9 @@ router.post(
           senderName: senderName || null,
           receiverPhone: receiverPhone || null,
           description: description || null,
+          scheduledDate: scheduledDate || null,
+          slot: slot || null,
+          note: notes || description || null,
         },
       },
     });

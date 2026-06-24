@@ -23,6 +23,7 @@ const COLORS = {
   green: '#27AE60',
   teal: '#00838F',
   gold: '#FFD700',
+  red: '#D32F2F',
 };
 
 const QUICK_TAGS_DELIVERY = ['Rapide', 'Soigneux', 'Poli', 'Emballage parfait', 'Ponctuel', 'Professionnel'];
@@ -95,7 +96,7 @@ export default function DeliveryRatingScreen({ navigation, route }) {
           <Text style={s.ratingName}>{livreurName}</Text>
           <Text style={s.ratingRole}>Livreur</Text>
           <StarRating value={livreurRating} onChange={setLivreurRating} />
-          <Text style={[s.ratingLabel, { color: livreurRating >= 4 ? COLORS.green : livreurRating >= 3 ? COLORS.orange : COLORS.accent }]}>
+          <Text style={[s.ratingLabel, { color: livreurRating >= 4 ? COLORS.green : livreurRating >= 3 ? COLORS.orange : COLORS.red }]}>
             {['', 'Très mauvais', 'Mauvais', 'Correct', 'Bien', 'Excellent'][livreurRating]}
           </Text>
 

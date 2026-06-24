@@ -76,10 +76,10 @@ export default function DepanneurDashboardScreen({ navigation }) {
   const toggleOnline = async (val) => {
     setTogglingOnline(true);
     try {
-      await api.patch('/api/sos/depanneur/toggle', { online: val });
-      setOnline(val);
-    } catch {
-      setOnline(v => v);
+      const r = await api.patch('/api/sos/depanneur/toggle', { online: val });
+      setOnline(!!(r.data.isOnline ?? r.data.online));
+    } catch (e) {
+      Alert.alert('Erreur', e?.response?.data?.error || 'Impossible de changer votre statut. Réessayez.');
     } finally {
       setTogglingOnline(false);
     }

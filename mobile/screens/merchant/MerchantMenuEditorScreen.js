@@ -20,6 +20,7 @@ const fromApi = (p) => ({
 export default function MerchantMenuEditorScreen({ navigation }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [saving, setSaving] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [editPrice, setEditPrice] = useState('');
@@ -27,14 +28,15 @@ export default function MerchantMenuEditorScreen({ navigation }) {
 
   const categories = ['Tous', ...new Set(items.map(i => i.category))];
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await api.get('/api/merchants/me/products');
-        setItems((res.data.products || []).map(fromApi));
-      } catch {} finally { setLoading(false); }
-    })();
-  }, []);
+  const load = () => {
+    setLoading(true);
+    api.get('/api/merchants/me/products')
+      .then(res => { setItems((res.data.products || []).map(fromApi)); setError(false); })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { load(); }, []);
 
   const toggleAvailability = async (item) => {
     setSaving(item.id);
@@ -155,7 +157,17 @@ export default function MerchantMenuEditorScreen({ navigation }) {
         ))}
       </View>
 
-      {loading ? <ActivityIndicator color={COLORS.accent} style={{ marginTop: 40 }} /> : (
+      {loading ? <ActivityIndicator color={COLORS.accent} style={{ marginTop: 40 }} /> : error ? (
+        <View style={styles.empty}>
+          <Text style={{ fontSize: 40 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, marginTop: 12, textAlign: 'center', paddingHorizontal: 30 }}>
+            Impossible de charger le menu.
+          </Text>
+          <TouchableOpacity onPress={load} style={{ marginTop: 14, backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
+            <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
         <FlatList
           data={filtered}
           keyExtractor={i => String(i.id)}
