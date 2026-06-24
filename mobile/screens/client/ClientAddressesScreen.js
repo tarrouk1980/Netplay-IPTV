@@ -15,11 +15,6 @@ const COLORS = {
 const TYPE_ICONS = { HOME: '🏠', WORK: '💼', OTHER: '📍' };
 const TYPE_LABELS = { HOME: 'Domicile', WORK: 'Travail', OTHER: 'Autre' };
 
-const MOCK = [
-  { id: 'A1', type: 'HOME', label: 'Domicile', address: 'Rue de la Liberté, Menzah 6, Ariana', lat: 36.855, lng: 10.188 },
-  { id: 'A2', type: 'WORK', label: 'Bureau', address: 'Avenue Mohamed V, Tunis Centre', lat: 36.819, lng: 10.166 },
-];
-
 function AddressCard({ item, onDelete, onEdit }) {
   return (
     <View style={styles.card}>
@@ -53,8 +48,11 @@ export default function ClientAddressesScreen({ navigation }) {
 
   const load = useCallback(() => {
     api.get('/api/users/clients/addresses')
-      .then(r => setAddresses(r.data.addresses || MOCK))
-      .catch(() => setAddresses(MOCK));
+      .then(r => setAddresses(r.data.addresses || []))
+      .catch((err) => {
+        console.error('[ClientAddressesScreen] load failed', err);
+        setAddresses([]);
+      });
   }, []);
 
   useEffect(() => { load(); }, [load]);
