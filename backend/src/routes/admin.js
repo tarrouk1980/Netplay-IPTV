@@ -752,7 +752,7 @@ router.get('/merchants', async (req, res) => {
         take: limitNum,
         orderBy: { createdAt: 'desc' },
         include: {
-          user: { select: { id: true, name: true, phone: true, kycStatus: true } },
+          user: { select: { id: true, name: true, phone: true, kycStatus: true, suspended: true } },
           _count: { select: { products: true, ads: true } },
         },
       }),
@@ -764,7 +764,14 @@ router.get('/merchants', async (req, res) => {
         const orderCount = await prisma.order.count({
           where: { providerId: m.userId, serviceType: 'GROCERY' },
         });
-        return { ...m, orderCount };
+        return {
+          ...m,
+          storeName: m.name,
+          ownerName: m.user.name,
+          phone: m.user.phone,
+          suspended: m.user.suspended,
+          orderCount,
+        };
       })
     );
 
@@ -776,10 +783,83 @@ router.get('/merchants', async (req, res) => {
 });
 
 // ─────────────────────────────────────────────
+// GET /api/admin/merchants/:id — Fiche marchand détaillée
+// ─────────────────────────────────────────────
+router.get('/merchants/:id', async (req, res) => {
+  try {
+    const merchant = await prisma.merchant.findUnique({
+      where: { id: req.params.id },
+      include: {
+        user: { select: { id: true, name: true, phone: true, email: true, kycStatus: true, kycDocuments: true, avgRating: true, suspended: true, createdAt: true } },
+        _count: { select: { products: true } },
+      },
+    });
+    if (!merchant) return res.status(404).json({ error: 'Merchant not found', code: 'NOT_FOUND' });
+
+    const orders = await prisma.order.findMany({
+      where: { providerId: merchant.userId, serviceType: 'GROCERY' },
+      include: { client: { select: { name: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const completedOrders = orders.filter((o) => o.status === 'COMPLETED');
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    const revenueMonth = completedOrders
+      .filter((o) => o.completedAt && o.completedAt >= startOfMonth)
+      .reduce((sum, o) => sum + Number(o.finalPrice ?? o.price ?? 0), 0);
+    const revenueTotal = completedOrders.reduce((sum, o) => sum + Number(o.finalPrice ?? o.price ?? 0), 0);
+
+    let docs = [];
+    try {
+      const parsed = JSON.parse(merchant.user.kycDocuments || '{}');
+      docs = Array.isArray(parsed) ? parsed : Object.entries(parsed).map(([label, value]) => ({ label, ...(typeof value === 'object' ? value : { status: value }) }));
+    } catch {
+      docs = [];
+    }
+
+    return res.json({
+      merchant: {
+        id: merchant.id,
+        name: merchant.name,
+        category: merchant.category,
+        owner: merchant.user.name,
+        phone: merchant.user.phone,
+        email: merchant.user.email,
+        address: merchant.address,
+        status: merchant.user.suspended ? 'suspended' : 'active',
+        verified: merchant.user.kycStatus === 'APPROVED',
+        joinDate: merchant.createdAt,
+        rating: merchant.user.avgRating,
+        totalOrders: orders.length,
+        completionRate: orders.length ? Number(((completedOrders.length / orders.length) * 100).toFixed(1)) : 0,
+        revenueMonth,
+        revenueTotal,
+        products: merchant._count.products,
+        docs,
+        recentOrders: orders.slice(0, 10).map((o) => ({
+          id: o.id,
+          client: o.client?.name || '—',
+          amount: Number(o.finalPrice ?? o.price ?? 0),
+          status: o.status,
+          date: o.createdAt,
+        })),
+      },
+    });
+  } catch (err) {
+    console.error('[admin/merchants/:id]', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─────────────────────────────────────────────
 // PATCH /api/admin/merchants/:id/suspend
 // ─────────────────────────────────────────────
 router.patch('/merchants/:id/suspend', async (req, res) => {
   try {
+    const suspended = req.body.suspended !== undefined ? !!req.body.suspended : true;
+
     const merchant = await prisma.merchant.findUnique({
       where: { id: req.params.id },
       include: { user: { select: { id: true, fcmToken: true } } },
@@ -788,11 +868,11 @@ router.patch('/merchants/:id/suspend', async (req, res) => {
 
     const updatedUser = await prisma.user.update({
       where: { id: merchant.userId },
-      data: { kycStatus: 'REJECTED' },
+      data: { suspended },
       select: { id: true, fcmToken: true },
     });
 
-    if (updatedUser.fcmToken) {
+    if (suspended && updatedUser.fcmToken) {
       await sendNotification(
         [updatedUser.fcmToken],
         'ACCOUNT_SUSPENDED',
@@ -802,7 +882,7 @@ router.patch('/merchants/:id/suspend', async (req, res) => {
       );
     }
 
-    return res.json({ suspended: true, merchantId: req.params.id });
+    return res.json({ suspended, merchantId: req.params.id });
   } catch (err) {
     console.error('[admin/merchants/suspend]', err);
     return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });

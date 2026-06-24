@@ -33,17 +33,17 @@ const STATUS_FILTERS = [
   { key: 'suspended', label: 'Suspendus' },
 ];
 
-function MerchantCard({ merchant, onToggleSuspend }) {
+function MerchantCard({ merchant, onToggleSuspend, onPress }) {
   const suspended = merchant.suspended;
   return (
-    <View style={card.container}>
+    <TouchableOpacity style={card.container} onPress={onPress} activeOpacity={0.85}>
       <View style={card.header}>
         <View style={card.avatar}>
           <Text style={card.avatarText}>🏪</Text>
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={card.storeName}>{merchant.storeName || merchant.name || 'Marchand'}</Text>
-          <Text style={card.ownerName}>{merchant.name}</Text>
+          <Text style={card.storeName}>{merchant.storeName || 'Marchand'}</Text>
+          <Text style={card.ownerName}>{merchant.ownerName}</Text>
           <Text style={card.phone}>{merchant.phone}</Text>
         </View>
         <View style={[card.badge, suspended ? card.badgeSuspended : card.badgeActive]}>
@@ -52,18 +52,13 @@ function MerchantCard({ merchant, onToggleSuspend }) {
       </View>
 
       <View style={card.meta}>
-        {merchant.city ? (
-          <View style={card.chip}>
-            <Text style={card.chipText}>📍 {merchant.city}</Text>
-          </View>
-        ) : null}
         {merchant.category ? (
           <View style={card.chip}>
             <Text style={card.chipText}>🏷️ {merchant.category}</Text>
           </View>
         ) : null}
         <View style={card.chip}>
-          <Text style={card.chipText}>📦 {merchant.ordersCount ?? 0} commandes</Text>
+          <Text style={card.chipText}>📦 {merchant.orderCount ?? 0} commandes</Text>
         </View>
       </View>
 
@@ -78,7 +73,7 @@ function MerchantCard({ merchant, onToggleSuspend }) {
           </Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -132,14 +127,10 @@ export default function AdminMerchantsScreen({ navigation }) {
     else setLoading(true);
     try {
       const res = await api.get('/api/admin/merchants');
-      setMerchants(res.data?.merchants || res.data || []);
+      setMerchants(res.data?.merchants || []);
     } catch (err) {
-      // Fallback mock data so screen is usable even without API
-      setMerchants([
-        { id: '1', name: 'Ahmed Ben Salem', storeName: 'Pizza Tunis', phone: '20123456', city: 'Tunis', category: 'Restauration', suspended: false, ordersCount: 142 },
-        { id: '2', name: 'Fatma Gharbi', storeName: 'Épicerie Sfax', phone: '25987654', city: 'Sfax', category: 'Épicerie', suspended: false, ordersCount: 89 },
-        { id: '3', name: 'Mohamed Trabelsi', storeName: 'Sushi Express', phone: '52112233', city: 'Sousse', category: 'Restauration', suspended: true, ordersCount: 23 },
-      ]);
+      setMerchants([]);
+      Alert.alert('Erreur', 'Impossible de charger la liste des marchands.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -155,7 +146,7 @@ export default function AdminMerchantsScreen({ navigation }) {
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(m =>
-        (m.name || '').toLowerCase().includes(q) ||
+        (m.ownerName || '').toLowerCase().includes(q) ||
         (m.storeName || '').toLowerCase().includes(q) ||
         (m.phone || '').includes(q)
       );
@@ -167,7 +158,7 @@ export default function AdminMerchantsScreen({ navigation }) {
     const action = merchant.suspended ? 'réactiver' : 'suspendre';
     Alert.alert(
       `${merchant.suspended ? 'Réactiver' : 'Suspendre'} le marchand`,
-      `Voulez-vous ${action} ${merchant.storeName || merchant.name} ?`,
+      `Voulez-vous ${action} ${merchant.storeName} ?`,
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -236,7 +227,11 @@ export default function AdminMerchantsScreen({ navigation }) {
           data={filtered}
           keyExtractor={item => item.id?.toString()}
           renderItem={({ item }) => (
-            <MerchantCard merchant={item} onToggleSuspend={handleToggleSuspend} />
+            <MerchantCard
+              merchant={item}
+              onToggleSuspend={handleToggleSuspend}
+              onPress={() => navigation.navigate('AdminMerchantDetail', { merchantId: item.id })}
+            />
           )}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={COLORS.accent} />

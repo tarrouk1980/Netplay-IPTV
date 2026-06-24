@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  StatusBar, Alert,
+  StatusBar, Alert, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
@@ -12,29 +12,12 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB', orange: '#E67E22',
 };
 
-const MOCK = {
-  id: 'MRC-0041', name: 'Pizza Roma', category: '🍕 Restauration', owner: 'Hamdi Belkacem',
-  phone: '+216 71 441 200', email: 'contact@pizzaroma.tn',
-  address: '12 Rue de Carthage, Tunis', zone: 'Tunis Centre',
-  status: 'active', verified: true, joinDate: '10 janvier 2024',
-  rating: 4.6, totalOrders: 2841, completionRate: 96.2,
-  revenueMonth: 18400, revenueTotal: 142000,
-  products: 34, avgDelivery: '28 min',
-  docs: [
-    { label: 'Patente commerciale', status: 'valid', expires: '12/2026' },
-    { label: 'Registre de commerce', status: 'valid', expires: '—' },
-    { label: 'Certificat sanitaire', status: 'warning', expires: '30/07/2026' },
-  ],
-  recentOrders: [
-    { id: 'ORD-4441', client: 'Sana B.', amount: 24.50, status: 'completed', date: 'Auj. 15:02' },
-    { id: 'ORD-4440', client: 'Karim L.', amount: 38.00, status: 'completed', date: 'Auj. 14:20' },
-    { id: 'ORD-4439', client: 'Ines M.', amount: 14.00, status: 'cancelled', date: 'Hier 20:10' },
-  ],
-};
-
 const STATUS_META = {
-  completed: { label: 'Terminé', color: COLORS.green },
-  cancelled:  { label: 'Annulé', color: COLORS.red },
+  COMPLETED: { label: 'Terminé', color: COLORS.green },
+  CANCELLED: { label: 'Annulé', color: COLORS.red },
+  PENDING: { label: 'En attente', color: COLORS.orange },
+  ACCEPTED: { label: 'En cours', color: COLORS.blue },
+  IN_PROGRESS: { label: 'En cours', color: COLORS.blue },
 };
 const DOC_META = {
   valid:   { label: 'Valide', color: COLORS.green },
@@ -42,15 +25,32 @@ const DOC_META = {
   expired: { label: 'Expiré', color: COLORS.red },
 };
 
-export default function AdminMerchantDetailScreen({ navigation }) {
+export default function AdminMerchantDetailScreen({ navigation, route }) {
+  const merchantId = route?.params?.merchantId;
   const [tab, setTab] = useState('info');
   const [suspending, setSuspending] = useState(false);
+  const [merchant, setMerchant] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [erreur, setErreur] = useState(false);
+
+  const charger = useCallback(() => {
+    if (!merchantId) { setLoading(false); setErreur(true); return; }
+    setLoading(true);
+    setErreur(false);
+    api.get(`/api/admin/merchants/${merchantId}`)
+      .then((r) => setMerchant(r.data.merchant))
+      .catch(() => setErreur(true))
+      .finally(() => setLoading(false));
+  }, [merchantId]);
+
+  useEffect(() => { charger(); }, [charger]);
 
   const suspendMerchant = async () => {
     setSuspending(true);
     try {
-      await api.patch(`/api/admin/merchants/${MOCK.id}/suspend`);
+      await api.patch(`/api/admin/merchants/${merchant.id}/suspend`);
       Alert.alert('Succès', 'Le compte a été suspendu.');
+      charger();
     } catch (err) {
       Alert.alert('Erreur', "Impossible de suspendre le compte. Réessayez.");
     } finally {
@@ -60,7 +60,7 @@ export default function AdminMerchantDetailScreen({ navigation }) {
 
   const confirmAction = (action, label) => {
     if (action === 'suspend') {
-      Alert.alert(label, `Confirmer pour ${MOCK.name} ?`, [
+      Alert.alert(label, `Confirmer pour ${merchant.name} ?`, [
         { text: 'Annuler', style: 'cancel' },
         { text: 'Confirmer', style: 'destructive', onPress: suspendMerchant },
       ]);
@@ -69,6 +69,30 @@ export default function AdminMerchantDetailScreen({ navigation }) {
     // No backend endpoint exists yet for contact / payout / commission / export actions.
     Alert.alert(label, 'Cette action n\'est pas encore disponible.');
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.root}>
+        <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 80 }} />
+      </SafeAreaView>
+    );
+  }
+
+  if (erreur || !merchant) {
+    return (
+      <SafeAreaView style={styles.root}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <Text style={{ fontSize: 40 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, marginTop: 12, textAlign: 'center' }}>
+            Impossible de récupérer la fiche marchand.
+          </Text>
+          <TouchableOpacity onPress={charger} style={{ marginTop: 16, backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
+            <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.root}>
@@ -79,9 +103,9 @@ export default function AdminMerchantDetailScreen({ navigation }) {
           <Text style={{ color: COLORS.accent, fontSize: 24 }}>‹</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Fiche marchand</Text>
-        <View style={[styles.statusPill, { backgroundColor: MOCK.status === 'active' ? COLORS.green + '22' : COLORS.red + '22' }]}>
-          <Text style={{ color: MOCK.status === 'active' ? COLORS.green : COLORS.red, fontSize: 11, fontWeight: '700' }}>
-            {MOCK.status === 'active' ? 'Actif' : 'Suspendu'}
+        <View style={[styles.statusPill, { backgroundColor: merchant.status === 'active' ? COLORS.green + '22' : COLORS.red + '22' }]}>
+          <Text style={{ color: merchant.status === 'active' ? COLORS.green : COLORS.red, fontSize: 11, fontWeight: '700' }}>
+            {merchant.status === 'active' ? 'Actif' : 'Suspendu'}
           </Text>
         </View>
       </View>
@@ -92,12 +116,12 @@ export default function AdminMerchantDetailScreen({ navigation }) {
           <Text style={{ fontSize: 34 }}>🍕</Text>
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={styles.merchantName}>{MOCK.name}</Text>
-          <Text style={styles.merchantCat}>{MOCK.category} · {MOCK.id}</Text>
-          <Text style={styles.merchantOwner}>👤 {MOCK.owner} · {MOCK.phone}</Text>
+          <Text style={styles.merchantName}>{merchant.name}</Text>
+          <Text style={styles.merchantCat}>{merchant.category} · {merchant.id}</Text>
+          <Text style={styles.merchantOwner}>👤 {merchant.owner} · {merchant.phone}</Text>
           <View style={styles.pillRow}>
-            {MOCK.verified && <View style={styles.verifiedPill}><Text style={styles.verifiedText}>✅ Vérifié</Text></View>}
-            <Text style={styles.ratingText}>⭐ {MOCK.rating}</Text>
+            {merchant.verified && <View style={styles.verifiedPill}><Text style={styles.verifiedText}>✅ Vérifié</Text></View>}
+            <Text style={styles.ratingText}>⭐ {merchant.rating?.toFixed(1) ?? '—'}</Text>
           </View>
         </View>
       </View>
@@ -121,12 +145,11 @@ export default function AdminMerchantDetailScreen({ navigation }) {
           <>
             <View style={styles.kpiGrid}>
               {[
-                { label: 'Commandes total', value: MOCK.totalOrders.toLocaleString(), color: COLORS.white },
-                { label: 'CA ce mois', value: `${MOCK.revenueMonth.toLocaleString()} TND`, color: COLORS.accent },
-                { label: 'CA total', value: `${(MOCK.revenueTotal / 1000).toFixed(0)}k TND`, color: COLORS.blue },
-                { label: 'Complétion', value: `${MOCK.completionRate}%`, color: COLORS.green },
-                { label: 'Produits', value: MOCK.products, color: COLORS.white },
-                { label: 'Livraison moy.', value: MOCK.avgDelivery, color: COLORS.muted },
+                { label: 'Commandes total', value: merchant.totalOrders.toLocaleString(), color: COLORS.white },
+                { label: 'CA ce mois', value: `${merchant.revenueMonth.toLocaleString()} TND`, color: COLORS.accent },
+                { label: 'CA total', value: `${(merchant.revenueTotal / 1000).toFixed(1)}k TND`, color: COLORS.blue },
+                { label: 'Complétion', value: `${merchant.completionRate}%`, color: COLORS.green },
+                { label: 'Produits', value: merchant.products, color: COLORS.white },
               ].map((k, i) => (
                 <View key={i} style={styles.kpiCard}>
                   <Text style={[styles.kpiVal, { color: k.color }]}>{k.value}</Text>
@@ -135,23 +158,25 @@ export default function AdminMerchantDetailScreen({ navigation }) {
               ))}
             </View>
             <View style={styles.infoCard}>
-              <Text style={styles.infoRow}>📍 Adresse : <Text style={{ color: COLORS.white }}>{MOCK.address}</Text></Text>
-              <Text style={styles.infoRow}>🗺️ Zone : <Text style={{ color: COLORS.white }}>{MOCK.zone}</Text></Text>
-              <Text style={styles.infoRow}>📅 Inscrit le : <Text style={{ color: COLORS.white }}>{MOCK.joinDate}</Text></Text>
-              <Text style={styles.infoRow}>✉️ Email : <Text style={{ color: COLORS.accent }}>{MOCK.email}</Text></Text>
+              <Text style={styles.infoRow}>📍 Adresse : <Text style={{ color: COLORS.white }}>{merchant.address}</Text></Text>
+              <Text style={styles.infoRow}>📅 Inscrit le : <Text style={{ color: COLORS.white }}>{new Date(merchant.joinDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</Text></Text>
+              <Text style={styles.infoRow}>✉️ Email : <Text style={{ color: COLORS.accent }}>{merchant.email || '—'}</Text></Text>
             </View>
           </>
         )}
 
         {tab === 'orders' && (
           <>
-            {MOCK.recentOrders.map(o => {
-              const meta = STATUS_META[o.status];
+            {merchant.recentOrders.length === 0 && (
+              <Text style={{ color: COLORS.muted, textAlign: 'center', marginTop: 24 }}>Aucune commande</Text>
+            )}
+            {merchant.recentOrders.map(o => {
+              const meta = STATUS_META[o.status] || { label: o.status, color: COLORS.muted };
               return (
                 <View key={o.id} style={styles.orderRow}>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.orderId}>{o.id} · {o.client}</Text>
-                    <Text style={styles.orderDate}>{o.date}</Text>
+                    <Text style={styles.orderDate}>{new Date(o.date).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</Text>
                   </View>
                   <Text style={[styles.orderStatus, { color: meta.color }]}>{meta.label}</Text>
                   <Text style={styles.orderAmount}>{o.amount.toFixed(2)} TND</Text>
@@ -163,13 +188,16 @@ export default function AdminMerchantDetailScreen({ navigation }) {
 
         {tab === 'docs' && (
           <>
-            {MOCK.docs.map(d => {
-              const meta = DOC_META[d.status];
+            {merchant.docs.length === 0 && (
+              <Text style={{ color: COLORS.muted, textAlign: 'center', marginTop: 24 }}>Aucun document</Text>
+            )}
+            {merchant.docs.map((d, i) => {
+              const meta = DOC_META[d.status] || { label: d.status || '—', color: COLORS.muted };
               return (
-                <View key={d.label} style={[styles.docCard, { borderColor: meta.color + '55' }]}>
+                <View key={d.label || i} style={[styles.docCard, { borderColor: meta.color + '55' }]}>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.docLabel}>{d.label}</Text>
-                    <Text style={styles.docExpire}>Expire : {d.expires}</Text>
+                    <Text style={styles.docLabel}>{d.label || `Document ${i + 1}`}</Text>
+                    <Text style={styles.docExpire}>Expire : {d.expires || '—'}</Text>
                   </View>
                   <View style={[styles.docBadge, { backgroundColor: meta.color + '22' }]}>
                     <Text style={{ color: meta.color, fontSize: 12, fontWeight: '700' }}>{meta.label}</Text>
