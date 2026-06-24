@@ -17,13 +17,6 @@ const TYPE_LABELS = { BREAKDOWN: 'Panne moteur', FLAT_TIRE: 'Crevaison', BATTERY
 const STATUS_COLORS = { COMPLETED: COLORS.green, CANCELLED: COLORS.red, IN_PROGRESS: COLORS.blue, PENDING: COLORS.orange };
 const STATUS_LABELS = { COMPLETED: 'Terminé', CANCELLED: 'Annulé', IN_PROGRESS: 'En cours', PENDING: 'En attente' };
 
-const MOCK = [
-  { id: 'SOS001', type: 'FLAT_TIRE', location: 'Autoroute A1, km 42', techName: 'Karim M.', amount: 45.000, status: 'COMPLETED', date: '03/06/2026 16:20', duration: '28 min' },
-  { id: 'SOS002', type: 'BATTERY', location: 'Av. Habib Bourguiba, Tunis', techName: 'Sami T.', amount: 35.000, status: 'COMPLETED', date: '01/06/2026 09:15', duration: '22 min' },
-  { id: 'SOS003', type: 'BREAKDOWN', location: 'Route de La Marsa', techName: null, amount: 0, status: 'CANCELLED', date: '28/05/2026 14:40', duration: null },
-  { id: 'SOS004', type: 'FUEL', location: 'El Mourouj 6', techName: 'Nour B.', amount: 15.000, status: 'COMPLETED', date: '20/05/2026 18:55', duration: '15 min' },
-];
-
 function SOSCard({ item }) {
   const sc = STATUS_COLORS[item.status] || COLORS.muted;
   return (
@@ -72,14 +65,25 @@ export default function SOSHistoryScreen({ navigation }) {
   const load = useCallback(() => {
     api.get('/api/sos/history')
       .then(r => {
-        const data = r.data.items || MOCK;
+        const orders = r.data.orders || [];
+        const data = orders.map(o => ({
+          id: o.id,
+          type: o.metadata?.sosType || 'OTHER',
+          location: o.originAddress || '—',
+          techName: o.provider?.name || null,
+          amount: o.finalPrice ?? o.price ?? 0,
+          status: o.status,
+          date: o.completedAt || o.createdAt,
+          duration: null,
+        }));
         setItems(data);
         const done = data.filter(d => d.status === 'COMPLETED');
         setStats({ total: done.length, spent: done.reduce((s, d) => s + d.amount, 0) });
       })
-      .catch(() => {
-        setItems(MOCK);
-        setStats({ total: 3, spent: 95.000 });
+      .catch((err) => {
+        console.error('[SOSHistoryScreen] load failed', err);
+        setItems([]);
+        setStats({ total: 0, spent: 0 });
       })
       .finally(() => setLoading(false));
   }, []);
