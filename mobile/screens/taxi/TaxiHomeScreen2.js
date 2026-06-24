@@ -24,12 +24,22 @@ export default function TaxiHomeScreen2({ navigation }) {
   const [location, setLocation] = useState(null);
   const [locLoading, setLocLoading] = useState(true);
   const [selectedType, setSelectedType] = useState('STANDARD');
-  const [nearbyCount, setNearbyCount] = useState({ STANDARD: 4, CONFORT: 2, EASYLADY: 1, EASYACCESS: 1 });
+  const [nearbyCount, setNearbyCount] = useState({ STANDARD: 0, CONFORT: 0, EASYLADY: 0, EASYACCESS: 0 });
 
   useEffect(() => {
     getCurrentLocationWithAddress().then(loc => {
       setLocation(loc);
       setLocLoading(false);
+      if (loc?.coords) {
+        // /api/taxi/nearby returns generic geo-matched TAXI providers (no per-subtype
+        // breakdown available server-side), so we surface the same live count for all types.
+        api.get(`/api/taxi/nearby?lat=${loc.coords.latitude}&lng=${loc.coords.longitude}&radius=5`)
+          .then(res => {
+            const count = res.data?.count ?? (res.data?.providers || []).length;
+            setNearbyCount({ STANDARD: count, CONFORT: count, EASYLADY: count, EASYACCESS: count });
+          })
+          .catch(() => {});
+      }
     }).catch(() => setLocLoading(false));
   }, []);
 

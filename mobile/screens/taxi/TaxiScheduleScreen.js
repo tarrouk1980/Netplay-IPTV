@@ -49,9 +49,13 @@ export default function TaxiScheduleScreen({ navigation }) {
     }
     setSubmitting(true);
     try {
+      const scheduledAt = new Date(`${selectedDay}T${hour}:${minute}:00`).toISOString();
       await api.post('/api/taxi/schedule', {
-        taxiType, date: selectedDay, time: `${hour}:${minute}`,
-        from: from.trim(), to: to.trim(), notes: notes.trim(),
+        taxiType,
+        scheduledAt,
+        originAddress: from.trim(),
+        destinationAddress: to.trim(),
+        note: notes.trim(),
       });
       Alert.alert(
         '✅ Réservation programmée !',

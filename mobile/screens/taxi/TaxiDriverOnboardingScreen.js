@@ -60,12 +60,22 @@ export default function TaxiDriverOnboardingScreen({ navigation }) {
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
-      await api.post('/api/taxi/driver/register', { infos, vehicle, docs: Object.keys(uploadedDocs) });
-      navigation.replace('ProviderDocuments', { role: 'CHAUFFEUR' });
-    } catch {
-      Alert.alert('✅ Dossier envoyé !', 'Votre candidature est en cours d\'examen. Vous recevrez une réponse sous 48h.', [
-        { text: 'OK', onPress: () => navigation.replace('Login') },
-      ]);
+      await api.post('/api/users/provider-onboarding', {
+        role: 'CHAUFFEUR',
+        name: `${infos.firstName} ${infos.lastName}`.trim(),
+        phone: infos.phone,
+        cin: uploadedDocs.cin ? 'uploaded' : '',
+        city: infos.city,
+        vehicle,
+        hasDocuments: Object.keys(uploadedDocs).length > 0,
+      });
+      Alert.alert(
+        '✅ Dossier envoyé !',
+        'Votre candidature est en cours d\'examen. Vous recevrez une réponse sous 48h.',
+        [{ text: 'OK', onPress: () => navigation.replace('Login') }]
+      );
+    } catch (err) {
+      Alert.alert('Erreur', err?.response?.data?.error || 'Impossible d\'envoyer votre candidature. Réessayez.');
     } finally { setSubmitting(false); }
   };
 

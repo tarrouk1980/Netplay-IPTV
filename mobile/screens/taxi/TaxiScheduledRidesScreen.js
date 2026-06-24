@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,61 +6,10 @@ import {
   TouchableOpacity,
   Alert,
   StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const COURSES = [
-  {
-    id: '1',
-    depart: 'Aéroport Mohammed V',
-    destination: 'Hôtel Kenzi Tower, Casablanca',
-    date: '04 juin 2026',
-    heure: '08:30',
-    vehicule: 'Berline',
-    prix: '120 MAD',
-    statut: 'Confirmée',
-  },
-  {
-    id: '2',
-    depart: 'Résidence Al Mazar, Rabat',
-    destination: 'Gare de Rabat-Ville',
-    date: '05 juin 2026',
-    heure: '07:00',
-    vehicule: 'Économique',
-    prix: '45 MAD',
-    statut: 'En attente',
-  },
-  {
-    id: '3',
-    depart: 'Centre commercial Morocco Mall',
-    destination: 'Quartier Gauthier, Casablanca',
-    date: '06 juin 2026',
-    heure: '14:15',
-    vehicule: 'SUV',
-    prix: '85 MAD',
-    statut: 'Confirmée',
-  },
-  {
-    id: '4',
-    depart: 'Gare Casa-Port',
-    destination: 'Aéroport Mohammed V',
-    date: '07 juin 2026',
-    heure: '10:00',
-    vehicule: 'Berline',
-    prix: '130 MAD',
-    statut: 'Annulée',
-  },
-  {
-    id: '5',
-    depart: 'Hôpital Ibn Sina, Rabat',
-    destination: 'Hay Riad, Rabat',
-    date: '08 juin 2026',
-    heure: '16:45',
-    vehicule: 'Économique',
-    prix: '35 MAD',
-    statut: 'En attente',
-  },
-];
+import api from '../../services/api';
 
 const COULEUR_STATUT = {
   Confirmée: '#4CAF50',
@@ -68,10 +17,54 @@ const COULEUR_STATUT = {
   Annulée: '#E53935',
 };
 
+function mapStatut(status) {
+  if (status === 'ACCEPTED' || status === 'IN_PROGRESS') return 'Confirmée';
+  if (status === 'CANCELLED') return 'Annulée';
+  return 'En attente';
+}
+
 export default function TaxiScheduledRidesScreen({ navigation }) {
-  const [courses, setCourses] = useState(COURSES);
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const res = await api.get('/api/taxi/schedule/upcoming');
+      const orders = res.data?.orders || [];
+      setCourses(orders.map((o) => {
+        const d = o.metadata?.scheduledAt ? new Date(o.metadata.scheduledAt) : null;
+        return {
+          id: o.id,
+          depart: o.originAddress || '—',
+          destination: o.destinationAddress || '—',
+          date: d ? d.toLocaleDateString('fr-TN', { day: '2-digit', month: 'long', year: 'numeric' }) : '—',
+          heure: d ? d.toLocaleTimeString('fr-TN', { hour: '2-digit', minute: '2-digit' }) : '—',
+          prix: o.price != null ? `${Number(o.price).toFixed(3)} TND` : 'Estimation à venir',
+          statut: mapStatut(o.status),
+        };
+      }));
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   const coursesAVenir = courses.filter((c) => c.statut !== 'Annulée').length;
+
+  const annulerCourse = async (course) => {
+    try {
+      await api.post(`/api/taxi/${course.id}/cancel`, { reason: 'Annulé par le client' });
+      load();
+    } catch {
+      Alert.alert('Erreur', "Impossible d'annuler cette course. Réessayez.");
+    }
+  };
 
   const ouvrirOptions = (course) => {
     Alert.alert(
@@ -83,7 +76,7 @@ export default function TaxiScheduledRidesScreen({ navigation }) {
           onPress: () =>
             Alert.alert(
               'Détails de la course',
-              `Départ : ${course.depart}\nDestination : ${course.destination}\nDate : ${course.date} à ${course.heure}\nVéhicule : ${course.vehicule}\nPrix estimé : ${course.prix}\nStatut : ${course.statut}`
+              `Départ : ${course.depart}\nDestination : ${course.destination}\nDate : ${course.date} à ${course.heure}\nPrix estimé : ${course.prix}\nStatut : ${course.statut}`
             ),
         },
         {
@@ -93,10 +86,7 @@ export default function TaxiScheduledRidesScreen({ navigation }) {
         {
           text: 'Annuler la course',
           style: 'destructive',
-          onPress: () =>
-            setCourses((prev) =>
-              prev.map((c) => (c.id === course.id ? { ...c, statut: 'Annulée' } : c))
-            ),
+          onPress: () => annulerCourse(course),
         },
         { text: 'Fermer', style: 'cancel' },
       ]
@@ -125,7 +115,6 @@ export default function TaxiScheduledRidesScreen({ navigation }) {
         <Text style={styles.infoTexte}>
           📅 {item.date} · {item.heure}
         </Text>
-        <Text style={styles.infoTexte}>🚗 {item.vehicule}</Text>
         <Text style={styles.prix}>{item.prix}</Text>
       </View>
     </TouchableOpacity>
@@ -136,17 +125,35 @@ export default function TaxiScheduledRidesScreen({ navigation }) {
       <View style={styles.entete}>
         <Text style={styles.titre}>Courses planifiées</Text>
         <View style={styles.compteur}>
-          <Text style={styles.compteurTexte}>{coursesAVenir} courses à venir cette semaine</Text>
+          <Text style={styles.compteurTexte}>{coursesAVenir} courses à venir</Text>
         </View>
       </View>
 
-      <FlatList
-        data={courses}
-        keyExtractor={(item) => item.id}
-        renderItem={rendreCourse}
-        contentContainerStyle={styles.liste}
-        showsVerticalScrollIndicator={false}
-      />
+      {loading ? (
+        <ActivityIndicator color="#F5A623" size="large" style={{ marginTop: 60 }} />
+      ) : error ? (
+        <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 30 }}>
+          <Text style={{ color: '#8E8E9A', marginBottom: 16, textAlign: 'center' }}>
+            Impossible de charger vos courses planifiées.
+          </Text>
+          <TouchableOpacity onPress={load} style={{ backgroundColor: '#F5A623', borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 }}>
+            <Text style={{ color: '#0A0A0F', fontWeight: '700' }}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <FlatList
+          data={courses}
+          keyExtractor={(item) => item.id}
+          renderItem={rendreCourse}
+          contentContainerStyle={styles.liste}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={{ alignItems: 'center', marginTop: 60 }}>
+              <Text style={{ color: '#8E8E9A' }}>Aucune course planifiée.</Text>
+            </View>
+          }
+        />
+      )}
 
       <View style={styles.basBouton}>
         <TouchableOpacity

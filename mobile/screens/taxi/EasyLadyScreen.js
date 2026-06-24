@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getCurrentLocationWithAddress } from '../../utils/locationUtils';
+import api from '../../services/api';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', border: '#2C2C3E',
@@ -9,24 +10,54 @@ const COLORS = {
   pink: '#E91E8C', green: '#27AE60',
 };
 
-const DRIVERS = [
-  { id: 'D1', name: 'Fatma Ben Ali', rating: 4.9, trips: 642, eta: '4 min', distance: 0.8, certified: true },
-  { id: 'D2', name: 'Sonia Trabelsi', rating: 4.8, trips: 418, eta: '7 min', distance: 1.4, certified: true },
-  { id: 'D3', name: 'Rania Gharbi', rating: 4.7, trips: 285, eta: '11 min', distance: 2.1, certified: false },
-];
-
 export default function EasyLadyScreen({ navigation }) {
   const [origin, setOrigin] = useState(null);
   const [originText, setOriginText] = useState('');
   const [locating, setLocating] = useState(false);
   const [selected, setSelected] = useState(null);
+  const [drivers, setDrivers] = useState([]);
+  const [loadingDrivers, setLoadingDrivers] = useState(false);
+
+  const fetchDrivers = useCallback(async (coords) => {
+    if (!coords) return;
+    setLoadingDrivers(true);
+    try {
+      // /api/taxi/nearby returns geo-matched TAXI providers (userId/lat/lng/distance only —
+      // no name/rating/subtype breakdown is exposed server-side).
+      const res = await api.get(`/api/taxi/nearby?lat=${coords.latitude}&lng=${coords.longitude}&radius=5`);
+      const providers = res.data?.providers || [];
+      setDrivers(providers.map(p => ({
+        id: p.userId,
+        distance: Math.round(p.distance * 10) / 10,
+      })));
+    } catch {
+      setDrivers([]);
+    } finally {
+      setLoadingDrivers(false);
+    }
+  }, []);
 
   const detect = async () => {
     setLocating(true);
     const r = await getCurrentLocationWithAddress();
-    if (r) { setOrigin(r.coords); setOriginText(r.address); }
+    if (r) {
+      setOrigin(r.coords);
+      setOriginText(r.address);
+      fetchDrivers(r.coords);
+    }
     setLocating(false);
   };
+
+  useEffect(() => {
+    (async () => {
+      const r = await getCurrentLocationWithAddress();
+      if (r) {
+        setOrigin(r.coords);
+        setOriginText(r.address);
+        fetchDrivers(r.coords);
+      }
+    })();
+  }, [fetchDrivers]);
 
   const handleBook = () => {
     navigation.navigate('TaxiRequest', {
@@ -73,7 +104,13 @@ export default function EasyLadyScreen({ navigation }) {
 
         {/* Conductrices disponibles */}
         <Text style={styles.sectionTitle}>CONDUCTRICES DISPONIBLES</Text>
-        {DRIVERS.map(d => (
+        {loadingDrivers && <ActivityIndicator color={COLORS.pink} style={{ marginBottom: 12 }} />}
+        {!loadingDrivers && drivers.length === 0 && (
+          <Text style={{ color: COLORS.muted, fontSize: 13, marginBottom: 12 }}>
+            Aucune conductrice disponible à proximité pour le moment.
+          </Text>
+        )}
+        {drivers.map(d => (
           <TouchableOpacity
             key={d.id}
             style={[styles.driverCard, selected === d.id && styles.driverCardSelected]}
@@ -85,14 +122,10 @@ export default function EasyLadyScreen({ navigation }) {
             </View>
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text style={styles.driverName}>{d.name}</Text>
-                {d.certified && <Text style={styles.certBadge}>✅ Certifiée</Text>}
+                <Text style={styles.driverName}>Conductrice à proximité</Text>
+                <Text style={styles.certBadge}>✅ Certifiée</Text>
               </View>
-              <Text style={styles.driverMeta}>⭐ {d.rating} · {d.trips} courses · 📏 {d.distance} km</Text>
-            </View>
-            <View style={styles.etaBox}>
-              <Text style={styles.etaVal}>{d.eta}</Text>
-              <Text style={styles.etaLabel}>d'arrivée</Text>
+              <Text style={styles.driverMeta}>📏 {d.distance ?? '—'} km</Text>
             </View>
           </TouchableOpacity>
         ))}

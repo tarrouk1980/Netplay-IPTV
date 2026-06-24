@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   StatusBar, TextInput, Alert, ActivityIndicator,
@@ -21,11 +21,6 @@ const TAXI_TYPES = [
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
 const MINUTES = ['00', '15', '30', '45'];
 
-const UPCOMING = [
-  { id: 1, date: 'Demain 08:30', from: 'Maison - La Marsa', to: 'Aéroport Tunis-Carthage', type: 'NORMAL', status: 'CONFIRMED' },
-  { id: 2, date: 'Sam 14:00', from: 'Bureau - Centre-ville', to: 'La Goulette', type: 'EASYLADY', status: 'PENDING' },
-];
-
 export default function TaxiScheduleAdvancedScreen({ navigation }) {
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
@@ -36,6 +31,33 @@ export default function TaxiScheduleAdvancedScreen({ navigation }) {
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState('NEW');
+  const [upcoming, setUpcoming] = useState([]);
+  const [loadingUpcoming, setLoadingUpcoming] = useState(false);
+
+  const loadUpcoming = useCallback(async () => {
+    setLoadingUpcoming(true);
+    try {
+      const res = await api.get('/api/taxi/schedule/upcoming');
+      const orders = res.data?.orders || [];
+      setUpcoming(orders.map((o) => ({
+        id: o.id,
+        date: o.metadata?.scheduledAt
+          ? new Date(o.metadata.scheduledAt).toLocaleString('fr-TN', { weekday: 'short', hour: '2-digit', minute: '2-digit' })
+          : '—',
+        from: o.originAddress,
+        to: o.destinationAddress,
+        status: o.status === 'ACCEPTED' ? 'CONFIRMED' : 'PENDING',
+      })));
+    } catch {
+      setUpcoming([]);
+    } finally {
+      setLoadingUpcoming(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (tab === 'UPCOMING') loadUpcoming();
+  }, [tab, loadUpcoming]);
 
   const today = new Date();
   const dates = Array.from({ length: 7 }, (_, i) => {
@@ -74,7 +96,18 @@ export default function TaxiScheduleAdvancedScreen({ navigation }) {
   const cancelBooking = (id) => {
     Alert.alert('Annuler', 'Annuler cette réservation ?', [
       { text: 'Non', style: 'cancel' },
-      { text: 'Oui, annuler', style: 'destructive', onPress: () => {} },
+      {
+        text: 'Oui, annuler',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await api.post(`/api/taxi/${id}/cancel`, { reason: 'Annulé par le client' });
+            loadUpcoming();
+          } catch {
+            Alert.alert('Erreur', "Impossible d'annuler cette réservation. Réessayez.");
+          }
+        },
+      },
     ]);
   };
 
@@ -179,13 +212,15 @@ export default function TaxiScheduleAdvancedScreen({ navigation }) {
 
         {tab === 'UPCOMING' && (
           <>
-            {UPCOMING.length === 0 ? (
+            {loadingUpcoming ? (
+              <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} />
+            ) : upcoming.length === 0 ? (
               <View style={styles.empty}>
                 <Text style={{ fontSize: 48, marginBottom: 12 }}>📅</Text>
                 <Text style={styles.emptyText}>Aucune réservation à venir</Text>
               </View>
             ) : (
-              UPCOMING.map(r => (
+              upcoming.map(r => (
                 <View key={r.id} style={styles.reservCard}>
                   <View style={styles.reservTop}>
                     <Text style={styles.reservDate}>{r.date}</Text>

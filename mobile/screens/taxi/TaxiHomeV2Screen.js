@@ -10,8 +10,11 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native';
+import api from '../../services/api';
 
 const { width } = Dimensions.get('window');
+
+const MAPBOX_TOKEN = 'pk.eyJ1IjoiZWFzeXdheXRhcmVrIiwiYSI6ImNtcHNuaGJ1ODBoc2Qyc3FxenU0aGFvd3QifQ.K-z5zbFtY8v5lyMUn7TryQ';
 
 const COLORS = {
   background: '#121212',
@@ -35,9 +38,9 @@ const QUICK_DESTINATIONS = [
 ];
 
 const VEHICLE_TYPES = [
-  { id: '1', type: 'Standard', icon: '🚗', baseFare: 3.0, ratePerKm: 0.5, waitTime: 3, available: 8 },
-  { id: '2', type: 'Confort', icon: '🚙', baseFare: 5.0, ratePerKm: 0.8, waitTime: 5, available: 4 },
-  { id: '3', type: 'VAN', icon: '🚐', baseFare: 7.0, ratePerKm: 1.0, waitTime: 8, available: 2 },
+  { id: '1', type: 'Standard', icon: '🚗', baseFare: 3.0, ratePerKm: 0.5, waitTime: 3 },
+  { id: '2', type: 'Confort', icon: '🚙', baseFare: 5.0, ratePerKm: 0.8, waitTime: 5 },
+  { id: '3', type: 'VAN', icon: '🚐', baseFare: 7.0, ratePerKm: 1.0, waitTime: 8 },
 ];
 
 const USER_LAT = 36.8065;
@@ -65,7 +68,15 @@ export default function TaxiHomeV2Screen({ navigation }) {
   const [selectedDestination, setSelectedDestination] = useState(null);
   const [selectedVehicle, setSelectedVehicle] = useState(VEHICLE_TYPES[0]);
   const [distance, setDistance] = useState(0);
-  const totalAvailable = VEHICLE_TYPES.reduce((sum, v) => sum + v.available, 0);
+  const [totalAvailable, setTotalAvailable] = useState(0);
+
+  useEffect(() => {
+    // /api/taxi/nearby returns the count of geo-matched TAXI providers near the user
+    // (no per-vehicle-type breakdown is exposed server-side).
+    api.get(`/api/taxi/nearby?lat=${USER_LAT}&lng=${USER_LNG}&radius=5`)
+      .then(res => setTotalAvailable(res.data?.count ?? (res.data?.providers || []).length))
+      .catch(() => setTotalAvailable(0));
+  }, []);
 
   useEffect(() => {
     if (selectedDestination) {
@@ -79,7 +90,7 @@ export default function TaxiHomeV2Screen({ navigation }) {
     }
   }, [selectedDestination]);
 
-  const mapUrl = `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/pin-s+FF6F00(${USER_LNG},${USER_LAT})/${USER_LNG},${USER_LAT},13,0/400x200@2x?access_token=pk.placeholder`;
+  const mapUrl = `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/pin-s+FF6F00(${USER_LNG},${USER_LAT})/${USER_LNG},${USER_LAT},13,0/400x200@2x?access_token=${MAPBOX_TOKEN}`;
 
   return (
     <View style={styles.container}>
@@ -166,7 +177,6 @@ export default function TaxiHomeV2Screen({ navigation }) {
             <View style={styles.vehicleInfo}>
               <Text style={styles.vehicleType}>{vehicle.type}</Text>
               <Text style={styles.vehicleWait}>⏱ {vehicle.waitTime} min</Text>
-              <Text style={styles.vehicleAvailable}>{vehicle.available} disponibles</Text>
             </View>
             <View style={styles.vehiclePrice}>
               <Text style={styles.vehiclePriceLabel}>À partir de</Text>

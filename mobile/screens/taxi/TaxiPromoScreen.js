@@ -12,11 +12,6 @@ const COLORS = {
   border: '#2A2A3A', green: '#27AE60', red: '#D32F2F', purple: '#8E44AD',
 };
 
-const ACTIVE_PROMOS = [
-  { id: 'P1', code: 'FLASH30', desc: '-30% sur EasyTaxy', discount: 30, type: 'percent', expiresAt: 'Ce soir 23h59', usesLeft: 1 },
-  { id: 'P2', code: 'BIENVENUE', desc: 'Bienvenue − 5 TND', discount: 5, type: 'fixed', expiresAt: '31/01/2025', usesLeft: 1 },
-];
-
 const SUGGESTIONS = [
   { code: 'EASY10', desc: '-10% code ami', emoji: '🎁' },
   { code: 'WEEKEND', desc: '-15% week-end', emoji: '🎉' },
@@ -26,7 +21,15 @@ const SUGGESTIONS = [
 export default function TaxiPromoScreen({ navigation }) {
   const [input, setInput] = useState('');
   const [applying, setApplying] = useState(false);
-  const [appliedPromos, setAppliedPromos] = useState(ACTIVE_PROMOS);
+  const [appliedPromos, setAppliedPromos] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.get('/api/promo/my-codes')
+      .then(res => setAppliedPromos(res.data?.codes || res.data?.promos || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
   const handleApply = async (code) => {
     const trimmed = (code || input).trim().toUpperCase();
@@ -90,7 +93,8 @@ export default function TaxiPromoScreen({ navigation }) {
         </View>
 
         {/* Active promos */}
-        {appliedPromos.length > 0 && (
+        {loading && <ActivityIndicator color={COLORS.accent} style={{ marginBottom: 16 }} />}
+        {!loading && appliedPromos.length > 0 && (
           <>
             <Text style={styles.sectionLabel}>Codes actifs</Text>
             {appliedPromos.map(p => (

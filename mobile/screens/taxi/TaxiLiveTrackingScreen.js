@@ -1,14 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   Alert,
-  Animated,
   ScrollView,
+  ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COULEURS = {
   fond: '#0A0A0F',
@@ -19,162 +21,126 @@ const COULEURS = {
   bordure: '#2C2C3A',
 };
 
-const CHAUFFEUR = {
-  nom: 'Karim B.',
-  nomComplet: 'Karim Bouazizi',
-  voiture: 'Hyundai Accent',
-  plaque: 'TN-4521-B',
-  note: 4.8,
-  avatar: 'KB',
-  couleurVoiture: 'Blanc',
-};
-
-const POSITIONS_TAXI = [
-  { x: 20, y: 70 },
-  { x: 28, y: 62 },
-  { x: 36, y: 55 },
-  { x: 44, y: 48 },
-  { x: 52, y: 42 },
-  { x: 60, y: 36 },
-  { x: 68, y: 30 },
-];
-
 const ETAPES = [
-  { label: 'Confirmé', icone: '✅' },
-  { label: 'En route', icone: '🚕' },
-  { label: 'Arrivé', icone: '🏁' },
+  { key: 'ACCEPTED', label: 'Confirmé', icone: '✅' },
+  { key: 'IN_PROGRESS', label: 'En route', icone: '🚕' },
+  { key: 'COMPLETED', label: 'Arrivé', icone: '🏁' },
 ];
 
-const DUREE_INITIALE = 5 * 60;
+export default function TaxiLiveTrackingScreen({ navigation, route }) {
+  const { orderId } = route?.params || {};
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-export default function TaxiLiveTrackingScreen({ navigation }) {
-  const [secondesRestantes, setSecondesRestantes] = useState(DUREE_INITIALE);
-  const [indexPosition, setIndexPosition] = useState(0);
-  const [etapeActive, setEtapeActive] = useState(1);
-  const posAnim = useRef(
-    new Animated.ValueXY({ x: POSITIONS_TAXI[0].x, y: POSITIONS_TAXI[0].y })
-  ).current;
-
-  useEffect(() => {
-    const timerCompte = setInterval(() => {
-      setSecondesRestantes((prev) => {
-        if (prev <= 0) {
-          clearInterval(timerCompte);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(timerCompte);
-  }, []);
+  const load = useCallback(() => {
+    if (!orderId) { setLoading(false); return; }
+    api.get(`/api/taxi/${orderId}`)
+      .then((r) => { setOrder(r.data.order); setError(false); })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, [orderId]);
 
   useEffect(() => {
-    const timerPos = setInterval(() => {
-      setIndexPosition((prev) => {
-        const prochainIndex = Math.min(prev + 1, POSITIONS_TAXI.length - 1);
-        const prochainePos = POSITIONS_TAXI[prochainIndex];
-        Animated.timing(posAnim, {
-          toValue: { x: prochainePos.x, y: prochainePos.y },
-          duration: 1800,
-          useNativeDriver: false,
-        }).start();
-        if (prochainIndex >= POSITIONS_TAXI.length - 1) {
-          setEtapeActive(2);
-          clearInterval(timerPos);
-        }
-        return prochainIndex;
-      });
-    }, 2000);
-    return () => clearInterval(timerPos);
-  }, []);
+    load();
+    const t = setInterval(load, 8000);
+    return () => clearInterval(t);
+  }, [load]);
 
-  const formatTemps = (secondes) => {
-    const m = Math.floor(secondes / 60).toString().padStart(2, '0');
-    const s = (secondes % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
-  };
+  useEffect(() => {
+    if (order?.status === 'COMPLETED') {
+      navigation?.replace?.('TaxiRating', { orderId, driverName: order.provider?.name });
+    }
+  }, [order?.status]);
 
   const appelerChauffeur = () => {
+    const phone = order?.provider?.phone;
+    if (!phone) return;
     Alert.alert(
-      "Appel en cours",
-      `Appel vers ${CHAUFFEUR.nomComplet} — Véhicule : ${CHAUFFEUR.voiture} (${CHAUFFEUR.plaque})`,
-      [{ text: "Raccrocher", style: "destructive" }, { text: "OK" }]
+      'Appeler le chauffeur',
+      `Voulez-vous appeler ${order.provider.name} ?`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Appeler', onPress: () => Linking.openURL(`tel:${phone}`) },
+      ]
     );
   };
 
   const envoyerMessage = () => {
-    Alert.alert(
-      "Message",
-      "Fonctionnalité de messagerie bientôt disponible.",
-      [{ text: "OK" }]
-    );
+    navigation?.navigate?.('Chat', { chauffeurNom: order?.provider?.name });
   };
 
   const annulerCourse = () => {
     Alert.alert(
-      "Annuler la course",
+      'Annuler la course',
       "Des frais d'annulation peuvent s'appliquer. Confirmer l'annulation ?",
       [
-        { text: "Retour", style: "cancel" },
+        { text: 'Retour', style: 'cancel' },
         {
-          text: "Annuler la course",
-          style: "destructive",
-          onPress: () => navigation && navigation.goBack(),
+          text: 'Annuler la course',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await api.post(`/api/taxi/${orderId}/cancel`, { reason: 'Annulé par le client' });
+              navigation?.goBack?.();
+            } catch (e) {
+              Alert.alert('Erreur', e?.response?.data?.error || "Impossible d'annuler la course.");
+            }
+          },
         },
       ]
     );
   };
 
+  if (!orderId) {
+    return (
+      <SafeAreaView style={[styles.conteneur, { alignItems: 'center', justifyContent: 'center', padding: 30 }]}>
+        <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+        <Text style={{ color: COULEURS.discret, textAlign: 'center' }}>Aucune course active.</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.conteneur, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator color={COULEURS.primaire} size="large" />
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !order) {
+    return (
+      <SafeAreaView style={[styles.conteneur, { alignItems: 'center', justifyContent: 'center', padding: 30 }]}>
+        <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+        <Text style={{ color: COULEURS.discret, textAlign: 'center', marginBottom: 16 }}>
+          Impossible de charger la course.
+        </Text>
+        <TouchableOpacity onPress={load} style={{ backgroundColor: COULEURS.primaire, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 }}>
+          <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
+  const vehicle = Array.isArray(order.provider?.vehicle) ? order.provider.vehicle[0] : order.provider?.vehicle;
+  const etapeActive = order.status === 'IN_PROGRESS' ? 1 : order.status === 'COMPLETED' ? 2 : 0;
+  const initiales = order.provider?.name
+    ? order.provider.name.split(' ').map((p) => p[0]).slice(0, 2).join('')
+    : '?';
+
   return (
     <SafeAreaView style={styles.conteneur}>
       <View style={styles.entete}>
-        <Text style={styles.titreEcran}>Votre chauffeur arrive</Text>
-        <View style={styles.etaBloc}>
-          <Text style={styles.etaLabel}>Arrivée dans</Text>
-          <Text style={[styles.etaTimer, secondesRestantes < 60 && styles.etaUrgent]}>
-            {formatTemps(secondesRestantes)}
-          </Text>
-        </View>
-      </View>
-
-      {/* Carte simulée */}
-      <View style={styles.carteSimulee}>
-        {Array.from({ length: 6 }).map((_, i) => (
-          <View key={`h${i}`} style={[styles.grilleLigne, { top: `${(i + 1) * 14}%` }]} />
-        ))}
-        {Array.from({ length: 6 }).map((_, i) => (
-          <View key={`v${i}`} style={[styles.grilleColonne, { left: `${(i + 1) * 14}%` }]} />
-        ))}
-
-        <View style={[styles.pinClient, { left: '70%', top: '22%' }]}>
-          <Text style={styles.pinEmoji}>🔴</Text>
-          <Text style={styles.pinLabel}>Vous</Text>
-        </View>
-
-        <Animated.View
-          style={[
-            styles.pinTaxi,
-            {
-              left: posAnim.x.interpolate({
-                inputRange: [0, 100],
-                outputRange: ['0%', '100%'],
-              }),
-              top: posAnim.y.interpolate({
-                inputRange: [0, 100],
-                outputRange: ['0%', '100%'],
-              }),
-            },
-          ]}
-        >
-          <Text style={styles.pinEmoji}>🚕</Text>
-          <Text style={styles.pinLabel}>Taxi</Text>
-        </Animated.View>
+        <Text style={styles.titreEcran}>
+          {order.status === 'ACCEPTED' ? 'Votre chauffeur arrive' : order.status === 'IN_PROGRESS' ? 'Course en cours' : 'En attente'}
+        </Text>
       </View>
 
       {/* Stepper */}
       <View style={styles.progressionBloc}>
         {ETAPES.map((etape, index) => (
-          <View key={etape.label} style={styles.etapeRangee}>
+          <View key={etape.key} style={styles.etapeRangee}>
             <View style={styles.etapeGauche}>
               <View
                 style={[
@@ -208,31 +174,37 @@ export default function TaxiLiveTrackingScreen({ navigation }) {
       <ScrollView style={styles.carteDefilement} showsVerticalScrollIndicator={false}>
         {/* Statut */}
         <View style={styles.statutBandeau}>
-          <Text style={styles.statutTexte}>🚕  Votre chauffeur est en route</Text>
+          <Text style={styles.statutTexte}>🚕  {order.provider?.name ? 'Votre chauffeur est en route' : "Recherche d'un chauffeur..."}</Text>
         </View>
 
         {/* Infos chauffeur */}
-        <View style={styles.chauffeurCarte}>
-          <View style={styles.chauffeurAvatar}>
-            <Text style={styles.avatarTexte}>{CHAUFFEUR.avatar}</Text>
-          </View>
-          <View style={styles.chauffeurInfo}>
-            <Text style={styles.chauffeurNom}>{CHAUFFEUR.nomComplet}</Text>
-            <Text style={styles.chauffeurVoiture}>{CHAUFFEUR.voiture} · {CHAUFFEUR.couleurVoiture}</Text>
-            <View style={styles.chauffeurMeta}>
-              <Text style={styles.chauffeurNote}>⭐ {CHAUFFEUR.note}</Text>
+        {order.provider && (
+          <View style={styles.chauffeurCarte}>
+            <View style={styles.chauffeurAvatar}>
+              <Text style={styles.avatarTexte}>{initiales}</Text>
+            </View>
+            <View style={styles.chauffeurInfo}>
+              <Text style={styles.chauffeurNom}>{order.provider.name}</Text>
+              {vehicle && (
+                <Text style={styles.chauffeurVoiture}>{vehicle.make} {vehicle.model}{vehicle.color ? ` · ${vehicle.color}` : ''}</Text>
+              )}
+              <View style={styles.chauffeurMeta}>
+                <Text style={styles.chauffeurNote}>⭐ {Number(order.provider.rating || 0).toFixed(1)}</Text>
+              </View>
             </View>
           </View>
-        </View>
+        )}
 
         {/* Plaque d'immatriculation */}
-        <View style={styles.plaqueConteneur}>
-          <Text style={styles.plaqueEtiquette}>Plaque d'immatriculation</Text>
-          <View style={styles.plaqueAffichage}>
-            <Text style={styles.plaqueTexte}>{CHAUFFEUR.plaque}</Text>
+        {vehicle?.plate && (
+          <View style={styles.plaqueConteneur}>
+            <Text style={styles.plaqueEtiquette}>Plaque d'immatriculation</Text>
+            <View style={styles.plaqueAffichage}>
+              <Text style={styles.plaqueTexte}>{vehicle.plate}</Text>
+            </View>
+            <Text style={styles.plaqueConseil}>Vérifiez la plaque avant de monter dans le véhicule</Text>
           </View>
-          <Text style={styles.plaqueConseil}>Vérifiez la plaque avant de monter dans le véhicule</Text>
-        </View>
+        )}
 
         {/* Boutons actions */}
         <View style={styles.boutonsRangee}>
@@ -247,9 +219,11 @@ export default function TaxiLiveTrackingScreen({ navigation }) {
         </View>
 
         {/* Bouton annulation */}
-        <TouchableOpacity style={styles.boutonAnnuler} onPress={annulerCourse} activeOpacity={0.85}>
-          <Text style={styles.boutonAnnulerTexte}>✕  Annuler (frais applicables)</Text>
-        </TouchableOpacity>
+        {order.status !== 'COMPLETED' && order.status !== 'CANCELLED' && (
+          <TouchableOpacity style={styles.boutonAnnuler} onPress={annulerCourse} activeOpacity={0.85}>
+            <Text style={styles.boutonAnnulerTexte}>✕  Annuler (frais applicables)</Text>
+          </TouchableOpacity>
+        )}
 
         <View style={{ height: 20 }} />
       </ScrollView>
@@ -276,67 +250,6 @@ const styles = StyleSheet.create({
     color: COULEURS.texte,
     flex: 1,
     marginRight: 12,
-  },
-  etaBloc: {
-    alignItems: 'flex-end',
-  },
-  etaLabel: {
-    fontSize: 11,
-    color: COULEURS.discret,
-    marginBottom: 2,
-  },
-  etaTimer: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: COULEURS.primaire,
-    fontVariant: ['tabular-nums'],
-  },
-  etaUrgent: {
-    color: '#F44336',
-  },
-  carteSimulee: {
-    height: 190,
-    marginHorizontal: 16,
-    borderRadius: 14,
-    backgroundColor: '#0F2027',
-    borderWidth: 1,
-    borderColor: COULEURS.bordure,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  grilleLigne: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-  },
-  grilleColonne: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    width: 1,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-  },
-  pinClient: {
-    position: 'absolute',
-    alignItems: 'center',
-  },
-  pinTaxi: {
-    position: 'absolute',
-    alignItems: 'center',
-  },
-  pinEmoji: {
-    fontSize: 20,
-  },
-  pinLabel: {
-    fontSize: 9,
-    color: COULEURS.texte,
-    fontWeight: '600',
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-    borderRadius: 4,
   },
   progressionBloc: {
     flexDirection: 'row',

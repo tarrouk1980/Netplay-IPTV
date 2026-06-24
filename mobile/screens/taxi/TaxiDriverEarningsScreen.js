@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,54 +6,81 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
-const PERIODES = ['Aujourd\'hui', 'Semaine', 'Mois'];
-
-const SOLDES = {
-  'Aujourd\'hui': 187.50,
-  'Semaine': 1243.80,
-  'Mois': 4892.30,
-};
-
-const COURSES = [
-  { id: '1', heure: '18:42', duree: '12 min', distance: '4.2 km', montant: 18.50 },
-  { id: '2', heure: '17:15', duree: '8 min', distance: '2.8 km', montant: 12.00 },
-  { id: '3', heure: '15:50', duree: '22 min', distance: '9.1 km', montant: 31.50 },
-  { id: '4', heure: '14:30', duree: '6 min', distance: '1.9 km', montant: 9.00 },
-  { id: '5', heure: '13:05', duree: '18 min', distance: '7.3 km', montant: 25.00 },
-  { id: '6', heure: '11:40', duree: '10 min', distance: '3.5 km', montant: 14.50 },
-  { id: '7', heure: '10:20', duree: '25 min', distance: '10.6 km', montant: 38.00 },
-  { id: '8', heure: '09:00', duree: '15 min', distance: '5.8 km', montant: 21.00 },
+const PERIODES = [
+  { label: 'Aujourd\'hui', value: 'today' },
+  { label: 'Semaine', value: 'week' },
+  { label: 'Mois', value: 'month' },
 ];
 
-const BARRES_7JOURS = [
-  { jour: 'Lun', montant: 142 },
-  { jour: 'Mar', montant: 205 },
-  { jour: 'Mer', montant: 178 },
-  { jour: 'Jeu', montant: 260 },
-  { jour: 'Ven', montant: 310 },
-  { jour: 'Sam', montant: 390 },
-  { jour: 'Dim', montant: 188 },
-];
-
-const MAX_BARRE = 390;
+const MAX_BARRE_DEFAULT = 1;
 const HAUTEUR_MAX = 100;
 
+function dayLabel(date) {
+  return ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'][new Date(date).getDay()];
+}
+
 export default function TaxiDriverEarningsScreen({ navigation }) {
-  const [periodeActive, setPeriodeActive] = useState('Aujourd\'hui');
+  const [periodeActive, setPeriodeActive] = useState('today');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [solde, setSolde] = useState(0);
+  const [courses, setCourses] = useState([]);
+  const [barres, setBarres] = useState([]);
+
+  const periodeLabel = PERIODES.find((p) => p.value === periodeActive)?.label || '';
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const res = await api.get(`/api/taxi/driver/history?period=${periodeActive}`);
+      const rides = res.data?.rides || [];
+      const summary = res.data?.summary || {};
+      setSolde(Number(summary.revenue || 0));
+      setCourses(rides.map((r) => ({
+        id: r.id,
+        heure: new Date(r.createdAt).toLocaleTimeString('fr-TN', { hour: '2-digit', minute: '2-digit' }),
+        distance: r.metadata?.distance ? `${Number(r.metadata.distance).toFixed(1)} km` : '—',
+        montant: Number(r.price || 0),
+      })));
+
+      // Build last-7-days bar chart from the raw rides (independent of selected period filter)
+      const byDay = {};
+      const now = new Date();
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(now.getDate() - i);
+        const key = d.toDateString();
+        byDay[key] = { jour: dayLabel(d), montant: 0 };
+      }
+      rides.forEach((r) => {
+        const key = new Date(r.createdAt).toDateString();
+        if (byDay[key]) byDay[key].montant += Number(r.price || 0);
+      });
+      setBarres(Object.values(byDay));
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [periodeActive]);
+
+  useEffect(() => { load(); }, [load]);
 
   const handleRetirer = () => {
     Alert.alert(
       'Retrait de fonds',
-      `Confirmer le retrait de ${SOLDES[periodeActive].toFixed(2)} $ vers votre compte bancaire ?`,
-      [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Confirmer', style: 'default' },
-      ]
+      'Le retrait vers votre compte bancaire n\'est pas encore disponible dans l\'application. Contactez le support EasyWay pour organiser un virement.',
+      [{ text: 'OK' }]
     );
   };
+
+  const maxBarre = Math.max(MAX_BARRE_DEFAULT, ...barres.map((b) => b.montant));
 
   return (
     <SafeAreaView style={styles.container}>
@@ -63,55 +90,69 @@ export default function TaxiDriverEarningsScreen({ navigation }) {
         <View style={styles.toggleRow}>
           {PERIODES.map((p) => (
             <TouchableOpacity
-              key={p}
-              style={[styles.toggleBtn, periodeActive === p && styles.toggleActif]}
-              onPress={() => setPeriodeActive(p)}
+              key={p.value}
+              style={[styles.toggleBtn, periodeActive === p.value && styles.toggleActif]}
+              onPress={() => setPeriodeActive(p.value)}
             >
-              <Text style={[styles.toggleTexte, periodeActive === p && styles.toggleTexteActif]}>
-                {p}
+              <Text style={[styles.toggleTexte, periodeActive === p.value && styles.toggleTexteActif]}>
+                {p.label}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        <View style={styles.soldeCard}>
-          <Text style={styles.soldeLabel}>Gains — {periodeActive}</Text>
-          <Text style={styles.soldeValeur}>{SOLDES[periodeActive].toFixed(2)} $</Text>
-          <TouchableOpacity style={styles.retirerBtn} onPress={handleRetirer}>
-            <Text style={styles.retirerTexte}>Retirer</Text>
-          </TouchableOpacity>
-        </View>
-
-        <Text style={styles.sectionTitre}>7 derniers jours</Text>
-        <View style={styles.grapheContainer}>
-          {BARRES_7JOURS.map((item) => {
-            const hauteur = Math.round((item.montant / MAX_BARRE) * HAUTEUR_MAX);
-            return (
-              <View key={item.jour} style={styles.barreColonne}>
-                <Text style={styles.barreValeur}>{item.montant}$</Text>
-                <View style={styles.barreWrapper}>
-                  <View style={[styles.barre, { height: hauteur }]} />
-                </View>
-                <Text style={styles.barreJour}>{item.jour}</Text>
-              </View>
-            );
-          })}
-        </View>
-
-        <Text style={styles.sectionTitre}>Dernières courses</Text>
-        {COURSES.map((course) => (
-          <View key={course.id} style={styles.courseCard}>
-            <View style={styles.courseGauche}>
-              <Text style={styles.courseHeure}>{course.heure}</Text>
-              <View style={styles.courseInfoRow}>
-                <Text style={styles.courseMeta}>{course.duree}</Text>
-                <Text style={styles.courseSep}>·</Text>
-                <Text style={styles.courseMeta}>{course.distance}</Text>
-              </View>
-            </View>
-            <Text style={styles.courseMontant}>+{course.montant.toFixed(2)} $</Text>
+        {loading ? (
+          <ActivityIndicator color="#F5A623" size="large" style={{ marginVertical: 30 }} />
+        ) : error ? (
+          <View style={{ alignItems: 'center', marginVertical: 20 }}>
+            <Text style={{ color: '#8E8E9A', marginBottom: 12 }}>Impossible de charger vos gains.</Text>
+            <TouchableOpacity onPress={load} style={styles.retirerBtn}>
+              <Text style={styles.retirerTexte}>Réessayer</Text>
+            </TouchableOpacity>
           </View>
-        ))}
+        ) : (
+          <>
+            <View style={styles.soldeCard}>
+              <Text style={styles.soldeLabel}>Gains — {periodeLabel}</Text>
+              <Text style={styles.soldeValeur}>{solde.toFixed(2)} TND</Text>
+              <TouchableOpacity style={styles.retirerBtn} onPress={handleRetirer}>
+                <Text style={styles.retirerTexte}>Retirer</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.sectionTitre}>7 derniers jours</Text>
+            <View style={styles.grapheContainer}>
+              {barres.map((item, i) => {
+                const hauteur = maxBarre > 0 ? Math.round((item.montant / maxBarre) * HAUTEUR_MAX) : 0;
+                return (
+                  <View key={`${item.jour}-${i}`} style={styles.barreColonne}>
+                    <Text style={styles.barreValeur}>{item.montant.toFixed(0)}</Text>
+                    <View style={styles.barreWrapper}>
+                      <View style={[styles.barre, { height: Math.max(2, hauteur) }]} />
+                    </View>
+                    <Text style={styles.barreJour}>{item.jour}</Text>
+                  </View>
+                );
+              })}
+            </View>
+
+            <Text style={styles.sectionTitre}>Dernières courses</Text>
+            {courses.length === 0 && (
+              <Text style={{ color: '#8E8E9A', marginBottom: 10 }}>Aucune course sur cette période.</Text>
+            )}
+            {courses.map((course) => (
+              <View key={course.id} style={styles.courseCard}>
+                <View style={styles.courseGauche}>
+                  <Text style={styles.courseHeure}>{course.heure}</Text>
+                  <View style={styles.courseInfoRow}>
+                    <Text style={styles.courseMeta}>{course.distance}</Text>
+                  </View>
+                </View>
+                <Text style={styles.courseMontant}>+{course.montant.toFixed(2)} TND</Text>
+              </View>
+            ))}
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

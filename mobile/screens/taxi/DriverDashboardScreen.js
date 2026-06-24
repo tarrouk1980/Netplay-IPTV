@@ -95,14 +95,12 @@ export default function DriverDashboardScreen({ navigation }) {
   }, [isOnline, navigation]);
 
   const fetchTodayEarnings = async () => {
-    // In production: fetch completed orders for today from API
-    // For now using placeholder calculation
     try {
-      const response = await api.get('/api/taxi/nearby?lat=36.8&lng=10.1&radius=5').catch(() => null);
-      // Earnings summary would come from a dedicated endpoint
-      setEarnings({ today: 0, rides: 0 });
+      const response = await api.get('/api/taxi/driver/stats?period=today');
+      const stats = response.data?.stats || response.data || {};
+      setEarnings({ today: Number(stats.revenue || 0), rides: Number(stats.trips || 0) });
     } catch {
-      // non-critical
+      // non-critical: keep previous earnings state on failure
     }
   };
 

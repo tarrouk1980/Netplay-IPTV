@@ -692,6 +692,25 @@ router.post('/schedule', authenticate, async (req, res) => {
   }
 });
 
+// GET /api/taxi/schedule/upcoming — client's pending/scheduled taxi reservations
+router.get('/schedule/upcoming', authenticate, async (req, res) => {
+  try {
+    const orders = await prisma.order.findMany({
+      where: {
+        clientId: req.user.id,
+        serviceType: 'TAXI',
+        status: { in: ['PENDING', 'ACCEPTED'] },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+    const scheduled = orders.filter((o) => o.metadata?.scheduledAt);
+    res.json({ orders: scheduled });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/taxi/driver/history?period=today|week|month|all
 router.get('/driver/history', authenticate, requireRole('CHAUFFEUR'), async (req, res) => {
   try {

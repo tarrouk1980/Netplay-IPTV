@@ -1,18 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getCurrentLocationWithAddress } from '../../utils/locationUtils';
+import api from '../../services/api';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', border: '#2C2C3E',
   text: '#FFFFFF', muted: '#8E8E9A', accent: '#F5A623',
   blue: '#2196F3', green: '#27AE60',
 };
-
-const DRIVERS = [
-  { id: 'D1', name: 'Mourad Cherif', rating: 4.9, trips: 520, eta: '6 min', distance: 1.1, vehicle: 'Mercedes Vito PMR', capacity: 1, certified: true },
-  { id: 'D2', name: 'Habib Nasr', rating: 4.8, trips: 310, eta: '10 min', distance: 1.8, vehicle: 'Renault Trafic PMR', capacity: 2, certified: true },
-];
 
 const FEATURES = [
   { icon: '♿', text: 'Rampe d\'accès fauteuil roulant' },
@@ -27,13 +23,48 @@ export default function EasyAccessScreen({ navigation }) {
   const [locating, setLocating] = useState(false);
   const [selected, setSelected] = useState(null);
   const [wheelchairCount, setWheelchairCount] = useState(1);
+  const [drivers, setDrivers] = useState([]);
+  const [loadingDrivers, setLoadingDrivers] = useState(false);
+
+  const fetchDrivers = useCallback(async (coords) => {
+    if (!coords) return;
+    setLoadingDrivers(true);
+    try {
+      // /api/taxi/nearby returns geo-matched TAXI providers (userId/lat/lng/distance only —
+      // no name/vehicle/capacity breakdown is exposed server-side).
+      const res = await api.get(`/api/taxi/nearby?lat=${coords.latitude}&lng=${coords.longitude}&radius=5`);
+      const providers = res.data?.providers || [];
+      setDrivers(providers.map(p => ({
+        id: p.userId,
+        distance: Math.round(p.distance * 10) / 10,
+        capacity: 1,
+      })));
+    } catch {
+      setDrivers([]);
+    } finally {
+      setLoadingDrivers(false);
+    }
+  }, []);
 
   const detect = async () => {
     setLocating(true);
     const r = await getCurrentLocationWithAddress();
-    if (r) setOriginText(r.address);
+    if (r) {
+      setOriginText(r.address);
+      fetchDrivers(r.coords);
+    }
     setLocating(false);
   };
+
+  useEffect(() => {
+    (async () => {
+      const r = await getCurrentLocationWithAddress();
+      if (r) {
+        setOriginText(r.address);
+        fetchDrivers(r.coords);
+      }
+    })();
+  }, [fetchDrivers]);
 
   const handleBook = () => {
     navigation.navigate('TaxiRequest', {
@@ -92,7 +123,13 @@ export default function EasyAccessScreen({ navigation }) {
 
         {/* Véhicules */}
         <Text style={styles.sectionTitle}>VÉHICULES DISPONIBLES</Text>
-        {DRIVERS.filter(d => d.capacity >= wheelchairCount).map(d => (
+        {loadingDrivers && <ActivityIndicator color={COLORS.blue} style={{ marginBottom: 12 }} />}
+        {!loadingDrivers && drivers.filter(d => (d.capacity ?? 1) >= wheelchairCount).length === 0 && (
+          <Text style={{ color: COLORS.muted, fontSize: 13, marginBottom: 12 }}>
+            Aucun véhicule adapté disponible à proximité pour le moment.
+          </Text>
+        )}
+        {drivers.filter(d => (d.capacity ?? 1) >= wheelchairCount).map(d => (
           <TouchableOpacity
             key={d.id}
             style={[styles.driverCard, selected === d.id && styles.driverCardSelected]}
@@ -103,13 +140,8 @@ export default function EasyAccessScreen({ navigation }) {
               <Text style={{ fontSize: 26 }}>🚐</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.driverName}>{d.name}</Text>
-              <Text style={styles.vehicleName}>{d.vehicle}</Text>
-              <Text style={styles.driverMeta}>⭐ {d.rating} · ♿ {d.capacity} fauteuil{d.capacity > 1 ? 's' : ''}</Text>
-            </View>
-            <View style={styles.etaBox}>
-              <Text style={styles.etaVal}>{d.eta}</Text>
-              <Text style={styles.etaLabel}>d'arrivée</Text>
+              <Text style={styles.driverName}>Véhicule PMR à proximité</Text>
+              <Text style={styles.driverMeta}>📏 {d.distance ?? '—'} km · ♿ {d.capacity ?? 1} fauteuil{(d.capacity ?? 1) > 1 ? 's' : ''}</Text>
             </View>
           </TouchableOpacity>
         ))}
