@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  ActivityIndicator, StatusBar, TextInput,
+  ActivityIndicator, StatusBar, TextInput, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
@@ -15,14 +15,6 @@ const COLORS = {
 const SERVICE_ICONS = { TAXI: '🚕', LIVREUR: '📦', DEPANNEUR: '🔧' };
 const STATUS_COLORS = { ONLINE: COLORS.green, OFFLINE: COLORS.muted, BUSY: COLORS.orange, SUSPENDED: COLORS.red };
 const STATUS_LABELS = { ONLINE: 'En ligne', OFFLINE: 'Hors ligne', BUSY: 'Occupé', SUSPENDED: 'Suspendu' };
-
-const MOCK = [
-  { id: 'D001', name: 'Mohamed Ali T.', phone: '+216 22 111 222', service: 'TAXI', status: 'ONLINE', rating: 4.8, trips: 312, vehicle: 'VW Golf 2021 • 123 TN 4567', kyc: 'VERIFIED' },
-  { id: 'D002', name: 'Sami Karoui', phone: '+216 98 333 444', service: 'LIVREUR', status: 'BUSY', rating: 4.6, trips: 187, vehicle: 'Scooter Sym • 456 TN 7890', kyc: 'VERIFIED' },
-  { id: 'D003', name: 'Karim Mansouri', phone: '+216 71 555 666', service: 'DEPANNEUR', status: 'ONLINE', rating: 4.9, trips: 94, vehicle: 'Camion dépannage • 789 TN 1234', kyc: 'VERIFIED' },
-  { id: 'D004', name: 'Nour Bejaoui', phone: '+216 55 777 888', service: 'TAXI', status: 'OFFLINE', rating: 4.3, trips: 241, vehicle: 'Renault Clio 2020 • 321 TN 9876', kyc: 'PENDING' },
-  { id: 'D005', name: 'Youssef Tlili', phone: '+216 50 999 000', service: 'LIVREUR', status: 'SUSPENDED', rating: 3.2, trips: 28, vehicle: 'Vélo électrique', kyc: 'REJECTED' },
-];
 
 const FILTERS = ['Tous', 'ONLINE', 'TAXI', 'LIVREUR', 'DEPANNEUR'];
 
@@ -67,8 +59,12 @@ export default function AdminDriversScreen({ navigation }) {
 
   const load = useCallback(() => {
     api.get('/api/admin/drivers')
-      .then(r => setDrivers(r.data.drivers || MOCK))
-      .catch(() => setDrivers(MOCK))
+      .then(r => setDrivers(r.data.drivers || []))
+      .catch((err) => {
+        console.error('[AdminDriversScreen] load failed', err);
+        setDrivers([]);
+        Alert.alert('Erreur', 'Impossible de charger la liste des chauffeurs.');
+      })
       .finally(() => setLoading(false));
   }, []);
 

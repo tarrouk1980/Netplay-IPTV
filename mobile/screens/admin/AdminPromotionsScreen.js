@@ -13,13 +13,6 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB',
 };
 
-const MOCK = [
-  { id: 'P1', code: 'EASY20', type: 'PERCENT', value: 20, minOrder: 10, usageLimit: 500, usageCount: 234, active: true, expiresAt: '30/06/2026', service: 'ALL' },
-  { id: 'P2', code: 'TAXI10', type: 'FIXED', value: 10, minOrder: 15, usageLimit: 200, usageCount: 87, active: true, expiresAt: '15/06/2026', service: 'TAXI' },
-  { id: 'P3', code: 'WELCOME5', type: 'PERCENT', value: 5, minOrder: 0, usageLimit: 1000, usageCount: 1000, active: false, expiresAt: '01/06/2026', service: 'ALL' },
-  { id: 'P4', code: 'LIVRAISON15', type: 'PERCENT', value: 15, minOrder: 20, usageLimit: 300, usageCount: 142, active: true, expiresAt: '31/07/2026', service: 'DELIVERY' },
-];
-
 const SERVICE_LABELS = { ALL: 'Tous services', TAXI: 'Taxi', DELIVERY: 'Livraison', GROCERY: 'Épicerie', SOS: 'SOS' };
 
 function PromoCard({ item, onToggle, onDelete }) {
@@ -87,8 +80,12 @@ export default function AdminPromotionsScreen({ navigation }) {
 
   const load = useCallback(() => {
     api.get('/api/admin/promotions')
-      .then(r => setPromos(r.data.promotions || MOCK))
-      .catch(() => setPromos(MOCK))
+      .then(r => setPromos(r.data.promotions || []))
+      .catch((err) => {
+        console.error('[AdminPromotionsScreen] load failed', err);
+        setPromos([]);
+        Alert.alert('Erreur', 'Impossible de charger les promotions.');
+      })
       .finally(() => setLoading(false));
   }, []);
 

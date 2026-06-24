@@ -28,32 +28,6 @@ const COLORS = {
 
 const MONTHS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
 
-const MOCK = {
-  currentMonth: {
-    revenue: 28450,
-    expenses: 4200,
-    profit: 24250,
-    growth: 18.4,
-    passRevenue: 7200,
-    commissions: 0,
-    refunds: 340,
-    walletDeposits: 21250,
-  },
-  monthly: [12000, 14500, 11200, 16800, 18900, 22100, 19400, 24600, 21300, 26800, 28450, null],
-  paymentMethods: [
-    { method: 'Wallet EasyPay', amount: 15400, pct: 54 },
-    { method: 'D17', amount: 7200, pct: 25 },
-    { method: 'Cash', amount: 3600, pct: 13 },
-    { method: 'Konnect', amount: 2250, pct: 8 },
-  ],
-  taxBreakdown: {
-    grossRevenue: 28450,
-    vatCollected: 5400,
-    vatPaid: 798,
-    netProfit: 22252,
-  },
-};
-
 function BarChart({ data, color, maxVal }) {
   const max = maxVal || Math.max(...data.filter(Boolean), 1);
   return (
@@ -95,13 +69,17 @@ export default function AdminFinancialReportScreen({ navigation }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [error, setError] = useState(null);
 
   const load = useCallback(async () => {
     try {
+      setError(null);
       const res = await api.get('/api/admin/financial/report');
       setData(res.data);
-    } catch {
-      setData(MOCK);
+    } catch (err) {
+      console.error('[AdminFinancialReportScreen] load failed', err);
+      setData(null);
+      setError('Impossible de charger le rapport financier.');
     } finally {
       setLoading(false);
     }
@@ -120,7 +98,20 @@ export default function AdminFinancialReportScreen({ navigation }) {
 
   if (loading) return <View style={s.centered}><ActivityIndicator color={COLORS.gold} size="large" /></View>;
 
-  const d = data || MOCK;
+  if (error || !data) {
+    return (
+      <View style={s.centered}>
+        <Text style={{ color: COLORS.text, fontSize: 14, marginBottom: 12, textAlign: 'center', paddingHorizontal: 20 }}>
+          {error || 'Aucune donnée disponible.'}
+        </Text>
+        <TouchableOpacity onPress={load} style={{ paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8, backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border }}>
+          <Text style={{ color: COLORS.gold, fontWeight: '700' }}>Réessayer</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const d = data;
   const cm = d.currentMonth || {};
   const monthName = MONTHS[new Date().getMonth()];
 
