@@ -4,6 +4,7 @@ import {
   StatusBar, TextInput, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', surfaceAlt: '#16161F',
@@ -43,6 +44,7 @@ export default function AdminRefundDetailScreen({ navigation, route }) {
   const [status, setStatus] = useState(refund.status);
   const [adminNote, setAdminNote] = useState('');
   const [partialAmount, setPartialAmount] = useState(String(refund.amount));
+  const [submitting, setSubmitting] = useState(false);
 
   const sc = STATUS_MAP[status] || STATUS_MAP.pending;
 
@@ -57,7 +59,21 @@ export default function AdminRefundDetailScreen({ navigation, route }) {
       `Rembourser ${amt.toFixed(2)} TND à ${refund.clientName} ?`,
       [
         { text: 'Annuler', style: 'cancel' },
-        { text: 'Approuver', onPress: () => setStatus('approved') },
+        {
+          text: 'Approuver',
+          onPress: async () => {
+            setSubmitting(true);
+            try {
+              await api.post(`/api/admin/disputes/${refund.id}/refund`, { amount: amt, note: adminNote || undefined });
+              setStatus('approved');
+            } catch (err) {
+              console.error('[AdminRefundDetailScreen] approve failed', err);
+              Alert.alert('Erreur', 'Le remboursement n\'a pas pu être enregistré. Veuillez réessayer.');
+            } finally {
+              setSubmitting(false);
+            }
+          },
+        },
       ]
     );
   };
@@ -72,7 +88,22 @@ export default function AdminRefundDetailScreen({ navigation, route }) {
       `Êtes-vous sûr de vouloir rejeter la demande de ${refund.clientName} ?`,
       [
         { text: 'Annuler', style: 'cancel' },
-        { text: 'Rejeter', style: 'destructive', onPress: () => setStatus('rejected') },
+        {
+          text: 'Rejeter',
+          style: 'destructive',
+          onPress: async () => {
+            setSubmitting(true);
+            try {
+              await api.patch(`/api/admin/disputes/${refund.id}/status`, { status: 'REJECTED', adminNote });
+              setStatus('rejected');
+            } catch (err) {
+              console.error('[AdminRefundDetailScreen] reject failed', err);
+              Alert.alert('Erreur', 'Le rejet n\'a pas pu être enregistré. Veuillez réessayer.');
+            } finally {
+              setSubmitting(false);
+            }
+          },
+        },
       ]
     );
   };
@@ -185,10 +216,10 @@ export default function AdminRefundDetailScreen({ navigation, route }) {
             />
 
             <View style={styles.decisionBtns}>
-              <TouchableOpacity style={styles.rejectBtn} onPress={handleReject}>
+              <TouchableOpacity style={styles.rejectBtn} onPress={handleReject} disabled={submitting}>
                 <Text style={styles.rejectBtnText}>✕ Rejeter</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.approveBtn} onPress={handleApprove}>
+              <TouchableOpacity style={styles.approveBtn} onPress={handleApprove} disabled={submitting}>
                 <Text style={styles.approveBtnText}>✓ Approuver</Text>
               </TouchableOpacity>
             </View>
