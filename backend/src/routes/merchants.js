@@ -124,6 +124,36 @@ router.get('/me/products', authenticate, requireRole('MARCHAND'), async (req, re
   return res.json({ products });
 });
 
+// GET /api/merchants/me/low-stock — products at/below their minStock threshold
+router.get('/me/low-stock', authenticate, requireRole('MARCHAND'), async (req, res) => {
+  const merchant = await prisma.merchant.findUnique({ where: { userId: req.user.id } });
+  if (!merchant) {
+    return res.status(404).json({ error: 'Merchant profile not found', code: 'NOT_FOUND' });
+  }
+
+  const products = await prisma.product.findMany({
+    where: { merchantId: merchant.id, active: true },
+    orderBy: [{ stock: 'asc' }],
+  });
+
+  const DEFAULT_MIN_STOCK = 10;
+  const lowStock = products
+    .map((p) => {
+      const minStock = Number(p.metadata?.minStock) > 0 ? Number(p.metadata.minStock) : DEFAULT_MIN_STOCK;
+      return {
+        id: p.id,
+        name: p.name,
+        category: p.category,
+        stock: p.stock,
+        minStock,
+        critical: p.stock <= Math.floor(minStock / 2),
+      };
+    })
+    .filter((p) => p.stock <= p.minStock);
+
+  return res.json({ items: lowStock, count: lowStock.length });
+});
+
 // POST /api/merchants/me/products
 router.post(
   '/me/products',

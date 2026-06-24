@@ -95,6 +95,7 @@ export default function GroceryCartScreen({ navigation, route }) {
         deliveryLat: loc.coords.lat,
         deliveryLng: loc.coords.lng,
         deliveryAddress: loc.address,
+        promoCode: promoApplied ? promoCode.trim() : undefined,
       };
       const res = await api.post('/api/grocery/request', body);
       const orderId = res.data?.order?.id;

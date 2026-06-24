@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,51 +6,70 @@ import {
   TouchableOpacity,
   Alert,
   StyleSheet,
-  ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const PRODUITS_INITIAUX = [
-  { id: '1', nom: 'Lait entier 1L', categorie: 'Produits laitiers', prix: '8.50 MAD', emoji: '🥛' },
-  { id: '2', nom: 'Pain complet', categorie: 'Boulangerie', prix: '5.00 MAD', emoji: '🍞' },
-  { id: '3', nom: 'Œufs fermiers x12', categorie: 'Œufs', prix: '22.00 MAD', emoji: '🥚' },
-  { id: '4', nom: 'Tomates 1kg', categorie: 'Légumes', prix: '12.00 MAD', emoji: '🍅' },
-  { id: '5', nom: 'Bananes 1kg', categorie: 'Fruits', prix: '9.00 MAD', emoji: '🍌' },
-  { id: '6', nom: 'Yaourt nature x4', categorie: 'Produits laitiers', prix: '14.50 MAD', emoji: '🫙' },
-  { id: '7', nom: 'Pâtes spaghetti 500g', categorie: 'Épicerie', prix: '6.00 MAD', emoji: '🍝' },
-  { id: '8', nom: "Huile d'olive 500ml", categorie: 'Épicerie', prix: '45.00 MAD', emoji: '🫒' },
-];
-
-const MAGASINS_INITIAUX = [
-  { id: '1', nom: 'Carrefour Anfa Place', note: 4.7, delai: '25 min', quartier: 'Casablanca' },
-  { id: '2', nom: 'Marjane Hay Riad', note: 4.5, delai: '35 min', quartier: 'Rabat' },
-  { id: '3', nom: 'Label Vie Agdal', note: 4.8, delai: '20 min', quartier: 'Rabat' },
-  { id: '4', nom: 'BIM Bourgogne', note: 4.2, delai: '15 min', quartier: 'Casablanca' },
-];
+import api from '../../services/api';
+import useCartStore from '../../store/cartStore';
 
 const ONGLETS = ['Produits', 'Magasins'];
 
 export default function GroceryFavoritesScreen({ navigation }) {
   const [ongletActif, setOngletActif] = useState('Produits');
-  const [produits, setProduits] = useState(PRODUITS_INITIAUX);
-  const [magasins, setMagasins] = useState(MAGASINS_INITIAUX);
+  const [produits, setProduits] = useState([]);
+  const [magasins, setMagasins] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [erreur, setErreur] = useState(false);
+  const addToCart = useCartStore((s) => s.addItem);
+
+  const charger = useCallback(() => {
+    setLoading(true);
+    setErreur(false);
+    api.get('/api/grocery/favorites')
+      .then((r) => {
+        setProduits(r.data?.products || []);
+        setMagasins(r.data?.merchants || []);
+      })
+      .catch(() => setErreur(true))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { charger(); }, [charger]);
 
   const supprimerProduit = (id) => {
     Alert.alert('Supprimer', 'Retirer ce produit de vos favoris ?', [
-      { text: 'Supprimer', style: 'destructive', onPress: () => setProduits((prev) => prev.filter((p) => p.id !== id)) },
+      {
+        text: 'Supprimer',
+        style: 'destructive',
+        onPress: () => {
+          api.delete(`/api/grocery/favorites/products/${id}`).catch(() => {});
+          setProduits((prev) => prev.filter((p) => p.id !== id));
+        },
+      },
       { text: 'Annuler', style: 'cancel' },
     ]);
   };
 
   const supprimerMagasin = (id) => {
     Alert.alert('Supprimer', 'Retirer ce magasin de vos favoris ?', [
-      { text: 'Supprimer', style: 'destructive', onPress: () => setMagasins((prev) => prev.filter((m) => m.id !== id)) },
+      {
+        text: 'Supprimer',
+        style: 'destructive',
+        onPress: () => {
+          api.delete(`/api/grocery/favorites/merchants/${id}`).catch(() => {});
+          setMagasins((prev) => prev.filter((m) => m.id !== id));
+        },
+      },
       { text: 'Annuler', style: 'cancel' },
     ]);
   };
 
   const ajouterAuPanier = (produit) => {
-    Alert.alert('Panier', `"${produit.nom}" ajouté au panier !`);
+    addToCart(
+      { id: produit.id, name: produit.name, price: Number(produit.price) },
+      produit.merchantId
+    );
+    Alert.alert('Panier', `"${produit.name}" ajouté au panier !`);
   };
 
   const rendreProduit = ({ item }) => (
@@ -58,10 +77,10 @@ export default function GroceryFavoritesScreen({ navigation }) {
       <TouchableOpacity style={styles.supprimerBouton} onPress={() => supprimerProduit(item.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
         <Text style={styles.supprimerTexte}>×</Text>
       </TouchableOpacity>
-      <Text style={styles.produitEmoji}>{item.emoji}</Text>
-      <Text style={styles.produitNom} numberOfLines={2}>{item.nom}</Text>
-      <Text style={styles.produitCategorie}>{item.categorie}</Text>
-      <Text style={styles.produitPrix}>{item.prix}</Text>
+      <Text style={styles.produitEmoji}>🛒</Text>
+      <Text style={styles.produitNom} numberOfLines={2}>{item.name}</Text>
+      <Text style={styles.produitCategorie}>{item.merchant?.name || item.category}</Text>
+      <Text style={styles.produitPrix}>{Number(item.price).toFixed(3)} TND</Text>
       <TouchableOpacity style={styles.boutonPanier} onPress={() => ajouterAuPanier(item)} activeOpacity={0.8}>
         <Text style={styles.boutonPanierTexte}>+ Panier</Text>
       </TouchableOpacity>
@@ -73,13 +92,8 @@ export default function GroceryFavoritesScreen({ navigation }) {
       <View style={styles.magasinGauche}>
         <Text style={styles.magasinEmoji}>🏪</Text>
         <View style={styles.magasinInfos}>
-          <Text style={styles.magasinNom}>{item.nom}</Text>
-          <Text style={styles.magasinQuartier}>{item.quartier}</Text>
-          <View style={styles.magasinStats}>
-            <Text style={styles.magasinStat}>⭐ {item.note}</Text>
-            <Text style={styles.magasinSeparateur}>·</Text>
-            <Text style={styles.magasinStat}>🕐 {item.delai}</Text>
-          </View>
+          <Text style={styles.magasinNom}>{item.name}</Text>
+          <Text style={styles.magasinQuartier}>{item.address}</Text>
         </View>
       </View>
       <View style={styles.magasinDroite}>
@@ -88,7 +102,7 @@ export default function GroceryFavoritesScreen({ navigation }) {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.boutonCommander}
-          onPress={() => navigation.navigate('GroceryStore', { magasinId: item.id })}
+          onPress={() => navigation.navigate('GroceryShop', { shopId: item.id, shopName: item.name })}
           activeOpacity={0.8}
         >
           <Text style={styles.boutonCommanderTexte}>Commander</Text>
@@ -116,7 +130,19 @@ export default function GroceryFavoritesScreen({ navigation }) {
         ))}
       </View>
 
-      {ongletActif === 'Produits' ? (
+      {loading && <ActivityIndicator color="#F5A623" style={{ marginTop: 40 }} />}
+
+      {!loading && erreur && (
+        <View style={styles.vide}>
+          <Text style={styles.videEmoji}>⚠️</Text>
+          <Text style={styles.videTexte}>Impossible de charger vos favoris</Text>
+          <TouchableOpacity onPress={charger} style={styles.boutonCommander}>
+            <Text style={styles.boutonCommanderTexte}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {!loading && !erreur && ongletActif === 'Produits' && (
         produits.length === 0 ? (
           <View style={styles.vide}>
             <Text style={styles.videEmoji}>🛒</Text>
@@ -133,19 +159,23 @@ export default function GroceryFavoritesScreen({ navigation }) {
             showsVerticalScrollIndicator={false}
           />
         )
-      ) : magasins.length === 0 ? (
-        <View style={styles.vide}>
-          <Text style={styles.videEmoji}>🏪</Text>
-          <Text style={styles.videTexte}>Aucun magasin favori</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={magasins}
-          keyExtractor={(item) => item.id}
-          renderItem={rendreMagasin}
-          contentContainerStyle={styles.listeMagasins}
-          showsVerticalScrollIndicator={false}
-        />
+      )}
+
+      {!loading && !erreur && ongletActif === 'Magasins' && (
+        magasins.length === 0 ? (
+          <View style={styles.vide}>
+            <Text style={styles.videEmoji}>🏪</Text>
+            <Text style={styles.videTexte}>Aucun magasin favori</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={magasins}
+            keyExtractor={(item) => item.id}
+            renderItem={rendreMagasin}
+            contentContainerStyle={styles.listeMagasins}
+            showsVerticalScrollIndicator={false}
+          />
+        )
       )}
     </SafeAreaView>
   );
@@ -298,19 +328,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
   },
-  magasinStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  magasinStat: {
-    color: '#8E8E9A',
-    fontSize: 12,
-  },
-  magasinSeparateur: {
-    color: '#2C2C3A',
-    marginHorizontal: 6,
-  },
   magasinDroite: {
     alignItems: 'flex-end',
     gap: 8,
@@ -338,6 +355,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 12,
   },
   videEmoji: {
     fontSize: 48,

@@ -70,6 +70,9 @@ export default function GroceryCheckoutScreen({ navigation, route }) {
         deliveryLng: loc.coords.lng,
         deliveryAddress: address,
         note: notes || undefined,
+        paymentMethod: payment,
+        deliverySlot: slot,
+        promoCode: promoCode.trim() || undefined,
       });
 
       navigation.replace('GroceryCheckoutSuccess', {
@@ -120,12 +123,11 @@ export default function GroceryCheckoutScreen({ navigation, route }) {
         {/* Address */}
         <Text style={styles.label}>Adresse de livraison</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { minHeight: 60 }]}
           value={address} onChangeText={setAddress}
           placeholder="Votre adresse complète..."
           placeholderTextColor={COLORS.muted}
           multiline textAlignVertical="top"
-          style={[styles.input, { minHeight: 60 }]}
         />
 
         {/* Slot */}

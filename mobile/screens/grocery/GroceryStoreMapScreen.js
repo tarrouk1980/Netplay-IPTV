@@ -14,7 +14,12 @@ const COLORS = {
   border: '#2A2A3A', green: '#27AE60', purple: '#8E44AD',
 };
 
-const TYPES = ['Tous', 'Supermarché', 'Épicerie', 'Bio', 'Pharmacie'];
+const TYPES = ['Tous', 'Supermarché', 'Pharmacie', 'Autre'];
+const CATEGORY_LABELS = {
+  SUPERMARKET: 'Supermarché',
+  PHARMACY: 'Pharmacie',
+};
+const labelForCategory = (cat) => CATEGORY_LABELS[cat] || 'Autre';
 
 export default function GroceryStoreMapScreen({ navigation }) {
   const [userPos, setUserPos] = useState({ lat: 36.8065, lng: 10.1815 });
@@ -41,7 +46,16 @@ export default function GroceryStoreMapScreen({ navigation }) {
         setUserPos({ lat, lng });
       }
       const res = await api.get(`/api/merchants?lat=${lat}&lng=${lng}&radius=15`);
-      if (res.data?.merchants?.length) setStores(res.data.merchants);
+      const merchants = res.data?.merchants || [];
+      setStores(merchants.map((m) => ({
+        id: m.id,
+        name: m.name,
+        type: labelForCategory(m.category),
+        lat: m.lat,
+        lng: m.lng,
+        open: m.isOpen,
+        distance: m.distanceKm != null ? `${m.distanceKm.toFixed(1)} km` : null,
+      })));
       setError(false);
     } catch {
       setError(true);
@@ -136,7 +150,7 @@ export default function GroceryStoreMapScreen({ navigation }) {
                 activeOpacity={0.8}
               >
                 <View style={styles.storeIcon}>
-                  <Text style={{ fontSize: 24 }}>{store.type === 'Épicerie' ? '🏪' : '🛒'}</Text>
+                  <Text style={{ fontSize: 24 }}>{store.type === 'Pharmacie' ? '💊' : '🛒'}</Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <View style={styles.storeHeader}>
@@ -147,8 +161,7 @@ export default function GroceryStoreMapScreen({ navigation }) {
                       </Text>
                     </View>
                   </View>
-                  <Text style={styles.storeMeta}>{store.type} · {store.distance} · {store.deliveryTime}</Text>
-                  <Text style={styles.storeMin}>Min. commande: {store.minOrder} TND</Text>
+                  <Text style={styles.storeMeta}>{store.type}{store.distance ? ` · ${store.distance}` : ''}</Text>
                 </View>
               </TouchableOpacity>
             ))}

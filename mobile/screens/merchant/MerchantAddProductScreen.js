@@ -18,7 +18,7 @@ const CATEGORIES = [
 ];
 
 export default function MerchantAddProductScreen({ navigation, route }) {
-  const editProduct = route?.params?.product;
+  const editProduct = route?.params?.product || route?.params?.editItem;
 
   const [name, setName] = useState(editProduct?.name || '');
   const [description, setDescription] = useState(editProduct?.description || '');

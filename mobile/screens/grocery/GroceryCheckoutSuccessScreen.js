@@ -100,8 +100,8 @@ export default function GroceryCheckoutSuccessScreen({ navigation, route }) {
           <View style={s.pointsBox}>
             <Text style={{ fontSize: 20 }}>⭐</Text>
             <View style={{ flex: 1, marginLeft: 10 }}>
-              <Text style={s.pointsTitle}>+5 EasyPoints gagnés !</Text>
-              <Text style={s.pointsSub}>Continuez à commander pour débloquer des récompenses.</Text>
+              <Text style={s.pointsTitle}>EasyPoints en attente</Text>
+              <Text style={s.pointsSub}>Vos points seront crédités à la livraison de votre commande.</Text>
             </View>
           </View>
         </Animated.View>

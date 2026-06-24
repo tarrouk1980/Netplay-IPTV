@@ -4,6 +4,7 @@ import {
   StatusBar, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', surfaceAlt: '#16161F',
@@ -49,6 +50,7 @@ const CHECKLIST_SECTIONS = [
 
 export default function DriverChecklistScreen({ navigation }) {
   const [checked, setChecked] = useState({});
+  const [submitting, setSubmitting] = useState(false);
 
   const toggle = (id) => {
     setChecked(prev => ({ ...prev, [id]: !prev[id] }));
@@ -60,6 +62,23 @@ export default function DriverChecklistScreen({ navigation }) {
 
   const allDone = checkedCount === totalItems;
 
+  const submitChecklist = async () => {
+    setSubmitting(true);
+    try {
+      await api.post('/api/provider/vehicle-checklist', {
+        checkedItems: Object.keys(checked).filter(id => checked[id]),
+        totalItems,
+        completedAt: new Date().toISOString(),
+      });
+    } catch (e) {
+      // Non-blocking: still let the driver proceed, but warn them the record wasn't saved.
+      Alert.alert('Attention', 'La checklist n\'a pas pu être enregistrée (connexion). Vous pouvez continuer.');
+    } finally {
+      setSubmitting(false);
+      navigation.goBack();
+    }
+  };
+
   const handleGoOnline = () => {
     if (!allDone) {
       Alert.alert(
@@ -67,11 +86,11 @@ export default function DriverChecklistScreen({ navigation }) {
         `${totalItems - checkedCount} point(s) non cochés. Continuer quand même ?`,
         [
           { text: 'Annuler', style: 'cancel' },
-          { text: 'Continuer', onPress: () => navigation.goBack() },
+          { text: 'Continuer', onPress: submitChecklist },
         ]
       );
     } else {
-      navigation.goBack();
+      submitChecklist();
     }
   };
 
@@ -137,9 +156,10 @@ export default function DriverChecklistScreen({ navigation }) {
         <TouchableOpacity
           style={[styles.goBtn, allDone && { backgroundColor: COLORS.green }]}
           onPress={handleGoOnline}
+          disabled={submitting}
         >
           <Text style={styles.goBtnText}>
-            {allDone ? '✅ Checklist validée — Passer en ligne' : `Continuer (${checkedCount}/${totalItems})`}
+            {submitting ? 'Enregistrement...' : (allDone ? '✅ Checklist validée — Passer en ligne' : `Continuer (${checkedCount}/${totalItems})`)}
           </Text>
         </TouchableOpacity>
       </View>

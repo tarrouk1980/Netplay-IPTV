@@ -153,16 +153,22 @@ export default function FlashSaleScreen({ navigation }) {
 
   const handleClaim = (deal) => {
     const screens = {
-      EASYTAXY: 'TaxiHome', SOS: 'SOSHome', DELIVERY: 'DeliveryHome',
+      TAXI: 'TaxiHome', SOS: 'SOSHome', DELIVERY: 'DeliveryHome',
       GROCERY: 'GroceryHome', PASS: 'BuyPass',
     };
     Alert.alert(
-      `🎉 Code copié : ${deal.code}`,
-      `Le code ${deal.code} sera automatiquement appliqué à votre prochaine commande ${deal.service}.`,
+      `🎉 Code : ${deal.code}`,
+      `Notez ce code et entrez-le dans "Codes promo" pour l'appliquer à votre prochaine commande ${deal.service}.`,
       [
         { text: 'OK' },
-        { text: `Aller vers ${deal.service}`, onPress: () => navigation.navigate(screens[deal.service] || 'Home') },
-      ]
+        {
+          text: 'Saisir le code',
+          onPress: () => navigation.navigate('PromoCode', { prefillCode: deal.code }),
+        },
+        deal.service && screens[deal.service]
+          ? { text: `Aller vers ${deal.service}`, onPress: () => navigation.navigate(screens[deal.service]) }
+          : null,
+      ].filter(Boolean)
     );
   };
 

@@ -55,23 +55,51 @@ router.get('/transactions', authenticate, async (req, res) => {
   }
 });
 
-// POST /api/wallet/recharge — simulation (en prod: intégration paiement)
+// POST /api/wallet/recharge
+// D17/eDinar is treated as an instant mobile-payment confirmation and credits immediately
+// (same behavior as /topup). CARD/VIREMENT/CASH require offline/gateway confirmation and are
+// only recorded as PENDING — no real payment gateway is integrated yet, so we must not credit
+// the wallet for those until a real confirmation step exists.
+const INSTANT_METHODS = new Set(['D17']);
 router.post('/recharge', authenticate, async (req, res) => {
-  const { amount } = req.body;
+  const { amount, method } = req.body;
   if (!(Number(amount) > 0)) {
     return res.status(400).json({ error: 'Montant invalide' });
   }
+  const isInstant = INSTANT_METHODS.has(method);
   try {
-    const [tx, user] = await prisma.$transaction([
-      prisma.walletTransaction.create({
-        data: { userId: req.user.id, amount: Number(amount), type: 'RECHARGE', description: `Recharge ${amount} TND` }
-      }),
-      prisma.user.update({
-        where: { id: req.user.id },
-        data: { walletBalance: { increment: Number(amount) } }
-      }),
-    ]);
-    res.json({ success: true, newBalance: user.walletBalance });
+    if (isInstant) {
+      const [, user] = await prisma.$transaction([
+        prisma.walletTransaction.create({
+          data: { userId: req.user.id, amount: Number(amount), type: 'RECHARGE', description: `Recharge ${amount} TND (${method})` }
+        }),
+        prisma.user.update({
+          where: { id: req.user.id },
+          data: { walletBalance: { increment: Number(amount) } }
+        }),
+      ]);
+      return res.json({ success: true, status: 'CREDITED', newBalance: user.walletBalance });
+    }
+
+    // Non-instant methods: record a pending transaction, do NOT credit the wallet yet.
+    await prisma.walletTransaction.create({
+      data: { userId: req.user.id, amount: Number(amount), type: 'RECHARGE', description: `Recharge ${amount} TND (${method || 'CARD'}) — en attente de confirmation` },
+    });
+    res.json({ success: true, status: 'PENDING' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/wallet/lookup-recipient?phone=... — verify a transfer recipient exists before confirming
+router.get('/lookup-recipient', authenticate, async (req, res) => {
+  const phone = (req.query.phone || '').trim();
+  if (!phone) return res.status(400).json({ error: 'Numéro de téléphone requis' });
+  try {
+    const recipient = await prisma.user.findUnique({ where: { phone }, select: { id: true, name: true, phone: true } });
+    if (!recipient) return res.status(404).json({ error: 'Aucun utilisateur trouvé avec ce numéro.' });
+    if (recipient.id === req.user.id) return res.status(400).json({ error: 'Vous ne pouvez pas vous envoyer de l\'argent à vous-même.' });
+    res.json({ name: recipient.name, phone: recipient.phone });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

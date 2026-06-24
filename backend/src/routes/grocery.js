@@ -8,6 +8,7 @@ const { requireRole } = require('../middleware/rbac');
 const { sendNotification, NOTIFICATION_TYPES } = require('../services/fcm');
 const { findNearby } = require('../services/geolocation');
 const { haversineKm } = require('../services/deliveryPricing');
+const { redeemPromo } = require('./promo');
 
 const router = express.Router();
 
@@ -38,6 +39,63 @@ function calcGroceryFee(distanceKm) {
 }
 
 // ─────────────────────────────────────────────
+// In-memory favorites store (no matching Prisma model exists yet — mirrors
+// the pattern used in routes/support.js and routes/chat.js).
+// ─────────────────────────────────────────────
+const favoriteProductIds = new Map(); // userId -> Set<productId>
+const favoriteMerchantIds = new Map(); // userId -> Set<merchantId>
+
+function favSet(map, userId) {
+  if (!map.has(userId)) map.set(userId, new Set());
+  return map.get(userId);
+}
+
+// GET /api/grocery/favorites — list favorite products + merchants
+router.get('/favorites', authenticate, requireRole('CLIENT'), async (req, res) => {
+  try {
+    const productIds = [...favSet(favoriteProductIds, req.user.id)];
+    const merchantIds = [...favSet(favoriteMerchantIds, req.user.id)];
+
+    const [products, merchants] = await Promise.all([
+      productIds.length
+        ? prisma.product.findMany({ where: { id: { in: productIds } }, include: { merchant: { select: { name: true } } } })
+        : [],
+      merchantIds.length
+        ? prisma.merchant.findMany({ where: { id: { in: merchantIds } } })
+        : [],
+    ]);
+
+    res.json({ products, merchants });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/grocery/favorites/products/:id
+router.post('/favorites/products/:id', authenticate, requireRole('CLIENT'), async (req, res) => {
+  favSet(favoriteProductIds, req.user.id).add(req.params.id);
+  res.status(201).json({ favorited: true });
+});
+
+// DELETE /api/grocery/favorites/products/:id
+router.delete('/favorites/products/:id', authenticate, requireRole('CLIENT'), async (req, res) => {
+  favSet(favoriteProductIds, req.user.id).delete(req.params.id);
+  res.json({ favorited: false });
+});
+
+// POST /api/grocery/favorites/merchants/:id
+router.post('/favorites/merchants/:id', authenticate, requireRole('CLIENT'), async (req, res) => {
+  favSet(favoriteMerchantIds, req.user.id).add(req.params.id);
+  res.status(201).json({ favorited: true });
+});
+
+// DELETE /api/grocery/favorites/merchants/:id
+router.delete('/favorites/merchants/:id', authenticate, requireRole('CLIENT'), async (req, res) => {
+  favSet(favoriteMerchantIds, req.user.id).delete(req.params.id);
+  res.json({ favorited: false });
+});
+
+// ─────────────────────────────────────────────
 // CLIENT: POST /grocery/request
 // ─────────────────────────────────────────────
 router.post(
@@ -52,11 +110,14 @@ router.post(
     body('merchantIds').optional().isArray(),
     body('scheduledAt').optional().isISO8601(),
     body('note').optional().trim(),
+    body('promoCode').optional().trim(),
+    body('paymentMethod').optional().trim(),
+    body('deliverySlot').optional().trim(),
   ],
   async (req, res) => {
     if (!validate(req, res)) return;
 
-    const { items, merchantIds, deliveryLat, deliveryLng, deliveryAddress, scheduledAt, note } = req.body;
+    const { items, merchantIds, deliveryLat, deliveryLng, deliveryAddress, scheduledAt, note, promoCode, paymentMethod, deliverySlot } = req.body;
 
     if (scheduledAt) {
       const scheduled = new Date(scheduledAt);
@@ -85,7 +146,16 @@ router.post(
     const originLng = deliveryLng;
     const distanceKm = haversineKm(originLat, originLng, deliveryLat, deliveryLng) || 1;
     const deliveryFee = calcGroceryFee(distanceKm);
-    const total = parseFloat((subtotal + deliveryFee).toFixed(3));
+
+    let discount = 0;
+    let promoError = null;
+    if (promoCode) {
+      const result = redeemPromo(req.user.id, promoCode, 'GROCERY', subtotal + deliveryFee);
+      discount = result.discount;
+      promoError = result.error || null;
+    }
+
+    const total = parseFloat(Math.max(0, subtotal + deliveryFee - discount).toFixed(3));
 
     const order = await prisma.order.create({
       data: {
@@ -104,8 +174,13 @@ router.post(
           deliveryAddress,
           scheduledAt: scheduledAt || null,
           note: note || null,
+          paymentMethod: paymentMethod || null,
+          deliverySlot: deliverySlot || null,
+          promoCode: discount > 0 ? promoCode.toUpperCase() : null,
+          promoError,
           subtotal: parseFloat(subtotal.toFixed(3)),
           deliveryFee,
+          discount,
           total,
         },
       },

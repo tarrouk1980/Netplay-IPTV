@@ -203,4 +203,36 @@ router.get('/my-codes', authenticate, async (req, res) => {
   }
 });
 
+// Re-validates a code server-side and marks it used, for other routes (e.g.
+// grocery.js) that need to apply a discount at order-creation time without
+// trusting a client-supplied discount amount.
+function redeemPromo(userId, code, serviceType, amount) {
+  if (!code) return { discount: 0 };
+  const promo = findPromo(code);
+  if (!promo) return { discount: 0, error: 'Code invalide ou expiré.' };
+  if (promo.expiresAt && new Date() > new Date(promo.expiresAt)) {
+    return { discount: 0, error: 'Ce code a expiré.' };
+  }
+  if (promo.maxUses && promo.usedCount >= promo.maxUses) {
+    return { discount: 0, error: "Ce code n'est plus disponible." };
+  }
+  if (serviceType && promo.services.length > 0 && !promo.services.includes(serviceType)) {
+    return { discount: 0, error: `Ce code n'est valable que pour : ${promo.services.join(', ')}.` };
+  }
+  if (promo.minAmount && parseFloat(amount) < promo.minAmount) {
+    return { discount: 0, error: `Montant minimum : ${promo.minAmount} TND.` };
+  }
+  const usageKey = `${userId}:${promo.code}`;
+  const timesUsed = userUsage.get(usageKey) || 0;
+  if (timesUsed >= 1 && promo.code !== 'TAXI10' && promo.code !== 'LIVRAISON0') {
+    return { discount: 0, error: 'Vous avez déjà utilisé ce code.' };
+  }
+
+  const discount = computeDiscount(promo, parseFloat(amount) || 0);
+  userUsage.set(usageKey, timesUsed + 1);
+  promo.usedCount += 1;
+  return { discount, code: promo.code };
+}
+
 module.exports = router;
+module.exports.redeemPromo = redeemPromo;

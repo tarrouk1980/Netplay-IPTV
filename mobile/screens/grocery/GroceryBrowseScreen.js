@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
+import useCartStore from '../../store/cartStore';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', surfaceAlt: '#16161F',
@@ -19,11 +20,14 @@ const CATEGORY_ICON = {
 export default function GroceryBrowseScreen({ navigation }) {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
-  const [cart, setCart] = useState({});
   const [sort, setSort] = useState('default');
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const cartItems = useCartStore((s) => s.items);
+  const cartMerchantId = useCartStore((s) => s.merchantId);
+  const storeAddItem = useCartStore((s) => s.addItem);
+  const storeUpdateQty = useCartStore((s) => s.updateQty);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -63,19 +67,12 @@ export default function GroceryBrowseScreen({ navigation }) {
     return 0;
   });
 
-  const addToCart = (id) => setCart(prev => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
-  const removeFromCart = (id) => setCart(prev => {
-    const next = { ...prev };
-    if (next[id] > 1) next[id]--;
-    else delete next[id];
-    return next;
-  });
+  const cartQty = (id) => cartItems.find((i) => i.id === id)?.qty || 0;
+  const addToCart = (p) => storeAddItem({ id: p.id, name: p.name, price: p.promoPrice || p.price }, p.merchantId);
+  const removeFromCart = (id) => storeUpdateQty(id, cartQty(id) - 1);
 
-  const cartTotal = Object.entries(cart).reduce((sum, [id, qty]) => {
-    const p = products.find(pr => pr.id === id);
-    return sum + (p ? (p.promoPrice || p.price) * qty : 0);
-  }, 0);
-  const cartCount = Object.values(cart).reduce((s, q) => s + q, 0);
+  const cartTotal = cartItems.reduce((sum, i) => sum + i.price * i.qty, 0);
+  const cartCount = cartItems.reduce((sum, i) => sum + i.qty, 0);
 
   if (loading) {
     return (
@@ -174,7 +171,7 @@ export default function GroceryBrowseScreen({ navigation }) {
             </View>
           )}
           {filtered.map(p => {
-            const qty = cart[p.id] || 0;
+            const qty = cartMerchantId && cartMerchantId !== p.merchantId ? 0 : cartQty(p.id);
             return (
               <View key={p.id} style={[styles.productCard, !p.stock && { opacity: 0.5 }]}>
                 <View style={styles.productImgWrap}>
@@ -201,12 +198,12 @@ export default function GroceryBrowseScreen({ navigation }) {
                         <Text style={styles.qtyBtnText}>−</Text>
                       </TouchableOpacity>
                       <Text style={styles.qtyNum}>{qty}</Text>
-                      <TouchableOpacity style={styles.qtyBtn} onPress={() => addToCart(p.id)}>
+                      <TouchableOpacity style={styles.qtyBtn} onPress={() => addToCart(p)}>
                         <Text style={styles.qtyBtnText}>+</Text>
                       </TouchableOpacity>
                     </View>
                   ) : (
-                    <TouchableOpacity style={styles.addBtn} onPress={() => addToCart(p.id)}>
+                    <TouchableOpacity style={styles.addBtn} onPress={() => addToCart(p)}>
                       <Text style={styles.addBtnText}>+ Ajouter</Text>
                     </TouchableOpacity>
                   )

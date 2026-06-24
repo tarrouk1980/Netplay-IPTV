@@ -1,60 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const MARCHAND = {
-  nom: 'Pizza Rapido',
-  categorie: 'Pizzeria • Italien',
-  note: 4.6,
-  nbAvis: 312,
-  initiales: 'PR',
-  description:
-    'Pizzas artisanales cuites au feu de bois, ingrédients frais importés d\'Italie. Livraison rapide dans tout le quartier depuis 2018.',
-  adresse: '14 Rue des Oliviers, Alger Centre',
-  telephone: '+213 555 12 34 56',
-  heures: 'Lun–Sam : 11h00–23h00 • Dim : 12h00–22h00',
-  tempsLivraison: '25–40 min',
-  fraisLivraison: '150 DA',
-  couleurBanniere: '#2C1654',
-  couleurAccent: '#F5A623',
-};
-
-const AVIS = [
-  {
-    id: 1,
-    auteur: 'Karim B.',
-    note: 5,
-    commentaire: 'Excellente pizza, pâte croustillante et ingrédients frais. Livraison rapide !',
-    date: '28 mai 2026',
-  },
-  {
-    id: 2,
-    auteur: 'Samira H.',
-    note: 4,
-    commentaire: 'Très bon rapport qualité/prix. La margherita est parfaite.',
-    date: '22 mai 2026',
-  },
-  {
-    id: 3,
-    auteur: 'Yacine M.',
-    note: 5,
-    commentaire: 'Livré en 30 minutes, pizza encore chaude. Je recommande vivement.',
-    date: '15 mai 2026',
-  },
-  {
-    id: 4,
-    auteur: 'Nadia O.',
-    note: 4,
-    commentaire: 'Bonne pizza mais la sauce pourrait être un peu plus généreuse.',
-    date: '10 mai 2026',
-  },
-];
+import { useFocusEffect } from '@react-navigation/native';
+import api from '../../services/api';
 
 function Etoiles({ note }) {
   return (
@@ -68,11 +23,80 @@ function Etoiles({ note }) {
   );
 }
 
-export default function MerchantProfileScreen({ navigation }) {
+export default function MerchantProfileScreen({ navigation, route }) {
+  const merchantId = route?.params?.merchantId || route?.params?.id;
+  const [merchant, setMerchant] = useState(null);
+  const [avis, setAvis] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const load = useCallback(async () => {
+    if (!merchantId) {
+      setError(true);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(false);
+    try {
+      const res = await api.get(`/api/merchants/${merchantId}`);
+      const m = res.data?.merchant;
+      if (!m) throw new Error('not found');
+      setMerchant(m);
+
+      try {
+        const revRes = await api.get(`/api/reviews/${m.userId || merchantId}`);
+        setAvis(revRes.data?.reviews || []);
+      } catch {
+        setAvis([]);
+      }
+    } catch (e) {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [merchantId]);
+
+  useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  const avgNote = avis.length
+    ? avis.reduce((s, a) => s + (a.rating || 0), 0) / avis.length
+    : 0;
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, styles.centered]} edges={['top']}>
+        <ActivityIndicator color="#F5A623" size="large" />
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !merchant) {
+    return (
+      <SafeAreaView style={[styles.container, styles.centered]} edges={['top']}>
+        <Text style={styles.errorText}>Impossible de charger ce commerçant.</Text>
+        <TouchableOpacity style={styles.retryBtn} onPress={load}>
+          <Text style={styles.retryBtnText}>Réessayer</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginTop: 12 }}>
+          <Text style={{ color: '#8E8E9A' }}>Retour</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
+  const initiales = (merchant.name || '?')
+    .split(' ')
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+  const metadata = merchant.metadata || {};
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={[styles.banniere, { backgroundColor: MARCHAND.couleurBanniere }]}>
+        <View style={[styles.banniere, { backgroundColor: '#2C1654' }]}>
           <View style={styles.banniereDecor1} />
           <View style={styles.banniereDecor2} />
           <TouchableOpacity style={styles.boutonRetour} onPress={() => navigation.goBack()}>
@@ -82,74 +106,84 @@ export default function MerchantProfileScreen({ navigation }) {
 
         <View style={styles.profilHeaderContainer}>
           <View style={styles.logoCircle}>
-            <Text style={styles.logoInitiales}>{MARCHAND.initiales}</Text>
+            <Text style={styles.logoInitiales}>{initiales}</Text>
           </View>
           <View style={styles.profilInfos}>
-            <Text style={styles.nomMarchand}>{MARCHAND.nom}</Text>
-            <Text style={styles.categorie}>{MARCHAND.categorie}</Text>
+            <Text style={styles.nomMarchand}>{merchant.name}</Text>
+            <Text style={styles.categorie}>{merchant.category}</Text>
             <View style={styles.noteRow}>
-              <Etoiles note={MARCHAND.note} />
-              <Text style={styles.noteTexte}>{MARCHAND.note}</Text>
-              <Text style={styles.nbAvis}>({MARCHAND.nbAvis} avis)</Text>
+              <Etoiles note={avgNote} />
+              <Text style={styles.noteTexte}>{avgNote ? avgNote.toFixed(1) : '—'}</Text>
+              <Text style={styles.nbAvis}>({avis.length} avis)</Text>
             </View>
           </View>
         </View>
 
         <View style={styles.infoCardsRow}>
           <View style={styles.infoCard}>
-            <Text style={styles.infoCardLabel}>Livraison</Text>
-            <Text style={styles.infoCardValeur}>{MARCHAND.tempsLivraison}</Text>
+            <Text style={styles.infoCardLabel}>Statut</Text>
+            <Text style={styles.infoCardValeur}>{merchant.isOpen ? 'Ouvert' : 'Fermé'}</Text>
           </View>
           <View style={styles.infoCard}>
             <Text style={styles.infoCardLabel}>Frais</Text>
-            <Text style={styles.infoCardValeur}>{MARCHAND.fraisLivraison}</Text>
+            <Text style={styles.infoCardValeur}>{metadata.fraisLivraison || '—'}</Text>
           </View>
           <View style={[styles.infoCard, { borderRightWidth: 0 }]}>
             <Text style={styles.infoCardLabel}>Note</Text>
-            <Text style={styles.infoCardValeur}>{MARCHAND.note} / 5</Text>
+            <Text style={styles.infoCardValeur}>{avgNote ? `${avgNote.toFixed(1)} / 5` : '—'}</Text>
           </View>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitre}>Informations</Text>
-          <View style={styles.infoLigne}>
-            <Text style={styles.infoIcon}>🕐</Text>
-            <Text style={styles.infoTexte}>{MARCHAND.heures}</Text>
-          </View>
+          {metadata.heures ? (
+            <View style={styles.infoLigne}>
+              <Text style={styles.infoIcon}>🕐</Text>
+              <Text style={styles.infoTexte}>{metadata.heures}</Text>
+            </View>
+          ) : null}
           <View style={styles.infoLigne}>
             <Text style={styles.infoIcon}>📍</Text>
-            <Text style={styles.infoTexte}>{MARCHAND.adresse}</Text>
+            <Text style={styles.infoTexte}>{merchant.address}</Text>
           </View>
-          <View style={styles.infoLigne}>
-            <Text style={styles.infoIcon}>📞</Text>
-            <Text style={styles.infoTexte}>{MARCHAND.telephone}</Text>
-          </View>
+          {metadata.telephone ? (
+            <View style={styles.infoLigne}>
+              <Text style={styles.infoIcon}>📞</Text>
+              <Text style={styles.infoTexte}>{metadata.telephone}</Text>
+            </View>
+          ) : null}
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitre}>À propos</Text>
-          <Text style={styles.description}>{MARCHAND.description}</Text>
-        </View>
+        {metadata.description ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitre}>À propos</Text>
+            <Text style={styles.description}>{metadata.description}</Text>
+          </View>
+        ) : null}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitre}>Avis clients</Text>
-          {AVIS.map((avis) => (
-            <View key={avis.id} style={styles.avisCard}>
-              <View style={styles.avisHeader}>
-                <View style={styles.avisAvatar}>
-                  <Text style={styles.avisAvatarTexte}>{avis.auteur[0]}</Text>
-                </View>
-                <View style={styles.avisInfos}>
-                  <Text style={styles.avisAuteur}>{avis.auteur}</Text>
-                  <View style={styles.avisNoteRow}>
-                    <Etoiles note={avis.note} />
-                    <Text style={styles.avisDate}>{avis.date}</Text>
+          {avis.length === 0 ? (
+            <Text style={styles.description}>Aucun avis pour le moment.</Text>
+          ) : (
+            avis.map((a) => (
+              <View key={a.id} style={styles.avisCard}>
+                <View style={styles.avisHeader}>
+                  <View style={styles.avisAvatar}>
+                    <Text style={styles.avisAvatarTexte}>{(a.author || '?')[0]}</Text>
+                  </View>
+                  <View style={styles.avisInfos}>
+                    <Text style={styles.avisAuteur}>{a.author}</Text>
+                    <View style={styles.avisNoteRow}>
+                      <Etoiles note={a.rating} />
+                      <Text style={styles.avisDate}>{a.date}</Text>
+                    </View>
                   </View>
                 </View>
+                <Text style={styles.avisCommentaire}>{a.comment}</Text>
               </View>
-              <Text style={styles.avisCommentaire}>{avis.commentaire}</Text>
-            </View>
-          ))}
+            ))
+          )}
         </View>
 
         <View style={styles.espaceFond} />
@@ -158,7 +192,7 @@ export default function MerchantProfileScreen({ navigation }) {
       <View style={styles.footerContainer}>
         <TouchableOpacity
           style={styles.boutonCommander}
-          onPress={() => navigation.navigate('Merchant')}
+          onPress={() => navigation.navigate('Merchant', { merchantId })}
         >
           <Text style={styles.boutonCommanderTexte}>Commander</Text>
         </TouchableOpacity>
@@ -171,6 +205,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0A0A0F',
+  },
+  centered: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  errorText: {
+    color: '#8E8E9A',
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryBtn: {
+    backgroundColor: '#F5A623',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+  },
+  retryBtnText: {
+    color: '#0A0A0F',
+    fontWeight: '700',
   },
   banniere: {
     height: 160,

@@ -36,12 +36,16 @@ export default function WalletRechargeScreen({ navigation }) {
     setLoading(true);
     try {
       const res = await api.post('/api/wallet/recharge', { amount: finalAmount, method });
-      if (res.data?.paymentUrl) {
-        Alert.alert('Redirection', 'Vous allez être redirigé vers la page de paiement.');
-      } else {
-        Alert.alert('✅ Demande envoyée', `Votre recharge de ${finalAmount} TND a été initiée.`, [
+      if (res.data?.status === 'CREDITED') {
+        Alert.alert('✅ Recharge effectuée', `${finalAmount} TND ont été ajoutés à votre wallet.`, [
           { text: 'OK', onPress: () => navigation.goBack() },
         ]);
+      } else {
+        Alert.alert(
+          'Demande enregistrée',
+          `Votre recharge de ${finalAmount} TND est en attente de confirmation de paiement. Votre solde sera crédité une fois le paiement validé.`,
+          [{ text: 'OK', onPress: () => navigation.goBack() }]
+        );
       }
     } catch (err) {
       Alert.alert('Erreur', err?.response?.data?.error || 'Impossible de traiter la recharge.');

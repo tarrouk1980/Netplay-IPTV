@@ -96,24 +96,27 @@ export default function GroceryStoreDetailScreen({ route, navigation }) {
   const [activeCategory, setActiveCategory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(false);
 
   const load = useCallback(async () => {
+    setError(false);
     try {
       const res = await api.get(`/api/merchants/${merchantId}`);
       setStore(res.data.merchant);
       const products = res.data.merchant?.products || [];
       const cats = Object.values(
         products.reduce((acc, p) => {
-          acc[p.category] = acc[p.category] || { name: p.category, items: [] };
-          acc[p.category].items.push(p);
+          acc[p.category] = acc[p.category] || { name: p.category, products: [] };
+          acc[p.category].products.push(p);
           return acc;
         }, {})
       );
       setSections(cats);
       if (cats.length > 0 && !activeCategory) setActiveCategory(cats[0].name);
     } catch {
-      setStore({ name: merchantName, isOpen: true, rating: 0, deliveryTime: 30 });
+      setStore(null);
       setSections([]);
+      setError(true);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -149,6 +152,20 @@ export default function GroceryStoreDetailScreen({ route, navigation }) {
       <View style={s.centered}>
         <ActivityIndicator color={COLORS.green} size="large" />
       </View>
+    );
+  }
+
+  if (error || !store) {
+    return (
+      <SafeAreaView style={s.root}>
+        <View style={s.centered}>
+          <Text style={{ fontSize: 40, marginBottom: 10 }}>⚠️</Text>
+          <Text style={s.emptyTitle}>Impossible de charger ce magasin</Text>
+          <TouchableOpacity style={s.catTab} onPress={load}>
+            <Text style={s.catTabTxt}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     );
   }
 

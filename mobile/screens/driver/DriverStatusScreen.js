@@ -47,8 +47,9 @@ export default function DriverStatusScreen({ navigation }) {
   const handleToggle = async (val) => {
     setToggling(true);
     try {
-      await api.patch('/api/taxi/driver/toggle');
-      setIsOnline(val);
+      const res = await api.patch('/api/taxi/driver/toggle', { online: val });
+      const serverOnline = res.data?.isOnline ?? res.data?.online ?? val;
+      setIsOnline(serverOnline);
     } catch {
       Alert.alert('Erreur', 'Impossible de changer votre statut. Vérifiez votre connexion.');
     } finally {

@@ -22,15 +22,25 @@ export default function WalletTransferScreen({ navigation, route }) {
   const [done, setDone] = useState(false);
   const [refId, setRefId] = useState('');
   const [sending, setSending] = useState(false);
+  const [lookingUp, setLookingUp] = useState(false);
 
   const numAmount = parseFloat(amount) || 0;
   const canProceedStep1 = phone.trim().length >= 8;
   const canProceedStep2 = numAmount >= 1 && numAmount <= balance;
 
-  const lookupRecipient = () => {
-    if (!canProceedStep1) return;
-    setRecipient({ name: null, phone: phone.trim(), avatar: '👤' });
-    setStep(2);
+  const lookupRecipient = async () => {
+    if (!canProceedStep1 || lookingUp) return;
+    setLookingUp(true);
+    try {
+      const res = await api.get('/api/wallet/lookup-recipient', { params: { phone: phone.trim() } });
+      setRecipient({ name: res.data.name, phone: res.data.phone, avatar: '👤' });
+      setStep(2);
+    } catch (err) {
+      const msg = err?.response?.data?.error || 'Impossible de vérifier ce numéro. Réessayez.';
+      Alert.alert('Destinataire introuvable', msg);
+    } finally {
+      setLookingUp(false);
+    }
   };
 
   const confirmTransfer = async () => {
@@ -146,11 +156,15 @@ export default function WalletTransferScreen({ navigation, route }) {
               />
             </View>
             <TouchableOpacity
-              style={[styles.lookupBtn, !canProceedStep1 && styles.lookupBtnDisabled]}
+              style={[styles.lookupBtn, (!canProceedStep1 || lookingUp) && styles.lookupBtnDisabled]}
               onPress={lookupRecipient}
-              disabled={!canProceedStep1}
+              disabled={!canProceedStep1 || lookingUp}
             >
-              <Text style={styles.lookupBtnText}>Continuer</Text>
+              {lookingUp ? (
+                <ActivityIndicator color="#000" />
+              ) : (
+                <Text style={styles.lookupBtnText}>Continuer</Text>
+              )}
             </TouchableOpacity>
           </View>
         )}
@@ -212,11 +226,15 @@ export default function WalletTransferScreen({ navigation, route }) {
       <View style={styles.footer}>
         {step === 1 && (
           <TouchableOpacity
-            style={[styles.nextBtn, !canProceedStep1 && styles.nextBtnDisabled]}
-            onPress={() => canProceedStep1 && lookupRecipient()}
-            disabled={!canProceedStep1}
+            style={[styles.nextBtn, (!canProceedStep1 || lookingUp) && styles.nextBtnDisabled]}
+            onPress={lookupRecipient}
+            disabled={!canProceedStep1 || lookingUp}
           >
-            <Text style={styles.nextBtnText}>Continuer</Text>
+            {lookingUp ? (
+              <ActivityIndicator color="#000" />
+            ) : (
+              <Text style={styles.nextBtnText}>Continuer</Text>
+            )}
           </TouchableOpacity>
         )}
         {step === 2 && (

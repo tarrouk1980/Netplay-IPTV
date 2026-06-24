@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
+import api from '../../services/api';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', border: '#2C2C3E',
@@ -8,32 +10,51 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', orange: '#FF9800',
 };
 
-const STOCK_ITEMS = [
-  { id: '1', name: 'Eau Safia 1.5L', sku: 'SKU001', stock: 2, minStock: 10, category: 'Boissons', critical: true },
-  { id: '2', name: 'Pain de mie Harry\'s', sku: 'SKU008', stock: 5, minStock: 20, category: 'Boulangerie', critical: false },
-  { id: '3', name: 'Lait Délice 1L', sku: 'SKU012', stock: 0, minStock: 15, category: 'Produits laitiers', critical: true },
-  { id: '4', name: 'Chips Bonito 100g', sku: 'SKU019', stock: 8, minStock: 30, category: 'Snacks', critical: false },
-  { id: '5', name: 'Jus Rania 1L', sku: 'SKU031', stock: 3, minStock: 12, category: 'Boissons', critical: true },
-];
-
 export default function MerchantStockAlertScreen({ navigation }) {
-  const [dismissed, setDismissed] = useState([]);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [restockingId, setRestockingId] = useState(null);
 
-  const visible = STOCK_ITEMS.filter(i => !dismissed.includes(i.id));
-  const critical = visible.filter(i => i.critical).length;
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const res = await api.get('/api/merchants/me/low-stock');
+      setItems(res.data?.items || []);
+    } catch (e) {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  const critical = items.filter(i => i.critical).length;
 
   const handleRestock = (item) => {
     Alert.alert(
       'Commander du stock',
-      `Envoyer une demande de réapprovisionnement pour "${item.name}" ?`,
+      `Remettre le stock de "${item.name}" au niveau minimum (${item.minStock}) ?`,
       [
         { text: 'Annuler', style: 'cancel' },
-        { text: 'Commander', onPress: () => {
-          Alert.alert('Demande envoyée', `Une commande pour "${item.name}" a été transmise.`);
-          setDismissed(prev => [...prev, item.id]);
-        }},
+        { text: 'Commander', onPress: () => doRestock(item) },
       ]
     );
+  };
+
+  const doRestock = async (item) => {
+    setRestockingId(item.id);
+    try {
+      await api.patch(`/api/merchants/me/products/${item.id}`, { stock: item.minStock });
+      Alert.alert('Stock mis à jour', `Le stock de "${item.name}" a été réapprovisionné.`);
+      setItems(prev => prev.filter(i => i.id !== item.id));
+    } catch (e) {
+      Alert.alert('Erreur', 'Impossible de mettre à jour le stock. Réessayez.');
+    } finally {
+      setRestockingId(null);
+    }
   };
 
   return (
@@ -44,59 +65,79 @@ export default function MerchantStockAlertScreen({ navigation }) {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>⚠️ Alertes de stock</Text>
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>{visible.length}</Text>
+          <Text style={styles.badgeText}>{items.length}</Text>
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {critical > 0 && (
-          <View style={styles.criticalBanner}>
-            <Text style={styles.criticalText}>🔴 {critical} produit{critical > 1 ? 's' : ''} en rupture de stock totale</Text>
-          </View>
-        )}
-
-        {visible.length === 0 ? (
-          <View style={styles.emptyBox}>
-            <Text style={styles.emptyIcon}>✅</Text>
-            <Text style={styles.emptyText}>Aucune alerte de stock</Text>
-          </View>
-        ) : (
-          visible.map(item => (
-            <View key={item.id} style={[styles.itemCard, item.stock === 0 && styles.itemCardCritical]}>
-              <View style={styles.itemHeader}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.itemName}>{item.name}</Text>
-                  <Text style={styles.itemMeta}>{item.sku} · {item.category}</Text>
-                </View>
-                <View style={[styles.stockBadge, { backgroundColor: item.stock === 0 ? COLORS.red + '20' : COLORS.orange + '20' }]}>
-                  <Text style={[styles.stockText, { color: item.stock === 0 ? COLORS.red : COLORS.orange }]}>
-                    {item.stock === 0 ? 'Rupture' : `${item.stock} restants`}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.progressRow}>
-                <View style={styles.progressBg}>
-                  <View style={[
-                    styles.progressFill,
-                    {
-                      width: `${Math.min((item.stock / item.minStock) * 100, 100)}%`,
-                      backgroundColor: item.stock === 0 ? COLORS.red : COLORS.orange,
-                    }
-                  ]} />
-                </View>
-                <Text style={styles.progressLabel}>Min: {item.minStock}</Text>
-              </View>
-
-              <TouchableOpacity style={styles.restockBtn} onPress={() => handleRestock(item)}>
-                <Text style={styles.restockText}>📦 Commander du stock</Text>
-              </TouchableOpacity>
+      {loading ? (
+        <View style={styles.emptyBox}>
+          <ActivityIndicator color={COLORS.accent} size="large" />
+        </View>
+      ) : error ? (
+        <View style={styles.emptyBox}>
+          <Text style={styles.emptyIcon}>⚠️</Text>
+          <Text style={styles.emptyText}>Impossible de charger les alertes de stock</Text>
+          <TouchableOpacity style={styles.retryBtn} onPress={load}>
+            <Text style={styles.restockText}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          {critical > 0 && (
+            <View style={styles.criticalBanner}>
+              <Text style={styles.criticalText}>🔴 {critical} produit{critical > 1 ? 's' : ''} en rupture de stock totale</Text>
             </View>
-          ))
-        )}
+          )}
 
-        <View style={{ height: 40 }} />
-      </ScrollView>
+          {items.length === 0 ? (
+            <View style={styles.emptyBox}>
+              <Text style={styles.emptyIcon}>✅</Text>
+              <Text style={styles.emptyText}>Aucune alerte de stock</Text>
+            </View>
+          ) : (
+            items.map(item => (
+              <View key={item.id} style={[styles.itemCard, item.stock === 0 && styles.itemCardCritical]}>
+                <View style={styles.itemHeader}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.itemName}>{item.name}</Text>
+                    <Text style={styles.itemMeta}>{item.category}</Text>
+                  </View>
+                  <View style={[styles.stockBadge, { backgroundColor: item.stock === 0 ? COLORS.red + '20' : COLORS.orange + '20' }]}>
+                    <Text style={[styles.stockText, { color: item.stock === 0 ? COLORS.red : COLORS.orange }]}>
+                      {item.stock === 0 ? 'Rupture' : `${item.stock} restants`}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.progressRow}>
+                  <View style={styles.progressBg}>
+                    <View style={[
+                      styles.progressFill,
+                      {
+                        width: `${Math.min((item.stock / item.minStock) * 100, 100)}%`,
+                        backgroundColor: item.stock === 0 ? COLORS.red : COLORS.orange,
+                      }
+                    ]} />
+                  </View>
+                  <Text style={styles.progressLabel}>Min: {item.minStock}</Text>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.restockBtn}
+                  onPress={() => handleRestock(item)}
+                  disabled={restockingId === item.id}
+                >
+                  <Text style={styles.restockText}>
+                    {restockingId === item.id ? 'Mise à jour...' : '📦 Commander du stock'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ))
+          )}
+
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 }
@@ -121,9 +162,13 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: COLORS.red + '50',
   },
   criticalText: { color: COLORS.red, fontSize: 13, fontWeight: '700' },
-  emptyBox: { alignItems: 'center', paddingVertical: 60 },
+  emptyBox: { alignItems: 'center', paddingVertical: 60, paddingHorizontal: 24 },
   emptyIcon: { fontSize: 48, marginBottom: 12 },
-  emptyText: { color: COLORS.muted, fontSize: 15 },
+  emptyText: { color: COLORS.muted, fontSize: 15, textAlign: 'center', marginBottom: 16 },
+  retryBtn: {
+    backgroundColor: COLORS.accent + '20', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 20,
+    borderWidth: 1, borderColor: COLORS.accent + '40',
+  },
   itemCard: {
     backgroundColor: COLORS.surface, borderRadius: 14, padding: 14,
     marginBottom: 12, borderWidth: 1, borderColor: COLORS.border,

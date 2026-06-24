@@ -18,26 +18,37 @@ const COLORS = {
   purple: '#9B59B6',
 };
 
-const SUGGESTED_CODES = [
-  { code: 'BIENVENUE', desc: '20% sur la première commande', icon: '🎉' },
-  { code: 'TAXI10', desc: '10% sur les courses taxi', icon: '🚕' },
-  { code: 'SOS5', desc: '5 TND sur dépannage SOS', icon: '🚨' },
-  { code: 'LIVRAISON0', desc: '-2 TND livraisons', icon: '🛵' },
-];
+const SERVICE_ICONS = {
+  TAXI: '🚕', SOS: '🚨', DELIVERY: '🛵', GROCERY: '🛒', PASS: '🎫',
+};
 
 export default function PromoCodeScreen({ navigation, route }) {
-  const { amount, serviceType } = route.params || {};
-  const [code, setCode] = useState('');
+  const { amount, serviceType, prefillCode } = route.params || {};
+  const [code, setCode] = useState(prefillCode || '');
   const [loading, setLoading] = useState(false);
   const [applied, setApplied] = useState(null);
   const [history, setHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
+  const [suggested, setSuggested] = useState([]);
+  const [loadingSuggested, setLoadingSuggested] = useState(true);
 
   useEffect(() => {
     api.get('/api/promo/my-codes')
       .then(r => setHistory(r.data?.codes || []))
       .catch(() => setHistory([]))
       .finally(() => setLoadingHistory(false));
+
+    api.get('/api/promo/list')
+      .then(r => {
+        const list = Array.isArray(r.data) ? r.data : [];
+        setSuggested(list.map(p => ({
+          code: p.code,
+          desc: p.label,
+          icon: SERVICE_ICONS[(p.services && p.services[0])] || '🏷️',
+        })));
+      })
+      .catch(() => setSuggested([]))
+      .finally(() => setLoadingSuggested(false));
   }, []);
 
   const handleApply = async (codeToApply) => {
@@ -140,21 +151,27 @@ export default function PromoCodeScreen({ navigation, route }) {
 
         {/* Suggested codes */}
         <Text style={styles.sectionLabel}>CODES DISPONIBLES</Text>
-        {SUGGESTED_CODES.map(s => (
-          <TouchableOpacity
-            key={s.code}
-            style={styles.suggCard}
-            onPress={() => { setCode(s.code); handleApply(s.code); }}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.suggIcon}>{s.icon}</Text>
-            <View style={styles.suggInfo}>
-              <Text style={styles.suggCode}>{s.code}</Text>
-              <Text style={styles.suggDesc}>{s.desc}</Text>
-            </View>
-            <Text style={styles.suggArrow}>›</Text>
-          </TouchableOpacity>
-        ))}
+        {loadingSuggested ? (
+          <ActivityIndicator color={COLORS.accent} style={{ marginVertical: 12 }} />
+        ) : suggested.length === 0 ? (
+          <Text style={[styles.suggDesc, { marginBottom: 12 }]}>Aucun code disponible pour le moment.</Text>
+        ) : (
+          suggested.map(s => (
+            <TouchableOpacity
+              key={s.code}
+              style={styles.suggCard}
+              onPress={() => { setCode(s.code); handleApply(s.code); }}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.suggIcon}>{s.icon}</Text>
+              <View style={styles.suggInfo}>
+                <Text style={styles.suggCode}>{s.code}</Text>
+                <Text style={styles.suggDesc}>{s.desc}</Text>
+              </View>
+              <Text style={styles.suggArrow}>›</Text>
+            </TouchableOpacity>
+          ))
+        )}
 
         {/* History */}
         {!loadingHistory && history.length > 0 && (
