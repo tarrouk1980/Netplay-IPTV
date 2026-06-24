@@ -12,17 +12,6 @@ const COLORS = {
   border: '#2A2A3A', green: '#27AE60', red: '#D32F2F', purple: '#8E44AD',
 };
 
-const MOCK = [
-  { id: 'EP001', type: 'credit', label: 'Course EasyTaxy terminée',    pts: +50,  date: '15/01/2025', service: '🚕' },
-  { id: 'EP002', type: 'credit', label: 'Parrainage — Sonia M.',        pts: +100, date: '14/01/2025', service: '🎁' },
-  { id: 'EP003', type: 'debit',  label: 'Échange — réduction 5 TND',   pts: -200, date: '13/01/2025', service: '🎫' },
-  { id: 'EP004', type: 'credit', label: 'Livraison SOS effectuée',      pts: +80,  date: '11/01/2025', service: '🛻' },
-  { id: 'EP005', type: 'credit', label: 'Bonus bienvenue',              pts: +250, date: '05/01/2025', service: '⭐' },
-  { id: 'EP006', type: 'credit', label: 'Commande épicerie > 30 TND',   pts: +60,  date: '02/01/2025', service: '🛒' },
-  { id: 'EP007', type: 'debit',  label: 'Échange — course gratuite',    pts: -500, date: '28/12/2024', service: '🚕' },
-  { id: 'EP008', type: 'credit', label: 'Pass Premium activé',          pts: +150, date: '01/12/2024', service: '🌟' },
-];
-
 // Fallback only used if /api/loyalty/balance is unreachable — the real
 // catalog (and the only set of ids /api/loyalty/redeem actually accepts)
 // is fetched from the backend below.
@@ -34,7 +23,8 @@ const FALLBACK_REWARDS = [
 ];
 
 export default function EasyPointsHistoryScreen({ navigation }) {
-  const [history, setHistory] = useState(MOCK);
+  const [history, setHistory] = useState([]);
+  const [historyError, setHistoryError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [balance, setBalance] = useState(0);
   const [rewards, setRewards] = useState(FALLBACK_REWARDS);
@@ -46,8 +36,12 @@ export default function EasyPointsHistoryScreen({ navigation }) {
       setLoading(true);
       try {
         const res = await api.get('/api/loyalty/history');
-        if (Array.isArray(res.data) && res.data.length) setHistory(res.data);
-      } catch {}
+        setHistory(Array.isArray(res.data) ? res.data : []);
+      } catch (err) {
+        console.error('[EasyPointsHistoryScreen] history load failed', err);
+        setHistory([]);
+        setHistoryError('Impossible de charger l\'historique des points.');
+      }
       try {
         const balRes = await api.get('/api/loyalty/balance');
         setBalance(balRes.data.points ?? 0);
@@ -121,6 +115,12 @@ export default function EasyPointsHistoryScreen({ navigation }) {
       {tab === 'historique' && (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list}>
           {loading && <ActivityIndicator color={COLORS.accent} style={{ marginTop: 20 }} />}
+          {!loading && historyError && (
+            <Text style={{ color: COLORS.red, fontSize: 13, textAlign: 'center', marginTop: 20 }}>{historyError}</Text>
+          )}
+          {!loading && !historyError && history.length === 0 && (
+            <Text style={{ color: COLORS.muted, fontSize: 13, textAlign: 'center', marginTop: 20 }}>Aucune transaction pour le moment.</Text>
+          )}
           {history.map((h) => (
             <View key={h.id} style={styles.txRow}>
               <View style={[styles.txIcon, { backgroundColor: (h.type === 'credit' ? COLORS.green : COLORS.red) + '22' }]}>

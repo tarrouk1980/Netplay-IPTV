@@ -12,44 +12,23 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB',
 };
 
-const MOCK = {
-  name: 'Carrefour Market La Marsa',
-  category: 'Supermarché',
-  rating: 4.7,
-  reviews: 312,
-  distance: 1.8,
-  deliveryTime: '25–35 min',
-  deliveryFee: 2.500,
-  minOrder: 15,
-  open: true,
-  hours: '08:00–22:00',
-  description: 'Supermarché avec une large gamme de produits frais, épicerie et produits ménagers.',
-  badges: ['Bio disponible', 'Livraison rapide', 'Paiement en ligne'],
-  categories: [
-    { id: 'C1', name: 'Fruits & Légumes', icon: '🥦', count: 48 },
-    { id: 'C2', name: 'Viandes & Poissons', icon: '🥩', count: 32 },
-    { id: 'C3', name: 'Produits laitiers', icon: '🧀', count: 25 },
-    { id: 'C4', name: 'Épicerie', icon: '🛒', count: 120 },
-    { id: 'C5', name: 'Boissons', icon: '🥤', count: 55 },
-    { id: 'C6', name: 'Hygiène', icon: '🧴', count: 40 },
-  ],
-  reviews_sample: [
-    { author: 'Asma B.', rating: 5, comment: 'Livraison rapide, produits frais !', date: 'Il y a 2j' },
-    { author: 'Nizar M.', rating: 4, comment: 'Bon choix, juste emballage à améliorer.', date: 'Il y a 5j' },
-  ],
-};
-
 export default function GroceryStoreProfileScreen({ navigation, route }) {
   const storeId = route?.params?.storeId;
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    api.get(`/api/merchants/${storeId || 'default'}`)
-      .then(r => setData(r.data?.merchant || MOCK))
-      .catch(() => setData(MOCK))
+    if (!storeId) {
+      setError(true);
+      setLoading(false);
+      return;
+    }
+    api.get(`/api/merchants/${storeId}`)
+      .then(r => setData(r.data?.merchant))
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, []);
+  }, [storeId]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -62,7 +41,13 @@ export default function GroceryStoreProfileScreen({ navigation, route }) {
         <View style={{ width: 40 }} />
       </View>
 
-      {loading ? <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} /> : (
+      {loading ? <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 40 }} /> : error || !data ? (
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <Text style={{ color: COLORS.muted, fontSize: 14, textAlign: 'center' }}>
+            Impossible de charger les informations de la boutique. Veuillez réessayer plus tard.
+          </Text>
+        </View>
+      ) : (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
 
           <View style={styles.heroCard}>
@@ -70,55 +55,65 @@ export default function GroceryStoreProfileScreen({ navigation, route }) {
             <Text style={styles.heroName}>{data.name}</Text>
             <Text style={styles.heroCategory}>{data.category}</Text>
             <View style={styles.heroMeta}>
-              <Text style={styles.heroMetaItem}>⭐ {data.rating} ({data.reviews})</Text>
-              <Text style={styles.heroMetaItem}>📏 {data.distance} km</Text>
+              {(data.rating != null || data.reviews != null) && (
+                <Text style={styles.heroMetaItem}>⭐ {data.rating ?? '—'} ({data.reviews ?? 0})</Text>
+              )}
+              {data.distance != null && <Text style={styles.heroMetaItem}>📏 {data.distance} km</Text>}
               <Text style={[styles.heroMetaItem, { color: data.open ? COLORS.green : COLORS.red }]}>
                 {data.open ? '🟢 Ouvert' : '🔴 Fermé'}
               </Text>
             </View>
-            <View style={styles.badgesRow}>
-              {data.badges.map(b => (
-                <View key={b} style={styles.badge}><Text style={styles.badgeText}>{b}</Text></View>
-              ))}
-            </View>
+            {Array.isArray(data.badges) && data.badges.length > 0 && (
+              <View style={styles.badgesRow}>
+                {data.badges.map(b => (
+                  <View key={b} style={styles.badge}><Text style={styles.badgeText}>{b}</Text></View>
+                ))}
+              </View>
+            )}
           </View>
 
           <View style={styles.infoRow}>
             <View style={styles.infoCard}>
               <Text style={styles.infoIcon}>🕐</Text>
-              <Text style={styles.infoVal}>{data.deliveryTime}</Text>
+              <Text style={styles.infoVal}>{data.deliveryTime ?? '—'}</Text>
               <Text style={styles.infoLabel}>Livraison</Text>
             </View>
             <View style={styles.infoCard}>
               <Text style={styles.infoIcon}>💰</Text>
-              <Text style={styles.infoVal}>{data.deliveryFee.toFixed(3)}</Text>
+              <Text style={styles.infoVal}>{Number(data.deliveryFee ?? 0).toFixed(3)}</Text>
               <Text style={styles.infoLabel}>TND livraison</Text>
             </View>
             <View style={styles.infoCard}>
               <Text style={styles.infoIcon}>🛒</Text>
-              <Text style={styles.infoVal}>{data.minOrder} TND</Text>
+              <Text style={styles.infoVal}>{data.minOrder ?? '—'} TND</Text>
               <Text style={styles.infoLabel}>Min. commande</Text>
             </View>
           </View>
 
           <View style={{ padding: 16 }}>
-            <Text style={styles.sectionTitle}>CATÉGORIES</Text>
-            <View style={styles.categoriesGrid}>
-              {data.categories.map(cat => (
-                <TouchableOpacity
-                  key={cat.id}
-                  style={styles.catCard}
-                  onPress={() => navigation.navigate('GroceryShop', { storeId, categoryId: cat.id })}
-                >
-                  <Text style={{ fontSize: 28 }}>{cat.icon}</Text>
-                  <Text style={styles.catName}>{cat.name}</Text>
-                  <Text style={styles.catCount}>{cat.count} produits</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            {Array.isArray(data.categories) && data.categories.length > 0 && (
+              <>
+                <Text style={styles.sectionTitle}>CATÉGORIES</Text>
+                <View style={styles.categoriesGrid}>
+                  {data.categories.map(cat => (
+                    <TouchableOpacity
+                      key={cat.id}
+                      style={styles.catCard}
+                      onPress={() => navigation.navigate('GroceryShop', { storeId, categoryId: cat.id })}
+                    >
+                      <Text style={{ fontSize: 28 }}>{cat.icon}</Text>
+                      <Text style={styles.catName}>{cat.name}</Text>
+                      <Text style={styles.catCount}>{cat.count} produits</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
+            )}
 
-            <Text style={styles.sectionTitle}>AVIS CLIENTS</Text>
-            {data.reviews_sample.map((r, i) => (
+            {Array.isArray(data.reviews_sample) && data.reviews_sample.length > 0 && (
+              <Text style={styles.sectionTitle}>AVIS CLIENTS</Text>
+            )}
+            {(data.reviews_sample ?? []).map((r, i) => (
               <View key={i} style={styles.reviewCard}>
                 <View style={styles.reviewTop}>
                   <Text style={styles.reviewAuthor}>{r.author}</Text>

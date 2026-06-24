@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  StatusBar, TextInput,
+  StatusBar, TextInput, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', surfaceAlt: '#16161F',
@@ -18,64 +19,83 @@ const CAT_COLOR = {
   Promos: COLORS.purple, Système: COLORS.blue,
 };
 
-const MOCK = [
-  {
-    id: 1, type: 'Promos', icon: '🎁', read: false,
-    title: 'Offre flash — 30% sur votre prochaine course !',
-    body: 'Code FLASH30 valable jusqu\'à ce soir 23h59. Utilisez-le maintenant !',
-    time: 'Il y a 5 min',
-  },
-  {
-    id: 2, type: 'Courses', icon: '🚕', read: false,
-    title: 'Votre chauffeur est arrivé',
-    body: 'Achraf B. vous attend devant l\'entrée. Plaque : TUN-2234.',
-    time: 'Il y a 18 min',
-  },
-  {
-    id: 3, type: 'Livraisons', icon: '🛵', read: true,
-    title: 'Colis livré avec succès',
-    body: 'Votre commande GRO-8821 a été livrée à 14:35. Bon appétit !',
-    time: 'Il y a 1h',
-  },
-  {
-    id: 4, type: 'SOS', icon: '🔧', read: true,
-    title: 'Dépanneur en route',
-    body: 'Mohamed K. arrive dans ~12 minutes. Restez près de votre véhicule.',
-    time: 'Il y a 2h',
-  },
-  {
-    id: 5, type: 'Promos', icon: '⭐', read: true,
-    title: 'Nouveau : EasyPass disponible !',
-    body: 'Souscrivez à EasyPass et économisez jusqu\'à 40% par mois.',
-    time: 'Hier',
-  },
-  {
-    id: 6, type: 'Système', icon: '🔒', read: true,
-    title: 'Connexion depuis un nouvel appareil',
-    body: 'Une connexion a été détectée depuis un iPhone 15 Pro à Tunis.',
-    time: 'Hier',
-  },
-  {
-    id: 7, type: 'Courses', icon: '⭐', read: true,
-    title: 'Évaluez votre course',
-    body: 'Comment s\'est passée votre course avec Achraf B. ? Donnez votre avis.',
-    time: 'Il y a 2 jours',
-  },
-  {
-    id: 8, type: 'Promos', icon: '🎉', read: true,
-    title: 'Bienvenue ! +10 TND offerts',
-    body: 'Votre crédit de bienvenue a été crédité sur votre portefeuille.',
-    time: 'Il y a 5 jours',
-  },
-];
+// Maps backend Notification.type values to this screen's display category/icon.
+const TYPE_META = {
+  TAXI: { category: 'Courses', icon: '🚕' },
+  ORDER: { category: 'Livraisons', icon: '🛵' },
+  SOS: { category: 'SOS', icon: '🔧' },
+  PROMO: { category: 'Promos', icon: '🎁' },
+  PAYMENT: { category: 'Système', icon: '💳' },
+  SYSTEM: { category: 'Système', icon: '🔒' },
+  LOYALTY: { category: 'Promos', icon: '⭐' },
+};
+
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const diffMs = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return 'À l\'instant';
+  if (mins < 60) return `Il y a ${mins} min`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `Il y a ${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return 'Hier';
+  return `Il y a ${days} jours`;
+}
 
 export default function NotificationCenterV2Screen({ navigation }) {
   const [activeCategory, setActiveCategory] = useState('Tout');
   const [search, setSearch] = useState('');
-  const [notifications, setNotifications] = useState(MOCK);
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const markAllRead = () => setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-  const markRead = (id) => setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  const load = useCallback(() => {
+    setLoading(true);
+    api.get('/api/notifications')
+      .then(r => {
+        const raw = r.data.notifications || [];
+        setNotifications(raw.map(n => {
+          const meta = TYPE_META[n.type] || { category: 'Système', icon: '🔔' };
+          return {
+            id: n.id,
+            type: meta.category,
+            icon: meta.icon,
+            read: !!n.read,
+            title: n.title,
+            body: n.body,
+            time: timeAgo(n.createdAt),
+          };
+        }));
+      })
+      .catch((err) => {
+        console.error('[NotificationCenterV2Screen] load failed', err);
+        setNotifications([]);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const markAllRead = () => {
+    const previous = notifications;
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    api.post('/api/notifications/read-all').catch((err) => {
+      console.error('[NotificationCenterV2Screen] markAllRead failed', err);
+      setNotifications(previous);
+      Alert.alert('Erreur', 'Impossible de marquer toutes les notifications comme lues. Réessayez.');
+    });
+  };
+  const markRead = (id) => {
+    const previous = notifications;
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    api.post(`/api/notifications/${id}/read`).catch((err) => {
+      console.error('[NotificationCenterV2Screen] markRead failed', err);
+      setNotifications(previous);
+      Alert.alert('Erreur', 'Impossible de marquer cette notification comme lue. Réessayez.');
+    });
+  };
+  // Note: no backend endpoint exists to delete a notification — this only
+  // removes it from local state for this session.
   const deleteNotif = (id) => setNotifications(prev => prev.filter(n => n.id !== id));
 
   const filtered = notifications.filter(n => {
@@ -154,7 +174,8 @@ export default function NotificationCenterV2Screen({ navigation }) {
       </ScrollView>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
-        {filtered.length === 0 && (
+        {loading && <ActivityIndicator color={COLORS.accent} style={{ marginTop: 40 }} />}
+        {!loading && filtered.length === 0 && (
           <View style={styles.emptyBox}>
             <Text style={{ fontSize: 48, marginBottom: 12 }}>🔔</Text>
             <Text style={styles.emptyText}>Aucune notification</Text>

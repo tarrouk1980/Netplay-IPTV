@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  StatusBar, Share, Clipboard,
+  StatusBar, Share, Clipboard, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
@@ -13,23 +13,6 @@ const COLORS = {
   green: '#27AE60', purple: '#9B59B6',
 };
 
-const MOCK = {
-  code: 'TAREK2024',
-  totalReferrals: 12,
-  pendingReferrals: 3,
-  confirmedReferrals: 9,
-  totalEarned: 54.00,
-  pendingEarned: 18.00,
-  rewardPerRef: 6.00,
-  referees: [
-    { name: 'Sana B.', date: '01/06/2024', status: 'confirmed', reward: 6.00 },
-    { name: 'Karim M.', date: '29/05/2024', status: 'confirmed', reward: 6.00 },
-    { name: 'Ines K.', date: '27/05/2024', status: 'pending', reward: 6.00 },
-    { name: 'Amira T.', date: '25/05/2024', status: 'confirmed', reward: 6.00 },
-    { name: 'Youssef L.', date: '20/05/2024', status: 'pending', reward: 6.00 },
-  ],
-};
-
 const STATUS_MAP = {
   confirmed: { label: 'Confirmé', color: COLORS.green, bg: '#0D2E0D' },
   pending: { label: 'En attente', color: COLORS.accent, bg: '#2A1E0A' },
@@ -37,36 +20,46 @@ const STATUS_MAP = {
 
 export default function ReferralDashboardScreen({ navigation }) {
   const [copied, setCopied] = useState(false);
-  const [data, setData] = useState(MOCK);
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const [codeRes, statsRes, historyRes] = await Promise.all([
-          api.get('/api/referral/my-code'),
-          api.get('/api/referral/my-stats'),
-          api.get('/api/referral/history'),
-        ]);
-        const referees = (historyRes.data || []).map((u) => ({
-          name: u.name,
-          date: new Date(u.createdAt).toLocaleDateString('fr-TN'),
-          status: 'confirmed',
-          reward: 6.0,
-        }));
-        const confirmedReferrals = statsRes.data.referrals || 0;
-        setData({
-          code: codeRes.data.code,
-          totalReferrals: confirmedReferrals,
-          pendingReferrals: 0,
-          confirmedReferrals,
-          totalEarned: statsRes.data.totalRewardsEarned || 0,
-          pendingEarned: 0,
-          rewardPerRef: 6.0,
-          referees,
-        });
-      } catch {}
-    })();
+  const load = React.useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [codeRes, statsRes, historyRes] = await Promise.all([
+        api.get('/api/referral/my-code'),
+        api.get('/api/referral/my-stats'),
+        api.get('/api/referral/history'),
+      ]);
+      const referees = (historyRes.data || []).map((u) => ({
+        name: u.name,
+        date: new Date(u.createdAt).toLocaleDateString('fr-TN'),
+        status: 'confirmed',
+        reward: 6.0,
+      }));
+      const confirmedReferrals = statsRes.data.referrals || 0;
+      setData({
+        code: codeRes.data.code,
+        totalReferrals: confirmedReferrals,
+        pendingReferrals: 0,
+        confirmedReferrals,
+        totalEarned: statsRes.data.totalRewardsEarned || 0,
+        pendingEarned: 0,
+        rewardPerRef: 6.0,
+        referees,
+      });
+    } catch (err) {
+      console.error('[ReferralDashboardScreen] load failed', err);
+      setData(null);
+      setError('Impossible de charger votre programme de parrainage.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   const copyCode = () => {
     Clipboard.setString(data.code);
@@ -81,6 +74,27 @@ export default function ReferralDashboardScreen({ navigation }) {
       });
     } catch {}
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator color={COLORS.accent} size="large" />
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <SafeAreaView style={[styles.root, { alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }]}>
+        <Text style={{ color: COLORS.white, fontSize: 14, marginBottom: 14, textAlign: 'center' }}>
+          {error || 'Aucune donnée disponible.'}
+        </Text>
+        <TouchableOpacity onPress={load} style={{ paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8, backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border }}>
+          <Text style={{ color: COLORS.accent, fontWeight: '700' }}>Réessayer</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
 
   const progressPct = Math.min((data.confirmedReferrals / 15) * 100, 100);
 

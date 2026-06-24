@@ -17,15 +17,6 @@ const TYPE_ICONS = {
   PAYMENT: '💳', SYSTEM: '⚙️', LOYALTY: '🏆',
 };
 
-const MOCK = [
-  { id: '1', type: 'TAXI', title: 'Course terminée', body: 'Votre course avec Mohamed A. est terminée. Notez votre expérience !', read: false, date: 'Il y a 5 min' },
-  { id: '2', type: 'PROMO', title: 'Offre exclusive !', body: '🎉 -20% sur votre prochaine course taxi avec le code EASY20. Valable 24h.', read: false, date: 'Il y a 1h' },
-  { id: '3', type: 'ORDER', title: 'Livraison en route', body: 'Sami K. est parti avec votre commande. ETA : 12 min.', read: true, date: 'Il y a 2h' },
-  { id: '4', type: 'LOYALTY', title: 'Nouveau badge !', body: 'Félicitations, vous atteignez le statut Silver ! 10% de réduction sur tous les services.', read: true, date: 'Hier' },
-  { id: '5', type: 'PAYMENT', title: 'Paiement confirmé', body: 'Votre paiement de 12.500 TND a bien été traité.', read: true, date: 'Hier' },
-  { id: '6', type: 'SOS', title: 'Technicien assigné', body: 'Karim M. prend en charge votre demande SOS. Il arrive dans ~20 min.', read: true, date: 'Il y a 3 jours' },
-];
-
 function NotifCard({ item, onPress }) {
   return (
     <TouchableOpacity
@@ -54,8 +45,11 @@ export default function ClientNotificationsScreen({ navigation }) {
 
   const load = useCallback(() => {
     api.get('/api/notifications')
-      .then(r => setNotifs(r.data.notifications || MOCK))
-      .catch(() => setNotifs(MOCK))
+      .then(r => setNotifs(r.data.notifications || []))
+      .catch((err) => {
+        console.error('[ClientNotificationsScreen] load failed', err);
+        setNotifs([]);
+      })
       .finally(() => setLoading(false));
   }, []);
 

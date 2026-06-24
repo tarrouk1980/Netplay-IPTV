@@ -4,6 +4,7 @@ import {
   StatusBar, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', surfaceAlt: '#16161F',
@@ -43,12 +44,30 @@ const DOC_META = {
 
 export default function AdminMerchantDetailScreen({ navigation }) {
   const [tab, setTab] = useState('info');
+  const [suspending, setSuspending] = useState(false);
+
+  const suspendMerchant = async () => {
+    setSuspending(true);
+    try {
+      await api.patch(`/api/admin/merchants/${MOCK.id}/suspend`);
+      Alert.alert('Succès', 'Le compte a été suspendu.');
+    } catch (err) {
+      Alert.alert('Erreur', "Impossible de suspendre le compte. Réessayez.");
+    } finally {
+      setSuspending(false);
+    }
+  };
 
   const confirmAction = (action, label) => {
-    Alert.alert(label, `Confirmer pour ${MOCK.name} ?`, [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Confirmer', style: action === 'ban' ? 'destructive' : 'default', onPress: () => {} },
-    ]);
+    if (action === 'suspend') {
+      Alert.alert(label, `Confirmer pour ${MOCK.name} ?`, [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Confirmer', style: 'destructive', onPress: suspendMerchant },
+      ]);
+      return;
+    }
+    // No backend endpoint exists yet for contact / payout / commission / export actions.
+    Alert.alert(label, 'Cette action n\'est pas encore disponible.');
   };
 
   return (
@@ -184,8 +203,12 @@ export default function AdminMerchantDetailScreen({ navigation }) {
             </View>
             <View style={styles.dangerZone}>
               <Text style={styles.dangerTitle}>⚠️ Zone de danger</Text>
-              <TouchableOpacity style={styles.suspendBtn} onPress={() => confirmAction('suspend', 'Suspendre')}>
-                <Text style={styles.suspendBtnText}>🚫 Suspendre le compte</Text>
+              <TouchableOpacity
+                style={[styles.suspendBtn, suspending && { opacity: 0.6 }]}
+                onPress={() => confirmAction('suspend', 'Suspendre')}
+                disabled={suspending}
+              >
+                <Text style={styles.suspendBtnText}>{suspending ? 'Suspension...' : '🚫 Suspendre le compte'}</Text>
               </TouchableOpacity>
             </View>
           </>

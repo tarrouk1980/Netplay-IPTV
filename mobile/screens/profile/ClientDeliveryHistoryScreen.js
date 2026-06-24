@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,8 +6,10 @@ import {
   FlatList,
   TouchableOpacity,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COULEURS = {
   bg: '#0A0A0F',
@@ -20,98 +22,32 @@ const COULEURS = {
 
 const FILTRES = ['Tous', 'Ce mois', 'Cette semaine', 'En cours'];
 
-const COMMANDES_MOCK = [
-  {
-    id: '1',
-    restaurant: 'Burger Palace',
-    articles: 'Burger BBQ x1, Frites x2, Coca x2',
-    prixTotal: 28.50,
-    date: '2026-05-28',
-    statut: 'Livré',
-    livreur: 'Karim B.',
-  },
-  {
-    id: '2',
-    restaurant: 'Sushi Zen',
-    articles: 'Plateau Sushi 24 pcs, Soupe Miso x2',
-    prixTotal: 52.00,
-    date: '2026-05-25',
-    statut: 'Livré',
-    livreur: 'Fatima L.',
-  },
-  {
-    id: '3',
-    restaurant: 'Pizza Roma',
-    articles: 'Margherita x1, Calzone x1, Tiramisu x1',
-    prixTotal: 35.80,
-    date: '2026-05-20',
-    statut: 'Livré',
-    livreur: 'Yassine M.',
-  },
-  {
-    id: '4',
-    restaurant: 'Burger Palace',
-    articles: 'Double Smash x2, Onion Rings x1',
-    prixTotal: 31.00,
-    date: '2026-05-15',
-    statut: 'Livré',
-    livreur: 'Karim B.',
-  },
-  {
-    id: '5',
-    restaurant: 'Tacos House',
-    articles: 'Tacos XL x3, Limonade x3',
-    prixTotal: 40.50,
-    date: '2026-05-10',
-    statut: 'Annulé',
-    livreur: 'Non assigné',
-  },
-  {
-    id: '6',
-    restaurant: 'Chez Mamie',
-    articles: 'Menu du jour x2, Dessert du jour x2',
-    prixTotal: 26.00,
-    date: '2026-05-05',
-    statut: 'Livré',
-    livreur: 'Amina S.',
-  },
-  {
-    id: '7',
-    restaurant: 'Sushi Zen',
-    articles: 'Ramen x1, Gyoza x2, Sashimi x1',
-    prixTotal: 44.20,
-    date: '2026-04-28',
-    statut: 'Livré',
-    livreur: 'Fatima L.',
-  },
-  {
-    id: '8',
-    restaurant: 'Pizza Roma',
-    articles: 'Regina x2, Salade César x1',
-    prixTotal: 33.60,
-    date: '2026-04-22',
-    statut: 'Livré',
-    livreur: 'Omar D.',
-  },
-  {
-    id: '9',
-    restaurant: 'Burger Palace',
-    articles: 'Chicken Crispy x1, Milkshake x1',
-    prixTotal: 18.90,
-    date: '2026-06-01',
-    statut: 'En cours',
-    livreur: 'Karim B.',
-  },
-  {
-    id: '10',
-    restaurant: 'Tacos House',
-    articles: 'Tacos L x2, Churros x2, Jus x2',
-    prixTotal: 38.00,
-    date: '2026-04-15',
-    statut: 'Livré',
-    livreur: 'Yassine M.',
-  },
-];
+const STATUT_LABELS = {
+  PENDING: 'En attente',
+  ACCEPTED: 'En cours',
+  IN_PROGRESS: 'En cours',
+  PICKED_UP: 'En cours',
+  COMPLETED: 'Livré',
+  CANCELLED: 'Annulé',
+};
+
+const mapStatut = (status) => STATUT_LABELS[status] || status || '-';
+
+const mapCommande = (order) => {
+  const metadata = order.metadata || {};
+  const items = Array.isArray(metadata.items)
+    ? metadata.items.map((it) => `${it.name || it.label || 'Article'}${it.qty ? ` x${it.qty}` : ''}`).join(', ')
+    : (metadata.articles || '');
+  return {
+    id: order.id,
+    restaurant: metadata.merchantName || metadata.restaurant || order.destinationAddress || 'Commande',
+    articles: items || '-',
+    prixTotal: Number(order.finalPrice ?? order.price ?? 0),
+    date: (order.createdAt || '').slice(0, 10),
+    statut: mapStatut(order.status),
+    livreur: (order.provider && (order.provider.name || order.provider.fullName)) || metadata.livreur || 'Non assigné',
+  };
+};
 
 const couleurStatut = (statut) => {
   if (statut === 'Livré') return '#4CAF50';
@@ -123,11 +59,15 @@ const couleurStatut = (statut) => {
 const filtrerCommandes = (commandes, filtre) => {
   if (filtre === 'Tous') return commandes;
   if (filtre === 'En cours') return commandes.filter((c) => c.statut === 'En cours');
+  const maintenant = new Date();
   if (filtre === 'Cette semaine') {
-    return commandes.filter((c) => ['2026-05-28', '2026-06-01'].includes(c.date));
+    const debutSemaine = new Date(maintenant);
+    debutSemaine.setDate(maintenant.getDate() - 7);
+    return commandes.filter((c) => c.date && new Date(c.date) >= debutSemaine);
   }
   if (filtre === 'Ce mois') {
-    return commandes.filter((c) => c.date.startsWith('2026-05') || c.date.startsWith('2026-06'));
+    const moisCourant = maintenant.toISOString().slice(0, 7);
+    return commandes.filter((c) => c.date && c.date.startsWith(moisCourant));
   }
   return commandes;
 };
@@ -142,14 +82,37 @@ const restaurantFavori = (commandes) => {
 
 export default function ClientDeliveryHistoryScreen({ navigation }) {
   const [filtreActif, setFiltreActif] = useState('Tous');
+  const [commandes, setCommandes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [erreur, setErreur] = useState(false);
 
-  const commandesFiltrees = filtrerCommandes(COMMANDES_MOCK, filtreActif);
-  const totalDepense = COMMANDES_MOCK.filter((c) => c.statut === 'Livré').reduce(
+  const charger = useCallback(() => {
+    setLoading(true);
+    setErreur(false);
+    api
+      .get('/api/delivery/history')
+      .then((r) => {
+        const orders = r.data?.orders || [];
+        setCommandes(orders.map(mapCommande));
+      })
+      .catch(() => {
+        setCommandes([]);
+        setErreur(true);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    charger();
+  }, [charger]);
+
+  const commandesFiltrees = filtrerCommandes(commandes, filtreActif);
+  const totalDepense = commandes.filter((c) => c.statut === 'Livré').reduce(
     (acc, c) => acc + c.prixTotal,
     0
   );
-  const nombreCommandes = COMMANDES_MOCK.length;
-  const favori = restaurantFavori(COMMANDES_MOCK.filter((c) => c.statut === 'Livré'));
+  const nombreCommandes = commandes.length;
+  const favori = restaurantFavori(commandes.filter((c) => c.statut === 'Livré'));
 
   const renderCommande = ({ item }) => (
     <TouchableOpacity
@@ -226,18 +189,24 @@ export default function ClientDeliveryHistoryScreen({ navigation }) {
         ))}
       </ScrollView>
 
-      <FlatList
-        data={commandesFiltrees}
-        keyExtractor={(item) => item.id}
-        renderItem={renderCommande}
-        contentContainerStyle={styles.liste}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={styles.vide}>
-            <Text style={styles.texteVide}>Aucune commande trouvée</Text>
-          </View>
-        }
-      />
+      {loading ? (
+        <ActivityIndicator color={COULEURS.primary} size="large" style={{ marginTop: 40 }} />
+      ) : (
+        <FlatList
+          data={commandesFiltrees}
+          keyExtractor={(item) => item.id}
+          renderItem={renderCommande}
+          contentContainerStyle={styles.liste}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.vide}>
+              <Text style={styles.texteVide}>
+                {erreur ? 'Impossible de charger les commandes' : 'Aucune commande trouvée'}
+              </Text>
+            </View>
+          }
+        />
+      )}
     </SafeAreaView>
   );
 }
