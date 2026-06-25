@@ -23,14 +23,19 @@ const METHODS = [
 export default function PaymentMethodsScreen({ navigation }) {
   const { user } = useAuthStore();
   const [defaultMethod, setDefaultMethod] = useState('WALLET');
-  const [savedCards] = useState([
-    { id: '1', last4: '4242', brand: 'Visa', expiry: '09/26' },
-  ]);
+  // NOTE: The backend has no PaymentMethod/saved-card model or endpoint
+  // (checked backend/prisma/schema.prisma and backend/src/routes/payments.js,
+  // payment.js — no /api/payments/methods or similar route exists). Saved
+  // cards and a persisted "default payment method" cannot be wired to a real
+  // API until such an endpoint is added. Left as local-only UI state below;
+  // do not invent a fake backend call for it.
+  const [savedCards] = useState([]);
   const [autoPay, setAutoPay] = useState(true);
 
   const handleSetDefault = (id) => {
+    // Local-only selection — see NOTE above re: missing backend endpoint
+    // for persisting a default payment method.
     setDefaultMethod(id);
-    Alert.alert('Mis à jour', `"${METHODS.find((m) => m.id === id)?.label}" est maintenant votre méthode par défaut.`);
   };
 
   return (

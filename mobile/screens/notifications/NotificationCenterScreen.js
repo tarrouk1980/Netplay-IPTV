@@ -81,7 +81,8 @@ export default function NotificationCenterScreen({ navigation }) {
       const res = await api.get('/api/notifications');
       setNotifs(res.data?.notifications || []);
       setError(false);
-    } catch {
+    } catch (err) {
+      console.error('[NotificationCenterScreen] load failed', err);
       setError(true);
     } finally { setLoading(false); }
   }, []);
@@ -99,9 +100,16 @@ export default function NotificationCenterScreen({ navigation }) {
   const handlePress = (notif) => {
     setNotifs(ns => ns.map(n => n.id === notif.id ? { ...n, read: true } : n));
     if (notif.action?.screen) {
-      try { navigation.navigate(notif.action.screen, notif.action.params || {}); } catch {}
+      try {
+        navigation.navigate(notif.action.screen, notif.action.params || {});
+      } catch (err) {
+        console.error('[NotificationCenterScreen] navigation failed', err);
+      }
     }
-    try { api.post(`/api/notifications/${notif.id}/read`); } catch {}
+    api.post(`/api/notifications/${notif.id}/read`).catch((err) => {
+      console.error('[NotificationCenterScreen] markRead failed', err);
+      setNotifs(ns => ns.map(n => n.id === notif.id ? { ...n, read: false } : n));
+    });
   };
 
   const markAllRead = async () => {

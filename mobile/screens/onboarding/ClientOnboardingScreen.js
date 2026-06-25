@@ -120,12 +120,20 @@ export default function ClientOnboardingScreen({ navigation }) {
   };
 
   const finish = async () => {
-    await AsyncStorage.setItem('onboarding_done', '1');
+    try {
+      await AsyncStorage.setItem('onboardingDone', 'true');
+    } catch (err) {
+      console.error('Failed to persist onboarding completion:', err);
+    }
     navigation.replace('Login');
   };
 
   const skip = async () => {
-    await AsyncStorage.setItem('onboarding_done', '1');
+    try {
+      await AsyncStorage.setItem('onboardingDone', 'true');
+    } catch (err) {
+      console.error('Failed to persist onboarding completion:', err);
+    }
     navigation.replace('Login');
   };
 

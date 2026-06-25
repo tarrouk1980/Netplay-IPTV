@@ -71,7 +71,11 @@ export default function OnboardingScreen({ navigation }) {
   };
 
   const handleFinish = async () => {
-    await AsyncStorage.setItem('onboardingDone', 'true').catch(() => {});
+    try {
+      await AsyncStorage.setItem('onboardingDone', 'true');
+    } catch (err) {
+      console.error('Failed to persist onboarding completion:', err);
+    }
     navigation.replace('Login');
   };
 

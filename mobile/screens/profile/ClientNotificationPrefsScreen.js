@@ -100,7 +100,10 @@ export default function ClientNotificationPrefsScreen() {
           setPrefs({ ...DEFAULT_PREFS, ...data });
         }
       })
-      .catch(() => {});
+      .catch((err) => {
+        console.error('[ClientNotificationPrefsScreen] load failed', err);
+        Alert.alert('Erreur', 'Impossible de charger vos préférences. Valeurs par défaut affichées.');
+      });
   }, []);
 
   const allEnabled = Object.values(prefs).every(Boolean);
@@ -122,7 +125,8 @@ export default function ClientNotificationPrefsScreen() {
         setLoading(false);
         Alert.alert('Succès', 'Vos préférences de notifications ont été enregistrées.');
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error('[ClientNotificationPrefsScreen] save failed', err);
         setLoading(false);
         Alert.alert('Erreur', 'Impossible d\'enregistrer vos préférences. Vérifiez votre connexion.');
       });

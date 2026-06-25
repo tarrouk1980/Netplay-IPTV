@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,9 +7,10 @@ import {
   StyleSheet,
   StatusBar,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import useNotificationStore from '../../store/notificationStore';
+import api from '../../services/api';
 
 const COLORS = {
   background: '#0A0A0F',
@@ -97,31 +98,60 @@ function NotificationItem({ item, onPress, onDismiss }) {
 }
 
 export default function NotificationsScreen({ navigation }) {
-  const { notifications, markRead, removeNotification, clearAll } = useNotificationStore();
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState('');
 
+  const load = useCallback(() => {
+    setLoading(true);
+    api.get('/api/notifications')
+      .then((res) => {
+        setNotifications(res.data?.notifications || []);
+      })
+      .catch((err) => {
+        console.error('[NotificationsScreen] load failed', err);
+        Alert.alert('Erreur', 'Impossible de charger les notifications. Vérifiez votre connexion.');
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
   const handlePress = useCallback((id) => {
-    markRead(id);
-  }, [markRead]);
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    api.post(`/api/notifications/${id}/read`).catch((err) => {
+      console.error('[NotificationsScreen] markRead failed', err);
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: false } : n)));
+      Alert.alert('Erreur', 'Impossible de marquer cette notification comme lue. Réessayez.');
+    });
+  }, []);
 
+  // Note: no backend endpoint exists to delete/dismiss a single notification —
+  // this only removes it from local state for this session.
   const handleDismiss = useCallback((id) => {
-    removeNotification(id);
-  }, [removeNotification]);
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  }, []);
 
+  // Note: no backend endpoint exists to delete all notifications —
+  // this only clears local state for this session.
   const handleClearAll = () => {
     Alert.alert(
       'Effacer tout',
       'Supprimer toutes les notifications ?',
       [
         { text: 'Annuler', style: 'cancel' },
-        { text: 'Effacer', style: 'destructive', onPress: clearAll },
+        { text: 'Effacer', style: 'destructive', onPress: () => setNotifications([]) },
       ]
     );
   };
 
   const handleMarkAllRead = () => {
-    notifications.forEach(n => {
-      if (!n.read) markRead(n.id);
+    const previous = notifications;
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    api.post('/api/notifications/read-all').catch((err) => {
+      console.error('[NotificationsScreen] markAllRead failed', err);
+      setNotifications(previous);
+      Alert.alert('Erreur', 'Impossible de marquer toutes les notifications comme lues. Réessayez.');
     });
   };
 
@@ -182,7 +212,11 @@ export default function NotificationsScreen({ navigation }) {
         })}
       </View>
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <View style={styles.emptyState}>
+          <ActivityIndicator color={COLORS.primary} size="large" />
+        </View>
+      ) : filtered.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyEmoji}>🔔</Text>
           <Text style={styles.emptyTitle}>Aucune notification</Text>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  StatusBar, ActivityIndicator,
+  StatusBar, ActivityIndicator, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
@@ -57,12 +57,21 @@ export default function ClientNotificationsScreen({ navigation }) {
 
   const markRead = (item) => {
     setNotifs(prev => prev.map(n => n.id === item.id ? { ...n, read: true } : n));
-    api.post('/api/notifications/' + item.id + '/read').catch(() => {});
+    api.post('/api/notifications/' + item.id + '/read').catch((err) => {
+      console.error('[ClientNotificationsScreen] markRead failed', err);
+      setNotifs(prev => prev.map(n => n.id === item.id ? { ...n, read: false } : n));
+      Alert.alert('Erreur', 'Impossible de marquer cette notification comme lue. Réessayez.');
+    });
   };
 
   const markAllRead = () => {
+    const previous = notifs;
     setNotifs(prev => prev.map(n => ({ ...n, read: true })));
-    api.post('/api/notifications/read-all').catch(() => {});
+    api.post('/api/notifications/read-all').catch((err) => {
+      console.error('[ClientNotificationsScreen] markAllRead failed', err);
+      setNotifs(previous);
+      Alert.alert('Erreur', 'Impossible de marquer toutes les notifications comme lues. Réessayez.');
+    });
   };
 
   const unreadCount = notifs.filter(n => !n.read).length;

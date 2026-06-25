@@ -67,13 +67,18 @@ export default function WalletTransactionsScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [activeType, setActiveType] = useState('ALL');
   const [exporting, setExporting] = useState(false);
+  const [error, setError] = useState(false);
 
   const load = useCallback(async () => {
     try {
       const res = await api.get('/api/wallet/transactions');
       setTransactions(Array.isArray(res.data) ? res.data : []);
-    } catch {
+      setError(false);
+    } catch (err) {
+      console.error('Failed to load wallet transactions', err);
       setTransactions([]);
+      setError(true);
+      Alert.alert('Erreur', "Impossible de charger l'historique des transactions.");
     } finally {
       setLoading(false);
     }

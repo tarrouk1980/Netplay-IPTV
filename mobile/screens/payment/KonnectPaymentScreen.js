@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, TextInput,
   Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView,
@@ -153,7 +153,19 @@ export default function KonnectPaymentScreen({ route, navigation }) {
   const [method, setMethod] = useState('KONNECT');
   const [loading, setLoading] = useState(false);
   const [webviewUrl, setWebviewUrl] = useState(null);
-  const [walletBalance] = useState(47.5);
+  const [walletBalance, setWalletBalance] = useState(0);
+
+  useEffect(() => {
+    let isMounted = true;
+    api.get('/api/wallet/balance')
+      .then((res) => {
+        if (isMounted) setWalletBalance(Number(res.data?.walletBalance) || 0);
+      })
+      .catch((err) => {
+        console.error('Failed to load wallet balance', err);
+      });
+    return () => { isMounted = false; };
+  }, []);
 
   const handlePay = async (cardData) => {
     setLoading(true);
@@ -171,13 +183,14 @@ export default function KonnectPaymentScreen({ route, navigation }) {
         const res = await api.post('/api/payments/flouci/init', { amount, orderId });
         if (res.data?.link) setWebviewUrl(res.data.link);
       } else if (method === 'WALLET') {
-        await api.post('/api/wallet/pay', { amount, orderId });
+        await api.post('/api/payments/wallet/pay', { amount, orderId });
         handleSuccess();
       } else {
         handleSuccess();
       }
-    } catch {
-      Alert.alert('Erreur', 'Paiement impossible. Réessayez.');
+    } catch (err) {
+      console.error('Payment failed', err);
+      Alert.alert('Erreur', err.response?.data?.error || 'Paiement impossible. Réessayez.');
     } finally {
       setLoading(false);
     }

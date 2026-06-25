@@ -24,8 +24,11 @@ export async function registerForPushNotifications() {
   const token = (await Notifications.getExpoPushTokenAsync()).data;
 
   try {
-    await api.post('/api/users/me/fcm-token', { token, platform: 'expo' });
-  } catch {}
+    await api.post('/api/users/me/fcm-token', { fcmToken: token });
+  } catch (error) {
+    console.error('[Notifications] Failed to register push token:', error?.message || error);
+    return null;
+  }
 
   return token;
 }

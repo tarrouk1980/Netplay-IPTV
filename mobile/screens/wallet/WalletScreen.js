@@ -42,7 +42,7 @@ export default function WalletScreen({ navigation }) {
   const load = useCallback(() => {
     api.get('/api/wallet')
       .then(r => { setWallet(r.data); setError(false); })
-      .catch(() => setError(true))
+      .catch((err) => { console.error('Failed to load wallet', err); setError(true); })
       .finally(() => setLoading(false));
   }, []);
 
@@ -85,9 +85,9 @@ export default function WalletScreen({ navigation }) {
             <Text style={styles.balanceLabel}>Solde disponible</Text>
             <Text style={styles.balanceAmount}>{wallet.balance.toFixed(3)}</Text>
             <Text style={styles.balanceTND}>TND</Text>
-            {wallet.pendingBalance > 0 && (
-              <Text style={styles.pendingText}>+ {wallet.pendingBalance.toFixed(3)} TND en attente</Text>
-            )}
+            {/* NOTE: backend GET /api/wallet does not currently return a pending-balance field
+                (PENDING recharges are recorded as WalletTransaction rows but not surfaced as a
+                separate aggregate). Add that to the backend response before re-introducing this UI. */}
             <TouchableOpacity
               style={styles.rechargeBtn}
               onPress={() => navigation.navigate('WalletRecharge')}
