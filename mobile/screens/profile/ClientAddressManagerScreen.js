@@ -143,7 +143,7 @@ export default function ClientAddressManagerScreen({ navigation }) {
   const load = useCallback(async () => {
     setError(false);
     try {
-      const res = await api.get('/api/clients/addresses');
+      const res = await api.get('/api/users/clients/addresses');
       setAddresses(res.data.addresses || []);
     } catch {
       setError(true);
@@ -157,9 +157,9 @@ export default function ClientAddressManagerScreen({ navigation }) {
   const handleSave = async (data) => {
     try {
       if (data.id) {
-        await api.put(`/api/clients/addresses/${data.id}`, data);
+        await api.put(`/api/users/clients/addresses/${data.id}`, data);
       } else {
-        await api.post('/api/clients/addresses', data);
+        await api.post('/api/users/clients/addresses', data);
       }
       setShowModal(false);
       setEditing(null);
@@ -180,7 +180,7 @@ export default function ClientAddressManagerScreen({ navigation }) {
           style: 'destructive',
           onPress: async () => {
             try {
-              await api.delete(`/api/clients/addresses/${addr.id}`);
+              await api.delete(`/api/users/clients/addresses/${addr.id}`);
               load();
             } catch {
               Alert.alert('Erreur', "Impossible de supprimer l'adresse.");
@@ -193,7 +193,7 @@ export default function ClientAddressManagerScreen({ navigation }) {
 
   const handleSetDefault = async (addrId) => {
     try {
-      await api.patch(`/api/clients/addresses/${addrId}/default`);
+      await api.patch(`/api/users/clients/addresses/${addrId}/default`);
       load();
     } catch {
       Alert.alert('Erreur', "Impossible de définir l'adresse par défaut.");

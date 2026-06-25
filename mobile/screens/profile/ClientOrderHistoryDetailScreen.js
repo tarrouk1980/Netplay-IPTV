@@ -196,7 +196,6 @@ export default function ClientOrderHistoryDetailScreen({ route, navigation }) {
             {meta.deliveryAddress && <Row label="Destination" value={meta.deliveryAddress} />}
             {meta.distance && <Row label="Distance" value={`${meta.distance} km`} />}
             {meta.duration && <Row label="Durée" value={`${meta.duration} min`} />}
-            {order.tip > 0 && <Row label="Pourboire" value={`${parseFloat(order.tip).toFixed(3)} TND`} valueColor={COLORS.orange} />}
           </View>
         </View>
 
@@ -207,7 +206,7 @@ export default function ClientOrderHistoryDetailScreen({ route, navigation }) {
             <View style={s.card}>
               <Row label="Nom" value={order.provider.name} />
               <Row label="Téléphone" value={order.provider.phone} />
-              {order.provider.rating && <Row label="Note" value={`⭐ ${parseFloat(order.provider.rating).toFixed(1)}`} />}
+              {order.provider.avgRating != null && <Row label="Note" value={`⭐ ${parseFloat(order.provider.avgRating).toFixed(1)}`} />}
             </View>
           </View>
         )}
@@ -239,7 +238,7 @@ export default function ClientOrderHistoryDetailScreen({ route, navigation }) {
 
         {/* Actions */}
         <View style={s.actionsSection}>
-          {isCompleted && !order.rating && (
+          {isCompleted && (
             <TouchableOpacity style={s.actionBtn} onPress={handleRate}>
               <Text style={s.actionBtnTxt}>⭐ Évaluer cette course</Text>
             </TouchableOpacity>

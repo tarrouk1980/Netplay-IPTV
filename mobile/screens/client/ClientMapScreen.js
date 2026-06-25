@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapboxWebView from '../../components/MapboxWebView';
 import { getCurrentLocationWithAddress } from '../../utils/locationUtils';
+import api from '../../services/api';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', border: '#2C2C3E',
@@ -10,12 +11,9 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C',
 };
 
-const NEARBY = [
-  { id: 'T1', type: 'taxi', icon: '🚕', label: 'Karim · 3 min', lat: 36.8095, lng: 10.1835 },
-  { id: 'T2', type: 'taxi', icon: '🚕', label: 'Sami · 5 min', lat: 36.8055, lng: 10.1795 },
-  { id: 'L1', type: 'livreur', icon: '🛵', label: 'Livreur · 2 min', lat: 36.8075, lng: 10.1855 },
-  { id: 'D1', type: 'depanneur', icon: '🛻', label: 'Dépanneur · 8 min', lat: 36.8035, lng: 10.1815 },
-];
+// Maps backend ServiceType keys to this screen's filter keys
+const SERVICE_TO_FILTER = { TAXI: 'taxi', DELIVERY: 'livreur', SOS: 'depanneur' };
+const FILTER_ICON = { taxi: '🚕', livreur: '🛵', depanneur: '🛻' };
 
 const FILTERS = [
   { key: 'all', label: 'Tous', icon: '📍' },

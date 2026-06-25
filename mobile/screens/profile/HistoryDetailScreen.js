@@ -52,30 +52,23 @@ function buildReceiptText(order) {
     '',
     `Référence   : ${order.id?.slice(0, 12).toUpperCase() || 'N/A'}`,
     `Date        : ${d}`,
-    `Service     : ${TYPE_ICON[order.type] || ''} ${order.type || ''}`,
+    `Service     : ${TYPE_ICON[order.serviceType] || ''} ${order.serviceType || ''}`,
     `Statut      : ${status}`,
     '',
     '──────────────────────────────',
-    `Départ      : ${order.pickupAddress || order.pickupLat?.toFixed(4) || 'N/A'}`,
-    `Arrivée     : ${order.destAddress || order.destLat?.toFixed(4) || 'N/A'}`,
-    '',
-    '──────────────────────────────',
-    `Distance    : ${order.distance ? order.distance + ' km' : 'N/A'}`,
-    `Durée       : ${order.duration ? order.duration + ' min' : 'N/A'}`,
+    `Départ      : ${order.originAddress || 'N/A'}`,
+    `Arrivée     : ${order.destinationAddress || 'N/A'}`,
     '',
     '──────────────────────────────',
   ];
-  if (order.fareBase)    lines.push(`Base        : ${order.fareBase} TND`);
-  if (order.fareDistance) lines.push(`Distance    : ${order.fareDistance} TND`);
-  if (order.discount)    lines.push(`Remise      : -${order.discount} TND`);
-  lines.push('──────────────────────────────');
-  lines.push(`TOTAL       : ${order.price ?? order.fare ?? 'N/A'} TND`);
-  lines.push(`Paiement    : ${order.metadata?.payment?.method || 'Espèces'}`);
-  if (order.driver?.name) {
+  lines.push(`TOTAL       : ${order.finalPrice ?? order.price ?? 'N/A'} TND`);
+  if (order.provider?.name) {
     lines.push('');
     lines.push('──────────────────────────────');
-    lines.push(`Chauffeur   : ${order.driver.name}`);
-    lines.push(`Note        : ${'★'.repeat(Math.round(order.driverRating || 0))}${'☆'.repeat(5 - Math.round(order.driverRating || 0))}`);
+    lines.push(`Prestataire : ${order.provider.name}`);
+    if (order.provider.avgRating != null) {
+      lines.push(`Note        : ${'★'.repeat(Math.round(order.provider.avgRating))}${'☆'.repeat(5 - Math.round(order.provider.avgRating))}`);
+    }
   }
   lines.push('');
   lines.push('         EASYWAY — www.easyway.tn');
@@ -91,12 +84,21 @@ export default function HistoryDetailScreen({ route, navigation }) {
   const [pickedRating, setPickedRating] = useState(0);
   const [savingRating, setSavingRating] = useState(false);
 
+  const [loadError, setLoadError] = useState(null);
+
+  const loadOrder = () => {
+    if (!orderId) return;
+    setLoading(true);
+    setLoadError(null);
+    api.get(`/api/orders/${orderId}`)
+      .then((res) => setOrder(res.data?.order || null))
+      .catch((err) => setLoadError(err?.response?.data?.error || 'Impossible de charger la course.'))
+      .finally(() => setLoading(false));
+  };
+
   useEffect(() => {
     if (!orderData && orderId) {
-      api.get(`/api/orders/${orderId}`)
-        .then((res) => setOrder(res.data))
-        .catch(() => {})
-        .finally(() => setLoading(false));
+      loadOrder();
     }
   }, [orderId]);
 
@@ -128,7 +130,10 @@ export default function HistoryDetailScreen({ route, navigation }) {
     setSavingRating(true);
     try {
       await api.post(`/api/orders/${order.id}/rate`, { rating: pickedRating });
-      setOrder((prev) => ({ ...prev, driverRating: pickedRating }));
+      setOrder((prev) => ({
+        ...prev,
+        provider: prev.provider ? { ...prev.provider, avgRating: pickedRating } : prev.provider,
+      }));
       setRateModalVisible(false);
       Alert.alert('Merci !', 'Votre avis a été pris en compte.');
     } catch {
@@ -159,14 +164,19 @@ export default function HistoryDetailScreen({ route, navigation }) {
           <View style={{ width: 36 }} />
         </View>
         <View style={styles.centered}>
-          <Text style={styles.emptyText}>Course introuvable</Text>
+          <Text style={styles.emptyText}>{loadError || 'Course introuvable'}</Text>
+          {loadError && (
+            <TouchableOpacity style={styles.rateBtn} onPress={loadOrder}>
+              <Text style={styles.rateBtnText}>Réessayer</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </SafeAreaView>
     );
   }
 
   const statusInfo = STATUS_MAP[order.status] || { label: order.status, color: COLORS.textMuted };
-  const icon = TYPE_ICON[order.type] || '🚗';
+  const icon = TYPE_ICON[order.serviceType] || '🚗';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -185,7 +195,7 @@ export default function HistoryDetailScreen({ route, navigation }) {
           <View style={styles.receiptTop}>
             <Text style={styles.receiptIcon}>{icon}</Text>
             <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.receiptType}>{order.type}</Text>
+              <Text style={styles.receiptType}>{order.serviceType}</Text>
               <Text style={styles.receiptDate}>
                 {new Date(order.createdAt).toLocaleString('fr-TN')}
               </Text>
@@ -205,58 +215,46 @@ export default function HistoryDetailScreen({ route, navigation }) {
             <View style={styles.routeRow}>
               <View style={[styles.routeDot, { backgroundColor: COLORS.success }]} />
               <Text style={styles.routeText} numberOfLines={2}>
-                {order.pickupAddress || 'Départ'}
+                {order.originAddress || 'Départ'}
               </Text>
             </View>
             <View style={styles.routeLine} />
             <View style={styles.routeRow}>
               <View style={[styles.routeDot, { backgroundColor: COLORS.danger }]} />
               <Text style={styles.routeText} numberOfLines={2}>
-                {order.destAddress || 'Arrivée'}
+                {order.destinationAddress || 'Arrivée'}
               </Text>
             </View>
           </View>
 
           <View style={styles.divider} />
 
-          {/* Details */}
-          {order.distance != null && <Row label="Distance" value={`${order.distance} km`} />}
-          {order.duration != null && <Row label="Durée" value={`${order.duration} min`} />}
-
-          <View style={styles.divider} />
-
           {/* Pricing */}
-          {order.fareBase != null && <Row label="Tarif de base" value={`${order.fareBase} TND`} />}
-          {order.fareDistance != null && <Row label="Distance" value={`${order.fareDistance} TND`} />}
-          {order.discount != null && order.discount > 0 && (
-            <Row label="Remise" value={`-${order.discount} TND`} valueColor={COLORS.success} />
-          )}
           <Row
             label="Total"
-            value={`${order.price ?? order.fare ?? 'N/A'} TND`}
+            value={`${order.finalPrice ?? order.price ?? 'N/A'} TND`}
             valueColor={COLORS.accent}
           />
-          <Row label="Paiement" value={order.paymentMethod || 'Espèces'} />
 
-          {/* Driver */}
-          {order.driver && (
+          {/* Provider */}
+          {order.provider && (
             <>
               <View style={styles.divider} />
               <View style={styles.driverSection}>
                 <View style={styles.driverAvatar}>
                   <Text style={styles.driverAvatarText}>
-                    {(order.driver.name || 'C')[0].toUpperCase()}
+                    {(order.provider.name || 'C')[0].toUpperCase()}
                   </Text>
                 </View>
                 <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={styles.driverName}>{order.driver.name}</Text>
-                  {order.driverRating != null && (
+                  <Text style={styles.driverName}>{order.provider.name}</Text>
+                  {order.provider.avgRating != null && (
                     <Text style={styles.driverRating}>
-                      {'★'.repeat(Math.round(order.driverRating))}{'☆'.repeat(5 - Math.round(order.driverRating))}
+                      {'★'.repeat(Math.round(order.provider.avgRating))}{'☆'.repeat(5 - Math.round(order.provider.avgRating))}
                     </Text>
                   )}
                 </View>
-                {order.status === 'COMPLETED' && !order.driverRating && (
+                {order.status === 'COMPLETED' && (
                   <TouchableOpacity style={styles.rateBtn} onPress={handleRate}>
                     <Text style={styles.rateBtnText}>⭐ Noter</Text>
                   </TouchableOpacity>

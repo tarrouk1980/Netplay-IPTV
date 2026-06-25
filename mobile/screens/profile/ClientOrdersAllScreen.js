@@ -61,8 +61,14 @@ export default function ClientOrdersAllScreen({ navigation }) {
 
   const load = useCallback(async () => {
     try {
-      const res = await api.get('/api/clients/orders');
-      setOrders(res.data.orders || []);
+      const res = await api.get('/api/users/me/orders');
+      const mapped = (res.data.orders || []).map((o) => ({
+        ...o,
+        pickup: o.originAddress || '-',
+        destination: o.destinationAddress || null,
+        price: o.finalPrice ?? o.price ?? 0,
+      }));
+      setOrders(mapped);
       setError(false);
     } catch {
       setError(true);

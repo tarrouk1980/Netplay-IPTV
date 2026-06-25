@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  StatusBar, Switch, Alert,
+  StatusBar, Switch, Alert, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
@@ -62,6 +62,29 @@ const ALL_KEYS = GROUPS.flatMap((g) => g.items.map((i) => i.key));
 export default function NotificationsSettingsScreen({ navigation }) {
   const [prefs, setPrefs] = useState(() => Object.fromEntries(ALL_KEYS.map((k) => [k, true])));
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(() => {
+    setLoading(true);
+    api.get('/api/users/me/notification-prefs')
+      .then((r) => {
+        const fetched = r.data?.prefs || {};
+        setPrefs((prev) => {
+          const merged = { ...prev };
+          Object.keys(fetched).forEach((k) => {
+            if (k in merged) merged[k] = !!fetched[k];
+          });
+          return merged;
+        });
+      })
+      .catch((err) => {
+        console.warn('[NotificationsSettingsScreen] load failed:', err?.message);
+        Alert.alert('Erreur', "Impossible de charger vos préférences. Valeurs par défaut affichées.");
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   const toggle = (key) => {
     setPrefs((p) => ({ ...p, [key]: !p[key] }));
@@ -86,6 +109,14 @@ export default function NotificationsSettingsScreen({ navigation }) {
     setPrefs(Object.fromEntries(ALL_KEYS.map((k) => [k, false])));
     setSaved(false);
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator color={COLORS.accent} size="large" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.root}>

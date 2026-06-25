@@ -26,13 +26,25 @@ export default function ClientFavoritesScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
+  // NOTE: only provider (driver) favorites are backed by a real API
+  // (GET/POST/DELETE /api/users/clients/favorites). There is no backend
+  // support for favorite shops or dishes yet, so those tabs show an
+  // honest "not available" state instead of fake data.
   const loadFavorites = () => {
     setLoading(true);
-    api.get('/api/client/favorites')
+    api.get('/api/users/clients/favorites')
       .then(r => {
-        setShops(r.data.shops || []);
-        setDrivers(r.data.drivers || []);
-        setDishes(r.data.dishes || []);
+        const favs = r.data.favorites || [];
+        setDrivers(favs.map(f => ({
+          id: f.id,
+          icon: '🚕',
+          name: f.name,
+          type: f.role,
+          rating: f.rating ? f.rating.toFixed(1) : '—',
+          rides: f.totalOrders || 0,
+        })));
+        setShops([]);
+        setDishes([]);
         setError(false);
       })
       .catch(() => setError(true))
@@ -44,16 +56,17 @@ export default function ClientFavoritesScreen({ navigation }) {
   }, []);
 
   const removeFavorite = (type, id) => {
+    if (type !== 'DRIVERS') return;
     Alert.alert('Retirer des favoris ?', '', [
       { text: 'Annuler', style: 'cancel' },
       {
-        text: 'Retirer', style: 'destructive', onPress: () => {
-          if (type === 'SHOPS') setShops(p => p.filter(s => s.id !== id));
-          else if (type === 'DRIVERS') setDrivers(p => p.filter(d => d.id !== id));
-          else setDishes(p => p.filter(f => f.id !== id));
-          api.delete(`/api/client/favorites/${type.toLowerCase()}/${id}`).catch(() => {
+        text: 'Retirer', style: 'destructive', onPress: async () => {
+          try {
+            await api.delete(`/api/users/clients/favorites/${id}`);
+            setDrivers(p => p.filter(d => d.id !== id));
+          } catch {
             Alert.alert('Erreur', 'Impossible de retirer ce favori. Réessayez.');
-          });
+          }
         },
       },
     ]);
@@ -165,6 +178,13 @@ export default function ClientFavoritesScreen({ navigation }) {
           >
             <Text style={{ color: '#000', fontSize: 14, fontWeight: '700' }}>Réessayer</Text>
           </TouchableOpacity>
+        </View>
+      ) : (tab === 'SHOPS' || tab === 'DISHES') ? (
+        <View style={{ alignItems: 'center', paddingVertical: 60, paddingHorizontal: 24 }}>
+          <Text style={{ fontSize: 40 }}>🚧</Text>
+          <Text style={{ color: COLORS.muted, marginTop: 12, textAlign: 'center' }}>
+            Les favoris {tab === 'SHOPS' ? 'magasins' : 'plats'} ne sont pas encore disponibles.
+          </Text>
         </View>
       ) : (
         <FlatList

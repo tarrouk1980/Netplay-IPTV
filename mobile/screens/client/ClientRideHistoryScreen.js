@@ -96,7 +96,7 @@ export default function ClientRideHistoryScreen({ navigation }) {
           destination: o.destinationAddress,
           amount: o.finalPrice ?? Number(o.price || 0),
           rating: null,
-          driver: null,
+          driver: o.provider?.name || null,
         }));
         setRides(mapped);
         setError(false);
@@ -104,6 +104,10 @@ export default function ClientRideHistoryScreen({ navigation }) {
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
+
+  const openDetail = (item) => {
+    navigation.navigate('ClientTripDetail', { orderId: item.id });
+  };
 
   const filtered = rides.filter(r => {
     const matchFilter = filter === 'Tous' || r.type === filter;
@@ -178,7 +182,7 @@ export default function ClientRideHistoryScreen({ navigation }) {
         <FlatList
           data={filtered}
           keyExtractor={i => i.id}
-          renderItem={({ item }) => <RideCard item={item} onPress={() => {}} />}
+          renderItem={({ item }) => <RideCard item={item} onPress={openDetail} />}
           contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={

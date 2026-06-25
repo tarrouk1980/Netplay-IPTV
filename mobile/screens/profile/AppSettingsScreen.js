@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import useAuthStore from '../../store/authStore';
+import api from '../../services/api';
 
 const COLORS = {
   bg: '#0A0A0F',
@@ -108,7 +109,16 @@ export default function AppSettingsScreen({ navigation }) {
         {
           text: 'Supprimer définitivement',
           style: 'destructive',
-          onPress: () => Alert.alert('Demande envoyée', 'Votre demande de suppression a été transmise.'),
+          onPress: async () => {
+            try {
+              await api.delete('/api/users/me/account');
+              await AsyncStorage.multiRemove(['authToken', 'user']);
+              logout?.();
+              navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+            } catch {
+              Alert.alert('Erreur', "La suppression du compte a échoué. Réessayez.");
+            }
+          },
         },
       ]
     );

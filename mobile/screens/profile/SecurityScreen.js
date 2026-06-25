@@ -21,46 +21,7 @@ const COLORS = {
   orange: '#FF9800',
 };
 
-const securityScore = 75;
-
-const recentActivity = [
-  {
-    id: '1',
-    date: '03 Juin 2025, 14:32',
-    device: 'iPhone 14 Pro',
-    location: 'Tunis, Tunisie',
-    status: 'success',
-  },
-  {
-    id: '2',
-    date: '01 Juin 2025, 09:15',
-    device: 'Chrome / Windows',
-    location: 'Sousse, Tunisie',
-    status: 'success',
-  },
-  {
-    id: '3',
-    date: '28 Mai 2025, 21:47',
-    device: 'Samsung Galaxy S23',
-    location: 'Sfax, Tunisie',
-    status: 'failed',
-  },
-];
-
 export default function SecurityScreen({ navigation }) {
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
-
-  const scoreColor =
-    securityScore >= 80
-      ? COLORS.green
-      : securityScore >= 50
-      ? COLORS.orange
-      : COLORS.red;
-
-  const statusLabel =
-    securityScore >= 80 ? "Compte sécurisé" : "Améliorez votre sécurité";
-  const statusEmoji = securityScore >= 80 ? '🛡️' : '⚠️';
-
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       {/* Header */}
@@ -73,128 +34,38 @@ export default function SecurityScreen({ navigation }) {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Security Status */}
-        <View style={styles.statusCard}>
-          <Text style={styles.statusEmoji}>{statusEmoji}</Text>
-          <Text style={styles.statusLabel}>{statusLabel}</Text>
-          <View style={styles.scoreBarContainer}>
-            <View style={styles.scoreBarBg}>
-              <View style={[styles.scoreBarFill, { width: `${securityScore}%`, backgroundColor: scoreColor }]} />
-            </View>
-            <Text style={[styles.scoreText, { color: scoreColor }]}>{securityScore}%</Text>
-          </View>
-        </View>
-
-        {/* Security Items */}
+        {/* 2FA - not yet available */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Éléments de sécurité</Text>
-
           <View style={styles.card}>
-            {/* Strong Password */}
-            <View style={styles.securityItem}>
-              <View style={styles.secItemLeft}>
-                <Text style={styles.secItemLabel}>Mot de passe fort</Text>
-                <Text style={styles.secItemSub}>Dernière modification: il y a 12 jours</Text>
-              </View>
-              <Text style={styles.statusIcon}>✅</Text>
-            </View>
-
-            <View style={styles.divider} />
-
-            {/* 2FA */}
             <View style={styles.securityItem}>
               <View style={styles.secItemLeft}>
                 <Text style={styles.secItemLabel}>Vérification en 2 étapes</Text>
-                <Text style={styles.secItemSub}>
-                  {twoFactorEnabled ? 'Activée' : 'Non activée'}
-                </Text>
+                <Text style={styles.secItemSub}>Bientôt disponible</Text>
               </View>
-              <Switch
-                value={twoFactorEnabled}
-                onValueChange={setTwoFactorEnabled}
-                trackColor={{ false: COLORS.border, true: COLORS.primary }}
-                thumbColor={COLORS.text}
-              />
-            </View>
-
-            <View style={styles.divider} />
-
-            {/* Phone */}
-            <View style={styles.securityItem}>
-              <View style={styles.secItemLeft}>
-                <Text style={styles.secItemLabel}>Numéro de téléphone vérifié</Text>
-                <Text style={styles.secItemSub}>+216 XX XXX XXX</Text>
-              </View>
-              <Text style={styles.statusIcon}>✅</Text>
-            </View>
-
-            <View style={styles.divider} />
-
-            {/* Email */}
-            <View style={styles.securityItem}>
-              <View style={styles.secItemLeft}>
-                <Text style={styles.secItemLabel}>Email vérifié</Text>
-                <Text style={styles.secItemSub}>u***@gmail.com</Text>
-              </View>
-              <Text style={styles.statusIcon}>❌</Text>
-            </View>
-
-            <View style={styles.divider} />
-
-            {/* Last Login */}
-            <View style={styles.securityItem}>
-              <View style={styles.secItemLeft}>
-                <Text style={styles.secItemLabel}>Dernière connexion</Text>
-                <Text style={styles.secItemSub}>03 Juin 2025 · iPhone 14 Pro</Text>
-              </View>
-              <View style={[styles.badge, { backgroundColor: COLORS.green + '22' }]}>
-                <Text style={[styles.badgeText, { color: COLORS.green }]}>Vous</Text>
-              </View>
+              <Text style={styles.statusIcon}>🚧</Text>
             </View>
           </View>
         </View>
 
-        {/* Recent Activity */}
+        {/* Recent activity - not yet available */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Activité récente</Text>
-          {recentActivity.map((item) => (
-            <View key={item.id} style={styles.activityCard}>
-              <View style={styles.activityLeft}>
-                <Text style={styles.activityDevice}>{item.device}</Text>
-                <Text style={styles.activityDate}>{item.date}</Text>
-                <Text style={styles.activityLocation}>📍 {item.location}</Text>
+          <View style={styles.card}>
+            <View style={styles.securityItem}>
+              <View style={styles.secItemLeft}>
+                <Text style={styles.secItemLabel}>Historique de connexion</Text>
+                <Text style={styles.secItemSub}>Bientôt disponible</Text>
               </View>
-              <View
-                style={[
-                  styles.activityBadge,
-                  {
-                    backgroundColor:
-                      item.status === 'success'
-                        ? COLORS.green + '22'
-                        : COLORS.red + '22',
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.activityBadgeText,
-                    { color: item.status === 'success' ? COLORS.green : COLORS.red },
-                  ]}
-                >
-                  {item.status === 'success' ? 'Réussi' : 'Échoué'}
-                </Text>
-              </View>
+              <Text style={styles.statusIcon}>🚧</Text>
             </View>
-          ))}
+          </View>
         </View>
 
         {/* Buttons */}
         <View style={styles.section}>
-          <TouchableOpacity style={styles.outlineBtn}>
+          <TouchableOpacity style={styles.outlineBtn} onPress={() => navigation.navigate('SecuritySettings')}>
             <Text style={styles.outlineBtnText}>Changer le mot de passe</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.dangerBtn}>
-            <Text style={styles.dangerBtnText}>Se déconnecter de tous les appareils</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

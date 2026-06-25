@@ -131,7 +131,7 @@ router.get('/:id/invoice', authenticate, async (req, res) => {
       subtotal: total,
       discount: 0,
       total,
-      paymentMethod: order.paymentMethod || 'N/A',
+      paymentMethod: order.metadata?.paymentMethod || 'N/A',
       driver: order.provider ? { name: order.provider.name, vehicle: order.metadata?.vehicle || '' } : null,
     });
   } catch (err) {

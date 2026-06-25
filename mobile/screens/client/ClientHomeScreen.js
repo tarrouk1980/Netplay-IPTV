@@ -34,20 +34,32 @@ export default function ClientHomeScreen({ navigation }) {
     const h = new Date().getHours();
     setGreeting(h < 12 ? 'Bonjour' : h < 18 ? 'Bon après-midi' : 'Bonsoir');
 
-    api.get('/api/client/home')
-      .then(r => {
-        setUserName(r.data.firstName || '');
-        setActiveOrder(r.data.activeOrder || null);
-      })
+    api.get('/api/users/me')
+      .then(r => { setUserName((r.data.name || '').split(' ')[0] || ''); })
       .catch(() => {})
       .finally(() => setLoading(false));
 
     api.get('/api/promo/list').then(r => setPromos(r.data || [])).catch(() => {});
 
     api.get('/api/users/me/orders').then(r => {
+      const orders = r.data.orders || [];
+
+      // Active order banner: most recent non-terminal order
+      const active = orders.find(o => ['PENDING', 'ACCEPTED', 'IN_PROGRESS'].includes(o.status));
+      if (active) {
+        const screen = SERVICE_TO_SCREEN[active.serviceType];
+        setActiveOrder(screen ? {
+          id: active.id,
+          screen,
+          icon: SERVICE_ICON[active.serviceType] || '📦',
+          title: active.destinationAddress || active.originAddress || active.serviceType,
+          status: active.status,
+        } : null);
+      }
+
       const seen = new Set();
       const items = [];
-      for (const o of (r.data.orders || [])) {
+      for (const o of orders) {
         if (seen.has(o.serviceType)) continue;
         seen.add(o.serviceType);
         const screen = SERVICE_TO_SCREEN[o.serviceType];

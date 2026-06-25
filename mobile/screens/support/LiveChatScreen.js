@@ -72,23 +72,49 @@ function StatusBanner({ status, ticketId }) {
 }
 
 export default function LiveChatScreen({ route, navigation }) {
-  const { ticketId, subject } = route.params || {};
+  const { ticketId: routeTicketId, subject } = route.params || {};
+  const [ticketId, setTicketId] = useState(routeTicketId || null);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [status, setStatus] = useState('WAITING');
   const [showQuick, setShowQuick] = useState(true);
+  const [initError, setInitError] = useState(false);
   const listRef = useRef(null);
   const pollRef = useRef(null);
 
-  const load = useCallback(async () => {
-    if (!ticketId) return;
+  const ensureTicket = useCallback(async () => {
+    if (ticketId) return ticketId;
     try {
-      const res = await api.get(`/api/support/tickets/${ticketId}/messages`);
+      const res = await api.post('/api/support/tickets', {
+        category: 'OTHER',
+        subject: subject || 'Chat en direct',
+        message: subject || 'Nouvelle conversation',
+      });
+      const id = res.data?.ticket?.id;
+      if (id) {
+        setTicketId(id);
+        setInitError(false);
+        return id;
+      }
+    } catch {
+      setInitError(true);
+    }
+    return null;
+  }, [ticketId, subject]);
+
+  const load = useCallback(async () => {
+    const id = await ensureTicket();
+    if (!id) return;
+    try {
+      const res = await api.get(`/api/support/tickets/${id}/messages`);
       if (res.data?.messages?.length) setMessages(res.data.messages);
       setStatus(res.data?.status || 'OPEN');
-    } catch {}
-  }, [ticketId]);
+      setInitError(false);
+    } catch {
+      setInitError(true);
+    }
+  }, [ensureTicket]);
 
   useEffect(() => {
     load();
@@ -117,7 +143,9 @@ export default function LiveChatScreen({ route, navigation }) {
     scrollToEnd();
 
     try {
-      await api.post(`/api/support/tickets/${ticketId || 'new'}/messages`, { text, image });
+      const id = await ensureTicket();
+      if (!id) throw new Error('no-ticket');
+      await api.post(`/api/support/tickets/${id}/messages`, { text, image });
     } catch {
       setMessages(m => m.filter(x => x.id !== msg.id));
       setInput(text?.trim() || '');
@@ -140,6 +168,10 @@ export default function LiveChatScreen({ route, navigation }) {
       { text: 'Annuler', style: 'cancel' },
       {
         text: 'Résoudre', onPress: async () => {
+          if (!ticketId) {
+            Alert.alert('Erreur', 'Aucun ticket actif à résoudre.');
+            return;
+          }
           try {
             await api.post(`/api/support/tickets/${ticketId}/resolve`);
             setStatus('RESOLVED');

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,9 +7,11 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
+import api from "../../services/api";
 
 const COLORS = {
   background: "#0A0A0F",
@@ -120,6 +122,28 @@ const buildDefault = () => {
 export default function NotificationPreferencesScreen() {
   const navigation = useNavigation();
   const [prefs, setPrefs] = useState(buildDefault());
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const load = useCallback(() => {
+    setLoading(true);
+    api.get('/api/users/me/notification-prefs')
+      .then((r) => {
+        const saved = r.data?.prefs || {};
+        const merged = buildDefault();
+        Object.keys(saved).forEach((k) => {
+          if (k in merged) merged[k] = !!saved[k];
+        });
+        setPrefs(merged);
+      })
+      .catch((err) => {
+        console.warn('[NotificationPreferencesScreen] load failed:', err?.message);
+        Alert.alert('Erreur', "Impossible de charger vos préférences. Valeurs par défaut affichées.");
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   const toggle = (key) => {
     setPrefs((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -137,13 +161,29 @@ export default function NotificationPreferencesScreen() {
     setPrefs(obj);
   };
 
-  const save = () => {
-    Alert.alert(
-      "Préférences sauvegardées",
-      "Vos préférences de notifications ont été enregistrées avec succès.",
-      [{ text: "OK" }]
-    );
+  const save = async () => {
+    setSaving(true);
+    try {
+      await api.put('/api/users/me/notification-prefs', prefs);
+      Alert.alert(
+        "Préférences sauvegardées",
+        "Vos préférences de notifications ont été enregistrées avec succès.",
+        [{ text: "OK" }]
+      );
+    } catch (err) {
+      Alert.alert('Erreur', err.response?.data?.error || "Impossible d'enregistrer vos préférences. Réessayez.");
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator color={COLORS.primary} size="large" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
@@ -197,8 +237,12 @@ export default function NotificationPreferencesScreen() {
         ))}
 
         <View style={styles.saveContainer}>
-          <TouchableOpacity style={styles.saveBtn} onPress={save}>
-            <Text style={styles.saveBtnText}>Enregistrer les préférences</Text>
+          <TouchableOpacity style={[styles.saveBtn, saving && { opacity: 0.6 }]} onPress={save} disabled={saving}>
+            {saving ? (
+              <ActivityIndicator color={COLORS.background} />
+            ) : (
+              <Text style={styles.saveBtnText}>Enregistrer les préférences</Text>
+            )}
           </TouchableOpacity>
         </View>
       </ScrollView>

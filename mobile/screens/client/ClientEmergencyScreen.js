@@ -24,12 +24,13 @@ export default function ClientEmergencyScreen({ navigation }) {
   const [contacts, setContacts] = useState([]);
   const [sharing, setSharing] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [newContact, setNewContact] = useState({ name: '', phone: '', relation: '' });
 
   useEffect(() => {
     api.get('/api/emergency/contacts')
       .then(r => setContacts((r.data.contacts || []).map((c, i) => ({ id: c.id || `EC${i}`, ...c }))))
-      .catch(() => {});
+      .catch(() => Alert.alert('Erreur', 'Impossible de charger vos contacts d\'urgence.'));
   }, []);
 
   const handleCall = (number) => {
@@ -55,20 +56,37 @@ export default function ClientEmergencyScreen({ navigation }) {
     } finally { setSharing(false); }
   };
 
-  const handleAddContact = () => {
+  const handleAddContact = async () => {
     if (!newContact.name.trim() || !newContact.phone.trim()) {
       Alert.alert('Champs requis', 'Nom et téléphone obligatoires.');
       return;
     }
-    setContacts(prev => [...prev, { ...newContact, id: `EC${Date.now()}` }]);
-    setNewContact({ name: '', phone: '', relation: '' });
-    setShowAdd(false);
+    setSaving(true);
+    try {
+      const r = await api.post('/api/emergency/contacts', newContact);
+      setContacts(prev => [...prev, r.data.contact]);
+      setNewContact({ name: '', phone: '', relation: '' });
+      setShowAdd(false);
+    } catch {
+      Alert.alert('Erreur', "Impossible d'ajouter ce contact. Réessayez.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleRemove = (id) => {
     Alert.alert('Supprimer ?', '', [
       { text: 'Annuler', style: 'cancel' },
-      { text: 'Supprimer', style: 'destructive', onPress: () => setContacts(p => p.filter(c => c.id !== id)) },
+      {
+        text: 'Supprimer', style: 'destructive', onPress: async () => {
+          try {
+            await api.delete(`/api/emergency/contacts/${id}`);
+            setContacts(p => p.filter(c => c.id !== id));
+          } catch {
+            Alert.alert('Erreur', 'Impossible de supprimer ce contact. Réessayez.');
+          }
+        },
+      },
     ]);
   };
 

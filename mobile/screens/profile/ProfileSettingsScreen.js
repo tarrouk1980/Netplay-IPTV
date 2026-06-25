@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,9 +7,11 @@ import {
   TouchableOpacity,
   Switch,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import useAuthStore from '../../store/authStore';
+import api from '../../services/api';
 
 const COLORS = {
   bg: '#0A0A0F',
@@ -46,6 +48,38 @@ export default function ProfileSettingsScreen({ navigation }) {
   const [notifPush, setNotifPush] = useState(true);
   const [notifSMS, setNotifSMS] = useState(false);
   const [notifEmail, setNotifEmail] = useState(true);
+  const [loadingPrefs, setLoadingPrefs] = useState(true);
+
+  const loadPrefs = useCallback(() => {
+    setLoadingPrefs(true);
+    api.get('/api/users/me/notification-prefs')
+      .then((r) => {
+        const prefs = r.data?.prefs || {};
+        if ('push' in prefs) setNotifPush(!!prefs.push);
+        if ('sms' in prefs) setNotifSMS(!!prefs.sms);
+        if ('email' in prefs) setNotifEmail(!!prefs.email);
+      })
+      .catch((err) => {
+        console.warn('[ProfileSettingsScreen] load prefs failed:', err?.message);
+      })
+      .finally(() => setLoadingPrefs(false));
+  }, []);
+
+  useEffect(() => { loadPrefs(); }, [loadPrefs]);
+
+  const updatePref = async (field, value, setter) => {
+    setter(value);
+    try {
+      await api.put('/api/users/me/notification-prefs', {
+        push: field === 'push' ? value : notifPush,
+        sms: field === 'sms' ? value : notifSMS,
+        email: field === 'email' ? value : notifEmail,
+      });
+    } catch (err) {
+      setter(!value);
+      Alert.alert('Erreur', "Impossible d'enregistrer ce réglage. Réessayez.");
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -129,11 +163,19 @@ export default function ProfileSettingsScreen({ navigation }) {
         {/* Section Notifications */}
         <Text style={styles.sectionTitle}>Notifications</Text>
         <View style={styles.section}>
-          {renderSwitch('🔔', "Notifications push", notifPush, setNotifPush)}
-          <View style={styles.separator} />
-          {renderSwitch('💬', "SMS", notifSMS, setNotifSMS)}
-          <View style={styles.separator} />
-          {renderSwitch('📧', "Email", notifEmail, setNotifEmail)}
+          {loadingPrefs ? (
+            <View style={{ padding: 20, alignItems: 'center' }}>
+              <ActivityIndicator color={COLORS.primary} />
+            </View>
+          ) : (
+            <>
+              {renderSwitch('🔔', "Notifications push", notifPush, (v) => updatePref('push', v, setNotifPush))}
+              <View style={styles.separator} />
+              {renderSwitch('💬', "SMS", notifSMS, (v) => updatePref('sms', v, setNotifSMS))}
+              <View style={styles.separator} />
+              {renderSwitch('📧', "Email", notifEmail, (v) => updatePref('email', v, setNotifEmail))}
+            </>
+          )}
         </View>
 
         {/* Section Confidentialité */}

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', border: '#2C2C3E',
@@ -8,42 +9,85 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', purple: '#9B59B6',
 };
 
-const TIERS = [
-  { key: 'BRONZE', label: 'Bronze', icon: '🥉', min: 0, max: 499, color: '#CD7F32', perks: ['5% de réduction taxi', 'Priorité support'] },
-  { key: 'SILVER', label: 'Argent', icon: '🥈', min: 500, max: 1999, color: '#C0C0C0', perks: ['10% de réduction taxi', '5% livraison', 'Accès anticipé promos'] },
-  { key: 'GOLD', label: 'Or', icon: '🥇', min: 2000, max: 4999, color: '#FFD700', perks: ['15% taxi & livraison', '10% épicerie', 'Support prioritaire 24h'] },
-  { key: 'PLATINUM', label: 'Platine', icon: '💎', min: 5000, max: null, color: '#E5E4E2', perks: ['20% sur tous les services', 'Chauffeur dédié', 'Conciergerie EasyWay'] },
-];
-
-const HISTORY = [
-  { id: 'H1', action: '🚕 Course taxi', points: +25, date: '03 juin' },
-  { id: 'H2', action: '🛵 Livraison', points: +10, date: '02 juin' },
-  { id: 'H3', action: '🎁 Bonus parrainage', points: +100, date: '01 juin' },
-  { id: 'H4', action: '🏷️ Code promo utilisé', points: -50, date: '30 mai' },
-  { id: 'H5', action: '🚕 Course taxi', points: +20, date: '29 mai' },
-];
-
-const USER_POINTS = 1240;
-const USER_TIER = 'SILVER';
+function fmtDate(iso) {
+  try {
+    return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+  } catch {
+    return '';
+  }
+}
 
 export default function ClientLoyaltyScreen({ navigation }) {
-  const [points] = useState(USER_POINTS);
-  const tier = TIERS.find(t => t.key === USER_TIER);
-  const nextTier = TIERS[TIERS.findIndex(t => t.key === USER_TIER) + 1];
-  const progress = nextTier
-    ? ((points - tier.min) / (nextTier.min - tier.min)) * 100
-    : 100;
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [redeeming, setRedeeming] = useState(null);
 
-  const handleRedeem = () => {
+  const load = useCallback(() => {
+    setLoading(true);
+    api.get('/api/loyalty/balance')
+      .then(r => { setData(r.data); setError(false); })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleRedeem = (reward) => {
+    if ((data?.points || 0) < reward.points) {
+      Alert.alert('Points insuffisants', `Il vous manque ${reward.points - (data?.points || 0)} points pour cette récompense.`);
+      return;
+    }
     Alert.alert(
-      'Convertir les points',
-      `Convertir 500 points en 5 TND de crédit ?`,
+      'Échanger des points',
+      `Échanger ${reward.points} points contre "${reward.label}" ?`,
       [
         { text: 'Annuler', style: 'cancel' },
-        { text: 'Confirmer', onPress: () => Alert.alert('✅ Crédit ajouté', '5 TND ont été ajoutés à votre portefeuille.') },
+        {
+          text: 'Confirmer',
+          onPress: async () => {
+            setRedeeming(reward.id);
+            try {
+              await api.post('/api/loyalty/redeem', { rewardId: reward.id });
+              Alert.alert('✅ Récompense activée', `"${reward.label}" a été ajoutée à votre compte.`);
+              load();
+            } catch (err) {
+              Alert.alert('Erreur', err.response?.data?.error || "Impossible d'échanger ces points pour le moment.");
+            } finally {
+              setRedeeming(null);
+            }
+          },
+        },
       ]
     );
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ActivityIndicator color={COLORS.accent} size="large" style={{ marginTop: 80 }} />
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <Text style={{ fontSize: 40 }}>⚠️</Text>
+          <Text style={{ color: COLORS.muted, marginTop: 12, textAlign: 'center' }}>
+            Impossible de récupérer votre programme fidélité.
+          </Text>
+          <TouchableOpacity onPress={load} style={{ marginTop: 16, backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
+            <Text style={{ color: '#000', fontWeight: '700' }}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const { points, level, levelColor, nextLevel, pointsToNext, rewards = [] } = data;
+  const progress = nextLevel ? Math.max(0, Math.min(100, 100 - (pointsToNext / Math.max(points + pointsToNext, 1)) * 100)) : 100;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -57,72 +101,49 @@ export default function ClientLoyaltyScreen({ navigation }) {
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Status card */}
-        <View style={[styles.statusCard, { borderColor: tier.color + '50' }]}>
-          <Text style={{ fontSize: 48 }}>{tier.icon}</Text>
+        <View style={[styles.statusCard, { borderColor: (levelColor || COLORS.accent) + '50' }]}>
+          <Text style={{ fontSize: 48 }}>🏆</Text>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.tierName, { color: tier.color }]}>{tier.label}</Text>
+            <Text style={[styles.tierName, { color: levelColor || COLORS.accent }]}>{level}</Text>
             <Text style={styles.pointsVal}>{points.toLocaleString()} pts</Text>
-            {nextTier && (
+            {nextLevel && (
               <>
                 <View style={styles.progressBg}>
-                  <View style={[styles.progressFill, { width: `${Math.min(progress, 100)}%`, backgroundColor: tier.color }]} />
+                  <View style={[styles.progressFill, { width: `${progress}%`, backgroundColor: levelColor || COLORS.accent }]} />
                 </View>
                 <Text style={styles.progressNote}>
-                  {(nextTier.min - points).toLocaleString()} pts pour {nextTier.icon} {nextTier.label}
+                  {pointsToNext.toLocaleString()} pts pour {nextLevel}
                 </Text>
               </>
             )}
           </View>
         </View>
 
-        {/* Redeem */}
-        <TouchableOpacity style={styles.redeemBtn} onPress={handleRedeem}>
-          <Text style={styles.redeemBtnText}>🔄 Convertir 500 pts → 5 TND</Text>
-        </TouchableOpacity>
-
-        {/* Avantages */}
-        <Text style={styles.sectionTitle}>VOS AVANTAGES ACTUELS</Text>
-        <View style={styles.perksCard}>
-          {tier.perks.map((p, i) => (
-            <View key={i} style={styles.perkRow}>
-              <Text style={[styles.perkDot, { color: tier.color }]}>●</Text>
-              <Text style={styles.perkText}>{p}</Text>
+        {/* Rewards */}
+        <Text style={styles.sectionTitle}>RÉCOMPENSES DISPONIBLES</Text>
+        {rewards.length === 0 ? (
+          <Text style={{ color: COLORS.muted, fontSize: 13, marginBottom: 16 }}>Aucune récompense disponible pour le moment.</Text>
+        ) : rewards.map(r => (
+          <TouchableOpacity
+            key={r.id}
+            style={[styles.rewardCard, points < r.points && { opacity: 0.5 }]}
+            onPress={() => handleRedeem(r)}
+            disabled={redeeming === r.id}
+          >
+            <Text style={{ fontSize: 26 }}>{r.icon}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.rewardLabel}>{r.label}</Text>
+              <Text style={styles.rewardDesc}>{r.description}</Text>
             </View>
-          ))}
-        </View>
-
-        {/* All tiers */}
-        <Text style={styles.sectionTitle}>TOUS LES NIVEAUX</Text>
-        {TIERS.map(t => {
-          const isCurrent = t.key === USER_TIER;
-          return (
-            <View key={t.key} style={[styles.tierRow, isCurrent && { borderColor: t.color + '60' }]}>
-              <Text style={{ fontSize: 22 }}>{t.icon}</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.tierRowName, { color: isCurrent ? t.color : COLORS.text }]}>
-                  {t.label} {isCurrent && '← vous êtes ici'}
-                </Text>
-                <Text style={styles.tierRange}>
-                  {t.max ? `${t.min.toLocaleString()} – ${t.max.toLocaleString()} pts` : `${t.min.toLocaleString()}+ pts`}
-                </Text>
-              </View>
-            </View>
-          );
-        })}
-
-        {/* Points history */}
-        <Text style={styles.sectionTitle}>HISTORIQUE</Text>
-        {HISTORY.map(h => (
-          <View key={h.id} style={styles.histRow}>
-            <Text style={styles.histAction}>{h.action}</Text>
-            <Text style={styles.histDate}>{h.date}</Text>
-            <Text style={[styles.histPts, { color: h.points > 0 ? COLORS.green : COLORS.red }]}>
-              {h.points > 0 ? '+' : ''}{h.points} pts
-            </Text>
-          </View>
+            {redeeming === r.id ? (
+              <ActivityIndicator color={COLORS.accent} />
+            ) : (
+              <Text style={styles.rewardPts}>{r.points} pts</Text>
+            )}
+          </TouchableOpacity>
         ))}
 
-        <View style={{ height: 40 }} />
+        <View style={{ height: 24 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -141,18 +162,9 @@ const styles = StyleSheet.create({
   progressBg: { height: 6, backgroundColor: COLORS.border, borderRadius: 3, marginTop: 8, overflow: 'hidden' },
   progressFill: { height: 6, borderRadius: 3 },
   progressNote: { color: COLORS.muted, fontSize: 11, marginTop: 4 },
-  redeemBtn: { backgroundColor: COLORS.accent + '20', borderRadius: 14, paddingVertical: 14, alignItems: 'center', marginBottom: 20, borderWidth: 1, borderColor: COLORS.accent + '40' },
-  redeemBtnText: { color: COLORS.accent, fontSize: 14, fontWeight: '800' },
   sectionTitle: { color: COLORS.muted, fontSize: 10, fontWeight: '700', letterSpacing: 1.4, marginBottom: 10 },
-  perksCard: { backgroundColor: COLORS.surface, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: COLORS.border, marginBottom: 20 },
-  perkRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 5 },
-  perkDot: { fontSize: 10 },
-  perkText: { color: COLORS.text, fontSize: 13 },
-  tierRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: COLORS.surface, borderRadius: 12, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: COLORS.border },
-  tierRowName: { fontSize: 14, fontWeight: '700' },
-  tierRange: { color: COLORS.muted, fontSize: 11, marginTop: 2 },
-  histRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.surface, borderRadius: 10, padding: 12, marginBottom: 6, borderWidth: 1, borderColor: COLORS.border },
-  histAction: { color: COLORS.text, fontSize: 13, flex: 1 },
-  histDate: { color: COLORS.muted, fontSize: 11, marginRight: 10 },
-  histPts: { fontSize: 13, fontWeight: '700', minWidth: 60, textAlign: 'right' },
+  rewardCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: COLORS.surface, borderRadius: 14, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: COLORS.border },
+  rewardLabel: { color: COLORS.text, fontSize: 14, fontWeight: '800' },
+  rewardDesc: { color: COLORS.muted, fontSize: 12, marginTop: 2 },
+  rewardPts: { color: COLORS.accent, fontSize: 13, fontWeight: '800' },
 });
