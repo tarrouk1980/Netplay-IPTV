@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  ActivityIndicator, Animated,
+  ActivityIndicator, Animated, Linking, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
@@ -154,7 +154,19 @@ function OrderCard({ order, onViewMap, onCancel }) {
             <Text style={styles.providerName}>{order.provider.name}</Text>
             {order.provider.vehicle && <Text style={styles.providerVehicle}>{order.provider.vehicle}</Text>}
           </View>
-          <TouchableOpacity style={[styles.callBtn, { borderColor: color }]}>
+          <TouchableOpacity
+            style={[styles.callBtn, { borderColor: color }]}
+            onPress={() => {
+              const phone = order.provider?.phone;
+              if (!phone) {
+                Alert.alert('Indisponible', 'Numéro de téléphone non disponible.');
+                return;
+              }
+              Linking.openURL(`tel:${phone.replace(/\s/g, '')}`).catch(() =>
+                Alert.alert('Erreur', "Impossible d'ouvrir l'application téléphone.")
+              );
+            }}
+          >
             <Text style={[styles.callBtnText, { color }]}>📞 Appeler</Text>
           </TouchableOpacity>
         </View>

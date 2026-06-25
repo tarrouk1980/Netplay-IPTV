@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  StatusBar, TextInput, Animated,
+  StatusBar, TextInput, Animated, ActivityIndicator, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', surfaceAlt: '#16161F',
@@ -28,6 +29,7 @@ export default function FeedbackScreen({ navigation }) {
   const [topic, setTopic] = useState(null);
   const [message, setMessage] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const scaleAnims = useRef(EMOJIS.map(() => new Animated.Value(1))).current;
 
   const selectRating = (i) => {
@@ -38,9 +40,17 @@ export default function FeedbackScreen({ navigation }) {
     ]).start();
   };
 
-  const submit = () => {
-    if (rating === null) return;
-    setSubmitted(true);
+  const submit = async () => {
+    if (rating === null || submitting) return;
+    setSubmitting(true);
+    try {
+      await api.post('/api/support/feedback', { rating, topic, message: message.trim() });
+      setSubmitted(true);
+    } catch (err) {
+      Alert.alert('Erreur', "Impossible d'envoyer votre avis. Vérifiez votre connexion et réessayez.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (submitted) {
@@ -155,11 +165,13 @@ export default function FeedbackScreen({ navigation }) {
 
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.submitBtn, rating === null && { opacity: 0.4 }]}
+          style={[styles.submitBtn, (rating === null || submitting) && { opacity: 0.4 }]}
           onPress={submit}
-          disabled={rating === null}
+          disabled={rating === null || submitting}
         >
-          <Text style={styles.submitBtnText}>Envoyer mon avis</Text>
+          {submitting
+            ? <ActivityIndicator color="#000" size="small" />
+            : <Text style={styles.submitBtnText}>Envoyer mon avis</Text>}
         </TouchableOpacity>
       </View>
     </SafeAreaView>

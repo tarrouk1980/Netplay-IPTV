@@ -50,12 +50,11 @@ export default function DisputeScreen({ navigation, route }) {
       const res = await api.post(`/api/orders/${orderId}/dispute`, {
         disputeType, urgency, description,
       });
-      setTicketId(res.data?.ticketId || `DSP-${Date.now().toString().slice(-6)}`);
+      setTicketId(res.data?.ticketId || '');
       setSubmitted(true);
-    } catch {
-      const fallbackId = `DSP-${Date.now().toString().slice(-6)}`;
-      setTicketId(fallbackId);
-      setSubmitted(true);
+    } catch (err) {
+      const message = err.response?.data?.error || "Impossible de soumettre votre litige. Vérifiez votre connexion et réessayez.";
+      Alert.alert('Erreur', message);
     } finally {
       setSubmitting(false);
     }

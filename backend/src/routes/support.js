@@ -90,4 +90,26 @@ router.post('/tickets/:id/resolve', authenticate, async (req, res) => {
   res.json({ ok: true });
 });
 
+// In-memory app feedback store (replace with DB model when a Feedback model is added to schema)
+const feedbacks = [];
+let feedbackSeq = 1;
+
+// POST /api/support/feedback — general app feedback (rating + optional topic/message)
+router.post('/feedback', authenticate, async (req, res) => {
+  const { rating, topic, message } = req.body;
+  if (rating === undefined || rating === null || Number.isNaN(Number(rating))) {
+    return res.status(400).json({ error: 'rating is required' });
+  }
+  const feedback = {
+    id: `FBK-${String(feedbackSeq++).padStart(4, '0')}`,
+    userId: req.user.id,
+    rating: Number(rating),
+    topic: topic || null,
+    message: message || '',
+    createdAt: new Date().toISOString(),
+  };
+  feedbacks.push(feedback);
+  res.status(201).json({ feedback });
+});
+
 module.exports = router;
