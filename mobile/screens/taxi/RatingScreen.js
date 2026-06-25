@@ -72,7 +72,7 @@ export default function RatingScreen({ route, navigation }) {
     }
     setSubmitting(true);
     try {
-      await api.post(`/api/orders/${orderId}/rate`, {
+      await api.post(`/api/taxi/${orderId}/rate`, {
         rating,
         tags: selectedTags,
         comment: comment.trim(),

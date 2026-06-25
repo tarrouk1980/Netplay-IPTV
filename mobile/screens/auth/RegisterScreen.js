@@ -633,6 +633,12 @@ export default function RegisterScreen({ navigation }) {
       // 2. Role-specific follow-up calls
       if (role === 'CHAUFFEUR') {
         try {
+          // Backend's Vehicle.vehicleType is NOT the car body style (sedan/SUV/etc) —
+          // it only accepts NORMAL | EASYLADY | EASYACCESS (driver category for
+          // gender preference / accessibility). Sending chauffeurVehicleType
+          // (BERLINE/SUV/MINIVAN/MOTO) here always fails backend validation (422),
+          // so map from the actual UI fields that correspond to it instead.
+          const backendVehicleType = isPMR ? 'EASYACCESS' : (isEasyLady ? 'EASYLADY' : 'NORMAL');
           await api.post('/api/vehicles', {
             make: vMake.trim(),
             model: vModel.trim(),
@@ -640,10 +646,14 @@ export default function RegisterScreen({ navigation }) {
             color: vColor.trim(),
             plate: vPlate.trim(),
             licenseNumber: licenseNumber.trim(),
-            vehicleType: chauffeurVehicleType,
+            vehicleType: backendVehicleType,
           });
         } catch (vErr) {
           console.warn('[RegisterScreen] Vehicle registration failed (non-blocking):', vErr?.response?.data);
+          Alert.alert(
+            'Inscription créée',
+            'Votre compte a été créé, mais l\'enregistrement de votre véhicule a échoué. Vous pourrez le renseigner depuis votre profil.'
+          );
         }
         // Upload KYC face photo (non-blocking)
         if (chauffeurFacePhoto) {
@@ -680,6 +690,10 @@ export default function RegisterScreen({ navigation }) {
           });
         } catch (mErr) {
           console.warn('[RegisterScreen] Merchant registration failed (non-blocking):', mErr?.response?.data);
+          Alert.alert(
+            'Inscription créée',
+            'Votre compte a été créé, mais la création de votre boutique a échoué. Vous pourrez compléter ces informations depuis votre profil.'
+          );
         }
         navigation.navigate('Home');
         return;

@@ -99,7 +99,8 @@ export default function DriverDashboardScreen({ navigation }) {
       const response = await api.get('/api/taxi/driver/stats?period=today');
       const stats = response.data?.stats || response.data || {};
       setEarnings({ today: Number(stats.revenue || 0), rides: Number(stats.trips || 0) });
-    } catch {
+    } catch (err) {
+      console.error('[DriverDashboard] Failed to fetch earnings:', err?.response?.data || err.message);
       // non-critical: keep previous earnings state on failure
     }
   };
@@ -141,12 +142,14 @@ export default function DriverDashboardScreen({ navigation }) {
       if (value) {
         const ok = await startLocationTracking();
         if (ok) {
+          await api.patch('/api/taxi/driver/toggle', { online: true });
           setIsOnline(true);
           // Join TAXI socket room to receive incoming requests
           const socket = getSocket();
           if (socket) socket.emit('join:service', 'TAXI');
         }
       } else {
+        await api.patch('/api/taxi/driver/toggle', { online: false });
         stopLocationTracking();
         setIsOnline(false);
         const socket = getSocket();
@@ -154,6 +157,7 @@ export default function DriverDashboardScreen({ navigation }) {
         setIncomingRequests([]);
       }
     } catch (err) {
+      console.error('[DriverDashboard] Toggle online failed:', err?.response?.data || err.message);
       Alert.alert('Erreur', 'Impossible de changer le statut.');
     } finally {
       setTogglingOnline(false);

@@ -39,17 +39,23 @@ export default function TaxiPromoScreen({ navigation }) {
     }
     setApplying(true);
     try {
-      const res = await api.post('/api/promo/apply', { code: trimmed, service: 'TAXI' });
-      const promo = res.data?.promo || {
-        id: `P${Date.now()}`, code: trimmed,
-        desc: `Code ${trimmed} appliqué`, discount: 10, type: 'percent',
-        expiresAt: 'Bientôt', usesLeft: 1,
+      const res = await api.post('/api/promo/apply', { code: trimmed, serviceType: 'TAXI' });
+      const data = res.data || {};
+      const promo = {
+        id: `${data.code || trimmed}-${Date.now()}`,
+        code: data.code || trimmed,
+        desc: data.label || `Code ${trimmed} appliqué`,
+        discount: data.discount,
+        type: data.type === 'PERCENT' ? 'percent' : 'fixed',
+        expiresAt: '—',
+        usesLeft: 1,
       };
       setAppliedPromos(prev => [promo, ...prev]);
       setInput('');
       Alert.alert('✅ Code appliqué !', promo.desc);
-    } catch {
-      Alert.alert('Erreur', 'Code invalide ou expiré.');
+    } catch (e) {
+      console.error('Erreur application code promo:', e);
+      Alert.alert('Erreur', e?.response?.data?.error || 'Code invalide ou expiré.');
     } finally {
       setApplying(false);
     }

@@ -87,9 +87,10 @@ export default function TaxiOrderDetailScreen({ route, navigation }) {
 
   const load = useCallback(async () => {
     try {
-      const res = await api.get(`/api/orders/${orderId}`);
+      const res = await api.get(`/api/taxi/${orderId}`);
       setOrder(res.data.order || res.data);
-    } catch {
+    } catch (e) {
+      console.error('Erreur chargement course taxi:', e);
       Alert.alert('Erreur', 'Course introuvable.');
       navigation.goBack();
     } finally {
@@ -107,9 +108,10 @@ export default function TaxiOrderDetailScreen({ route, navigation }) {
         onPress: async () => {
           setCancelling(true);
           try {
-            await api.post(`/api/orders/${orderId}/cancel`, { reason: 'Annulé par le client' });
+            await api.post(`/api/taxi/${orderId}/cancel`, { reason: 'Annulé par le client' });
             load();
           } catch (e) {
+            console.error('Erreur annulation course taxi:', e);
             Alert.alert('Erreur', e?.response?.data?.error || 'Impossible d\'annuler.');
           } finally {
             setCancelling(false);

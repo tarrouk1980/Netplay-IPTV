@@ -69,7 +69,8 @@ export default function DriverHeatmapScreen({ navigation }) {
     try {
       const res = await api.get('/api/provider/demand-heatmap');
       setData(res.data);
-    } catch {
+    } catch (err) {
+      console.error('[DriverHeatmap] Failed to load demand heatmap:', err?.response?.data || err.message);
       setError(true);
     } finally {
       setLoading(false);

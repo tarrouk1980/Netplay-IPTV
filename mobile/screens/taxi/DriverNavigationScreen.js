@@ -42,7 +42,9 @@ export default function DriverNavigationScreen({ route, navigation }) {
           { accuracy: Location.Accuracy.Balanced, timeInterval: 5000, distanceInterval: 20 },
           (l) => setDriverPos({ lat: l.coords.latitude, lng: l.coords.longitude })
         );
-      } catch {}
+      } catch (err) {
+        console.error('[DriverNavigation] Location tracking failed:', err?.message || err);
+      }
     })();
     return () => { watchRef.current?.remove?.(); };
   }, []);
