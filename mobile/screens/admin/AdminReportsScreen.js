@@ -14,6 +14,9 @@ import {
   TextInput,
 } from 'react-native';
 
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+
 import api from '../../services/api';
 
 const COLORS = {
@@ -289,6 +292,7 @@ export default function AdminReportsScreen({ navigation }) {
       const res = await api.get(`/api/reports/admin?status=${status}`);
       setReports(res.data || []);
     } catch (err) {
+      console.error('[AdminReportsScreen] fetchReports', err);
       Alert.alert('Erreur', err.response?.data?.error || 'Impossible de charger les signalements');
     } finally {
       setLoading(false);
@@ -310,6 +314,7 @@ export default function AdminReportsScreen({ navigation }) {
       await api.patch(`/api/reports/admin/${id}`, { status, adminNote });
       fetchReports(activeTab);
     } catch (err) {
+      console.error('[AdminReportsScreen] updateReport', err);
       Alert.alert('Erreur', err.response?.data?.error || 'Mise à jour échouée');
     }
   };
@@ -367,7 +372,8 @@ export default function AdminReportsScreen({ navigation }) {
         Alert.alert('Fichier créé', fileUri);
       }
     } catch (e) {
-      Alert.alert('Erreur', 'Impossible d\'exporter les données.');
+      console.error('[AdminReportsScreen] exportCSV', e);
+      Alert.alert('Erreur', e.message || 'Impossible d\'exporter les données.');
     }
   };
 

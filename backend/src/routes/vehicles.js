@@ -36,27 +36,32 @@ router.post(
 
     const { make, model, plate, licenseNumber, vehicleType, year, color } = req.body;
 
-    // Check for duplicate plate
-    const existing = await prisma.vehicle.findUnique({ where: { plate } });
-    if (existing) {
-      return res.status(409).json({ error: 'A vehicle with this plate already exists', code: 'PLATE_DUPLICATE' });
+    try {
+      // Check for duplicate plate
+      const existing = await prisma.vehicle.findUnique({ where: { plate } });
+      if (existing) {
+        return res.status(409).json({ error: 'A vehicle with this plate already exists', code: 'PLATE_DUPLICATE' });
+      }
+
+      const vehicle = await prisma.vehicle.create({
+        data: {
+          userId: req.user.id,
+          make,
+          model,
+          plate: plate.toUpperCase().trim(),
+          licenseNumber: licenseNumber || null,
+          vehicleType,
+          year: year ? parseInt(year, 10) || null : null,
+          color: color || null,
+          verified: false,
+        },
+      });
+
+      return res.status(201).json({ vehicle });
+    } catch (err) {
+      console.error('[Vehicles/Create]', err);
+      return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
     }
-
-    const vehicle = await prisma.vehicle.create({
-      data: {
-        userId: req.user.id,
-        make,
-        model,
-        plate: plate.toUpperCase().trim(),
-        licenseNumber: licenseNumber || null,
-        vehicleType,
-        year: year ? parseInt(year, 10) || null : null,
-        color: color || null,
-        verified: false,
-      },
-    });
-
-    return res.status(201).json({ vehicle });
   }
 );
 

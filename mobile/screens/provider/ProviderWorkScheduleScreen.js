@@ -86,8 +86,9 @@ export default function ProviderWorkScheduleScreen({ navigation }) {
       if (res.data.schedule && res.data.schedule.length > 0) {
         setSchedule(res.data.schedule);
       }
-    } catch {
-      // keep defaults
+    } catch (err) {
+      console.error('[ProviderWorkScheduleScreen] load failed:', err?.message || err);
+      Alert.alert('Erreur', 'Impossible de charger vos horaires. Les valeurs par défaut sont affichées.');
     } finally {
       setLoading(false);
     }

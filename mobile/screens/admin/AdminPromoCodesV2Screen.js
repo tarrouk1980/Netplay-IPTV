@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,8 +7,11 @@ import {
   StyleSheet,
   Alert,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
+import api from '../../services/api';
 
 const COULEURS = {
   bg: '#0A0A0F',
@@ -19,90 +22,18 @@ const COULEURS = {
   border: '#2C2C3A',
 };
 
-const CODES_INITIAUX = [
-  {
-    id: '1',
-    code: 'BIENVENUE20',
-    type: 'pourcentage',
-    reduction: 20,
-    utilisations: 145,
-    limite: 500,
-    expiration: '30 juin 2026',
-    statut: 'Actif',
-  },
-  {
-    id: '2',
-    code: 'ETE150',
-    type: 'fixe',
-    reduction: 150,
-    utilisations: 500,
-    limite: 500,
-    expiration: '1 juil 2026',
-    statut: 'Épuisé',
-  },
-  {
-    id: '3',
-    code: 'FIDELE10',
-    type: 'pourcentage',
-    reduction: 10,
-    utilisations: 89,
-    limite: 1000,
-    expiration: '31 déc 2026',
-    statut: 'Actif',
-  },
-  {
-    id: '4',
-    code: 'FLASH200',
-    type: 'fixe',
-    reduction: 200,
-    utilisations: 300,
-    limite: 300,
-    expiration: '15 mai 2026',
-    statut: 'Expiré',
-  },
-  {
-    id: '5',
-    code: 'RAMADAN25',
-    type: 'pourcentage',
-    reduction: 25,
-    utilisations: 412,
-    limite: 600,
-    expiration: '10 avr 2026',
-    statut: 'Expiré',
-  },
-  {
-    id: '6',
-    code: 'VIP30',
-    type: 'pourcentage',
-    reduction: 30,
-    utilisations: 22,
-    limite: 100,
-    expiration: '31 août 2026',
-    statut: 'Actif',
-  },
-  {
-    id: '7',
-    code: 'NOUVEAU100',
-    type: 'fixe',
-    reduction: 100,
-    utilisations: 0,
-    limite: 200,
-    expiration: '30 sept 2026',
-    statut: 'Actif',
-  },
-  {
-    id: '8',
-    code: 'WEEK50',
-    type: 'fixe',
-    reduction: 50,
-    utilisations: 200,
-    limite: 200,
-    expiration: '31 mars 2026',
-    statut: 'Épuisé',
-  },
-];
-
 const FILTRES = ['Actifs', 'Expirés', 'Épuisés'];
+
+// Derives a UI status string from the real /api/admin/promo-codes fields
+// (isActive, expiresAt, usedCount, maxUsage) — there is no `statut` field
+// on the backend, so we compute it here instead of inventing one server-side.
+function deriveStatut(item) {
+  const expired = item.expiresAt && new Date(item.expiresAt) < new Date();
+  const exhausted = item.maxUsage > 0 && (item.usedCount || 0) >= item.maxUsage;
+  if (expired) return 'Expiré';
+  if (exhausted) return 'Épuisé';
+  return item.isActive ? 'Actif' : 'Inactif';
+}
 
 const couleurStatut = (statut) => {
   if (statut === 'Actif') return '#4CAF50';
@@ -111,9 +42,47 @@ const couleurStatut = (statut) => {
   return '#8E8E9A';
 };
 
-export default function AdminPromoCodesV2Screen() {
-  const [codes, setCodes] = useState(CODES_INITIAUX);
+export default function AdminPromoCodesV2Screen({ navigation }) {
+  const [codes, setCodes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [filtreActif, setFiltreActif] = useState('Actifs');
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.get('/api/admin/promo-codes');
+      const list = res.data?.codes || res.data?.promoCodes || res.data?.promos || [];
+      setCodes(
+        list.map((p) => ({
+          id: p.id,
+          code: p.code,
+          type: p.type, // 'PERCENT' | 'FIXED'
+          value: p.value,
+          usedCount: p.usedCount || 0,
+          maxUsage: p.maxUsage || 0,
+          expiresAt: p.expiresAt,
+          isActive: p.isActive,
+          minOrder: p.minOrder,
+          service: p.service,
+          statut: deriveStatut(p),
+        }))
+      );
+    } catch (e) {
+      console.error('[AdminPromoCodesV2Screen] load failed', e);
+      setError(e?.response?.data?.error || 'Impossible de charger les codes promo.');
+      setCodes([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load])
+  );
 
   const codesFiltres = codes.filter((c) => {
     if (filtreActif === 'Actifs') return c.statut === 'Actif';
@@ -123,28 +92,38 @@ export default function AdminPromoCodesV2Screen() {
   });
 
   const codesActifs = codes.filter((c) => c.statut === 'Actif').length;
-  const utilisationsMois = 1668;
-  const economies = 24350;
 
-  const toggleStatut = (id) => {
-    setCodes((prev) =>
-      prev.map((c) => {
-        if (c.id !== id) return c;
-        return { ...c, statut: c.statut === 'Actif' ? 'Expiré' : 'Actif' };
-      })
-    );
+  const toggleStatut = async (item) => {
+    const nextActive = !item.isActive;
+    try {
+      await api.patch(`/api/admin/promo-codes/${item.id}`, { isActive: nextActive });
+      load();
+    } catch (e) {
+      console.error('[AdminPromoCodesV2Screen] toggle failed', e);
+      Alert.alert('Erreur', e?.response?.data?.error || 'Impossible de changer le statut du code.');
+    }
   };
 
-  const supprimerCode = (id, code) => {
+  const supprimerCode = (item) => {
     Alert.alert(
       'Supprimer le code',
-      `Voulez-vous supprimer le code "${code}" ?`,
+      `Voulez-vous supprimer le code "${item.code}" ?`,
       [
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Supprimer',
           style: 'destructive',
-          onPress: () => setCodes((prev) => prev.filter((c) => c.id !== id)),
+          onPress: async () => {
+            try {
+              // No DELETE exists under /api/admin/promo-codes/:id; /api/admin/promos/:id
+              // operates on the same underlying in-memory promoStore, so it's used here.
+              await api.delete(`/api/admin/promos/${item.id}`);
+              load();
+            } catch (e) {
+              console.error('[AdminPromoCodesV2Screen] delete failed', e);
+              Alert.alert('Erreur', e?.response?.data?.error || 'Impossible de supprimer le code.');
+            }
+          },
         },
       ]
     );
@@ -155,11 +134,11 @@ export default function AdminPromoCodesV2Screen() {
   };
 
   const creerCode = () => {
-    Alert.alert(
-      'Créer un code promo',
-      'Fonctionnalité disponible prochainement.\n\nChamps : Code, Réduction (% ou fixe), Limite, Date expiration.',
-      [{ text: 'Fermer' }]
-    );
+    if (navigation?.navigate) {
+      navigation.navigate('AdminPromoCreate');
+    } else {
+      Alert.alert('Erreur', 'Navigation indisponible.');
+    }
   };
 
   const renderCode = ({ item }) => (
@@ -168,9 +147,7 @@ export default function AdminPromoCodesV2Screen() {
         <View>
           <Text style={styles.codeTexte}>{item.code}</Text>
           <Text style={styles.reductionTexte}>
-            {item.type === 'pourcentage'
-              ? `-${item.reduction}%`
-              : `-${item.reduction} DA`}
+            {item.type === 'PERCENT' ? `-${item.value}%` : `-${item.value} TND`}
           </Text>
         </View>
         <View
@@ -191,12 +168,14 @@ export default function AdminPromoCodesV2Screen() {
         <View style={styles.infoItem}>
           <Text style={styles.infoLabel}>Utilisations</Text>
           <Text style={styles.infoValeur}>
-            {item.utilisations}/{item.limite}
+            {item.usedCount}/{item.maxUsage || '∞'}
           </Text>
         </View>
         <View style={styles.infoItem}>
           <Text style={styles.infoLabel}>Expiration</Text>
-          <Text style={styles.infoValeur}>{item.expiration}</Text>
+          <Text style={styles.infoValeur}>
+            {item.expiresAt ? new Date(item.expiresAt).toLocaleDateString('fr-TN') : 'Aucune'}
+          </Text>
         </View>
       </View>
 
@@ -205,10 +184,7 @@ export default function AdminPromoCodesV2Screen() {
           style={[
             styles.progressionBarre,
             {
-              width: `${Math.min(
-                (item.utilisations / item.limite) * 100,
-                100
-              )}%`,
+              width: `${item.maxUsage ? Math.min((item.usedCount / item.maxUsage) * 100, 100) : 0}%`,
               backgroundColor: couleurStatut(item.statut),
             },
           ]}
@@ -218,10 +194,10 @@ export default function AdminPromoCodesV2Screen() {
       <View style={styles.actions}>
         <TouchableOpacity
           style={[styles.actionBtn, styles.actionBtnToggle]}
-          onPress={() => toggleStatut(item.id)}
+          onPress={() => toggleStatut(item)}
         >
           <Text style={styles.actionBtnTexte}>
-            {item.statut === 'Actif' ? 'Désactiver' : 'Activer'}
+            {item.isActive ? 'Désactiver' : 'Activer'}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -232,7 +208,7 @@ export default function AdminPromoCodesV2Screen() {
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.actionBtn, styles.actionBtnSuppr]}
-          onPress={() => supprimerCode(item.id, item.code)}
+          onPress={() => supprimerCode(item)}
         >
           <Text style={[styles.actionBtnTexte, { color: '#F44336' }]}>
             Supprimer
@@ -261,14 +237,6 @@ export default function AdminPromoCodesV2Screen() {
           <Text style={styles.statValeur}>{codesActifs}</Text>
           <Text style={styles.statLabel}>Codes actifs</Text>
         </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statValeur}>{utilisationsMois}</Text>
-          <Text style={styles.statLabel}>Utilisations ce mois</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statValeur}>{economies} DA</Text>
-          <Text style={styles.statLabel}>Économies générées</Text>
-        </View>
       </ScrollView>
 
       <View style={styles.filtres}>
@@ -293,18 +261,31 @@ export default function AdminPromoCodesV2Screen() {
         ))}
       </View>
 
-      <FlatList
-        data={codesFiltres}
-        keyExtractor={(item) => item.id}
-        renderItem={renderCode}
-        contentContainerStyle={styles.liste}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={styles.vide}>
-            <Text style={styles.videTexte}>Aucun code dans cette catégorie</Text>
-          </View>
-        }
-      />
+      {loading ? (
+        <View style={styles.vide}>
+          <ActivityIndicator color={COULEURS.primary} size="large" />
+        </View>
+      ) : error ? (
+        <View style={styles.vide}>
+          <Text style={styles.videTexte}>{error}</Text>
+          <TouchableOpacity onPress={load} style={{ marginTop: 12 }}>
+            <Text style={[styles.videTexte, { color: COULEURS.primary }]}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <FlatList
+          data={codesFiltres}
+          keyExtractor={(item) => item.id}
+          renderItem={renderCode}
+          contentContainerStyle={styles.liste}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.vide}>
+              <Text style={styles.videTexte}>Aucun code dans cette catégorie</Text>
+            </View>
+          }
+        />
+      )}
     </SafeAreaView>
   );
 }

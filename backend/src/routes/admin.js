@@ -1128,7 +1128,7 @@ router.get('/system/health', async (req, res) => {
     const startDb = Date.now();
     const [userCount, activeOrders] = await Promise.all([
       prisma.user.count(),
-      prisma.order.count({ where: { status: { in: ['ACCEPTED', 'IN_PROGRESS', 'PICKING_UP'] } } }),
+      prisma.order.count({ where: { status: { in: ['ACCEPTED', 'IN_PROGRESS'] } } }),
     ]);
     const dbMs = Date.now() - startDb;
 
@@ -1930,9 +1930,14 @@ router.get('/disputes/:id', async (req, res) => {
     const dispute = await prisma.dispute.findUnique({
       where: { id: req.params.id },
       include: {
-        order: { select: { id: true, serviceType: true, price: true, metadata: true } },
-        client: { select: { id: true, name: true, phone: true, email: true } },
-        provider: { select: { id: true, name: true, phone: true, role: true } },
+        order: {
+          select: {
+            id: true, serviceType: true, price: true, metadata: true,
+            client: { select: { id: true, name: true, phone: true, email: true } },
+            provider: { select: { id: true, name: true, phone: true, role: true } },
+          },
+        },
+        reporter: { select: { id: true, name: true, phone: true, role: true } },
       },
     }).catch(() => null);
 

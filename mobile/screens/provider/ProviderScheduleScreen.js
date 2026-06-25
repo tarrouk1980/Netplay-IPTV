@@ -85,7 +85,10 @@ export default function ProviderScheduleScreen({ navigation }) {
   useEffect(() => {
     api.get('/api/provider/schedule')
       .then(r => { if (r.data?.schedule) setSchedule(r.data.schedule); })
-      .catch(() => {})
+      .catch(err => {
+        console.error('[ProviderScheduleScreen] load failed:', err?.message || err);
+        Alert.alert('Erreur', 'Impossible de charger vos horaires. Les valeurs par défaut sont affichées.');
+      })
       .finally(() => setLoading(false));
   }, []);
 

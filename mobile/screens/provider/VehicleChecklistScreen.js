@@ -100,12 +100,15 @@ export default function VehicleChecklistScreen({ navigation, route }) {
         checkedItems: Object.keys(checked).filter(k => checked[k]),
         totalItems,
         completedAt: new Date().toISOString(),
-      }).catch(() => {});
+      });
       Alert.alert(
         'Checklist validée ✅',
         'Votre véhicule est prêt. Bonne journée !',
         [{ text: 'Commencer', onPress: () => navigation.goBack() }]
       );
+    } catch (err) {
+      console.error('[VehicleChecklistScreen] submit failed:', err?.message || err);
+      Alert.alert('Erreur', 'Impossible d\'enregistrer la checklist. Veuillez réessayer.');
     } finally {
       setSubmitting(false);
     }

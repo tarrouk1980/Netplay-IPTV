@@ -88,7 +88,10 @@ export default function ProviderVehicleInfoScreen({ navigation }) {
         setInsuranceExpiry(v.insuranceExpiry ? new Date(v.insuranceExpiry).toISOString().split('T')[0] : '');
         setTechControlExpiry(v.techControlExpiry ? new Date(v.techControlExpiry).toISOString().split('T')[0] : '');
       }
-    }).catch(() => {}).finally(() => setLoading(false));
+    }).catch((err) => {
+      console.error('[ProviderVehicleInfoScreen] load failed:', err?.message || err);
+      Alert.alert('Erreur', 'Impossible de charger les informations du véhicule.');
+    }).finally(() => setLoading(false));
   }, []);
 
   const handleSave = async () => {

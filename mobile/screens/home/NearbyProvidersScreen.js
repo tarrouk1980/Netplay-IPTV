@@ -54,7 +54,8 @@ export default function NearbyProvidersScreen({ navigation }) {
       const res = await api.get(`/api/users/nearby-providers?lat=${userLat}&lng=${userLng}`);
       setProviders(res.data?.providers || {});
       setError(false);
-    } catch {
+    } catch (err) {
+      console.error('[NearbyProvidersScreen] failed to load nearby providers:', err?.message || err);
       setError(true);
     } finally {
       setLoading(false);

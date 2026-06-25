@@ -52,8 +52,9 @@ export default function CoverageCheck({ serviceType, children, style }) {
       } else {
         setStatus('uncovered');
       }
-    } catch {
+    } catch (err) {
       // API error or no location — allow by default
+      console.warn('[CoverageCheck] Coverage check failed, defaulting to covered:', err?.message || err);
       setStatus('covered');
     }
   };

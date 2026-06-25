@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  StatusBar, TextInput, Alert, Switch,
+  StatusBar, TextInput, Alert, Switch, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const COLORS = {
   bg: '#0A0A0F', surface: '#1C1C28', surfaceAlt: '#16161F',
@@ -11,13 +12,18 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB', orange: '#E67E22', purple: '#9B59B6',
 };
 
+// Target ids map directly to backend/src/routes/admin.js POST /notifications/push
+// `audience` param, which filters prisma.user by `role` (or no filter for 'ALL').
+// "Inactifs" and "Abonnés EasyPass" segments have no backend support (no
+// inactivity tracking or EasyPass subscription model wired to this endpoint),
+// so they are intentionally not offered here rather than faked.
 const TARGETS = [
-  { id: 'all', label: 'Tous les utilisateurs', icon: '👥', count: 8420 },
-  { id: 'clients', label: 'Clients uniquement', icon: '👤', count: 6100 },
-  { id: 'drivers', label: 'Chauffeurs actifs', icon: '🚕', count: 540 },
-  { id: 'livreurs', label: 'Livreurs', icon: '🛵', count: 280 },
-  { id: 'inactive', label: 'Inactifs +30j', icon: '💤', count: 1200 },
-  { id: 'vip', label: 'Abonnés EasyPass', icon: '⭐', count: 320 },
+  { id: 'ALL', label: 'Tous les utilisateurs', icon: '👥' },
+  { id: 'CLIENT', label: 'Clients uniquement', icon: '👤' },
+  { id: 'CHAUFFEUR', label: 'Chauffeurs', icon: '🚕' },
+  { id: 'LIVREUR', label: 'Livreurs', icon: '🛵' },
+  { id: 'DEPANNEUR', label: 'Dépanneurs', icon: '🔧' },
+  { id: 'MARCHAND', label: 'Marchands', icon: '🏪' },
 ];
 
 const TEMPLATES = [
@@ -27,27 +33,64 @@ const TEMPLATES = [
   { label: '📊 Rapport mensuel', title: 'Votre résumé du mois', body: 'Consultez vos statistiques du mois sur l\'application.' },
 ];
 
-const HISTORY = [
-  { id: 1, title: 'Flash sale -20%', target: 'Tous', sent: 8420, opened: 3100, date: '01/06/2024', status: 'sent' },
-  { id: 2, title: 'Rappel inactifs', target: 'Inactifs', sent: 1200, opened: 420, date: '28/05/2024', status: 'sent' },
-  { id: 3, title: 'Nouveau service SOS', target: 'Clients', sent: 6100, opened: 2800, date: '15/05/2024', status: 'sent' },
-];
-
 export default function AdminPushCampaignScreen({ navigation }) {
   const [tab, setTab] = useState('create');
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
-  const [target, setTarget] = useState('all');
+  const [target, setTarget] = useState('ALL');
   const [scheduled, setScheduled] = useState(false);
   const [scheduleDate, setScheduleDate] = useState('');
-  const [preview, setPreview] = useState(false);
+  const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [lastResult, setLastResult] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState(null);
 
   const selectedTarget = TARGETS.find(t => t.id === target);
 
   const applyTemplate = (tpl) => {
     setTitle(tpl.title);
     setBody(tpl.body);
+  };
+
+  const loadHistory = useCallback(async () => {
+    setHistoryLoading(true);
+    setHistoryError(null);
+    try {
+      const res = await api.get('/api/admin/notifications/campaigns');
+      setHistory(res?.data?.campaigns || []);
+    } catch (err) {
+      console.error('[AdminPushCampaignScreen] loadHistory failed:', err);
+      setHistoryError(err?.response?.data?.error || err.message || 'Impossible de charger l\'historique.');
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (tab === 'history') loadHistory();
+  }, [tab, loadHistory]);
+
+  const doSend = async () => {
+    setSending(true);
+    try {
+      const res = await api.post('/api/admin/notifications/campaigns', {
+        title,
+        body,
+        audience: target,
+        sendNow: !scheduled,
+        scheduledAt: scheduled ? scheduleDate : null,
+      });
+      setLastResult(res?.data?.campaign || null);
+      setSent(true);
+    } catch (err) {
+      console.error('[AdminPushCampaignScreen] send campaign failed:', err);
+      const msg = err?.response?.data?.error || err.message || 'Impossible d\'envoyer la campagne.';
+      Alert.alert('Erreur', msg);
+    } finally {
+      setSending(false);
+    }
   };
 
   const handleSend = () => {
@@ -57,10 +100,10 @@ export default function AdminPushCampaignScreen({ navigation }) {
     }
     Alert.alert(
       scheduled ? 'Planifier la campagne' : 'Envoyer maintenant',
-      `${selectedTarget.label} · ${selectedTarget.count.toLocaleString()} destinataires`,
+      `${selectedTarget.label}`,
       [
         { text: 'Annuler', style: 'cancel' },
-        { text: scheduled ? 'Planifier' : 'Envoyer', onPress: () => setSent(true) },
+        { text: scheduled ? 'Planifier' : 'Envoyer', onPress: doSend },
       ]
     );
   };
@@ -73,13 +116,18 @@ export default function AdminPushCampaignScreen({ navigation }) {
           <Text style={{ fontSize: 64, marginBottom: 16 }}>🚀</Text>
           <Text style={styles.sentTitle}>{scheduled ? 'Campagne planifiée !' : 'Notification envoyée !'}</Text>
           <Text style={styles.sentSub}>
-            {selectedTarget.count.toLocaleString()} destinataires · {selectedTarget.label}
+            {scheduled
+              ? `Planifiée · ${selectedTarget.label}`
+              : `${(lastResult?.reached ?? 0).toLocaleString()} destinataires · ${selectedTarget.label}`}
           </Text>
           <View style={styles.sentCard}>
             <Text style={styles.sentCardTitle}>{title}</Text>
             <Text style={styles.sentCardBody}>{body}</Text>
           </View>
-          <TouchableOpacity style={styles.backBtn} onPress={() => { setSent(false); setTitle(''); setBody(''); }}>
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={() => { setSent(false); setTitle(''); setBody(''); setLastResult(null); }}
+          >
             <Text style={styles.backBtnText}>Créer une nouvelle campagne</Text>
           </TouchableOpacity>
         </View>
@@ -188,9 +236,6 @@ export default function AdminPushCampaignScreen({ navigation }) {
                 >
                   <Text style={styles.targetIcon}>{t.icon}</Text>
                   <Text style={[styles.targetLabel, target === t.id && { color: COLORS.white }]}>{t.label}</Text>
-                  <Text style={[styles.targetCount, target === t.id && { color: COLORS.accent }]}>
-                    {t.count.toLocaleString()}
-                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -224,31 +269,34 @@ export default function AdminPushCampaignScreen({ navigation }) {
       {tab === 'history' && (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
           <View style={styles.section}>
-            {HISTORY.map((h) => {
-              const openRate = Math.round((h.opened / h.sent) * 100);
+            {historyLoading && (
+              <ActivityIndicator color={COLORS.accent} style={{ marginTop: 20 }} />
+            )}
+            {!historyLoading && historyError && (
+              <Text style={{ color: COLORS.red, textAlign: 'center', marginTop: 20 }}>{historyError}</Text>
+            )}
+            {!historyLoading && !historyError && history.length === 0 && (
+              <Text style={{ color: COLORS.muted, textAlign: 'center', marginTop: 20 }}>
+                Aucune campagne envoyée pour le moment.
+              </Text>
+            )}
+            {!historyLoading && !historyError && history.map((h) => {
+              // NOTE: "opened" / open-rate is not tracked by the backend
+              // (backend/src/routes/admin.js POST /notifications/campaigns
+              // always stores opened: 0) — there is no click/open tracking
+              // wired up, so we only show real fields (reached, status).
               return (
                 <View key={h.id} style={styles.historyCard}>
                   <View style={styles.historyTop}>
                     <Text style={styles.historyTitle}>{h.title}</Text>
-                    <Text style={styles.historyDate}>{h.date}</Text>
+                    <Text style={styles.historyDate}>{h.sentAt ? new Date(h.sentAt).toLocaleString() : (h.scheduledAt || h.status)}</Text>
                   </View>
-                  <Text style={styles.historyTarget}>🎯 {h.target}</Text>
+                  <Text style={styles.historyTarget}>🎯 {h.audience} · {h.status}</Text>
                   <View style={styles.historyStats}>
                     <View style={styles.historyStat}>
-                      <Text style={styles.historyStatNum}>{h.sent.toLocaleString()}</Text>
-                      <Text style={styles.historyStatLbl}>Envoyés</Text>
+                      <Text style={styles.historyStatNum}>{(h.reached || 0).toLocaleString()}</Text>
+                      <Text style={styles.historyStatLbl}>Atteints</Text>
                     </View>
-                    <View style={styles.historyStat}>
-                      <Text style={[styles.historyStatNum, { color: COLORS.green }]}>{h.opened.toLocaleString()}</Text>
-                      <Text style={styles.historyStatLbl}>Ouverts</Text>
-                    </View>
-                    <View style={styles.historyStat}>
-                      <Text style={[styles.historyStatNum, { color: COLORS.accent }]}>{openRate}%</Text>
-                      <Text style={styles.historyStatLbl}>Taux</Text>
-                    </View>
-                  </View>
-                  <View style={styles.openRateBar}>
-                    <View style={[styles.openRateFill, { width: `${openRate}%` }]} />
                   </View>
                 </View>
               );
@@ -261,17 +309,20 @@ export default function AdminPushCampaignScreen({ navigation }) {
       {tab === 'create' && (
         <View style={styles.footer}>
           <View style={styles.recipientsInfo}>
-            <Text style={styles.recipientsNum}>{selectedTarget.count.toLocaleString()}</Text>
-            <Text style={styles.recipientsLabel}>destinataires</Text>
+            <Text style={styles.recipientsLabel}>{selectedTarget.label}</Text>
           </View>
           <TouchableOpacity
-            style={[styles.sendBtn, (!title.trim() || !body.trim()) && styles.sendBtnDisabled]}
+            style={[styles.sendBtn, (!title.trim() || !body.trim() || sending) && styles.sendBtnDisabled]}
             onPress={handleSend}
-            disabled={!title.trim() || !body.trim()}
+            disabled={!title.trim() || !body.trim() || sending}
           >
-            <Text style={styles.sendBtnText}>
-              {scheduled ? '📅 Planifier' : '🚀 Envoyer maintenant'}
-            </Text>
+            {sending ? (
+              <ActivityIndicator color="#000" />
+            ) : (
+              <Text style={styles.sendBtnText}>
+                {scheduled ? '📅 Planifier' : '🚀 Envoyer maintenant'}
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
       )}

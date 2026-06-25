@@ -52,8 +52,9 @@ export default function AdminPromoCreateScreen({ navigation }) {
       Alert.alert('✅ Code créé !', `Le code "${code.toUpperCase()}" est prêt.`, [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
-    } catch {
-      Alert.alert('Erreur', 'Impossible de créer le code. Peut-être déjà existant ?');
+    } catch (e) {
+      console.error('[AdminPromoCreateScreen] create failed', e);
+      Alert.alert('Erreur', e?.response?.data?.error || 'Impossible de créer le code. Peut-être déjà existant ?');
     } finally {
       setSubmitting(false);
     }

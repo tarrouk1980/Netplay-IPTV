@@ -72,14 +72,19 @@ export default function AdminLiveOrdersScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState('ALL');
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [error, setError] = useState(null);
 
   const load = useCallback(async (silent = false) => {
     try {
       const res = await api.get('/api/admin/orders/live');
       setOrders(res.data.orders || []);
       setLastUpdated(new Date());
-    } catch {
-      if (!silent) setOrders([]);
+      setError(null);
+    } catch (e) {
+      console.error('[AdminLiveOrdersScreen] failed to load /api/admin/orders/live', e);
+      if (!silent) {
+        setError(e?.response?.data?.error || 'Impossible de charger les commandes en direct.');
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -119,6 +124,12 @@ export default function AdminLiveOrdersScreen({ navigation }) {
           <Text style={s.totalBadgeTxt}>{orders.length}</Text>
         </View>
       </View>
+
+      {error ? (
+        <View style={s.errorBanner}>
+          <Text style={s.errorBannerTxt}>⚠️ {error}</Text>
+        </View>
+      ) : null}
 
       {/* Service summary */}
       <View style={s.summaryRow}>
@@ -210,6 +221,8 @@ const s = StyleSheet.create({
   lastUpdated: { color: COLORS.muted, fontSize: 10, marginTop: 2 },
   totalBadge: { backgroundColor: COLORS.green, borderRadius: 14, paddingHorizontal: 10, paddingVertical: 4 },
   totalBadgeTxt: { color: '#FFF', fontSize: 13, fontWeight: '700' },
+  errorBanner: { backgroundColor: COLORS.accent + '22', borderColor: COLORS.accent, borderWidth: 1, borderRadius: 10, marginHorizontal: 16, marginTop: 10, paddingVertical: 8, paddingHorizontal: 12 },
+  errorBannerTxt: { color: COLORS.accent, fontSize: 12, fontWeight: '600' },
   summaryRow: { flexDirection: 'row', paddingHorizontal: 16, gap: 8, paddingVertical: 10 },
   summaryCard: { flex: 1, backgroundColor: COLORS.surface, borderRadius: 10, padding: 8, alignItems: 'center', borderWidth: 1, gap: 2 },
   summaryCount: { fontSize: 16, fontWeight: '800' },

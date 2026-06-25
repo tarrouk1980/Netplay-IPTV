@@ -112,15 +112,19 @@ export default function AdminPassManagementScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const [grantModal, setGrantModal] = useState(false);
   const [revoking, setRevoking] = useState(null);
+  const [error, setError] = useState(null);
 
   const load = useCallback(async () => {
     try {
       const res = await api.get('/api/admin/passes');
       setStats(res.data.stats);
       setSubs(res.data.subscriptions || []);
-    } catch {
-      setStats({ totalActive: 0, totalRevenue: 0, starter: 0, pro: 0, unlimited: 0, churnRate: 0 });
+      setError(null);
+    } catch (e) {
+      console.error('[AdminPassManagementScreen] failed to load /api/admin/passes', e);
+      setStats(null);
       setSubs([]);
+      setError(e?.response?.data?.error || 'Impossible de charger les EasyPass.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -147,6 +151,7 @@ export default function AdminPassManagementScreen({ navigation }) {
             Alert.alert('Pass révoqué');
             load();
           } catch (e) {
+            console.error('[AdminPassManagementScreen] failed to revoke pass', subId, e);
             Alert.alert('Erreur', e?.response?.data?.error || 'Erreur');
           } finally {
             setRevoking(null);
@@ -184,22 +189,29 @@ export default function AdminPassManagementScreen({ navigation }) {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={COLORS.gold} />}
         ListHeaderComponent={
           <>
+            {error ? (
+              <View style={s.errorBanner}>
+                <Text style={s.errorBannerTxt}>⚠️ {error}</Text>
+              </View>
+            ) : null}
             {/* Stats */}
-            <View style={s.statsGrid}>
-              {[
-                { label: 'Actifs', value: stats?.totalActive ?? 0, color: COLORS.green },
-                { label: 'Revenus mois', value: `${(stats?.totalRevenue ?? 0).toFixed(0)} TND`, color: COLORS.gold },
-                { label: 'STARTER', value: stats?.starter ?? 0 },
-                { label: 'PRO', value: stats?.pro ?? 0, color: COLORS.gold },
-                { label: 'UNLIMITED', value: stats?.unlimited ?? 0, color: '#9C27B0' },
-                { label: 'Churn', value: `${(stats?.churnRate ?? 0).toFixed(1)}%`, color: COLORS.accent },
-              ].map((k, i) => (
-                <View key={i} style={s.statCard}>
-                  <Text style={[s.statValue, { color: k.color || COLORS.text }]}>{k.value}</Text>
-                  <Text style={s.statLabel}>{k.label}</Text>
-                </View>
-              ))}
-            </View>
+            {stats ? (
+              <View style={s.statsGrid}>
+                {[
+                  { label: 'Actifs', value: stats?.totalActive ?? 0, color: COLORS.green },
+                  { label: 'Revenus mois', value: `${(stats?.totalRevenue ?? 0).toFixed(0)} TND`, color: COLORS.gold },
+                  { label: 'STARTER', value: stats?.starter ?? 0 },
+                  { label: 'PRO', value: stats?.pro ?? 0, color: COLORS.gold },
+                  { label: 'UNLIMITED', value: stats?.unlimited ?? 0, color: '#9C27B0' },
+                  { label: 'Churn', value: `${(stats?.churnRate ?? 0).toFixed(1)}%`, color: COLORS.accent },
+                ].map((k, i) => (
+                  <View key={i} style={s.statCard}>
+                    <Text style={[s.statValue, { color: k.color || COLORS.text }]}>{k.value}</Text>
+                    <Text style={s.statLabel}>{k.label}</Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
             <Text style={s.sectionTitle}>Abonnements actifs</Text>
           </>
         }
@@ -269,6 +281,8 @@ const s = StyleSheet.create({
   title: { color: COLORS.text, fontSize: 18, fontWeight: '700', flex: 1 },
   grantBtn: { backgroundColor: COLORS.gold, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 7 },
   grantBtnTxt: { color: '#FFF', fontSize: 13, fontWeight: '700' },
+  errorBanner: { backgroundColor: COLORS.accent + '22', borderColor: COLORS.accent, borderWidth: 1, borderRadius: 10, marginHorizontal: 16, marginTop: 12, paddingVertical: 8, paddingHorizontal: 12 },
+  errorBannerTxt: { color: COLORS.accent, fontSize: 12, fontWeight: '600' },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, gap: 8, marginTop: 16, marginBottom: 8 },
   statCard: { width: '30%', backgroundColor: COLORS.surface, borderRadius: 12, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
   statValue: { color: COLORS.text, fontSize: 18, fontWeight: '800', marginBottom: 4 },

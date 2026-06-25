@@ -83,34 +83,38 @@ export default function HomeScreen({ navigation }) {
     try {
       const res = await api.get('/api/users/me/activity');
       setRecentActivity(res.data.activity || []);
-    } catch {
-      // silently ignore
+    } catch (err) {
+      console.error('[HomeScreen] fetchActivity failed:', err?.message || err);
     }
   }, []);
 
   const fetchAds = useCallback(async () => {
     try {
-      const promoRes = await api.get('/api/ads?placement=home_promos&limit=8');
+      // Backend only accepts placement values HOME | DELIVERY | GROCERY | TAXI | ALL
+      // (see backend/src/routes/ads.js); 'home_promos' is not a valid placement.
+      const promoRes = await api.get('/api/ads?placement=HOME&limit=8');
       const ads = promoRes.data?.ads || promoRes.data || [];
       if (ads.length > 0) {
+        // Advertisement model (backend/prisma/schema.prisma) only has title/imageUrl/targetUrl —
+        // there is no description/color/ctaUrl field, so those are not sent by the backend.
         setPromos(ads.map((ad, i) => ({
           id: ad.id || `ad_${i}`,
           label: ad.title || '',
-          sub: ad.description || '',
-          color: ad.color || '#D32F2F',
+          sub: '',
+          color: '#D32F2F',
           imageUrl: ad.imageUrl || null,
-          ctaUrl: ad.ctaUrl || null,
+          ctaUrl: ad.targetUrl || null,
         })));
       }
-    } catch {
-      // garder les defaults
+    } catch (err) {
+      console.warn('[HomeScreen] fetchAds failed, keeping default promos:', err?.message || err);
     }
   }, []);
 
   useEffect(() => {
-    try { fetchSubscription(); } catch {}
-    try { fetchActivity(); } catch {}
-    try { fetchAds(); } catch {}
+    fetchSubscription().catch((err) => console.error('[HomeScreen] fetchSubscription failed:', err?.message || err));
+    fetchActivity();
+    fetchAds();
 
     if (!user?.role || user.role === 'CLIENT') return;
 

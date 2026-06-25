@@ -62,7 +62,8 @@ function AudioBubble({ uri, isMe }) {
         );
         setSound(s);
         setPlaying(true);
-      } catch {
+      } catch (err) {
+        console.error('[ChatModal/AudioBubble] Failed to play voice message:', err);
         Alert.alert('Erreur', 'Impossible de lire le message vocal.');
       }
     } else {
@@ -163,7 +164,11 @@ export default function ChatModal({ visible, orderId, onClose }) {
 
   const emitAndAddLocal = useCallback((payload) => {
     const socket = socketService.getSocket();
-    if (!socket) return;
+    if (!socket) {
+      console.warn('[ChatModal] No active socket — message not sent:', payload);
+      Alert.alert('Connexion perdue', 'Impossible d\'envoyer le message. Vérifiez votre connexion.');
+      return;
+    }
     const msg = {
       id: Date.now(),
       senderName: user?.name || 'Moi',
@@ -171,6 +176,12 @@ export default function ChatModal({ visible, orderId, onClose }) {
       createdAt: new Date().toISOString(),
       ...payload,
     };
+    // NOTE: backend socket handler (backend/src/socket/index.js, `chat:message`) only
+    // relays { orderId, message, senderName } — it currently drops any extra fields such
+    // as `type` and `mediaUrl`. As a result, media messages (image/video/audio) will not
+    // render correctly for the other participant until the backend relay is updated to
+    // forward those fields too. Sending the full payload here so it works once that gap
+    // is closed server-side.
     socket.emit('chat:message', { orderId, senderName: msg.senderName, ...payload });
     setMessages((prev) => [...prev, msg]);
     scrollToBottom();
@@ -212,8 +223,10 @@ export default function ChatModal({ visible, orderId, onClose }) {
       const ext = asset.uri.split('.').pop() || 'jpg';
       const url = await uploadMedia(asset.uri, `image/${ext}`, `photo.${ext}`);
       emitAndAddLocal({ type: 'image', mediaUrl: url, message: '📷 Photo' });
-    } catch {
-      // Fallback: send local uri directly (works within same session)
+    } catch (err) {
+      // Fallback: send local uri directly (works within same session, but the
+      // other participant won't be able to load it since it's a local file path).
+      console.warn('[ChatModal] Photo upload failed, falling back to local URI:', err?.message || err);
       emitAndAddLocal({ type: 'image', mediaUrl: asset.uri, message: '📷 Photo' });
     } finally {
       setUploading(false);
@@ -233,7 +246,8 @@ export default function ChatModal({ visible, orderId, onClose }) {
     try {
       const url = await uploadMedia(asset.uri, 'image/jpg', 'photo.jpg');
       emitAndAddLocal({ type: 'image', mediaUrl: url, message: '📷 Photo' });
-    } catch {
+    } catch (err) {
+      console.warn('[ChatModal] Photo upload failed, falling back to local URI:', err?.message || err);
       emitAndAddLocal({ type: 'image', mediaUrl: asset.uri, message: '📷 Photo' });
     } finally {
       setUploading(false);
@@ -257,7 +271,8 @@ export default function ChatModal({ visible, orderId, onClose }) {
     try {
       const url = await uploadMedia(asset.uri, 'video/mp4', 'video.mp4');
       emitAndAddLocal({ type: 'video', mediaUrl: url, message: '🎥 Vidéo' });
-    } catch {
+    } catch (err) {
+      console.warn('[ChatModal] Video upload failed, falling back to local URI:', err?.message || err);
       emitAndAddLocal({ type: 'video', mediaUrl: asset.uri, message: '🎥 Vidéo' });
     } finally {
       setUploading(false);
@@ -282,7 +297,8 @@ export default function ChatModal({ visible, orderId, onClose }) {
       setIsRecording(true);
       setRecordingDuration(0);
       recTimerRef.current = setInterval(() => setRecordingDuration((d) => d + 1), 1000);
-    } catch {
+    } catch (err) {
+      console.error('[ChatModal] Failed to start recording:', err);
       Alert.alert('Erreur', 'Impossible de démarrer l\'enregistrement.');
     }
   };
@@ -304,19 +320,25 @@ export default function ChatModal({ visible, orderId, onClose }) {
       try {
         const url = await uploadMedia(uri, 'audio/m4a', 'voice.m4a');
         emitAndAddLocal({ type: 'audio', mediaUrl: url, message: '🎤 Message vocal' });
-      } catch {
+      } catch (err) {
+        console.warn('[ChatModal] Voice upload failed, falling back to local URI:', err?.message || err);
         emitAndAddLocal({ type: 'audio', mediaUrl: uri, message: '🎤 Message vocal' });
       } finally {
         setUploading(false);
       }
-    } catch {
+    } catch (err) {
+      console.error('[ChatModal] Recording stop/upload failed:', err);
       Alert.alert('Erreur', 'Enregistrement échoué.');
     }
   };
 
   const cancelRecording = async () => {
     clearInterval(recTimerRef.current);
-    try { await recording?.stopAndUnloadAsync(); } catch {}
+    try {
+      await recording?.stopAndUnloadAsync();
+    } catch (err) {
+      console.warn('[ChatModal] Failed to stop/unload recording on cancel:', err?.message || err);
+    }
     setRecording(null);
     setIsRecording(false);
     setRecordingDuration(0);

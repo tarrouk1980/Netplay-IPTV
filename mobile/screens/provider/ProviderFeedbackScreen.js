@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,29 +6,24 @@ import {
   ScrollView,
   StyleSheet,
   Dimensions,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
 
 const { width } = Dimensions.get('window');
 
-const AVIS = [
-  { id: 1, initiales: 'SL', couleur: '#E74C3C', nom: 'S***i', note: 5, commentaire: 'Très professionnel, ponctuel et sympa. Je recommande vivement !', date: '28 mai 2026' },
-  { id: 2, initiales: 'MK', couleur: '#3498DB', nom: 'M***k', note: 4, commentaire: 'Bonne prestation, le trajet était confortable. Petit bémol sur le GPS.', date: '25 mai 2026' },
-  { id: 3, initiales: 'AB', couleur: '#2ECC71', nom: 'A***b', note: 5, commentaire: 'Parfait du début à la fin. Voiture propre et chauffeur agréable.', date: '22 mai 2026' },
-  { id: 4, initiales: 'FD', couleur: '#9B59B6', nom: 'F***d', note: 3, commentaire: 'Correct mais pas exceptionnel. Le trajet a pris un peu plus de temps que prévu.', date: '20 mai 2026' },
-  { id: 5, initiales: 'NR', couleur: '#F39C12', nom: 'N***r', note: 5, commentaire: 'Excellent service ! Très à l\'écoute et conduite parfaite.', date: '18 mai 2026' },
-  { id: 6, initiales: 'TC', couleur: '#1ABC9C', nom: 'T***c', note: 4, commentaire: 'Rapide et efficace. Bonne communication avant le départ.', date: '15 mai 2026' },
-  { id: 7, initiales: 'PV', couleur: '#E67E22', nom: 'P***v', note: 2, commentaire: 'Attente trop longue et pas de message d\'excuse. Décevant.', date: '12 mai 2026' },
-  { id: 8, initiales: 'LM', couleur: '#E91E63', nom: 'L***m', note: 5, commentaire: 'Super expérience, je reprendrai ce chauffeur avec plaisir !', date: '10 mai 2026' },
-];
-
 const FILTRES = ['Tous', '5★', '4★', '≤3★'];
 
-const NOTE_GLOBALE = 4.3;
-const TOTAL_AVIS = AVIS.length;
+function maskName(name) {
+  if (!name) return 'Client anonyme';
+  if (name.length <= 1) return name;
+  return `${name[0]}***${name[name.length - 1]}`;
+}
 
-function compterParNote(note) {
-  return AVIS.filter((a) => a.note === note).length;
+function compterParNote(avis, note) {
+  return avis.filter((a) => Math.round(a.note) === note).length;
 }
 
 function Etoiles({ note, taille = 14 }) {
@@ -58,30 +53,89 @@ function BarreNote({ note, count, total }) {
 
 export default function ProviderFeedbackScreen() {
   const [filtre, setFiltre] = useState('Tous');
+  const [avis, setAvis] = useState([]);
+  const [noteGlobale, setNoteGlobale] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(null);
 
-  const avisFiltres = AVIS.filter((a) => {
+  const load = useCallback(async () => {
+    try {
+      setError(null);
+      const res = await api.get('/api/provider/reviews');
+      const reviews = res.data?.reviews || [];
+      const mapped = reviews.map((r) => ({
+        id: r.id,
+        nom: maskName(r.clientName),
+        note: r.rating || 0,
+        commentaire: r.comment || '',
+        date: r.createdAt
+          ? new Date(r.createdAt).toLocaleDateString('fr-TN', { day: '2-digit', month: 'long', year: 'numeric' })
+          : '',
+      }));
+      setAvis(mapped);
+      const total = mapped.length;
+      const avg = total > 0 ? mapped.reduce((s, a) => s + a.note, 0) / total : 0;
+      setNoteGlobale(avg);
+    } catch (err) {
+      console.error('[ProviderFeedbackScreen] load failed:', err?.message || err);
+      setError('Impossible de charger vos avis.');
+      setAvis([]);
+      setNoteGlobale(0);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const totalAvis = avis.length;
+
+  const avisFiltres = avis.filter((a) => {
     if (filtre === 'Tous') return true;
-    if (filtre === '5★') return a.note === 5;
-    if (filtre === '4★') return a.note === 4;
-    if (filtre === '≤3★') return a.note <= 3;
+    if (filtre === '5★') return Math.round(a.note) === 5;
+    if (filtre === '4★') return Math.round(a.note) === 4;
+    if (filtre === '≤3★') return Math.round(a.note) <= 3;
     return true;
   });
 
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.centered}>
+          <ActivityIndicator color="#F5A623" size="large" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor="#F5A623" />
+        }
+      >
         <Text style={styles.titre}>Mes avis reçus</Text>
 
+        {error && (
+          <View style={styles.erreurContainer}>
+            <Text style={styles.erreurTexte}>{error}</Text>
+          </View>
+        )}
+
         <View style={styles.noteGlobaleContainer}>
-          <Text style={styles.noteGlobaleChiffre}>{NOTE_GLOBALE.toFixed(1)}</Text>
-          <Etoiles note={Math.round(NOTE_GLOBALE)} taille={28} />
-          <Text style={styles.noteGlobaleSub}>{TOTAL_AVIS} avis au total</Text>
+          <Text style={styles.noteGlobaleChiffre}>{noteGlobale.toFixed(1)}</Text>
+          <Etoiles note={Math.round(noteGlobale)} taille={28} />
+          <Text style={styles.noteGlobaleSub}>{totalAvis} avis au total</Text>
         </View>
 
         <View style={styles.distributionContainer}>
           <Text style={styles.distributionTitre}>Distribution des notes</Text>
           {[5, 4, 3, 2, 1].map((n) => (
-            <BarreNote key={n} note={n} count={compterParNote(n)} total={TOTAL_AVIS} />
+            <BarreNote key={n} note={n} count={compterParNote(avis, n)} total={totalAvis} />
           ))}
         </View>
 
@@ -98,21 +152,25 @@ export default function ProviderFeedbackScreen() {
         </View>
 
         <View style={styles.listeContainer}>
-          {avisFiltres.map((avis, index) => (
+          {avisFiltres.map((a, index) => (
             <View
-              key={avis.id}
+              key={a.id}
               style={[styles.avisItem, index < avisFiltres.length - 1 && styles.avisItemBorder]}
             >
-              <View style={[styles.avatar, { backgroundColor: avis.couleur }]}>
-                <Text style={styles.avatarTexte}>{avis.initiales}</Text>
+              <View style={[styles.avatar, { backgroundColor: '#3498DB' }]}>
+                <Text style={styles.avatarTexte}>{(a.nom || '?').slice(0, 2).toUpperCase()}</Text>
               </View>
               <View style={styles.avisContenu}>
                 <View style={styles.avisEnTete}>
-                  <Text style={styles.avisNom}>{avis.nom}</Text>
-                  <Text style={styles.avisDate}>{avis.date}</Text>
+                  <Text style={styles.avisNom}>{a.nom}</Text>
+                  <Text style={styles.avisDate}>{a.date}</Text>
                 </View>
-                <Etoiles note={avis.note} taille={13} />
-                <Text style={styles.avisCommentaire}>{avis.commentaire}</Text>
+                <Etoiles note={a.note} taille={13} />
+                {a.commentaire ? (
+                  <Text style={styles.avisCommentaire}>{a.commentaire}</Text>
+                ) : (
+                  <Text style={[styles.avisCommentaire, { fontStyle: 'italic' }]}>Aucun commentaire</Text>
+                )}
               </View>
             </View>
           ))}
@@ -132,6 +190,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0A0A0F',
   },
+  centered: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   scroll: {
     paddingBottom: 40,
   },
@@ -142,6 +205,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 16,
+  },
+  erreurContainer: {
+    backgroundColor: '#E74C3C22',
+    borderRadius: 12,
+    marginHorizontal: 20,
+    marginBottom: 16,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#E74C3C',
+  },
+  erreurTexte: {
+    color: '#E74C3C',
+    fontSize: 13,
+    textAlign: 'center',
   },
   noteGlobaleContainer: {
     backgroundColor: '#1C1C28',

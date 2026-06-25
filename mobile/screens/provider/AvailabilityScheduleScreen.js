@@ -111,7 +111,10 @@ export default function AvailabilityScheduleScreen({ navigation }) {
       const res = await api.get('/api/provider/availability');
       if (res.data?.schedule) setSchedule(res.data.schedule);
       setOnlineNow(res.data?.onlineNow || false);
-    } catch {}
+    } catch (err) {
+      console.error('[AvailabilityScheduleScreen] load failed:', err?.message || err);
+      Alert.alert('Erreur', 'Impossible de charger vos disponibilités.');
+    }
     finally { setLoading(false); }
   }, []);
 

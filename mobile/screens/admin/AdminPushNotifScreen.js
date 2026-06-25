@@ -12,13 +12,16 @@ const COLORS = {
   green: '#27AE60', red: '#E74C3C', blue: '#3498DB',
 };
 
+// NOTE: per-audience recipient counts are not provided by
+// POST /api/admin/notifications/push (it only returns { sent } after the
+// fact), so no live count is shown here rather than a fabricated number.
 const AUDIENCES = [
-  { key: 'ALL', label: '👥 Tous les utilisateurs', count: '12 430', color: COLORS.blue },
-  { key: 'CLIENT', label: '🙋 Clients uniquement', count: '9 842', color: COLORS.accent },
-  { key: 'CHAUFFEUR', label: '🚕 Chauffeurs', count: '1 204', color: '#F5A623' },
-  { key: 'LIVREUR', label: '🛵 Livreurs', count: '876', color: COLORS.green },
-  { key: 'DEPANNEUR', label: '🔧 Dépanneurs', count: '312', color: COLORS.red },
-  { key: 'MARCHAND', label: '🏪 Marchands', count: '196', color: '#9B59B6' },
+  { key: 'ALL', label: '👥 Tous les utilisateurs', color: COLORS.blue },
+  { key: 'CLIENT', label: '🙋 Clients uniquement', color: COLORS.accent },
+  { key: 'CHAUFFEUR', label: '🚕 Chauffeurs', color: '#F5A623' },
+  { key: 'LIVREUR', label: '🛵 Livreurs', color: COLORS.green },
+  { key: 'DEPANNEUR', label: '🔧 Dépanneurs', color: COLORS.red },
+  { key: 'MARCHAND', label: '🏪 Marchands', color: '#9B59B6' },
 ];
 
 const TEMPLATES = [
@@ -28,11 +31,11 @@ const TEMPLATES = [
   { label: '🎉 Bienvenue', title: 'Bienvenue sur EASYWAY !', body: 'Votre compte est prêt. Commandez votre premier taxi et bénéficiez de 5 TND offerts.' },
 ];
 
-const HISTORY = [
-  { id: 1, title: 'Promo Ramadan', audience: 'ALL', sent: 12430, opened: 8104, date: 'Auj. 10:22', status: 'SENT' },
-  { id: 2, title: 'Nouveau driver disponible', audience: 'CLIENT', sent: 9842, opened: 4210, date: 'Hier 18:45', status: 'SENT' },
-  { id: 3, title: 'Rappel recharge wallet', audience: 'CLIENT', sent: 3200, opened: 1890, date: '02/06', status: 'SENT' },
-];
+// NOTE: There is no backend persistence for notifications sent via
+// POST /api/admin/notifications/push (backend/src/routes/admin.js ~L1640) —
+// it just fans out to Expo push and returns { sent }. There is no
+// send-history/open-rate tracking endpoint to back a "Historique" tab,
+// so we show an honest empty/unavailable state instead of fabricating data.
 
 export default function AdminPushNotifScreen({ navigation }) {
   const [tab, setTab] = useState('SEND');
@@ -45,17 +48,20 @@ export default function AdminPushNotifScreen({ navigation }) {
 
   const sendNotification = async () => {
     if (!title.trim() || !body.trim()) { Alert.alert('Champs requis', 'Titre et message sont obligatoires.'); return; }
-    Alert.alert('Confirmer', `Envoyer à ${AUDIENCES.find(a => a.key === audience)?.count} utilisateurs ?`, [
+    Alert.alert('Confirmer', `Envoyer à : ${AUDIENCES.find(a => a.key === audience)?.label} ?`, [
       { text: 'Annuler', style: 'cancel' },
       {
         text: 'Envoyer', onPress: async () => {
           setSending(true);
           try {
-            await api.post('/api/admin/notifications/push', { audience, title, body });
-            Alert.alert('✅ Envoyé', 'La notification a été envoyée avec succès.');
+            const res = await api.post('/api/admin/notifications/push', { audience, title, body });
+            const sentCount = res?.data?.sent ?? 0;
+            Alert.alert('✅ Envoyé', `La notification a été envoyée à ${sentCount.toLocaleString()} appareil(s).`);
             setTitle(''); setBody('');
-          } catch {
-            Alert.alert('Erreur', 'Impossible d\'envoyer la notification.');
+          } catch (err) {
+            console.error('[AdminPushNotifScreen] sendNotification failed:', err);
+            const msg = err?.response?.data?.error || err.message || 'Impossible d\'envoyer la notification.';
+            Alert.alert('Erreur', msg);
           } finally { setSending(false); }
         },
       },
@@ -94,7 +100,6 @@ export default function AdminPushNotifScreen({ navigation }) {
                   onPress={() => setAudience(a.key)}
                 >
                   <Text style={styles.audienceLabel}>{a.label}</Text>
-                  <Text style={[styles.audienceCount, { color: a.color }]}>{a.count}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -160,19 +165,12 @@ export default function AdminPushNotifScreen({ navigation }) {
         {tab === 'HISTORY' && (
           <>
             <Text style={styles.sectionTitle}>📋 Notifications envoyées</Text>
-            {HISTORY.map(h => (
-              <View key={h.id} style={styles.histRow}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.histTitle}>{h.title}</Text>
-                  <Text style={styles.histMeta}>{h.audience} · {h.date}</Text>
-                </View>
-                <View style={styles.histStats}>
-                  <Text style={styles.histSent}>📤 {h.sent.toLocaleString()}</Text>
-                  <Text style={styles.histOpened}>👁 {h.opened.toLocaleString()}</Text>
-                  <Text style={styles.histRate}>{Math.round(h.opened / h.sent * 100)}%</Text>
-                </View>
-              </View>
-            ))}
+            <View style={styles.histRow}>
+              <Text style={{ color: COLORS.muted, fontSize: 13 }}>
+                L'historique d'envoi et les taux d'ouverture ne sont pas encore disponibles côté serveur.
+                Utilisez l'onglet "Campagnes" pour un suivi avec stockage des envois.
+              </Text>
+            </View>
           </>
         )}
       </ScrollView>

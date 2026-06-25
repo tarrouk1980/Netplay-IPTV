@@ -51,7 +51,8 @@ export default function AdminPromoDetailScreen({ route, navigation }) {
       setUsages(res.data.usages || []);
       setMaxUses(res.data.promo?.maxUses?.toString() || '');
       setExpiresAt(res.data.promo?.expiresAt ? new Date(res.data.promo.expiresAt).toISOString().split('T')[0] : '');
-    } catch {
+    } catch (e) {
+      console.error('[AdminPromoDetailScreen] load failed', e);
       Alert.alert('Erreur', 'Code promo introuvable.');
       navigation.goBack();
     } finally {
@@ -88,8 +89,9 @@ export default function AdminPromoDetailScreen({ route, navigation }) {
             await api.patch(`/api/admin/promo-codes/${promoId || promoCode}`, { active: false });
             Alert.alert('Code désactivé');
             load();
-          } catch {
-            Alert.alert('Erreur');
+          } catch (e) {
+            console.error('[AdminPromoDetailScreen] deactivate failed', e);
+            Alert.alert('Erreur', e?.response?.data?.error || 'Impossible de désactiver le code.');
           }
         },
       },
@@ -129,7 +131,7 @@ export default function AdminPromoDetailScreen({ route, navigation }) {
         {/* Stats cards */}
         <View style={s.statsRow}>
           <View style={s.statCard}>
-            <Text style={[s.statValue, { color: COLORS.orange }]}>{promo.discountValue}{promo.discountType === 'PERCENT' ? '%' : ' TND'}</Text>
+            <Text style={[s.statValue, { color: COLORS.orange }]}>{promo.value}{promo.type === 'PERCENT' ? '%' : ' TND'}</Text>
             <Text style={s.statLabel}>Remise</Text>
           </View>
           <View style={s.statCard}>
@@ -172,10 +174,10 @@ export default function AdminPromoDetailScreen({ route, navigation }) {
           <Text style={s.sectionTitle}>Détails</Text>
           <View style={s.card}>
             <Row label="Code" value={promo.code} />
-            <Row label="Type" value={promo.discountType === 'PERCENT' ? 'Pourcentage' : 'Montant fixe'} />
-            <Row label="Valeur" value={promo.discountType === 'PERCENT' ? `${promo.discountValue}%` : `${promo.discountValue} TND`} valueColor={COLORS.orange} />
+            <Row label="Type" value={promo.type === 'PERCENT' ? 'Pourcentage' : 'Montant fixe'} />
+            <Row label="Valeur" value={promo.type === 'PERCENT' ? `${promo.value}%` : `${promo.value} TND`} valueColor={COLORS.orange} />
             {promo.minOrderAmount && <Row label="Commande min." value={`${promo.minOrderAmount} TND`} />}
-            {promo.serviceType && <Row label="Service" value={promo.serviceType} />}
+            {promo.service && <Row label="Service" value={promo.service} />}
             <Row label="Créé le" value={new Date(promo.createdAt).toLocaleDateString('fr-TN')} />
             {promo.expiresAt && <Row label="Expire le" value={new Date(promo.expiresAt).toLocaleDateString('fr-TN')} valueColor={isExpired ? COLORS.accent : COLORS.muted} />}
           </View>
