@@ -34,7 +34,7 @@ export default function MerchantPromotionsScreen({ navigation }) {
             minOrder: 0,
             uses: 0,
             maxUses: 0,
-            active: p.active,
+            active: p.metadata?.promoActive !== false,
             expiry: null,
           }));
         setPromos(withPromo);
@@ -49,7 +49,9 @@ export default function MerchantPromotionsScreen({ navigation }) {
   const togglePromo = (id) => {
     const promo = promos.find(p => p.id === id);
     setPromos(prev => prev.map(p => p.id === id ? { ...p, active: !p.active } : p));
-    api.patch(`/api/merchants/me/products/${id}`, { active: !promo.active }).catch(() => {
+    // Toggling a promo must only flip its own active flag (stored in product metadata),
+    // not the product's own `active` field — that would hide the whole product from clients.
+    api.patch(`/api/merchants/me/products/${id}`, { metadata: { promoActive: !promo.active } }).catch(() => {
       setPromos(prev => prev.map(p => p.id === id ? { ...p, active: promo.active } : p));
       Alert.alert('Erreur', 'Impossible de modifier la promotion.');
     });
@@ -60,13 +62,18 @@ export default function MerchantPromotionsScreen({ navigation }) {
       { text: 'Annuler', style: 'cancel' },
       {
         text: 'Supprimer', style: 'destructive',
-        onPress: () => {
+        onPress: async () => {
           const promo = promos.find(p => p.id === id);
           setPromos(prev => prev.filter(p => p.id !== id));
-          api.patch(`/api/merchants/me/products/${id}`, { active: false }).catch(() => {
+          try {
+            // Clear the promo fields, leave the product itself untouched/active.
+            await api.patch(`/api/merchants/me/products/${id}`, {
+              metadata: { promoPrice: null, promoLabel: null, promoActive: false },
+            });
+          } catch {
             setPromos(prev => promo ? [...prev, promo] : prev);
             Alert.alert('Erreur', 'Impossible de supprimer la promotion.');
-          });
+          }
         },
       },
     ]);

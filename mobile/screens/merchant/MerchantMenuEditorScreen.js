@@ -53,12 +53,14 @@ export default function MerchantMenuEditorScreen({ navigation }) {
   const savePrice = async (item) => {
     const price = parseFloat(editPrice);
     if (isNaN(price) || price <= 0) { Alert.alert('Prix invalide'); return; }
+    const previousPrice = item.price;
     setSaving(item.id);
     setItems(prev => prev.map(i => i.id === item.id ? { ...i, price } : i));
     setEditingId(null);
     try {
       await api.patch(`/api/merchants/me/products/${item.id}`, { price });
     } catch {
+      setItems(prev => prev.map(i => i.id === item.id ? { ...i, price: previousPrice } : i));
       Alert.alert('Erreur', 'Impossible de sauvegarder le prix.');
     } finally { setSaving(null); }
   };

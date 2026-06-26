@@ -70,3 +70,15 @@ export function onLocationUpdate(callback) {
 export function getSocket() {
   return socket;
 }
+
+// Default export so call sites that do `import socketService from '../services/socket'`
+// (e.g. ChatModal.js, GroceryTrackingScreen.js) get a working object instead of
+// `undefined` — this module previously only had named exports, which made
+// `socketService.getSocket()` throw at runtime for those call sites.
+export default {
+  connectSocket,
+  disconnectSocket,
+  joinServiceRoom,
+  onLocationUpdate,
+  getSocket,
+};

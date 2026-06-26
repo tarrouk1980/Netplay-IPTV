@@ -219,9 +219,14 @@ const useAdminStore = create((set, get) => ({
     }
   },
 
-  suspendMerchant: async (id) => {
+  suspendMerchant: async (id, suspended = true) => {
     try {
-      const res = await api.patch(`/api/admin/merchants/${id}/suspend`);
+      const res = await api.patch(`/api/admin/merchants/${id}/suspend`, { suspended });
+      set((state) => ({
+        merchants: state.merchants.map((m) =>
+          m.id === id ? { ...m, suspended: res.data.suspended } : m
+        ),
+      }));
       return res.data;
     } catch (err) {
       throw new Error(err.response?.data?.error || 'Erreur suspension marchand');
