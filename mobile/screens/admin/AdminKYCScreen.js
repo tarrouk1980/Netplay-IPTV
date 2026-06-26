@@ -98,7 +98,11 @@ export default function AdminKYCScreen({ navigation }) {
           role: u.role,
           status: u.kycStatus || 'PENDING',
           submittedAt: u.createdAt ? new Date(u.createdAt).toISOString().slice(0, 10) : '',
-          docs: Array.isArray(u.kycDocuments) ? u.kycDocuments : [],
+          // kycDocuments is stored as a raw "key:uri,key:uri" string (see KYCScreen.js submission),
+          // never an array — parse out the document type labels for display.
+          docs: typeof u.kycDocuments === 'string' && u.kycDocuments
+            ? u.kycDocuments.split(',').map(pair => pair.split(':')[0]).filter(Boolean)
+            : [],
           note: '',
         })));
       })

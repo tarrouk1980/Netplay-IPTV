@@ -96,10 +96,12 @@ router.post(
     const { documentType, documentUrl } = req.body;
 
     try {
-      // Update user KYC status to PENDING
+      // Update user KYC status to PENDING and persist the submitted document
+      // references into kycDocuments (was previously only logged to console and
+      // never saved, so AdminKYCScreen always saw an empty "{}" document list).
       const user = await prisma.user.update({
         where: { id: req.user.id },
-        data: { kycStatus: 'PENDING' },
+        data: { kycStatus: 'PENDING', kycDocuments: documentUrl },
         select: { id: true, name: true, role: true, kycStatus: true },
       });
 
