@@ -22,11 +22,14 @@ const FILTERS = [
   { key: 'depanneur', label: 'Dépanneurs', icon: '🛻' },
 ];
 
+const FILTER_TO_SERVICE = { taxi: 'TAXI', livreur: 'DELIVERY', depanneur: 'SOS' };
+
 export default function ClientMapScreen({ navigation }) {
   const [userPos, setUserPos] = useState(null);
   const [address, setAddress] = useState('');
   const [locating, setLocating] = useState(true);
   const [filter, setFilter] = useState('all');
+  const [nearby, setNearby] = useState([]);
 
   useEffect(() => {
     (async () => {
@@ -36,7 +39,26 @@ export default function ClientMapScreen({ navigation }) {
     })();
   }, []);
 
-  const visible = filter === 'all' ? NEARBY : NEARBY.filter(n => n.type === filter);
+  useEffect(() => {
+    if (!userPos) return;
+    const serviceTypes = filter === 'all' ? Object.values(FILTER_TO_SERVICE) : [FILTER_TO_SERVICE[filter]];
+    Promise.all(
+      serviceTypes.map(serviceType =>
+        api.get('/api/geo/nearby', { params: { lat: userPos.lat, lng: userPos.lng, serviceType } })
+          .then(r => (r.data.providers || []).map(p => ({
+            id: p.id,
+            type: Object.keys(FILTER_TO_SERVICE).find(k => FILTER_TO_SERVICE[k] === serviceType),
+            icon: FILTER_ICON[Object.keys(FILTER_TO_SERVICE).find(k => FILTER_TO_SERVICE[k] === serviceType)],
+            label: p.name || p.label || '—',
+            lat: p.lat,
+            lng: p.lng,
+          })))
+          .catch((err) => { console.error('[ClientMapScreen] nearby fetch failed', err); return []; })
+      )
+    ).then(results => setNearby(results.flat()));
+  }, [userPos, filter]);
+
+  const visible = filter === 'all' ? nearby : nearby.filter(n => n.type === filter);
 
   const markers = [
     ...(userPos ? [{ coordinates: [userPos.lng, userPos.lat], color: COLORS.accent, label: '📍' }] : []),

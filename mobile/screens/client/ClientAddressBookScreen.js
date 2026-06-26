@@ -24,8 +24,8 @@ export default function ClientAddressBookScreen({ navigation }) {
   const loadAddresses = () => {
     setLoading(true);
     api.get('/api/users/clients/addresses')
-      .then(r => { setAddresses(r.data || []); setError(false); })
-      .catch(() => setError(true))
+      .then(r => { setAddresses(r.data.addresses || []); setError(false); })
+      .catch((err) => { console.error('[ClientAddressBookScreen] load failed', err); setError(true); })
       .finally(() => setLoading(false));
   };
 
@@ -37,7 +37,8 @@ export default function ClientAddressBookScreen({ navigation }) {
     try {
       await api.patch(`/api/users/clients/addresses/${id}/default`);
       setAddresses(prev => prev.map(a => ({ ...a, isDefault: a.id === id })));
-    } catch {
+    } catch (err) {
+      console.error('[ClientAddressBookScreen] setDefault failed', err);
       Alert.alert('Erreur', 'Impossible de définir l\'adresse par défaut. Réessayez.');
     }
   };
@@ -51,7 +52,8 @@ export default function ClientAddressBookScreen({ navigation }) {
           try {
             await api.delete(`/api/users/clients/addresses/${id}`);
             setAddresses(prev => prev.filter(a => a.id !== id));
-          } catch {
+          } catch (err) {
+            console.error('[ClientAddressBookScreen] delete failed', err);
             Alert.alert('Erreur', 'Impossible de supprimer l\'adresse. Réessayez.');
           }
         },
@@ -72,7 +74,8 @@ export default function ClientAddressBookScreen({ navigation }) {
       setAdding(false);
       setNewLabel('');
       setNewAddress('');
-    } catch {
+    } catch (err) {
+      console.error('[ClientAddressBookScreen] add failed', err);
       Alert.alert('Erreur', 'Impossible d\'enregistrer l\'adresse. Réessayez.');
     } finally {
       setSaving(false);

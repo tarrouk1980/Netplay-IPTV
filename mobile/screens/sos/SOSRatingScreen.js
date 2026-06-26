@@ -48,7 +48,8 @@ export default function SOSRatingScreen({ navigation, route }) {
       Alert.alert('Merci ! ⭐', 'Votre évaluation a bien été enregistrée.', [
         { text: 'OK', onPress: () => navigation.reset({ index: 0, routes: [{ name: 'Home' }] }) },
       ]);
-    } catch {
+    } catch (err) {
+      console.error('[SOSRatingScreen] rating submission failed', err);
       Alert.alert('Erreur', 'Impossible d\'envoyer votre évaluation.');
     } finally {
       setSaving(false);

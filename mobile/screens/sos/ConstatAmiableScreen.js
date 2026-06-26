@@ -265,10 +265,20 @@ export default function ConstatAmiableScreen({ route, navigation }) {
       Alert.alert('Signatures manquantes', 'Les deux parties doivent signer le constat.');
       return;
     }
+    // The backend only exposes POST /api/sos/:id/constat (tied to an existing SOS
+    // order) — there is no generic, order-less endpoint to save a constat against.
+    // Without an orderId the request would always fail server-side, so surface a
+    // clear error instead of silently posting to a non-existent route.
+    if (!orderId) {
+      Alert.alert(
+        'Intervention requise',
+        'Un constat amiable doit être associé à une intervention SOS existante. Veuillez démarrer une demande SOS avant de remplir le constat.'
+      );
+      return;
+    }
     setSubmitting(true);
     try {
-      const endpoint = orderId ? `/api/sos/${orderId}/constat` : '/api/sos/constat';
-      await api.post(endpoint, {
+      await api.post(`/api/sos/${orderId}/constat`, {
         vehicleA, vehicleB,
         circumstances: selectedCircumstances,
         croquis: croquis || null,
@@ -286,6 +296,7 @@ export default function ConstatAmiableScreen({ route, navigation }) {
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
     } catch (err) {
+      console.error('[ConstatAmiableScreen] submit failed', err);
       Alert.alert('Erreur', err?.response?.data?.error || 'Impossible d\'envoyer le constat.');
     } finally {
       setSubmitting(false);

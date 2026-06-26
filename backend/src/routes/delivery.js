@@ -476,7 +476,9 @@ router.post('/:id/confirm-receipt', authenticate, requireRole('CLIENT'), async (
         },
       }),
     ]);
-  } catch {} // Non-blocking
+  } catch (loyaltyErr) {
+    console.error('[Delivery] confirm-receipt: failed to award loyalty points (non-blocking):', loyaltyErr);
+  }
 
   const io = getIo(req);
   if (io) {
@@ -762,7 +764,9 @@ router.post('/:id/complete', authenticate, requireRole('LIVREUR'), async (req, r
         },
       }),
     ]);
-  } catch {} // Non-blocking
+  } catch (loyaltyErr) {
+    console.error('[Delivery] complete: failed to award loyalty points (non-blocking):', loyaltyErr);
+  }
 
   const clientToken = order.client?.fcmToken;
   if (clientToken) {
@@ -829,8 +833,13 @@ router.get('/earnings', authenticate, async (req, res) => {
 });
 
 // GET /api/delivery/merchant/orders/:id — détail commande marchand
-router.get('/merchant/orders/:id', authenticate, async (req, res) => {
+router.get('/merchant/orders/:id', authenticate, requireRole('MARCHAND'), async (req, res) => {
   try {
+    const merchant = await prisma.merchant.findUnique({ where: { userId: req.user.id } });
+    if (!merchant) {
+      return res.status(404).json({ error: 'Merchant profile not found', code: 'NOT_FOUND' });
+    }
+
     const order = await prisma.order.findUnique({
       where: { id: req.params.id },
       include: {
@@ -839,6 +848,9 @@ router.get('/merchant/orders/:id', authenticate, async (req, res) => {
       },
     });
     if (!order) return res.status(404).json({ error: 'Order not found' });
+    if (order.metadata?.merchantId !== merchant.id) {
+      return res.status(403).json({ error: 'Not your order', code: 'FORBIDDEN' });
+    }
     const meta = order.metadata || {};
     res.json({
       order: {
@@ -854,17 +866,32 @@ router.get('/merchant/orders/:id', authenticate, async (req, res) => {
 });
 
 // PATCH /api/delivery/merchant/orders/:id/status
-router.patch('/merchant/orders/:id/status', authenticate, async (req, res) => {
+router.patch('/merchant/orders/:id/status', authenticate, requireRole('MARCHAND'), async (req, res) => {
   try {
     const { status } = req.body;
     const allowed = ['ACCEPTED', 'PREPARING', 'READY', 'PICKED_UP', 'CANCELLED'];
     if (!allowed.includes(status)) return res.status(400).json({ error: 'Invalid status' });
+
+    const merchant = await prisma.merchant.findUnique({ where: { userId: req.user.id } });
+    if (!merchant) {
+      return res.status(404).json({ error: 'Merchant profile not found', code: 'NOT_FOUND' });
+    }
+
+    const existing = await prisma.order.findUnique({ where: { id: req.params.id } });
+    if (!existing || existing.serviceType !== 'DELIVERY') {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+    if (existing.metadata?.merchantId !== merchant.id) {
+      return res.status(403).json({ error: 'Not your order', code: 'FORBIDDEN' });
+    }
+
     const order = await prisma.order.update({
       where: { id: req.params.id },
       data: { status },
     });
     res.json({ order });
   } catch (err) {
+    console.error('[delivery/merchant/orders/status]', err);
     res.status(500).json({ error: err.message });
   }
 });

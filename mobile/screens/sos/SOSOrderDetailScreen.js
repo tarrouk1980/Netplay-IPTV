@@ -115,7 +115,8 @@ export default function SOSOrderDetailScreen({ route, navigation }) {
     try {
       const res = await api.get(`/api/sos/${orderId}`);
       setOrder(res.data.order || res.data);
-    } catch {
+    } catch (err) {
+      console.error('[SOSOrderDetailScreen] load failed', err);
       Alert.alert('Erreur', 'Intervention introuvable.');
       navigation.goBack();
     } finally {

@@ -90,7 +90,8 @@ export default function DepanneurDashboardScreen({ navigation }) {
       await api.post(`/api/sos/depanneur/requests/${sos.id}/accept`);
       setRequests(prev => prev.filter(r => r.id !== sos.id));
       Alert.alert('Intervention acceptée', `Navigation vers ${sos.clientName} lancée.`);
-    } catch {
+    } catch (err) {
+      console.error('[DepanneurDashboardScreen] accept request failed', err);
       Alert.alert('Erreur', 'Impossible d\'accepter cette demande.');
     }
   };

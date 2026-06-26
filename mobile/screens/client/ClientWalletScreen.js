@@ -43,7 +43,10 @@ export default function ClientWalletScreen({ navigation }) {
         setData({ balance, transactions });
         setError(false);
       })
-      .catch(() => setError(true))
+      .catch((err) => {
+        console.error('[ClientWalletScreen] failed to load wallet', err);
+        setError(true);
+      })
       .finally(() => setLoading(false));
   }, []);
 

@@ -30,7 +30,10 @@ export default function ClientEmergencyScreen({ navigation }) {
   useEffect(() => {
     api.get('/api/emergency/contacts')
       .then(r => setContacts((r.data.contacts || []).map((c, i) => ({ id: c.id || `EC${i}`, ...c }))))
-      .catch(() => Alert.alert('Erreur', 'Impossible de charger vos contacts d\'urgence.'));
+      .catch((err) => {
+        console.error('[ClientEmergencyScreen] load contacts failed', err);
+        Alert.alert('Erreur', 'Impossible de charger vos contacts d\'urgence.');
+      });
   }, []);
 
   const handleCall = (number) => {
@@ -51,7 +54,8 @@ export default function ClientEmergencyScreen({ navigation }) {
         contacts: contacts.map(c => c.phone),
       });
       Alert.alert('✅ Position partagée', 'Votre position GPS a été envoyée à vos contacts d\'urgence.');
-    } catch {
+    } catch (err) {
+      console.error('[ClientEmergencyScreen] shareLocation failed', err);
       Alert.alert('Erreur', "Impossible de partager votre position. Vérifiez votre connexion.");
     } finally { setSharing(false); }
   };
@@ -67,7 +71,8 @@ export default function ClientEmergencyScreen({ navigation }) {
       setContacts(prev => [...prev, r.data.contact]);
       setNewContact({ name: '', phone: '', relation: '' });
       setShowAdd(false);
-    } catch {
+    } catch (err) {
+      console.error('[ClientEmergencyScreen] addContact failed', err);
       Alert.alert('Erreur', "Impossible d'ajouter ce contact. Réessayez.");
     } finally {
       setSaving(false);
@@ -82,7 +87,8 @@ export default function ClientEmergencyScreen({ navigation }) {
           try {
             await api.delete(`/api/emergency/contacts/${id}`);
             setContacts(p => p.filter(c => c.id !== id));
-          } catch {
+          } catch (err) {
+            console.error('[ClientEmergencyScreen] removeContact failed', err);
             Alert.alert('Erreur', 'Impossible de supprimer ce contact. Réessayez.');
           }
         },

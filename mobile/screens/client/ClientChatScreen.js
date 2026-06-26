@@ -56,7 +56,7 @@ export default function ClientChatScreen({ navigation, route }) {
     if (!orderId) return;
     api.get(`/api/chat/${orderId}/messages`)
       .then((r) => setMessages(r.data || []))
-      .catch(() => {})
+      .catch((err) => console.error('[ClientChatScreen] load failed', err))
       .finally(() => setLoading(false));
   }, [orderId]);
 
@@ -77,7 +77,9 @@ export default function ClientChatScreen({ navigation, route }) {
       const res = await api.post(`/api/chat/${orderId}/messages`, { text: msg });
       setMessages((prev) => [...prev, res.data]);
       scrollToEnd();
-    } catch {
+    } catch (err) {
+      console.error('[ClientChatScreen] send failed', err);
+      setInput(msg);
       Alert.alert('Erreur', "Le message n'a pas pu être envoyé. Réessayez.");
     }
     setSending(false);

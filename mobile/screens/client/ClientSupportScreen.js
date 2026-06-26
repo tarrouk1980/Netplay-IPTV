@@ -42,7 +42,8 @@ export default function ClientSupportScreen({ navigation }) {
     try {
       await api.post('/api/support/tickets', { category: topic, subject: topic, message });
       setSent(true);
-    } catch {
+    } catch (err) {
+      console.error('[ClientSupportScreen] ticket submission failed', err);
       Alert.alert('Erreur', 'Impossible d\'envoyer votre message. Réessayez.');
     } finally {
       setSending(false);

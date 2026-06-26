@@ -86,7 +86,8 @@ export default function SOSTrackingScreen({ navigation, route }) {
           try {
             await api.patch(`/api/sos/orders/${requestId}/status`, { status: 'CANCELLED' });
             navigation.navigate('Home');
-          } catch {
+          } catch (err) {
+            console.error('[SOSTrackingScreen] cancel request failed', err);
             Alert.alert('Erreur', "Impossible d'annuler la demande pour le moment.");
           }
         },

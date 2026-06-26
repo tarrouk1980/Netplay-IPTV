@@ -59,7 +59,8 @@ export default function ClientFeedbackScreen({ navigation }) {
       Alert.alert('Merci !', 'Votre avis a été envoyé avec succès.', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
-    } catch {
+    } catch (err) {
+      console.error('[ClientFeedbackScreen] submit failed', err);
       Alert.alert('Erreur', "Votre avis n'a pas pu être envoyé. Réessayez.");
     } finally {
       setSubmitting(false);

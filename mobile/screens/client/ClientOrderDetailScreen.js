@@ -69,11 +69,26 @@ export default function ClientOrderDetailScreen({ navigation, route }) {
     } catch {}
   };
 
+  const submitDispute = async (disputeType) => {
+    if (!order) return;
+    try {
+      await api.post(`/api/orders/${order.id}/dispute`, {
+        disputeType,
+        urgency: 'low',
+        description: `${disputeType} — signalé depuis l'application mobile pour la commande ${order.id}.`,
+      });
+      Alert.alert('✅ Signalement envoyé', 'Notre équipe va examiner votre commande sous peu.');
+    } catch (err) {
+      console.error('[ClientOrderDetailScreen] dispute submission failed', err);
+      Alert.alert('Erreur', "Impossible d'envoyer votre signalement pour le moment. Réessayez.");
+    }
+  };
+
   const handleDispute = () => {
     Alert.alert('Signaler un problème', 'Quel est le problème avec cette commande ?', [
-      { text: 'Commande incomplète' },
-      { text: 'Mauvaise commande' },
-      { text: 'Qualité insatisfaisante' },
+      { text: 'Commande incomplète', onPress: () => submitDispute('incomplete_order') },
+      { text: 'Mauvaise commande', onPress: () => submitDispute('wrong_order') },
+      { text: 'Qualité insatisfaisante', onPress: () => submitDispute('quality_issue') },
       { text: 'Annuler', style: 'cancel' },
     ]);
   };

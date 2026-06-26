@@ -28,7 +28,7 @@ export default function ClientAddressMapScreen({ navigation }) {
     setLoading(true);
     api.get('/api/users/clients/addresses')
       .then(r => { setAddresses(r.data.addresses || []); setError(false); })
-      .catch(() => setError(true))
+      .catch((err) => { console.error('[ClientAddressMapScreen] load failed', err); setError(true); })
       .finally(() => setLoading(false));
   };
 
@@ -58,7 +58,8 @@ export default function ClientAddressMapScreen({ navigation }) {
       setAddresses(prev => [...prev, r.data.address || { ...form, id: `A${Date.now()}`, isDefault: addresses.length === 0 }]);
       setAdding(false);
       setForm({ label: '', icon: '📍', address: '', lat: null, lng: null });
-    } catch {
+    } catch (err) {
+      console.error('[ClientAddressMapScreen] save failed', err);
       Alert.alert('Erreur', 'Impossible d\'enregistrer l\'adresse. Réessayez.');
     } finally { setSaving(false); }
   };
@@ -71,7 +72,8 @@ export default function ClientAddressMapScreen({ navigation }) {
           try {
             await api.delete(`/api/users/clients/addresses/${addr.id}`);
             setAddresses(prev => prev.filter(a => a.id !== addr.id));
-          } catch {
+          } catch (err) {
+            console.error('[ClientAddressMapScreen] delete failed', err);
             Alert.alert('Erreur', 'Impossible de supprimer l\'adresse. Réessayez.');
           }
         },
@@ -83,7 +85,8 @@ export default function ClientAddressMapScreen({ navigation }) {
     try {
       await api.patch(`/api/users/clients/addresses/${addr.id}/default`);
       setAddresses(prev => prev.map(a => ({ ...a, isDefault: a.id === addr.id })));
-    } catch {
+    } catch (err) {
+      console.error('[ClientAddressMapScreen] setDefault failed', err);
       Alert.alert('Erreur', 'Impossible de définir l\'adresse par défaut. Réessayez.');
     }
   };

@@ -16,6 +16,11 @@ router.get('/:id/tracking', authenticate, async (req, res) => {
       },
     });
     if (!order) return res.status(404).json({ error: 'Order not found' });
+    const isParty = order.clientId === req.user.id || order.providerId === req.user.id;
+    const isAdmin = req.user.role === 'ADMIN';
+    if (!isParty && !isAdmin) {
+      return res.status(403).json({ error: 'Not your order' });
+    }
     const position = order.providerId
       ? await getPosition(order.providerId, order.serviceType).catch(() => null)
       : null;
@@ -44,6 +49,9 @@ router.post('/:id/rate', authenticate, async (req, res) => {
       select: { id: true, clientId: true, providerId: true, status: true },
     });
     if (!order) return res.status(404).json({ error: 'Order not found' });
+    if (order.clientId !== req.user.id) {
+      return res.status(403).json({ error: 'Not your order' });
+    }
     if (order.status !== 'COMPLETED') return res.status(400).json({ error: 'Order not completed' });
 
     // Create review
@@ -99,6 +107,11 @@ router.get('/:id', authenticate, async (req, res) => {
       },
     });
     if (!order) return res.status(404).json({ error: 'Order not found' });
+    const isParty = order.clientId === req.user.id || order.providerId === req.user.id;
+    const isAdmin = req.user.role === 'ADMIN';
+    if (!isParty && !isAdmin) {
+      return res.status(403).json({ error: 'Not your order' });
+    }
     res.json({ order });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -192,6 +205,9 @@ router.post('/:id/dispute', authenticate, async (req, res) => {
     }
     const order = await prisma.order.findUnique({ where: { id: req.params.id } });
     if (!order) return res.status(404).json({ error: 'Order not found' });
+    if (order.clientId !== req.user.id && order.providerId !== req.user.id) {
+      return res.status(403).json({ error: 'Not your order' });
+    }
 
     const dispute = await prisma.dispute.create({
       data: {

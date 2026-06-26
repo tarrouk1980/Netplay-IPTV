@@ -63,7 +63,8 @@ export default function SOSPaymentScreen({ navigation, route }) {
         await api.post('/api/reviews', { targetId: order.provider.id, rating: note, orderId });
       }
       navigation.navigate('SOSHome');
-    } catch {
+    } catch (err) {
+      console.error('[SOSPaymentScreen] payment confirmation failed', err);
       Alert.alert('Erreur', 'Impossible de confirmer le paiement.');
     } finally {
       setSubmitting(false);

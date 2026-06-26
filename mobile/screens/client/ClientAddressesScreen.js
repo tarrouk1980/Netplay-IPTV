@@ -81,13 +81,9 @@ export default function ClientAddressesScreen({ navigation }) {
         setAddresses(prev => [...prev, res.data.address || { id: Date.now().toString(), ...form }]);
       }
       setShowModal(false);
-    } catch {
-      if (editing) {
-        setAddresses(prev => prev.map(a => a.id === editing.id ? { ...a, ...form } : a));
-      } else {
-        setAddresses(prev => [...prev, { id: Date.now().toString(), ...form }]);
-      }
-      setShowModal(false);
+    } catch (err) {
+      console.error('[ClientAddressesScreen] save failed', err);
+      Alert.alert('Erreur', "Impossible d'enregistrer l'adresse. Réessayez.");
     } finally { setSaving(false); }
   };
 
@@ -95,9 +91,14 @@ export default function ClientAddressesScreen({ navigation }) {
     Alert.alert('Supprimer', 'Supprimer cette adresse ?', [
       { text: 'Annuler', style: 'cancel' },
       {
-        text: 'Supprimer', style: 'destructive', onPress: () => {
-          api.delete('/api/users/clients/addresses/' + item.id).catch(() => {});
-          setAddresses(prev => prev.filter(a => a.id !== item.id));
+        text: 'Supprimer', style: 'destructive', onPress: async () => {
+          try {
+            await api.delete('/api/users/clients/addresses/' + item.id);
+            setAddresses(prev => prev.filter(a => a.id !== item.id));
+          } catch (err) {
+            console.error('[ClientAddressesScreen] delete failed', err);
+            Alert.alert('Erreur', 'Impossible de supprimer l\'adresse. Réessayez.');
+          }
         }
       },
     ]);

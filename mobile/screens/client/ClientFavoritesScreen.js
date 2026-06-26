@@ -47,7 +47,7 @@ export default function ClientFavoritesScreen({ navigation }) {
         setDishes([]);
         setError(false);
       })
-      .catch(() => setError(true))
+      .catch((err) => { console.error('[ClientFavoritesScreen] load failed', err); setError(true); })
       .finally(() => setLoading(false));
   };
 
@@ -64,7 +64,8 @@ export default function ClientFavoritesScreen({ navigation }) {
           try {
             await api.delete(`/api/users/clients/favorites/${id}`);
             setDrivers(p => p.filter(d => d.id !== id));
-          } catch {
+          } catch (err) {
+            console.error('[ClientFavoritesScreen] removeFavorite failed', err);
             Alert.alert('Erreur', 'Impossible de retirer ce favori. Réessayez.');
           }
         },

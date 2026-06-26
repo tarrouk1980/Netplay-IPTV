@@ -97,7 +97,8 @@ export default function ClientSavedAddressesScreen({ navigation }) {
         setAddresses(prev => [...prev, newAddr]);
       }
       setModalVisible(false);
-    } catch {
+    } catch (err) {
+      console.error('[ClientSavedAddressesScreen] save failed', err);
       Alert.alert('Erreur', 'Impossible d\'enregistrer l\'adresse. Réessayez.');
     }
   };
@@ -110,7 +111,8 @@ export default function ClientSavedAddressesScreen({ navigation }) {
           try {
             await api.delete(`/api/users/clients/addresses/${id}`);
             setAddresses(prev => prev.filter(a => a.id !== id));
-          } catch {
+          } catch (err) {
+            console.error('[ClientSavedAddressesScreen] delete failed', err);
             Alert.alert('Erreur', 'Impossible de supprimer l\'adresse. Réessayez.');
           }
         },
@@ -122,7 +124,8 @@ export default function ClientSavedAddressesScreen({ navigation }) {
     try {
       await api.patch(`/api/users/clients/addresses/${id}/default`);
       setAddresses(prev => prev.map(a => ({ ...a, isDefault: a.id === id })));
-    } catch {
+    } catch (err) {
+      console.error('[ClientSavedAddressesScreen] setDefault failed', err);
       Alert.alert('Erreur', 'Impossible de définir l\'adresse par défaut. Réessayez.');
     }
   };

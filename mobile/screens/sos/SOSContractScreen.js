@@ -119,7 +119,8 @@ export default function SOSContractScreen({ navigation, route }) {
               if (res.data.bothConfirmed) {
                 Alert.alert("Contrat confirmé", "Les deux parties ont confirmé l'intervention.");
               }
-            } catch {
+            } catch (err) {
+              console.error('[SOSContractScreen] signature failed', err);
               Alert.alert("Erreur", "Impossible d'enregistrer la signature. Réessayez.");
             } finally {
               setSigning(false);

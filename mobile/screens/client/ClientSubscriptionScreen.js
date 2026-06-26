@@ -85,8 +85,9 @@ export default function ClientSubscriptionScreen({ navigation }) {
               await api.post('/api/subscriptions/cancel');
               setCurrentPlan('FREE');
               Alert.alert('Abonnement résilié', 'Vous êtes revenu au plan gratuit.');
-            } catch {
-              setCurrentPlan('FREE');
+            } catch (err) {
+              console.error('[ClientSubscriptionScreen] cancel failed', err);
+              Alert.alert('Erreur', 'Impossible de résilier votre abonnement. Réessayez.');
             } finally { setSubscribing(false); }
           },
         },
@@ -106,9 +107,10 @@ export default function ClientSubscriptionScreen({ navigation }) {
               await api.post('/api/subscriptions/subscribe', { plan: planKey });
               setCurrentPlan(planKey);
               Alert.alert(`✅ Bienvenue sur ${plan.label} !`, 'Votre abonnement est actif.');
-            } catch {
-              setCurrentPlan(planKey);
-              Alert.alert(`✅ Bienvenue sur ${plan.label} !`, 'Votre abonnement est actif.');
+            } catch (err) {
+              console.error('[ClientSubscriptionScreen] subscribe failed', err);
+              const msg = err?.response?.data?.error || 'Impossible de souscrire à cet abonnement. Réessayez.';
+              Alert.alert('Erreur', msg);
             } finally { setSubscribing(false); }
           },
         },

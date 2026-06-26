@@ -52,7 +52,9 @@ export default function LoginScreen({ navigation }) {
           if (savedPhone) setPhone(savedPhone);
           if (savedPassword) setPassword(savedPassword);
           setRememberMe(true);
-        } catch (_) {}
+        } catch (e) {
+          console.error('[LoginScreen] Failed to parse saved credentials:', e);
+        }
       }
     });
   }, []);

@@ -533,7 +533,9 @@ router.post(
               },
             }),
           ]);
-        } catch {} // Non-blocking
+        } catch (loyaltyErr) {
+          console.error('[SOS] complete: failed to award loyalty points (non-blocking):', loyaltyErr);
+        }
 
         const tokens = [order.client?.fcmToken, order.provider?.fcmToken].filter(Boolean);
         if (tokens.length > 0) {
@@ -884,6 +886,15 @@ router.post(
 router.patch('/orders/:id/status', authenticate, async (req, res) => {
   try {
     const { status } = req.body;
+    const existing = await prisma.order.findUnique({ where: { id: req.params.id } });
+    if (!existing) return res.status(404).json({ error: 'Order not found', code: 'NOT_FOUND' });
+
+    const isParty = existing.clientId === req.user.id || existing.providerId === req.user.id;
+    const isAdmin = req.user.role === 'ADMIN';
+    if (!isParty && !isAdmin) {
+      return res.status(403).json({ error: 'Not a party of this order', code: 'FORBIDDEN' });
+    }
+
     const order = await prisma.order.update({
       where: { id: req.params.id },
       data: { status, ...(status === 'COMPLETED' ? { completedAt: new Date() } : {}) },
@@ -898,6 +909,15 @@ router.patch('/orders/:id/status', authenticate, async (req, res) => {
 // PATCH /api/sos/orders/:id/complete
 router.patch('/orders/:id/complete', authenticate, async (req, res) => {
   try {
+    const existing = await prisma.order.findUnique({ where: { id: req.params.id } });
+    if (!existing) return res.status(404).json({ error: 'Order not found', code: 'NOT_FOUND' });
+
+    const isParty = existing.clientId === req.user.id || existing.providerId === req.user.id;
+    const isAdmin = req.user.role === 'ADMIN';
+    if (!isParty && !isAdmin) {
+      return res.status(403).json({ error: 'Not a party of this order', code: 'FORBIDDEN' });
+    }
+
     const order = await prisma.order.update({
       where: { id: req.params.id },
       data: { status: 'COMPLETED', completedAt: new Date() },

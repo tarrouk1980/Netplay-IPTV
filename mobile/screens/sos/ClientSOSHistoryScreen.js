@@ -52,7 +52,8 @@ export default function ClientSOSHistoryScreen({ navigation }) {
       const res = await api.get('/api/sos/history');
       setOrders(res.data.orders || []);
       setError(false);
-    } catch {
+    } catch (err) {
+      console.error('[ClientSOSHistoryScreen] load failed', err);
       setError(true);
     } finally {
       setLoading(false);

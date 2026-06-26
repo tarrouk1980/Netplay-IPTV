@@ -57,7 +57,10 @@ export default function ClientTripDetailScreen({ navigation, route }) {
         });
         setError(false);
       })
-      .catch(() => setError(true))
+      .catch((err) => {
+        console.error('[ClientTripDetailScreen] failed to load trip', err);
+        setError(true);
+      })
       .finally(() => setLoading(false));
   }, [orderId]);
 

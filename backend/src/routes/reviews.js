@@ -54,6 +54,21 @@ router.post(
     }
 
     try {
+      if (orderId) {
+        const order = await prisma.order.findUnique({ where: { id: orderId } });
+        if (!order) {
+          return res.status(404).json({ error: 'Order not found', code: 'NOT_FOUND' });
+        }
+        const isParty = order.clientId === req.user.id || order.providerId === req.user.id;
+        if (!isParty) {
+          return res.status(403).json({ error: 'Not your order', code: 'FORBIDDEN' });
+        }
+        const targetIsOtherParty = order.clientId === targetId || order.providerId === targetId;
+        if (!targetIsOtherParty) {
+          return res.status(400).json({ error: 'targetId must be the other party on this order', code: 'INVALID_TARGET' });
+        }
+      }
+
       const review = await prisma.review.create({
         data: { targetId, reviewerId: req.user.id, rating, comment: comment || null, orderId: orderId || null },
       });
