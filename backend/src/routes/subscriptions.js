@@ -189,6 +189,15 @@ router.post(
 
         const sub = subs[0];
         if (!sub) throw new Error('NO_ACTIVE_SUBSCRIPTION');
+        if (sub.ridesRemaining <= 0) throw new Error('NO_RIDES_REMAINING');
+
+        await tx.subscription.update({
+          where: { id: sub.id },
+          data: {
+            ridesRemaining: { decrement: 1 },
+            ridesConsumed: { increment: 1 },
+          },
+        });
 
         await tx.order.update({ where: { id: orderId }, data: { passConsumed: true } });
       });
@@ -197,6 +206,9 @@ router.post(
     } catch (err) {
       if (err.message === 'NO_ACTIVE_SUBSCRIPTION') {
         return res.status(402).json({ error: 'Pas de pass actif', code: 'NO_ACTIVE_SUBSCRIPTION' });
+      }
+      if (err.message === 'NO_RIDES_REMAINING') {
+        return res.status(402).json({ error: 'Plus de trajets disponibles sur ce pass', code: 'NO_RIDES_REMAINING' });
       }
       console.error('[Subscriptions/Consume]', err);
       return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });

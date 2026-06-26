@@ -147,7 +147,12 @@ router.get('/history', authenticate, requireRole('CLIENT'), async (req, res) => 
 // PRESTATAIRE: GET /api/homeservices/requests — pending requests in own category
 // ─────────────────────────────────────────────
 router.get('/requests', authenticate, requireRole('PRESTATAIRE'), async (req, res) => {
-  if (!req.user.serviceCategory) {
+  const me = await prisma.user.findUnique({
+    where: { id: req.user.id },
+    select: { serviceCategory: true },
+  });
+
+  if (!me?.serviceCategory) {
     return res.status(400).json({ error: 'No service category set on profile', code: 'NO_CATEGORY' });
   }
 
@@ -155,7 +160,7 @@ router.get('/requests', authenticate, requireRole('PRESTATAIRE'), async (req, re
     where: {
       serviceType: 'HOME_SERVICE',
       status: 'PENDING',
-      metadata: { path: ['category'], equals: req.user.serviceCategory },
+      metadata: { path: ['category'], equals: me.serviceCategory },
     },
     orderBy: { createdAt: 'desc' },
     include: { client: { select: { id: true, name: true } } },

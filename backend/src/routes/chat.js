@@ -5,8 +5,29 @@ const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 const { authenticate } = require('../middleware/auth');
+const { prisma } = require('../config/db');
 
 const router = express.Router();
+
+// Ensure the requesting user is a party (client or provider) on the order
+async function requireOrderParty(req, res, next) {
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: req.params.orderId },
+      select: { clientId: true, providerId: true },
+    });
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found', code: 'NOT_FOUND' });
+    }
+    if (order.clientId !== req.user.id && order.providerId !== req.user.id) {
+      return res.status(403).json({ error: 'Access denied', code: 'FORBIDDEN' });
+    }
+    next();
+  } catch (err) {
+    console.error('[Chat] requireOrderParty error:', err);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+}
 
 const chatStorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -44,13 +65,13 @@ router.post('/upload', authenticate, chatUpload.single('file'), (req, res) => {
 const chatMessages = new Map(); // orderId → Message[]
 
 // GET /api/chat/:orderId/messages — history
-router.get('/:orderId/messages', authenticate, (req, res) => {
+router.get('/:orderId/messages', authenticate, requireOrderParty, (req, res) => {
   const msgs = chatMessages.get(req.params.orderId) || [];
   res.json(msgs);
 });
 
 // POST /api/chat/:orderId/messages — send message
-router.post('/:orderId/messages', authenticate, (req, res) => {
+router.post('/:orderId/messages', authenticate, requireOrderParty, (req, res) => {
   const { text } = req.body;
   if (!text?.trim()) return res.status(400).json({ error: 'Message vide' });
 
@@ -80,7 +101,7 @@ router.post('/:orderId/messages', authenticate, (req, res) => {
 });
 
 // POST /api/chat/:orderId/voice — send a voice message
-router.post('/:orderId/voice', authenticate, chatUpload.single('audio'), (req, res) => {
+router.post('/:orderId/voice', authenticate, requireOrderParty, chatUpload.single('audio'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Aucun fichier reçu' });
 
   const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
@@ -111,7 +132,7 @@ router.post('/:orderId/voice', authenticate, chatUpload.single('audio'), (req, r
 });
 
 // POST /api/chat/:orderId/image — send an image message
-router.post('/:orderId/image', authenticate, chatUpload.single('image'), (req, res) => {
+router.post('/:orderId/image', authenticate, requireOrderParty, chatUpload.single('image'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Aucun fichier reçu' });
 
   const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;

@@ -3,6 +3,8 @@ const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const { authenticate: auth } = require('../middleware/auth');
+// EasyBusiness (fleet management) is reachable by any authenticated user from ProfileScreen;
+// authorization is ownership-based (businessId: req.user.id) on every query below, not role-based.
 
 // POST /api/business/register — submit company registration request
 router.post('/register', auth, async (req, res) => {
@@ -12,16 +14,9 @@ router.post('/register', auth, async (req, res) => {
       return res.status(400).json({ error: 'companyName et email requis' });
     }
 
-    // Store as a notification/request for admin review
-    // For now, upsert on the User profile or create a pending record
-    await prisma.user.update({
-      where: { id: req.user.id },
-      data: {
-        // Custom fields will be added to schema when available
-        // For now just log it
-      },
-    }).catch(() => {});
-
+    // Store as a notification/request for admin review.
+    // No dedicated business-registration fields exist on the schema yet,
+    // so there is nothing to persist on the User record here.
     // TODO: send email to admin
     res.json({ success: true, message: 'Demande reçue. Notre équipe vous contactera sous 24h.' });
   } catch (err) {
