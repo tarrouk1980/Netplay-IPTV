@@ -28,15 +28,17 @@ const COLORS = {
   accent: '#D32F2F',
 };
 
-function ProductCard({ product, onAdd, qty }) {
+function ProductCard({ product, onAdd, qty, onPress }) {
   return (
     <View style={p.card}>
-      <View style={p.imgPlaceholder}>
-        <Text style={{ fontSize: 28 }}>{product.emoji || '🛒'}</Text>
-      </View>
-      <Text style={p.name} numberOfLines={2}>{product.name}</Text>
-      <Text style={p.price}>{parseFloat(product.price).toFixed(3)} TND</Text>
-      {product.unit && <Text style={p.unit}>{product.unit}</Text>}
+      <TouchableOpacity onPress={() => onPress(product)}>
+        <View style={p.imgPlaceholder}>
+          <Text style={{ fontSize: 28 }}>{product.emoji || '🛒'}</Text>
+        </View>
+        <Text style={p.name} numberOfLines={2}>{product.name}</Text>
+        <Text style={p.price}>{parseFloat(product.price).toFixed(3)} TND</Text>
+        {product.unit && <Text style={p.unit}>{product.unit}</Text>}
+      </TouchableOpacity>
       {qty > 0 ? (
         <View style={p.qtyRow}>
           <TouchableOpacity style={p.qtyBtn} onPress={() => onAdd(product, -1)}>
@@ -234,6 +236,7 @@ export default function GroceryStoreDetailScreen({ route, navigation }) {
               product={item}
               qty={getItemQty?.(item.id) || 0}
               onAdd={handleAdd}
+              onPress={(prod) => navigation.navigate('GroceryProductDetail', { product: prod })}
             />
           )}
           contentContainerStyle={{ padding: 12, paddingBottom: cartCount > 0 ? 100 : 40 }}

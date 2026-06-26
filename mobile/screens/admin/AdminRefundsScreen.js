@@ -61,9 +61,12 @@ export default function AdminRefundsScreen({ navigation }) {
           id: d.id,
           orderId: d.orderId,
           client: d.order?.client?.name || d.reporter?.name || 'Client',
+          clientPhone: d.order?.client?.phone || d.reporter?.phone || '',
+          clientId: d.order?.client?.id || d.reporter?.id || '',
           service: d.order?.serviceType || 'SOS',
           montant: Number(d.order?.price || 0),
           raison: d.reason,
+          description: d.resolution || '',
           date: d.createdAt ? new Date(d.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }) : '',
           statut: STATUT_LABEL[d.status] || d.status,
         })));
@@ -212,7 +215,26 @@ export default function AdminRefundsScreen({ navigation }) {
             </View>
           )}
           {remboursementsFiltres.map((remboursement) => (
-            <View key={remboursement.id} style={styles.remboursementCard}>
+            <TouchableOpacity
+              key={remboursement.id}
+              style={styles.remboursementCard}
+              onPress={() => navigation.navigate('AdminRefundDetail', {
+                refund: {
+                  id: remboursement.id,
+                  orderId: remboursement.orderId,
+                  orderType: remboursement.service === 'TAXI' ? 'taxi' : 'delivery',
+                  clientName: remboursement.client,
+                  clientPhone: remboursement.clientPhone,
+                  clientId: remboursement.clientId,
+                  requestedAt: remboursement.date,
+                  amount: remboursement.montant,
+                  status: 'pending',
+                  reason: remboursement.raison,
+                  description: remboursement.description,
+                  paymentMethod: '',
+                },
+              })}
+            >
               <View style={styles.cardHeader}>
                 <View style={styles.cardHeaderGauche}>
                   <Text style={styles.serviceIcone}>{ICONE_SERVICE[remboursement.service] || '🆘'}</Text>
@@ -258,7 +280,7 @@ export default function AdminRefundsScreen({ navigation }) {
                   </View>
                 )}
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
 
