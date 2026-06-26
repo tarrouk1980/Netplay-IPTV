@@ -161,7 +161,7 @@ export default function ClientOrderHistoryScreen({ navigation }) {
           data={filtered}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
-            <OrderCard item={item} onPress={o => navigation.navigate('OrderDetail', { orderId: o.id, type: o.type })} />
+            <OrderCard item={item} onPress={o => navigation.navigate('ClientOrderDetail', { orderId: o.id, type: o.type })} />
           )}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
